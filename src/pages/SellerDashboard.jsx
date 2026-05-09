@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 
@@ -13,10 +13,16 @@ export default function SellerDashboard() {
     description: "",
   });
 
+  const [sellerFoods, setSellerFoods] = useState([]);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
   const [loading, setLoading] = useState(false);
+  const [foodsLoading, setFoodsLoading] = useState(true);
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    fetchSellerFoods();
+  }, []);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -49,6 +55,21 @@ export default function SellerDashboard() {
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
     setMessage("");
+  }
+
+  async function fetchSellerFoods() {
+    setFoodsLoading(true);
+
+    const { data, error } = await supabase
+      .from("foods")
+      .select("*")
+      .order("id", { ascending: false });
+
+    if (!error) {
+      setSellerFoods(data || []);
+    }
+
+    setFoodsLoading(false);
   }
 
   async function uploadDishImage() {
@@ -132,6 +153,7 @@ export default function SellerDashboard() {
 
       setImageFile(null);
       setImagePreview("");
+      fetchSellerFoods();
     } catch (error) {
       setMessage(`Image upload failed: ${error.message}`);
     } finally {
@@ -141,12 +163,14 @@ export default function SellerDashboard() {
 
   return (
     <main className="min-h-screen bg-black text-white px-4 sm:px-6 py-8 sm:py-10">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
-            <p className="text-yellow-400 font-semibold">Seller Dashboard</p>
+            <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
+              Seller Dashboard
+            </p>
 
-            <h1 className="text-3xl sm:text-4xl font-bold mt-2">
+            <h1 className="text-3xl sm:text-5xl font-black mt-2 tracking-tight">
               Manage your food drops
             </h1>
           </div>
@@ -162,21 +186,21 @@ export default function SellerDashboard() {
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 mt-8 sm:mt-10">
           <div className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-5 sm:p-6">
             <p className="text-gray-400">Today’s Orders</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-yellow-400 mt-3">
+            <h2 className="text-3xl sm:text-4xl font-black text-yellow-400 mt-3">
               0
             </h2>
           </div>
 
           <div className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-5 sm:p-6">
             <p className="text-gray-400">Active Dishes</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-yellow-400 mt-3">
-              Live
+            <h2 className="text-3xl sm:text-4xl font-black text-yellow-400 mt-3">
+              {sellerFoods.length}
             </h2>
           </div>
 
           <div className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-5 sm:p-6">
             <p className="text-gray-400">Today’s Sales</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-yellow-400 mt-3">
+            <h2 className="text-3xl sm:text-4xl font-black text-yellow-400 mt-3">
               ₹0
             </h2>
           </div>
@@ -314,6 +338,103 @@ export default function SellerDashboard() {
             {loading ? "Uploading Dish..." : "Add Dish"}
           </button>
         </form>
+
+        <section className="mt-8">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
+                Your Live Dishes
+              </p>
+
+              <h2 className="text-2xl sm:text-3xl font-bold mt-1">
+                Seller Menu
+              </h2>
+            </div>
+
+            <div className="bg-[#111] border border-[#2a2a2a] px-4 py-2 rounded-2xl text-sm text-gray-400">
+              {sellerFoods.length} dishes
+            </div>
+          </div>
+
+          {foodsLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+              {[1, 2, 3].map((item) => (
+                <div
+                  key={item}
+                  className="bg-[#111] border border-[#2a2a2a] rounded-3xl overflow-hidden animate-pulse"
+                >
+                  <div className="h-48 bg-[#1a1a1a]" />
+                  <div className="p-5 space-y-4">
+                    <div className="h-5 bg-[#1a1a1a] rounded-full w-3/4" />
+                    <div className="h-4 bg-[#1a1a1a] rounded-full w-1/2" />
+                    <div className="h-10 bg-[#1a1a1a] rounded-2xl" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : sellerFoods.length === 0 ? (
+            <div className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-8 text-center">
+              <p className="text-gray-500">
+                No dishes added yet.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+              {sellerFoods.map((food) => (
+                <div
+                  key={food.id}
+                  className="bg-[#111] border border-[#2a2a2a] rounded-3xl overflow-hidden"
+                >
+                  <img
+                    src={food.image}
+                    alt={food.name}
+                    className="w-full h-48 object-cover"
+                  />
+
+                  <div className="p-5">
+                    <div className="flex justify-between gap-3">
+                      <div>
+                        <h3 className="text-xl font-bold">
+                          {food.name}
+                        </h3>
+
+                        <p className="text-gray-500 text-sm mt-1">
+                          {food.seller}
+                        </p>
+                      </div>
+
+                      <div className="text-right">
+                        <p className="text-yellow-400 font-bold text-2xl">
+                          ₹{food.price}
+                        </p>
+
+                        <p className="text-gray-500 text-sm">
+                          {food.stock} left
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between mt-5">
+                      <span
+                        className={`text-xs px-3 py-1 rounded-full ${
+                          food.type === "Non-Veg"
+                            ? "bg-red-900/40 text-red-400"
+                            : "bg-green-900/40 text-green-400"
+                        }`}
+                      >
+                        {food.type}
+                      </span>
+
+                      <span className="text-gray-500 text-sm">
+                        {food.time}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </main>
   );
