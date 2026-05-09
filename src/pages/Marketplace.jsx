@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import FoodCard from "../components/FoodCard";
 import Navbar from "../components/Navbar";
 import { supabase } from "../lib/supabaseClient";
@@ -12,40 +12,63 @@ export default function Marketplace() {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    async function fetchFoods() {
-      setLoading(true);
-      setErrorMessage("");
-
-      const { data, error } = await supabase
-        .from("foods")
-        .select("*")
-        .order("id", { ascending: true });
-
-      if (error) {
-        setErrorMessage(error.message);
-        setFoods([]);
-      } else {
-        setFoods(data || []);
-      }
-
-      setLoading(false);
-    }
-
     fetchFoods();
+
+    const channel = supabase
+      .channel("foods-realtime-channel")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "foods",
+        },
+        () => {
+          fetchFoods();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  const filteredFoods = foods.filter((item) => {
-    const searchValue = searchTerm.toLowerCase();
+  async function fetchFoods() {
+    setLoading(true);
+    setErrorMessage("");
 
-    const matchesSearch =
-      item.name?.toLowerCase().includes(searchValue) ||
-      item.seller?.toLowerCase().includes(searchValue) ||
-      item.time?.toLowerCase().includes(searchValue);
+    const { data, error } = await supabase
+      .from("foods")
+      .select("*")
+      .order("id", { ascending: false });
 
-    const matchesType = selectedType === "All" || item.type === selectedType;
+    if (error) {
+      setErrorMessage(error.message);
+      setFoods([]);
+    } else {
+      setFoods(data || []);
+    }
 
-    return matchesSearch && matchesType;
-  });
+    setLoading(false);
+  }
+
+  const filteredFoods = useMemo(() => {
+    return foods.filter((item) => {
+      const searchValue = searchTerm.trim().toLowerCase();
+
+      const matchesSearch =
+        searchValue === "" ||
+        item.name?.toLowerCase().includes(searchValue) ||
+        item.seller?.toLowerCase().includes(searchValue) ||
+        item.time?.toLowerCase().includes(searchValue);
+
+      const matchesType =
+        selectedType === "All" || item.type === selectedType;
+
+      return matchesSearch && matchesType;
+    });
+  }, [foods, searchTerm, selectedType]);
 
   function clearFilters() {
     setSearchTerm("");
@@ -62,25 +85,30 @@ export default function Marketplace() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-black">
-        <section className="px-6 py-10 border-b border-[#1f1f1f]">
-          <div className="max-w-7xl mx-auto">
-            <p className="text-yellow-400 font-semibold tracking-wide">
+      <main className="min-h-screen bg-black text-white overflow-hidden">
+        {/* Hero */}
+        <section className="relative px-4 sm:px-6 pt-7 pb-6 sm:py-10 border-b border-[#1f1f1f]">
+          <div className="absolute top-0 right-0 w-72 h-72 bg-yellow-500/10 rounded-full blur-[90px]" />
+
+          <div className="relative max-w-7xl mx-auto">
+            <p className="text-yellow-400 font-semibold tracking-wide text-sm uppercase">
               Marketplace
             </p>
 
-            <h1 className="text-5xl md:text-6xl font-bold text-white mt-4 leading-tight">
+            <h1 className="text-[2.25rem] sm:text-5xl md:text-6xl font-black text-white mt-3 leading-[1.03] tracking-tight">
               Fresh homemade food
-              <br />
-              from your community.
+              <span className="block text-yellow-400">
+                from your community.
+              </span>
             </h1>
 
-            <p className="text-gray-400 text-lg mt-6 max-w-2xl">
+            <p className="text-gray-400 text-[15px] sm:text-lg mt-5 max-w-2xl leading-relaxed">
               Discover meals, snacks, desserts, and special dishes prepared by
               trusted home chefs inside your apartment complex.
             </p>
 
-            <div className="mt-8 flex flex-col lg:flex-row gap-4">
+            {/* Search + Filters */}
+            <div className="mt-7 grid grid-cols-1 gap-3 lg:flex lg:items-center lg:gap-4">
               <input
                 type="text"
                 value={searchTerm}
@@ -89,7 +117,7 @@ export default function Marketplace() {
                 className="bg-[#111111] border border-[#2a2a2a] text-white rounded-2xl px-5 py-4 w-full lg:max-w-lg outline-none focus:border-yellow-500 transition-all duration-200"
               />
 
-              <div className="relative w-full sm:w-60">
+              <div className="relative w-full lg:w-60">
                 <button
                   type="button"
                   onClick={() => setTypeDropdownOpen(!typeDropdownOpen)}
@@ -127,35 +155,35 @@ export default function Marketplace() {
                 )}
               </div>
 
-              {searchTerm || selectedType !== "All" ? (
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="border border-yellow-500 text-yellow-400 hover:bg-yellow-500 hover:text-black font-bold px-8 py-4 rounded-2xl transition-all duration-200"
-                >
-                  Clear
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-8 py-4 rounded-2xl transition-all duration-200"
-                >
-                  Search
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={
+                  searchTerm || selectedType !== "All"
+                    ? clearFilters
+                    : undefined
+                }
+                className={`font-bold px-8 py-4 rounded-2xl transition-all duration-200 ${
+                  searchTerm || selectedType !== "All"
+                    ? "border border-yellow-500 text-yellow-400 hover:bg-yellow-500 hover:text-black"
+                    : "bg-yellow-500 hover:bg-yellow-400 text-black"
+                }`}
+              >
+                {searchTerm || selectedType !== "All" ? "Clear" : "Search"}
+              </button>
             </div>
           </div>
         </section>
 
-        <section className="px-6 py-10">
+        {/* Grid */}
+        <section className="px-4 sm:px-6 py-7 sm:py-10">
           <div className="max-w-7xl mx-auto">
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-end justify-between gap-4 mb-6 sm:mb-8">
               <div>
-                <h2 className="text-3xl font-bold text-white">
+                <h2 className="text-2xl sm:text-3xl font-black text-white">
                   Today’s Specials
                 </h2>
 
-                <p className="text-gray-500 mt-2">
+                <p className="text-gray-500 mt-2 text-sm sm:text-base">
                   {searchTerm || selectedType !== "All"
                     ? `Showing ${getTypeLabel(selectedType)} results ${
                         searchTerm ? `for "${searchTerm}"` : ""
@@ -164,22 +192,47 @@ export default function Marketplace() {
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="hidden md:block border border-yellow-500 text-yellow-400 hover:bg-yellow-500 hover:text-black px-5 py-3 rounded-2xl font-semibold transition-all duration-200"
-              >
-                View All
-              </button>
+              {(searchTerm || selectedType !== "All") && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="hidden sm:block border border-yellow-500 text-yellow-400 hover:bg-yellow-500 hover:text-black px-5 py-3 rounded-2xl font-semibold transition-all duration-200"
+                >
+                  View All
+                </button>
+              )}
             </div>
 
             {loading && (
-              <p className="text-gray-400">Loading homemade food...</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
+                {[1, 2, 3, 4].map((item) => (
+                  <div
+                    key={item}
+                    className="bg-[#111111] border border-[#222] rounded-[1.75rem] overflow-hidden animate-pulse"
+                  >
+                    <div className="h-44 sm:h-48 bg-[#1a1a1a]" />
+                    <div className="p-5 space-y-4">
+                      <div className="h-5 bg-[#1a1a1a] rounded-full w-3/4" />
+                      <div className="h-4 bg-[#1a1a1a] rounded-full w-1/2" />
+                      <div className="h-10 bg-[#1a1a1a] rounded-2xl" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
 
             {errorMessage && (
-              <div className="bg-red-950/40 border border-red-500 text-red-300 rounded-2xl p-4">
-                Failed to load foods: {errorMessage}
+              <div className="bg-red-950/40 border border-red-500/50 text-red-300 rounded-3xl p-5">
+                <p className="font-bold">Failed to load foods</p>
+                <p className="text-sm mt-1">{errorMessage}</p>
+
+                <button
+                  type="button"
+                  onClick={fetchFoods}
+                  className="mt-4 bg-red-500 hover:bg-red-400 text-black font-bold px-5 py-3 rounded-2xl"
+                >
+                  Retry
+                </button>
               </div>
             )}
 
@@ -219,7 +272,7 @@ export default function Marketplace() {
               )}
 
             {!loading && !errorMessage && filteredFoods.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
                 {filteredFoods.map((item) => (
                   <FoodCard key={item.id} item={item} />
                 ))}
