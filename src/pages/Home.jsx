@@ -69,47 +69,72 @@ export default function Home() {
             <div className="relative">
               <div className="absolute -inset-3 bg-yellow-500/10 blur-2xl rounded-[2rem]" />
 
-              <div className="relative bg-[#101010] border border-[#2a2a2a] rounded-[1.75rem] p-4 shadow-2xl">
-                <div className="bg-gradient-to-br from-yellow-500/20 via-[#151515] to-black rounded-[1.35rem] p-5">
-                  <div className="flex items-start justify-between gap-4">
+              <div className="relative bg-[#101010] border border-[#2a2a2a] rounded-[1.75rem] p-4 shadow-2xl overflow-hidden">
+                <div className="absolute top-0 right-0 w-56 h-56 bg-yellow-500/10 blur-[80px] rounded-full" />
+
+                <div className="relative bg-gradient-to-br from-yellow-500/10 via-[#141414] to-black rounded-[1.35rem] p-5 sm:p-6">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs text-yellow-400 font-semibold uppercase tracking-wide">
-                        Today’s Special
+                      <p className="text-xs text-yellow-400 font-semibold uppercase tracking-[0.18em]">
+                        Community Kitchen
                       </p>
 
-                      <h2 className="text-2xl sm:text-3xl font-black mt-3">
-                        Paneer Biryani
+                      <h2 className="text-2xl sm:text-3xl font-black mt-3 leading-tight">
+                        Fresh homemade
+                        <span className="block text-yellow-400">
+                          food drops daily
+                        </span>
                       </h2>
+                    </div>
 
-                      <p className="text-gray-400 mt-2 text-sm">
-                        By A-1204 • Ready in 20 mins
+                    <div className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs px-3 py-1.5 rounded-full font-semibold">
+                      Live
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3 mt-7">
+                    <div className="bg-black/40 border border-[#222] rounded-2xl p-3 text-center">
+                      <p className="text-yellow-400 text-lg font-black">
+                        25+
+                      </p>
+                      <p className="text-gray-500 text-[11px] mt-1">
+                        Home chefs
                       </p>
                     </div>
 
-                    <span className="bg-green-900/40 text-green-400 text-xs px-3 py-1 rounded-full">
-                      Veg
-                    </span>
-                  </div>
-
-                  <div className="mt-7 bg-black/40 border border-[#2a2a2a] rounded-3xl p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-gray-500 text-xs">Limited drop</p>
-                        <p className="text-white font-bold mt-1">8 plates left</p>
-                      </div>
-
-                      <p className="text-yellow-400 text-3xl font-black">
-                        ₹120
+                    <div className="bg-black/40 border border-[#222] rounded-2xl p-3 text-center">
+                      <p className="text-yellow-400 text-lg font-black">
+                        10 min
+                      </p>
+                      <p className="text-gray-500 text-[11px] mt-1">
+                        Avg pickup
                       </p>
                     </div>
 
-                    <Link
-                      to="/marketplace"
-                      className="block text-center mt-5 w-full bg-yellow-500 hover:bg-yellow-400 active:scale-95 text-black py-3 rounded-2xl font-bold transition-all duration-200"
-                    >
-                      Explore Marketplace
-                    </Link>
+                    <div className="bg-black/40 border border-[#222] rounded-2xl p-3 text-center">
+                      <p className="text-yellow-400 text-lg font-black">
+                        Daily
+                      </p>
+                      <p className="text-gray-500 text-[11px] mt-1">
+                        New menus
+                      </p>
+                    </div>
                   </div>
+
+                  <div className="mt-6 bg-black/40 border border-[#222] rounded-3xl p-4">
+                    <p className="text-gray-300 text-sm leading-relaxed">
+                      “Order from trusted residents in your own apartment —
+                      faster, fresher, and more personal than traditional
+                      delivery apps.”
+                    </p>
+                  </div>
+
+                  <Link
+                    to="/marketplace"
+                    className="block text-center mt-6 w-full bg-yellow-500 hover:bg-yellow-400 active:scale-95 text-black py-3.5 rounded-2xl font-black transition-all duration-200 shadow-lg shadow-yellow-500/20"
+                  >
+                    Explore Marketplace
+                  </Link>
                 </div>
               </div>
             </div>
