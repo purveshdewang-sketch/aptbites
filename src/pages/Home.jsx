@@ -23,7 +23,7 @@ export default function Home() {
               <h1 className="text-[2.35rem] sm:text-5xl md:text-6xl font-black leading-[1.02] tracking-tight">
                 Homemade food,
                 <span className="block text-yellow-400">
-                  one floor away.
+                  One block away.
                 </span>
               </h1>
 

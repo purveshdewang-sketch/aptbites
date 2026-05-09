@@ -1,16 +1,71 @@
-import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+import { supabase } from "../lib/supabaseClient";
 
 export default function Navbar() {
   const { cartCount } = useCart();
+
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [user, setUser] = useState(null);
+
+  const dropdownRef = useRef(null);
 
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     setMenuOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    async function getUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      setUser(user);
+    }
+
+    getUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
+        setProfileOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+    };
+  }, []);
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+
+    setProfileOpen(false);
+
+    navigate("/");
+  }
 
   const navLinks = [
     {
@@ -26,6 +81,12 @@ export default function Navbar() {
       path: "/seller-dashboard",
     },
   ];
+
+  function getInitial() {
+    if (!user?.email) return "A";
+
+    return user.email.charAt(0).toUpperCase();
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-black/80 backdrop-blur-2xl border-b border-[#1d1d1d]">
@@ -77,22 +138,78 @@ export default function Navbar() {
 
           {/* Right Side */}
           <div className="flex items-center gap-2">
-            {/* Desktop Auth */}
-            <div className="hidden md:flex items-center gap-3">
+            {/* Not Logged In */}
+            {!user && (
               <Link
                 to="/customer-login"
-                className="text-sm text-gray-400 hover:text-yellow-400 transition-all"
+                className="hidden md:flex bg-yellow-500 hover:bg-yellow-400 active:scale-95 text-black text-sm font-bold px-5 py-2.5 rounded-2xl transition-all duration-200 shadow-lg shadow-yellow-500/10"
               >
-                Login
+                Sign In
               </Link>
+            )}
 
-              <Link
-                to="/seller-login"
-                className="bg-yellow-500 hover:bg-yellow-400 active:scale-95 text-black text-sm font-bold px-4 py-2 rounded-2xl transition-all duration-200"
+            {/* Logged In Profile */}
+            {user && (
+              <div
+                className="relative hidden md:block"
+                ref={dropdownRef}
               >
-                Sign Up
-              </Link>
-            </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setProfileOpen(!profileOpen)
+                  }
+                  className="w-11 h-11 rounded-2xl bg-yellow-500 hover:bg-yellow-400 text-black font-black flex items-center justify-center transition-all duration-200"
+                >
+                  {getInitial()}
+                </button>
+
+                {profileOpen && (
+                  <div className="absolute right-0 mt-3 w-64 bg-[#111111] border border-[#222] rounded-3xl overflow-hidden shadow-2xl shadow-black/50 animate-[fadeIn_.18s_ease]">
+                    <div className="p-5 border-b border-[#222]">
+                      <p className="text-white font-semibold truncate">
+                        {user.email}
+                      </p>
+
+                      <p className="text-gray-500 text-sm mt-1">
+                        Logged in
+                      </p>
+                    </div>
+
+                    <div className="p-2">
+                      <Link
+                        to="/marketplace"
+                        className="block px-4 py-3 rounded-2xl text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400 transition-all"
+                      >
+                        Marketplace
+                      </Link>
+
+                      <Link
+                        to="/seller-dashboard"
+                        className="block px-4 py-3 rounded-2xl text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400 transition-all"
+                      >
+                        Seller Dashboard
+                      </Link>
+
+                      <Link
+                        to="/orders"
+                        className="block px-4 py-3 rounded-2xl text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400 transition-all"
+                      >
+                        Order History
+                      </Link>
+
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-3 rounded-2xl text-red-400 hover:bg-red-500/10 transition-all"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Cart */}
             <Link
@@ -151,19 +268,41 @@ export default function Navbar() {
 
                 <div className="h-px bg-[#222] my-2" />
 
-                <Link
-                  to="/customer-login"
-                  className="px-4 py-3 rounded-2xl text-sm font-medium text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400 transition-all duration-200"
-                >
-                  Login
-                </Link>
+                {!user ? (
+                  <Link
+                    to="/customer-login"
+                    className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-4 py-3 rounded-2xl text-center transition-all duration-200"
+                  >
+                    Sign In
+                  </Link>
+                ) : (
+                  <>
+                    <div className="px-4 py-3">
+                      <p className="text-white font-semibold truncate">
+                        {user.email}
+                      </p>
 
-                <Link
-                  to="/seller-login"
-                  className="mt-2 bg-yellow-500 hover:bg-yellow-400 active:scale-95 text-black font-bold px-4 py-3 rounded-2xl text-center transition-all duration-200"
-                >
-                  Become a Seller
-                </Link>
+                      <p className="text-gray-500 text-sm mt-1">
+                        Logged in
+                      </p>
+                    </div>
+
+                    <Link
+                      to="/orders"
+                      className="px-4 py-3 rounded-2xl text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400 transition-all"
+                    >
+                      Order History
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="mt-2 bg-red-500/10 text-red-400 font-bold px-4 py-3 rounded-2xl transition-all duration-200"
+                    >
+                      Sign Out
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
