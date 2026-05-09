@@ -9,11 +9,12 @@ export default function SellerDashboard() {
     seller: "",
     time: "",
     stock: "",
-    image: "",
     type: "Veg",
     description: "",
   });
 
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -26,90 +27,168 @@ export default function SellerDashboard() {
     }));
   }
 
+  function handleImageChange(event) {
+    const file = event.target.files[0];
+
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+
+    if (!allowedTypes.includes(file.type)) {
+      setMessage("Please upload a JPG, PNG, or WEBP image.");
+      return;
+    }
+
+    const maxSizeInBytes = 5 * 1024 * 1024;
+
+    if (file.size > maxSizeInBytes) {
+      setMessage("Image is too large. Please upload an image below 5 MB.");
+      return;
+    }
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+    setMessage("");
+  }
+
+  async function uploadDishImage() {
+    if (!imageFile) {
+      return "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1200&auto=format&fit=crop";
+    }
+
+    const fileExtension = imageFile.name.split(".").pop();
+    const fileName = `${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}.${fileExtension}`;
+
+    const filePath = `dishes/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("food-images")
+      .upload(filePath, imageFile, {
+        cacheControl: "3600",
+        upsert: false,
+      });
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data } = supabase.storage
+      .from("food-images")
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  }
+
   async function handleAddDish(event) {
     event.preventDefault();
     setMessage("");
 
-    if (!formData.name || !formData.price || !formData.seller || !formData.time || !formData.stock) {
+    if (
+      !formData.name ||
+      !formData.price ||
+      !formData.seller ||
+      !formData.time ||
+      !formData.stock
+    ) {
       setMessage("Please fill dish name, price, seller, ready time, and stock.");
       return;
     }
 
     setLoading(true);
 
-    const { error } = await supabase.from("foods").insert([
-      {
-        name: formData.name,
-        price: Number(formData.price),
-        seller: formData.seller,
-        time: formData.time,
-        stock: Number(formData.stock),
-        image:
-          formData.image ||
-          "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1200&auto=format&fit=crop",
-      },
-    ]);
+    try {
+      const imageUrl = await uploadDishImage();
 
-    setLoading(false);
+      const { error } = await supabase.from("foods").insert([
+        {
+          name: formData.name,
+          price: Number(formData.price),
+          seller: formData.seller,
+          time: formData.time,
+          stock: Number(formData.stock),
+          type: formData.type,
+          image: imageUrl,
+        },
+      ]);
 
-    if (error) {
-      setMessage(`Error: ${error.message}`);
-      return;
+      if (error) {
+        setMessage(`Error: ${error.message}`);
+        return;
+      }
+
+      setMessage("Dish added successfully. It is now visible in Marketplace.");
+
+      setFormData({
+        name: "",
+        price: "",
+        seller: "",
+        time: "",
+        stock: "",
+        type: "Veg",
+        description: "",
+      });
+
+      setImageFile(null);
+      setImagePreview("");
+    } catch (error) {
+      setMessage(`Image upload failed: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
-
-    setMessage("Dish added successfully. It is now visible in Marketplace.");
-
-    setFormData({
-      name: "",
-      price: "",
-      seller: "",
-      time: "",
-      stock: "",
-      image: "",
-      type: "Veg",
-      description: "",
-    });
   }
 
   return (
-    <main className="min-h-screen bg-black text-white px-6 py-10">
+    <main className="min-h-screen bg-black text-white px-4 sm:px-6 py-8 sm:py-10">
       <div className="max-w-5xl mx-auto">
-        <div className="flex justify-between items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
             <p className="text-yellow-400 font-semibold">Seller Dashboard</p>
-            <h1 className="text-4xl font-bold mt-2">Manage your food drops</h1>
+
+            <h1 className="text-3xl sm:text-4xl font-bold mt-2">
+              Manage your food drops
+            </h1>
           </div>
 
           <Link
             to="/marketplace"
-            className="bg-yellow-500 text-black font-bold px-5 py-3 rounded-2xl"
+            className="bg-yellow-500 hover:bg-yellow-400 active:scale-95 text-black font-bold px-5 py-3 rounded-2xl text-center transition-all"
           >
             View Marketplace
           </Link>
         </div>
 
-        <section className="grid md:grid-cols-3 gap-5 mt-10">
-          <div className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-6">
+        <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 mt-8 sm:mt-10">
+          <div className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-5 sm:p-6">
             <p className="text-gray-400">Today’s Orders</p>
-            <h2 className="text-4xl font-bold text-yellow-400 mt-3">0</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold text-yellow-400 mt-3">
+              0
+            </h2>
           </div>
 
-          <div className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-6">
+          <div className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-5 sm:p-6">
             <p className="text-gray-400">Active Dishes</p>
-            <h2 className="text-4xl font-bold text-yellow-400 mt-3">Live</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold text-yellow-400 mt-3">
+              Live
+            </h2>
           </div>
 
-          <div className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-6">
+          <div className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-5 sm:p-6">
             <p className="text-gray-400">Today’s Sales</p>
-            <h2 className="text-4xl font-bold text-yellow-400 mt-3">₹0</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold text-yellow-400 mt-3">
+              ₹0
+            </h2>
           </div>
         </section>
 
         <form
           onSubmit={handleAddDish}
-          className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-6 mt-8"
+          className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-5 sm:p-6 mt-8"
         >
-          <h2 className="text-2xl font-bold text-yellow-400">Add New Dish</h2>
+          <h2 className="text-2xl font-bold text-yellow-400">
+            Add New Dish
+          </h2>
 
           {message && (
             <div className="mt-5 bg-black border border-[#333] rounded-2xl p-4 text-sm text-gray-300">
@@ -117,7 +196,7 @@ export default function SellerDashboard() {
             </div>
           )}
 
-          <div className="grid md:grid-cols-2 gap-4 mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
             <input
               name="name"
               value={formData.name}
@@ -172,13 +251,51 @@ export default function SellerDashboard() {
               placeholder="Seller flat / kitchen name e.g. A-1204"
             />
 
-            <input
-              name="image"
-              value={formData.image}
-              onChange={handleChange}
-              className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500 md:col-span-2"
-              placeholder="Image URL"
-            />
+            <div className="md:col-span-2">
+              <label className="block text-sm text-gray-400 mb-3">
+                Upload Dish Image
+              </label>
+
+              <label className="flex flex-col items-center justify-center border-2 border-dashed border-[#333] hover:border-yellow-500/50 bg-black rounded-3xl p-8 cursor-pointer transition-all duration-200">
+                <div className="text-5xl mb-3">📸</div>
+
+                <p className="text-white font-semibold">
+                  Tap to upload image
+                </p>
+
+                <p className="text-gray-500 text-sm mt-1">
+                  JPG, PNG, WEBP · Max 5 MB
+                </p>
+
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
+              </label>
+
+              {imagePreview && (
+                <div className="mt-4">
+                  <img
+                    src={imagePreview}
+                    alt="Dish preview"
+                    className="w-full h-56 object-cover rounded-3xl border border-[#333]"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImageFile(null);
+                      setImagePreview("");
+                    }}
+                    className="mt-3 text-sm text-red-400 hover:text-red-300"
+                  >
+                    Remove image
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           <textarea
@@ -192,9 +309,9 @@ export default function SellerDashboard() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-5 bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold px-6 py-3 rounded-2xl"
+            className="mt-5 w-full sm:w-auto bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold px-6 py-3 rounded-2xl"
           >
-            {loading ? "Adding Dish..." : "Add Dish"}
+            {loading ? "Uploading Dish..." : "Add Dish"}
           </button>
         </form>
       </div>
