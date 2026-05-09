@@ -16,21 +16,12 @@ export function AuthProvider({ children }) {
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    let mounted = true;
-
     async function loadSession() {
       const {
         data: { session },
-        error,
       } = await supabase.auth.getSession();
 
-      if (!mounted) return;
-
-      if (error) {
-        console.error("Session load error:", error.message);
-      }
-
-      setSession(session ?? null);
+      setSession(session);
       setUser(session?.user ?? null);
       setAuthLoading(false);
     }
@@ -39,14 +30,13 @@ export function AuthProvider({ children }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession ?? null);
-      setUser(newSession?.user ?? null);
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
       setAuthLoading(false);
     });
 
     return () => {
-      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -69,12 +59,9 @@ export function AuthProvider({ children }) {
   }
 
   async function signOut() {
-    const result = await supabase.auth.signOut();
-
+    await supabase.auth.signOut();
     setSession(null);
     setUser(null);
-
-    return result;
   }
 
   const value = useMemo(
@@ -92,7 +79,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={value}>
-      {!authLoading && children}
+      {children}
     </AuthContext.Provider>
   );
 }
