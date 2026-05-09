@@ -25,6 +25,15 @@ export default function SellerDashboard() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
+    const savedSellerName = localStorage.getItem("aptbites_seller_name");
+
+    if (savedSellerName) {
+      setFormData((currentData) => ({
+        ...currentData,
+        seller: savedSellerName,
+      }));
+    }
+
     if (user) {
       fetchSellerFoods();
     }
@@ -37,6 +46,10 @@ export default function SellerDashboard() {
       ...currentData,
       [name]: value,
     }));
+
+    if (name === "seller") {
+      localStorage.setItem("aptbites_seller_name", value);
+    }
   }
 
   function handleImageChange(event) {
@@ -80,11 +93,18 @@ export default function SellerDashboard() {
 
   async function uploadDishImage() {
     if (!imageFile) {
-      return editingFood?.image || "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1200&auto=format&fit=crop";
+      return (
+        editingFood?.image ||
+        "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1200&auto=format&fit=crop"
+      );
     }
 
     const fileExtension = imageFile.name.split(".").pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExtension}`;
+
+    const fileName = `${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}.${fileExtension}`;
+
     const filePath = `dishes/${fileName}`;
 
     const { error } = await supabase.storage
@@ -104,10 +124,12 @@ export default function SellerDashboard() {
   }
 
   function resetForm() {
+    const savedSellerName = localStorage.getItem("aptbites_seller_name") || "";
+
     setFormData({
       name: "",
       price: "",
-      seller: "",
+      seller: savedSellerName,
       time: "",
       stock: "",
       type: "Veg",
@@ -131,6 +153,10 @@ export default function SellerDashboard() {
       type: food.type || "Veg",
       description: food.description || "",
     });
+
+    if (food.seller) {
+      localStorage.setItem("aptbites_seller_name", food.seller);
+    }
 
     setImagePreview(food.image || "");
 
@@ -158,6 +184,8 @@ export default function SellerDashboard() {
       setMessage("Please fill dish name, price, seller, ready time, and stock.");
       return;
     }
+
+    localStorage.setItem("aptbites_seller_name", formData.seller);
 
     setLoading(true);
     setMessage("");
