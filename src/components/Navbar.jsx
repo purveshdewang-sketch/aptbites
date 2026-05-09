@@ -1,14 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
-import { supabase } from "../lib/supabaseClient";
+import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
   const { cartCount } = useCart();
 
+  const {
+    user,
+    signOut,
+    authLoading,
+  } = useAuth();
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [user, setUser] = useState(null);
 
   const dropdownRef = useRef(null);
 
@@ -20,26 +25,6 @@ export default function Navbar() {
   }, [location.pathname]);
 
   useEffect(() => {
-    async function getUser() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      setUser(user);
-    }
-
-    getUser();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
     function handleClickOutside(event) {
       if (
         dropdownRef.current &&
@@ -49,7 +34,10 @@ export default function Navbar() {
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
 
     return () => {
       document.removeEventListener(
@@ -60,7 +48,7 @@ export default function Navbar() {
   }, []);
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    await signOut();
 
     setProfileOpen(false);
 
@@ -86,6 +74,14 @@ export default function Navbar() {
     if (!user?.email) return "A";
 
     return user.email.charAt(0).toUpperCase();
+  }
+
+  if (authLoading) {
+    return (
+      <header className="sticky top-0 z-50 bg-black border-b border-[#1d1d1d]">
+        <div className="h-16 sm:h-[72px]" />
+      </header>
+    );
   }
 
   return (
@@ -148,7 +144,7 @@ export default function Navbar() {
               </Link>
             )}
 
-            {/* Logged In Profile */}
+            {/* Logged In */}
             {user && (
               <div
                 className="relative hidden md:block"
@@ -165,7 +161,7 @@ export default function Navbar() {
                 </button>
 
                 {profileOpen && (
-                  <div className="absolute right-0 mt-3 w-64 bg-[#111111] border border-[#222] rounded-3xl overflow-hidden shadow-2xl shadow-black/50 animate-[fadeIn_.18s_ease]">
+                  <div className="absolute right-0 mt-3 w-64 bg-[#111111] border border-[#222] rounded-3xl overflow-hidden shadow-2xl shadow-black/50">
                     <div className="p-5 border-b border-[#222]">
                       <p className="text-white font-semibold truncate">
                         {user.email}
@@ -231,7 +227,7 @@ export default function Navbar() {
               )}
             </Link>
 
-            {/* Mobile Menu Button */}
+            {/* Mobile Menu */}
             <button
               type="button"
               onClick={() => setMenuOpen(!menuOpen)}
@@ -242,9 +238,9 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Dropdown */}
         {menuOpen && (
-          <div className="md:hidden pb-4 animate-[fadeIn_.2s_ease]">
+          <div className="md:hidden pb-4">
             <div className="bg-[#111111] border border-[#222] rounded-3xl p-3 shadow-2xl shadow-black/40">
               <div className="grid gap-1">
                 {navLinks.map((link) => {
@@ -271,7 +267,7 @@ export default function Navbar() {
                 {!user ? (
                   <Link
                     to="/customer-login"
-                    className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-4 py-3 rounded-2xl text-center transition-all duration-200"
+                    className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-4 py-3 rounded-2xl text-center"
                   >
                     Sign In
                   </Link>
@@ -289,7 +285,7 @@ export default function Navbar() {
 
                     <Link
                       to="/orders"
-                      className="px-4 py-3 rounded-2xl text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400 transition-all"
+                      className="px-4 py-3 rounded-2xl text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400"
                     >
                       Order History
                     </Link>
@@ -297,7 +293,7 @@ export default function Navbar() {
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="mt-2 bg-red-500/10 text-red-400 font-bold px-4 py-3 rounded-2xl transition-all duration-200"
+                      className="mt-2 bg-red-500/10 text-red-400 font-bold px-4 py-3 rounded-2xl"
                     >
                       Sign Out
                     </button>

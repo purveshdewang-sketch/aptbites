@@ -11,37 +11,53 @@ import { supabase } from "../lib/supabaseClient";
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    async function getInitialSession() {
+    let mounted = true;
+
+    async function loadSession() {
       const {
         data: { session },
+        error,
       } = await supabase.auth.getSession();
 
+      if (!mounted) return;
+
+      if (error) {
+        console.error("Session load error:", error.message);
+      }
+
+      setSession(session ?? null);
       setUser(session?.user ?? null);
       setAuthLoading(false);
     }
 
-    getInitialSession();
+    loadSession();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession ?? null);
+      setUser(newSession?.user ?? null);
       setAuthLoading(false);
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
-  async function signUp(email, password) {
+  async function signUp(email, password, metadata = {}) {
     return supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: metadata,
+      },
     });
   }
 
@@ -53,23 +69,30 @@ export function AuthProvider({ children }) {
   }
 
   async function signOut() {
-    return supabase.auth.signOut();
+    const result = await supabase.auth.signOut();
+
+    setSession(null);
+    setUser(null);
+
+    return result;
   }
 
   const value = useMemo(
     () => ({
+      session,
       user,
       authLoading,
+      isAuthenticated: Boolean(user),
       signUp,
       signIn,
       signOut,
     }),
-    [user, authLoading]
+    [session, user, authLoading]
   );
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {!authLoading && children}
     </AuthContext.Provider>
   );
 }
