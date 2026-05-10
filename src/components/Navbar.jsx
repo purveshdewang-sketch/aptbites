@@ -6,11 +6,7 @@ import { useAuth } from "../context/AuthContext";
 export default function Navbar() {
   const { cartCount } = useCart();
 
-  const {
-    user,
-    signOut,
-    authLoading,
-  } = useAuth();
+  const { user, signOut, authLoading } = useAuth();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -22,36 +18,27 @@ export default function Navbar() {
 
   useEffect(() => {
     setMenuOpen(false);
+    setProfileOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
     function handleClickOutside(event) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setProfileOpen(false);
       }
     }
 
-    document.addEventListener(
-      "mousedown",
-      handleClickOutside
-    );
+    document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutside
-      );
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
   async function handleLogout() {
     await signOut();
-
     setProfileOpen(false);
-
+    setMenuOpen(false);
     navigate("/");
   }
 
@@ -63,10 +50,6 @@ export default function Navbar() {
     {
       name: "Marketplace",
       path: "/marketplace",
-    },
-    {
-      name: "Seller",
-      path: "/seller-dashboard",
     },
   ];
 
@@ -88,20 +71,14 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 bg-black/80 backdrop-blur-2xl border-b border-[#1d1d1d]">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="h-16 sm:h-[72px] flex items-center justify-between">
-          {/* Logo */}
-          <Link
-            to="/"
-            className="flex items-center gap-2 group"
-          >
+          <Link to="/" className="flex items-center gap-2 group">
             <div className="w-9 h-9 rounded-2xl bg-yellow-500 flex items-center justify-center shadow-lg shadow-yellow-500/20">
-              <span className="text-black font-black text-sm">
-                A
-              </span>
+              <span className="text-black font-black text-sm">A</span>
             </div>
 
             <div className="leading-none">
               <p className="text-white font-bold text-lg tracking-tight group-hover:text-yellow-400 transition-all">
-                AptBites
+                Quickbites
               </p>
 
               <p className="text-[10px] text-gray-500 mt-1 tracking-wide uppercase">
@@ -110,11 +87,9 @@ export default function Navbar() {
             </div>
           </Link>
 
-          {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-7">
             {navLinks.map((link) => {
-              const isActive =
-                location.pathname === link.path;
+              const isActive = location.pathname === link.path;
 
               return (
                 <Link
@@ -132,9 +107,7 @@ export default function Navbar() {
             })}
           </div>
 
-          {/* Right Side */}
           <div className="flex items-center gap-2">
-            {/* Not Logged In */}
             {!user && (
               <Link
                 to="/customer-login"
@@ -144,32 +117,24 @@ export default function Navbar() {
               </Link>
             )}
 
-            {/* Logged In */}
             {user && (
-              <div
-                className="relative hidden md:block"
-                ref={dropdownRef}
-              >
+              <div className="relative hidden md:block" ref={dropdownRef}>
                 <button
                   type="button"
-                  onClick={() =>
-                    setProfileOpen(!profileOpen)
-                  }
+                  onClick={() => setProfileOpen(!profileOpen)}
                   className="w-11 h-11 rounded-2xl bg-yellow-500 hover:bg-yellow-400 text-black font-black flex items-center justify-center transition-all duration-200"
                 >
                   {getInitial()}
                 </button>
 
                 {profileOpen && (
-                  <div className="absolute right-0 mt-3 w-64 bg-[#111111] border border-[#222] rounded-3xl overflow-hidden shadow-2xl shadow-black/50">
+                  <div className="absolute right-0 mt-3 w-72 bg-[#111111] border border-[#222] rounded-3xl overflow-hidden shadow-2xl shadow-black/50">
                     <div className="p-5 border-b border-[#222]">
                       <p className="text-white font-semibold truncate">
                         {user.email}
                       </p>
 
-                      <p className="text-gray-500 text-sm mt-1">
-                        Logged in
-                      </p>
+                      <p className="text-gray-500 text-sm mt-1">Logged in</p>
                     </div>
 
                     <div className="p-2">
@@ -181,17 +146,24 @@ export default function Navbar() {
                       </Link>
 
                       <Link
+                        to="/orders"
+                        className="block px-4 py-3 rounded-2xl text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400 transition-all"
+                      >
+                        Active Orders
+                      </Link>
+
+                      <Link
+                        to="/order-history"
+                        className="block px-4 py-3 rounded-2xl text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400 transition-all"
+                      >
+                        Order History
+                      </Link>
+
+                      <Link
                         to="/seller-dashboard"
                         className="block px-4 py-3 rounded-2xl text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400 transition-all"
                       >
                         Seller Dashboard
-                      </Link>
-
-                      <Link
-                        to="/orders"
-                        className="block px-4 py-3 rounded-2xl text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400 transition-all"
-                      >
-                        Order History
                       </Link>
 
                       <button
@@ -207,7 +179,6 @@ export default function Navbar() {
               </div>
             )}
 
-            {/* Cart */}
             <Link
               to="/cart"
               className="relative bg-[#151515] hover:bg-[#1d1d1d] border border-[#2a2a2a] hover:border-yellow-500/40 active:scale-95 text-white px-3 sm:px-4 py-2 rounded-2xl transition-all duration-200 flex items-center gap-2"
@@ -227,7 +198,6 @@ export default function Navbar() {
               )}
             </Link>
 
-            {/* Mobile Menu */}
             <button
               type="button"
               onClick={() => setMenuOpen(!menuOpen)}
@@ -238,14 +208,12 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Dropdown */}
         {menuOpen && (
           <div className="md:hidden pb-4">
             <div className="bg-[#111111] border border-[#222] rounded-3xl p-3 shadow-2xl shadow-black/40">
               <div className="grid gap-1">
                 {navLinks.map((link) => {
-                  const isActive =
-                    location.pathname === link.path;
+                  const isActive = location.pathname === link.path;
 
                   return (
                     <Link
@@ -278,16 +246,28 @@ export default function Navbar() {
                         {user.email}
                       </p>
 
-                      <p className="text-gray-500 text-sm mt-1">
-                        Logged in
-                      </p>
+                      <p className="text-gray-500 text-sm mt-1">Logged in</p>
                     </div>
 
                     <Link
                       to="/orders"
                       className="px-4 py-3 rounded-2xl text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400"
                     >
+                      Active Orders
+                    </Link>
+
+                    <Link
+                      to="/order-history"
+                      className="px-4 py-3 rounded-2xl text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400"
+                    >
                       Order History
+                    </Link>
+
+                    <Link
+                      to="/seller-dashboard"
+                      className="px-4 py-3 rounded-2xl text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400"
+                    >
+                      Seller Dashboard
                     </Link>
 
                     <button

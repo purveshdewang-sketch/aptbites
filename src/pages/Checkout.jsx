@@ -1,13 +1,19 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabaseClient";
 
+const PLATFORM_FEE = 10;
+
 export default function Checkout() {
   const { cartItems, cartTotal, clearCart } = useCart();
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const subtotalAmount = Number(cartTotal || 0);
+  const totalAmount = subtotalAmount + PLATFORM_FEE;
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -29,7 +35,30 @@ export default function Checkout() {
     }));
   }
 
+  function getSellerIdFromCart() {
+    if (!cartItems || cartItems.length === 0) return null;
+
+    const sellerIds = cartItems
+      .map((item) => item.user_id || item.seller_id)
+      .filter(Boolean);
+
+    const uniqueSellerIds = [...new Set(sellerIds)];
+
+    if (uniqueSellerIds.length === 0) return null;
+
+    if (uniqueSellerIds.length > 1) {
+      return "MIXED_SELLERS";
+    }
+
+    return uniqueSellerIds[0];
+  }
+
   async function handlePlaceOrder() {
+    if (!user) {
+      alert("Please login before placing your order.");
+      return;
+    }
+
     if (!formData.fullName || !formData.phone || !formData.flat) {
       alert("Please fill name, phone number, and flat details.");
       return;
@@ -40,23 +69,40 @@ export default function Checkout() {
       return;
     }
 
+    const sellerId = getSellerIdFromCart();
+
+    if (sellerId === "MIXED_SELLERS") {
+      alert(
+        "Please order from one seller at a time. Remove dishes from other sellers and try again."
+      );
+      return;
+    }
+
+    if (!sellerId) {
+      alert(
+        "Seller details are missing from cart items. Please remove the items and add them again from marketplace."
+      );
+      return;
+    }
+
     setLoading(true);
 
     const orderPayload = {
-      user_id: user?.id || null,
+      user_id: user.id,
+      seller_id: sellerId,
       customer_name: formData.fullName,
       phone: formData.phone,
       flat: formData.flat,
       delivery_type: formData.deliveryType,
       notes: formData.notes,
-      total_amount: cartTotal,
-      status: "Pending",
+      subtotal_amount: subtotalAmount,
+      platform_fee: PLATFORM_FEE,
+      total_amount: totalAmount,
+      status: "placed",
       items: cartItems,
     };
 
-    const { error } = await supabase
-      .from("orders")
-      .insert([orderPayload]);
+    const { error } = await supabase.from("orders").insert([orderPayload]);
 
     setLoading(false);
 
@@ -65,8 +111,12 @@ export default function Checkout() {
       return;
     }
 
-    setOrderPlaced(true);
     clearCart();
+    setOrderPlaced(true);
+
+    setTimeout(() => {
+      navigate("/orders");
+    }, 1000);
   }
 
   if (orderPlaced) {
@@ -81,23 +131,22 @@ export default function Checkout() {
             </div>
 
             <p className="text-yellow-400 font-semibold uppercase tracking-wide mt-6">
-              Order Confirmed
+              Order Placed
             </p>
 
             <h1 className="text-3xl sm:text-5xl font-black mt-4 leading-tight">
-              Your order has been placed.
+              Taking you to order tracking.
             </h1>
 
             <p className="text-gray-400 mt-5 leading-relaxed">
-              The seller will prepare your homemade food and contact you if
-              needed.
+              Your order has been sent to the seller.
             </p>
 
             <Link
-              to="/marketplace"
+              to="/orders"
               className="block mt-8 bg-yellow-500 hover:bg-yellow-400 active:scale-95 text-black font-black py-4 rounded-2xl transition-all duration-200"
             >
-              Back to Marketplace
+              Track My Order
             </Link>
           </div>
         </main>
@@ -219,9 +268,7 @@ export default function Checkout() {
 
             {cartItems.length === 0 ? (
               <div className="mt-8 bg-black/40 border border-[#222] rounded-3xl p-6 text-center">
-                <p className="text-gray-500">
-                  Your cart is empty.
-                </p>
+                <p className="text-gray-500">Your cart is empty.</p>
               </div>
             ) : (
               <div className="mt-7 space-y-4">
@@ -233,15 +280,13 @@ export default function Checkout() {
                     <img
                       src={item.image}
                       alt={item.name}
-                      className="w-16 h-16 rounded-2xl object-cover"
+                      className="w-16 h-16 rounded-2xl object-cover bg-[#111]"
                     />
 
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="font-bold truncate">
-                            {item.name}
-                          </p>
+                          <p className="font-bold truncate">{item.name}</p>
 
                           <p className="text-gray-500 text-sm mt-1">
                             Qty {item.quantity}
@@ -249,7 +294,7 @@ export default function Checkout() {
                         </div>
 
                         <p className="font-black text-yellow-400 shrink-0">
-                          ₹{item.price * item.quantity}
+                          ₹{Number(item.price || 0) * Number(item.quantity || 1)}
                         </p>
                       </div>
                     </div>
@@ -258,29 +303,41 @@ export default function Checkout() {
               </div>
             )}
 
-            <div className="mt-8 border-t border-[#222] pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-sm">
-                    Total Amount
-                  </p>
+            <div className="mt-8 border-t border-[#222] pt-6 space-y-4">
+              <div className="flex items-center justify-between text-sm">
+                <p className="text-gray-400">Subtotal</p>
+                <p className="font-bold text-white">₹{subtotalAmount}</p>
+              </div>
 
+              <div className="flex items-center justify-between text-sm">
+                <div>
+                  <p className="text-gray-400">Platform Fee</p>
+                  <p className="text-gray-600 text-xs mt-1">
+                    Quickbites service charge
+                  </p>
+                </div>
+                <p className="font-bold text-yellow-400">₹{PLATFORM_FEE}</p>
+              </div>
+
+              <div className="border-t border-[#222] pt-5 flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-sm">Total Amount</p>
                   <p className="text-gray-500 text-xs mt-1">
-                    Inclusive of platform charges
+                    Includes ₹{PLATFORM_FEE} platform fee
                   </p>
                 </div>
 
                 <p className="text-3xl sm:text-4xl font-black text-yellow-400">
-                  ₹{cartTotal}
+                  ₹{totalAmount}
                 </p>
               </div>
 
               <button
                 onClick={handlePlaceOrder}
                 disabled={loading}
-                className="w-full mt-7 bg-yellow-500 hover:bg-yellow-400 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-black font-black py-4 rounded-2xl text-lg transition-all duration-200 shadow-lg shadow-yellow-500/20"
+                className="w-full mt-3 bg-yellow-500 hover:bg-yellow-400 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-black font-black py-4 rounded-2xl text-lg transition-all duration-200 shadow-lg shadow-yellow-500/20"
               >
-                {loading ? "Placing Order..." : "Place Order"}
+                {loading ? "Placing Order..." : `Place Order • ₹${totalAmount}`}
               </button>
 
               <Link

@@ -5,13 +5,39 @@ const CartContext = createContext(null);
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([]);
 
-  // Add item to cart
+  // ADD ITEM TO CART
   function addToCart(item) {
     setCartItems((currentItems) => {
+      // Ensure seller identity exists
+      const incomingSellerId = item.user_id || item.seller_id;
+
+      if (!incomingSellerId) {
+        alert(
+          "Seller information missing for this dish. Please refresh and try again."
+        );
+
+        return currentItems;
+      }
+
+      // Prevent mixed seller checkout
+      if (currentItems.length > 0) {
+        const existingSellerId =
+          currentItems[0].user_id || currentItems[0].seller_id;
+
+        if (existingSellerId !== incomingSellerId) {
+          alert(
+            "You can only order from one seller at a time."
+          );
+
+          return currentItems;
+        }
+      }
+
       const existingItem = currentItems.find(
         (cartItem) => cartItem.id === item.id
       );
 
+      // Increase quantity if already exists
       if (existingItem) {
         return currentItems.map((cartItem) =>
           cartItem.id === item.id
@@ -23,11 +49,19 @@ export function CartProvider({ children }) {
         );
       }
 
-      return [...currentItems, { ...item, quantity: 1 }];
+      // Add new item
+      return [
+        ...currentItems,
+        {
+          ...item,
+          seller_id: incomingSellerId,
+          quantity: 1,
+        },
+      ];
     });
   }
 
-  // Increase quantity
+  // INCREASE QUANTITY
   function increaseQuantity(itemId) {
     setCartItems((currentItems) =>
       currentItems.map((cartItem) =>
@@ -41,7 +75,7 @@ export function CartProvider({ children }) {
     );
   }
 
-  // Decrease quantity
+  // DECREASE QUANTITY
   function decreaseQuantity(itemId) {
     setCartItems((currentItems) =>
       currentItems
@@ -57,42 +91,50 @@ export function CartProvider({ children }) {
     );
   }
 
-  // Remove item fully
+  // REMOVE ITEM
   function removeFromCart(itemId) {
     setCartItems((currentItems) =>
       currentItems.filter((cartItem) => cartItem.id !== itemId)
     );
   }
 
-  // Clear cart
+  // CLEAR CART
   function clearCart() {
     setCartItems([]);
   }
 
-  // Total items count
+  // TOTAL ITEMS
   const cartCount = cartItems.reduce(
     (total, item) => total + item.quantity,
     0
   );
 
-  // Total amount
+  // TOTAL AMOUNT
   const cartTotal = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
+    (total, item) =>
+      total + Number(item.price || 0) * Number(item.quantity || 0),
     0
   );
+
+  // CURRENT SELLER
+  const currentSellerId =
+    cartItems.length > 0
+      ? cartItems[0].seller_id || cartItems[0].user_id
+      : null;
 
   const value = useMemo(
     () => ({
       cartItems,
       cartCount,
       cartTotal,
+      currentSellerId,
       addToCart,
       increaseQuantity,
       decreaseQuantity,
       removeFromCart,
       clearCart,
     }),
-    [cartItems, cartCount, cartTotal]
+    [cartItems, cartCount, cartTotal, currentSellerId]
   );
 
   return (

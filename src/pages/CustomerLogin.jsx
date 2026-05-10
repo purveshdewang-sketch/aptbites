@@ -97,12 +97,12 @@ export default function CustomerLogin() {
         </div>
 
         <h1 className="text-3xl font-black text-center">
-          {isSignUp ? "Create Your AptBites Account" : "Welcome Back"}
+          {isSignUp ? "Create Your Quickbites Account" : "Welcome Back"}
         </h1>
 
         <p className="text-gray-400 mt-3 text-center leading-relaxed">
           {isSignUp
-            ? "Verify your apartment details so AptBites stays private to your community."
+            ? "Verify your apartment details so Quickbites stays private to your community."
             : "Sign in to continue ordering homemade food from your apartment."}
         </p>
 

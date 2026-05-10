@@ -4,14 +4,7 @@ import Navbar from "../components/Navbar";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../context/AuthContext";
 
-const ORDER_STEPS = [
-  { key: "placed", label: "Placed", icon: "🧾" },
-  { key: "confirmed", label: "Confirmed", icon: "✅" },
-  { key: "baking", label: "Baking", icon: "🔥" },
-  { key: "packing", label: "Packing", icon: "📦" },
-];
-
-export default function Orders() {
+export default function OrderHistory() {
   const { user } = useAuth();
 
   const [orders, setOrders] = useState([]);
@@ -24,10 +17,10 @@ export default function Orders() {
       return;
     }
 
-    fetchOrders();
+    fetchCompletedOrders();
 
     const channel = supabase
-      .channel(`customer-active-orders-${user.id}`)
+      .channel(`customer-completed-orders-${user.id}`)
       .on(
         "postgres_changes",
         {
@@ -37,7 +30,7 @@ export default function Orders() {
           filter: `user_id=eq.${user.id}`,
         },
         () => {
-          fetchOrders();
+          fetchCompletedOrders();
         }
       )
       .subscribe();
@@ -47,7 +40,7 @@ export default function Orders() {
     };
   }, [user]);
 
-  async function fetchOrders() {
+  async function fetchCompletedOrders() {
     if (!user) return;
 
     setLoading(true);
@@ -57,7 +50,7 @@ export default function Orders() {
       .from("orders")
       .select("*")
       .eq("user_id", user.id)
-      .neq("status", "completed")
+      .eq("status", "completed")
       .order("id", { ascending: false });
 
     if (error) {
@@ -70,86 +63,6 @@ export default function Orders() {
     setLoading(false);
   }
 
-  function normalizeStatus(status) {
-    return String(status || "placed").toLowerCase();
-  }
-
-  function getStatusStyle(status) {
-    const currentStatus = normalizeStatus(status);
-
-    if (currentStatus === "packing") {
-      return "bg-blue-900/40 text-blue-300 border-blue-500/20";
-    }
-
-    if (currentStatus === "baking") {
-      return "bg-orange-900/40 text-orange-300 border-orange-500/20";
-    }
-
-    return "bg-yellow-900/30 text-yellow-300 border-yellow-500/20";
-  }
-
-  function getStatusLabel(status) {
-    const currentStatus = normalizeStatus(status);
-
-    if (currentStatus === "placed") return "Order Placed";
-    if (currentStatus === "confirmed") return "Order Confirmed";
-    if (currentStatus === "baking") return "Baking";
-    if (currentStatus === "packing") return "Packing";
-
-    return status || "Placed";
-  }
-
-  function getStepIndex(status) {
-    const currentStatus = normalizeStatus(status);
-    const index = ORDER_STEPS.findIndex((step) => step.key === currentStatus);
-    return index === -1 ? 0 : index;
-  }
-
-  function OrderStatusBar({ status }) {
-    const activeIndex = getStepIndex(status);
-
-    return (
-      <div className="mt-5">
-        <div className="grid grid-cols-4 gap-2">
-          {ORDER_STEPS.map((step, index) => {
-            const isActive = index <= activeIndex;
-
-            return (
-              <div key={step.key} className="text-center">
-                <div
-                  className={`mx-auto w-10 h-10 rounded-full flex items-center justify-center text-lg border transition-all ${
-                    isActive
-                      ? "bg-yellow-500 text-black border-yellow-400"
-                      : "bg-black text-gray-500 border-[#333]"
-                  }`}
-                >
-                  {step.icon}
-                </div>
-
-                <p
-                  className={`mt-2 text-[10px] sm:text-xs font-bold ${
-                    isActive ? "text-yellow-400" : "text-gray-600"
-                  }`}
-                >
-                  {step.label}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="mt-4 h-2 bg-black border border-[#222] rounded-full overflow-hidden">
-          <div
-            className="h-full bg-yellow-500 transition-all duration-500"
-            style={{
-              width: `${((activeIndex + 1) / ORDER_STEPS.length) * 100}%`,
-            }}
-          />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
       <Navbar />
@@ -158,21 +71,21 @@ export default function Orders() {
         <div className="max-w-5xl mx-auto">
           <div>
             <p className="text-yellow-400 font-semibold tracking-wide uppercase text-sm">
-              Active Orders
+              Order History
             </p>
 
             <h1 className="text-4xl sm:text-5xl font-black mt-3 tracking-tight">
-              Live Order Tracking
+              Completed Orders
             </h1>
 
             <p className="text-gray-400 mt-4 max-w-2xl leading-relaxed">
-              Track your current homemade food orders in real time.
+              View your past completed Quickbites orders.
             </p>
           </div>
 
           {!user && (
             <div className="mt-10 bg-[#111111] border border-[#222] rounded-[2rem] p-8 text-center">
-              <h2 className="text-2xl font-bold">Sign in to view orders</h2>
+              <h2 className="text-2xl font-bold">Sign in to view history</h2>
 
               <Link
                 to="/customer-login"
@@ -192,7 +105,6 @@ export default function Orders() {
                 >
                   <div className="h-5 bg-[#1a1a1a] rounded-full w-1/3" />
                   <div className="h-4 bg-[#1a1a1a] rounded-full w-2/3 mt-4" />
-                  <div className="h-14 bg-[#1a1a1a] rounded-2xl mt-5" />
                 </div>
               ))}
             </div>
@@ -200,7 +112,7 @@ export default function Orders() {
 
           {user && errorMessage && (
             <div className="mt-10 bg-red-950/40 border border-red-500/50 text-red-300 rounded-3xl p-5">
-              <p className="font-bold">Failed to load orders</p>
+              <p className="font-bold">Failed to load order history</p>
               <p className="text-sm mt-1">{errorMessage}</p>
             </div>
           )}
@@ -208,22 +120,23 @@ export default function Orders() {
           {user && !loading && !errorMessage && orders.length === 0 && (
             <div className="mt-10 bg-[#111111] border border-[#222] rounded-[2rem] p-8 sm:p-10 text-center">
               <div className="w-20 h-20 mx-auto rounded-full bg-yellow-500/10 flex items-center justify-center text-4xl">
-                🍲
+                📜
               </div>
 
               <h2 className="text-2xl sm:text-3xl font-bold mt-6">
-                No active orders
+                No completed orders yet
               </h2>
 
               <p className="text-gray-500 mt-3 max-w-md mx-auto">
-                Your currently running orders will appear here.
+                Completed orders will appear here after the seller marks them as
+                completed.
               </p>
 
               <Link
-                to="/marketplace"
+                to="/orders"
                 className="inline-block mt-7 bg-yellow-500 hover:bg-yellow-400 active:scale-95 text-black font-bold px-6 py-3 rounded-2xl transition-all duration-200"
               >
-                Explore Marketplace
+                View Active Orders
               </Link>
             </div>
           )}
@@ -250,16 +163,10 @@ export default function Orders() {
                       </p>
                     </div>
 
-                    <span
-                      className={`w-fit border text-xs font-bold px-3 py-1.5 rounded-full ${getStatusStyle(
-                        order.status
-                      )}`}
-                    >
-                      {getStatusLabel(order.status)}
+                    <span className="w-fit border text-xs font-bold px-3 py-1.5 rounded-full bg-green-900/40 text-green-300 border-green-500/20">
+                      Completed
                     </span>
                   </div>
-
-                  <OrderStatusBar status={order.status} />
 
                   <div className="mt-5 bg-black/40 border border-[#222] rounded-3xl p-4 space-y-3">
                     {(order.items || []).map((item) => (
@@ -281,6 +188,29 @@ export default function Orders() {
                       </div>
                     ))}
                   </div>
+
+                  <div className="mt-4 bg-black/30 border border-[#222] rounded-2xl p-4 space-y-2 text-sm">
+                    <div className="flex justify-between text-gray-400">
+                      <span>Subtotal</span>
+                      <span>₹{order.subtotal_amount || 0}</span>
+                    </div>
+
+                    <div className="flex justify-between text-gray-400">
+                      <span>Platform Fee</span>
+                      <span>₹{order.platform_fee || 10}</span>
+                    </div>
+
+                    <div className="flex justify-between text-yellow-400 font-black border-t border-[#222] pt-2">
+                      <span>Total</span>
+                      <span>₹{order.total_amount || 0}</span>
+                    </div>
+                  </div>
+
+                  {order.notes && (
+                    <p className="text-gray-500 text-sm mt-4">
+                      Note: {order.notes}
+                    </p>
+                  )}
                 </article>
               ))}
             </div>

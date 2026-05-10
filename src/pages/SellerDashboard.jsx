@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../context/AuthContext";
 
 export default function SellerDashboard() {
   const { user } = useAuth();
+
+  const audioRef = useRef(null);
+  const previousOrderIdsRef = useRef([]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -17,15 +20,22 @@ export default function SellerDashboard() {
   });
 
   const [sellerFoods, setSellerFoods] = useState([]);
+  const [sellerOrders, setSellerOrders] = useState([]);
   const [editingFood, setEditingFood] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
   const [loading, setLoading] = useState(false);
   const [foodsLoading, setFoodsLoading] = useState(true);
+  const [ordersLoading, setOrdersLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [audioReady, setAudioReady] = useState(false);
 
   useEffect(() => {
-    const savedSellerName = localStorage.getItem("aptbites_seller_name");
+    if (!user) return;
+
+    const savedSellerName = localStorage.getItem(
+      `Quickbites_seller_name_${user.id}`
+    );
 
     if (savedSellerName) {
       setFormData((currentData) => ({
@@ -34,10 +44,68 @@ export default function SellerDashboard() {
       }));
     }
 
-    if (user) {
-      fetchSellerFoods();
-    }
+    fetchSellerFoods();
+    fetchSellerOrders();
+
+    const channel = supabase
+      .channel(`seller-orders-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+          filter: `seller_id=eq.${user.id}`,
+        },
+        () => {
+          fetchSellerOrders(true);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
+
+  function getSellerStorageKey() {
+    return user ? `Quickbites_seller_name_${user.id}` : "Quickbites_seller_name";
+  }
+
+  function toggleNotificationSound() {
+    const audio = audioRef.current;
+
+    if (!audio) return;
+
+    if (audioReady) {
+      audio.pause();
+      audio.currentTime = 0;
+      setAudioReady(false);
+      setMessage("Order notification sound disabled.");
+      return;
+    }
+
+    audio
+      .play()
+      .then(() => {
+        audio.pause();
+        audio.currentTime = 0;
+        setAudioReady(true);
+        setMessage("Order notification sound enabled.");
+      })
+      .catch(() => {
+        setMessage("Tap again to enable notification sound.");
+      });
+  }
+
+  function playTingSound() {
+    const audio = audioRef.current;
+
+    if (!audio || !audioReady) return;
+
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  }
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -48,7 +116,7 @@ export default function SellerDashboard() {
     }));
 
     if (name === "seller") {
-      localStorage.setItem("aptbites_seller_name", value);
+      localStorage.setItem(getSellerStorageKey(), value);
     }
   }
 
@@ -91,6 +159,41 @@ export default function SellerDashboard() {
     setFoodsLoading(false);
   }
 
+  async function fetchSellerOrders(shouldCheckNewOrder = false) {
+    if (!user) return;
+
+    setOrdersLoading(true);
+
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("seller_id", user.id)
+      .order("id", { ascending: false });
+
+    if (!error) {
+      const nextOrders = data || [];
+
+      if (shouldCheckNewOrder) {
+        const previousIds = previousOrderIdsRef.current;
+        const newActiveOrderFound = nextOrders.some(
+          (order) =>
+            !previousIds.includes(order.id) &&
+            normalizeStatus(order.status) !== "completed"
+        );
+
+        if (newActiveOrderFound) {
+          playTingSound();
+          setMessage("New order received.");
+        }
+      }
+
+      previousOrderIdsRef.current = nextOrders.map((order) => order.id);
+      setSellerOrders(nextOrders);
+    }
+
+    setOrdersLoading(false);
+  }
+
   async function uploadDishImage() {
     if (!imageFile) {
       return (
@@ -124,7 +227,7 @@ export default function SellerDashboard() {
   }
 
   function resetForm() {
-    const savedSellerName = localStorage.getItem("aptbites_seller_name") || "";
+    const savedSellerName = localStorage.getItem(getSellerStorageKey()) || "";
 
     setFormData({
       name: "",
@@ -155,7 +258,7 @@ export default function SellerDashboard() {
     });
 
     if (food.seller) {
-      localStorage.setItem("aptbites_seller_name", food.seller);
+      localStorage.setItem(getSellerStorageKey(), food.seller);
     }
 
     setImagePreview(food.image || "");
@@ -185,7 +288,7 @@ export default function SellerDashboard() {
       return;
     }
 
-    localStorage.setItem("aptbites_seller_name", formData.seller);
+    localStorage.setItem(getSellerStorageKey(), formData.seller);
 
     setLoading(true);
     setMessage("");
@@ -216,9 +319,7 @@ export default function SellerDashboard() {
 
         setMessage("Dish updated successfully.");
       } else {
-        const { error } = await supabase
-          .from("foods")
-          .insert([payload]);
+        const { error } = await supabase.from("foods").insert([payload]);
 
         if (error) throw error;
 
@@ -254,21 +355,95 @@ export default function SellerDashboard() {
     fetchSellerFoods();
   }
 
-  async function markSoldOut(foodId) {
+  async function toggleStock(food) {
+    const newStockValue = Number(food.stock) === 0 ? 10 : 0;
+
     const { error } = await supabase
       .from("foods")
-      .update({ stock: 0 })
-      .eq("id", foodId)
+      .update({ stock: newStockValue })
+      .eq("id", food.id)
       .eq("user_id", user.id);
 
     if (error) {
-      setMessage(`Could not mark sold out: ${error.message}`);
+      setMessage(`Could not update stock: ${error.message}`);
       return;
     }
 
-    setMessage("Dish marked as sold out.");
+    setMessage(
+      Number(food.stock) === 0
+        ? "Dish is back in stock."
+        : "Dish marked as sold out."
+    );
+
     fetchSellerFoods();
   }
+
+  async function updateOrderStatus(orderId, nextStatus) {
+    const { error } = await supabase
+      .from("orders")
+      .update({ status: nextStatus })
+      .eq("id", orderId)
+      .eq("seller_id", user.id);
+
+    if (error) {
+      setMessage(`Could not update order: ${error.message}`);
+      return;
+    }
+
+    setMessage(
+      nextStatus === "completed"
+        ? "Order completed and moved to Sold Orders."
+        : `Order marked as ${nextStatus}.`
+    );
+
+    fetchSellerOrders();
+  }
+
+  function normalizeStatus(status) {
+    return String(status || "placed").toLowerCase();
+  }
+
+  function getStatusLabel(status) {
+    const currentStatus = normalizeStatus(status);
+
+    if (currentStatus === "placed") return "New Order";
+    if (currentStatus === "confirmed") return "Confirmed";
+    if (currentStatus === "baking") return "Baking";
+    if (currentStatus === "packing") return "Packing";
+    if (currentStatus === "completed") return "Completed";
+
+    return status || "New Order";
+  }
+
+  function getStatusBadgeClass(status) {
+    const currentStatus = normalizeStatus(status);
+
+    if (currentStatus === "completed") {
+      return "bg-green-900/40 text-green-300 border-green-500/20";
+    }
+
+    if (currentStatus === "baking") {
+      return "bg-orange-900/40 text-orange-300 border-orange-500/20";
+    }
+
+    if (currentStatus === "packing") {
+      return "bg-blue-900/40 text-blue-300 border-blue-500/20";
+    }
+
+    return "bg-yellow-900/30 text-yellow-300 border-yellow-500/20";
+  }
+
+  const activeSellerOrders = sellerOrders.filter(
+    (order) => normalizeStatus(order.status) !== "completed"
+  );
+
+  const soldOrders = sellerOrders.filter(
+    (order) => normalizeStatus(order.status) === "completed"
+  );
+
+  const totalOrdersCount = sellerOrders.length;
+  const activeOrdersCount = activeSellerOrders.length;
+  const soldOrdersCount = soldOrders.length;
 
   if (!user) {
     return (
@@ -286,6 +461,13 @@ export default function SellerDashboard() {
           >
             Sign In
           </Link>
+
+          <Link
+            to="/"
+            className="block mt-3 border border-[#333] hover:border-yellow-500/50 text-gray-300 hover:text-yellow-400 font-bold py-3 rounded-2xl transition-all"
+          >
+            Back to Home
+          </Link>
         </div>
       </main>
     );
@@ -293,8 +475,14 @@ export default function SellerDashboard() {
 
   return (
     <main className="min-h-screen bg-black text-white px-4 sm:px-6 py-8 sm:py-10">
+      <audio
+        ref={audioRef}
+        preload="auto"
+        src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
+      />
+
       <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
           <div>
             <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
               Seller Dashboard
@@ -305,33 +493,217 @@ export default function SellerDashboard() {
             </h1>
           </div>
 
-          <Link
-            to="/marketplace"
-            className="bg-yellow-500 hover:bg-yellow-400 active:scale-95 text-black font-bold px-5 py-3 rounded-2xl text-center transition-all"
-          >
-            View Marketplace
-          </Link>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Link
+              to="/"
+              className="border border-[#333] hover:border-yellow-500/50 text-gray-300 hover:text-yellow-400 active:scale-95 font-bold px-5 py-3 rounded-2xl text-center transition-all"
+            >
+              ← Back to Home
+            </Link>
+
+            <button
+              type="button"
+              onClick={toggleNotificationSound}
+              className={`${
+                audioReady
+                  ? "bg-green-500 text-black"
+                  : "bg-[#111] text-yellow-400 border border-yellow-500/40"
+              } active:scale-95 font-bold px-5 py-3 rounded-2xl text-center transition-all`}
+            >
+              {audioReady ? "🔕 Turn Sound Off" : "🔔 Turn Sound On"}
+            </button>
+
+            <Link
+              to="/marketplace"
+              className="bg-yellow-500 hover:bg-yellow-400 active:scale-95 text-black font-bold px-5 py-3 rounded-2xl text-center transition-all"
+            >
+              View Marketplace
+            </Link>
+          </div>
         </div>
 
-        <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 mt-8">
+        {message && (
+          <div className="mt-5 bg-[#111] border border-[#333] rounded-2xl p-4 text-sm text-gray-300">
+            {message}
+          </div>
+        )}
+
+        <section className="grid grid-cols-1 sm:grid-cols-4 gap-4 sm:gap-5 mt-8">
           <div className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-5">
-            <p className="text-gray-400">Today’s Orders</p>
-            <h2 className="text-4xl font-black text-yellow-400 mt-3">0</h2>
+            <p className="text-gray-400">Total Orders</p>
+            <h2 className="text-4xl font-black text-yellow-400 mt-3">
+              {totalOrdersCount}
+            </h2>
           </div>
 
           <div className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-5">
-            <p className="text-gray-400">Your Active Dishes</p>
+            <p className="text-gray-400">Active Orders</p>
+            <h2 className="text-4xl font-black text-yellow-400 mt-3">
+              {activeOrdersCount}
+            </h2>
+          </div>
+
+          <div className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-5">
+            <p className="text-gray-400">Sold Orders</p>
+            <h2 className="text-4xl font-black text-yellow-400 mt-3">
+              {soldOrdersCount}
+            </h2>
+          </div>
+
+          <div className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-5">
+            <p className="text-gray-400">Active Dishes</p>
             <h2 className="text-4xl font-black text-yellow-400 mt-3">
               {sellerFoods.filter((food) => Number(food.stock) > 0).length}
             </h2>
           </div>
+        </section>
 
-          <div className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-5">
-            <p className="text-gray-400">Sold Out</p>
-            <h2 className="text-4xl font-black text-yellow-400 mt-3">
-              {sellerFoods.filter((food) => Number(food.stock) === 0).length}
-            </h2>
+        <section className="mt-8 bg-[#111] border border-[#2a2a2a] rounded-3xl p-5 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
+                Incoming Orders
+              </p>
+
+              <h2 className="text-2xl sm:text-3xl font-bold mt-1">
+                Active Order Panel
+              </h2>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => fetchSellerOrders()}
+              className="bg-black border border-[#333] hover:border-yellow-500/50 text-gray-300 hover:text-yellow-400 font-bold px-4 py-3 rounded-2xl transition-all"
+            >
+              Refresh
+            </button>
           </div>
+
+          {ordersLoading ? (
+            <p className="text-gray-500 mt-6">Loading seller orders...</p>
+          ) : activeSellerOrders.length === 0 ? (
+            <div className="mt-6 bg-black/40 border border-[#222] rounded-3xl p-8 text-center">
+              <div className="text-5xl">🛎️</div>
+              <p className="text-gray-400 font-bold mt-4">
+                No active orders right now.
+              </p>
+              <p className="text-gray-600 text-sm mt-2">
+                New customer orders will appear here automatically.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-6 space-y-5">
+              {activeSellerOrders.map((order) => (
+                <article
+                  key={order.id}
+                  className="bg-black/40 border border-[#222] rounded-3xl p-4 sm:p-5"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div>
+                      <p className="text-gray-500 text-sm">Order #{order.id}</p>
+
+                      <h3 className="text-2xl font-black mt-1">
+                        ₹{order.total_amount}
+                      </h3>
+
+                      <p className="text-gray-400 text-sm mt-2">
+                        {order.customer_name} • {order.phone}
+                      </p>
+
+                      <p className="text-gray-500 text-sm mt-1">
+                        {order.delivery_type} • {order.flat}
+                      </p>
+                    </div>
+
+                    <span
+                      className={`w-fit border text-xs font-bold px-3 py-1.5 rounded-full ${getStatusBadgeClass(
+                        order.status
+                      )}`}
+                    >
+                      {getStatusLabel(order.status)}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 bg-[#111] border border-[#222] rounded-2xl p-4 space-y-3">
+                    {(order.items || []).map((item) => (
+                      <div
+                        key={`${order.id}-${item.id}`}
+                        className="flex items-center justify-between gap-4"
+                      >
+                        <div className="min-w-0">
+                          <p className="font-semibold truncate">{item.name}</p>
+                          <p className="text-gray-500 text-sm">
+                            Qty {item.quantity} × ₹{item.price}
+                          </p>
+                        </div>
+
+                        <p className="text-yellow-400 font-bold shrink-0">
+                          ₹{Number(item.price || 0) * Number(item.quantity || 0)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 bg-[#111] border border-[#222] rounded-2xl p-4 space-y-2 text-sm">
+                    <div className="flex justify-between text-gray-400">
+                      <span>Subtotal</span>
+                      <span>₹{order.subtotal_amount || 0}</span>
+                    </div>
+
+                    <div className="flex justify-between text-gray-400">
+                      <span>Platform Fee</span>
+                      <span>₹{order.platform_fee || 10}</span>
+                    </div>
+
+                    <div className="flex justify-between text-yellow-400 font-black border-t border-[#222] pt-2">
+                      <span>Total Paid</span>
+                      <span>₹{order.total_amount || 0}</span>
+                    </div>
+                  </div>
+
+                  {order.notes && (
+                    <p className="text-gray-500 text-sm mt-4">
+                      Note: {order.notes}
+                    </p>
+                  )}
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-5">
+                    <button
+                      type="button"
+                      onClick={() => updateOrderStatus(order.id, "confirmed")}
+                      className="bg-yellow-500 hover:bg-yellow-400 text-black font-black py-3 rounded-2xl active:scale-95"
+                    >
+                      Confirmed
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => updateOrderStatus(order.id, "baking")}
+                      className="border border-orange-500/50 text-orange-300 hover:bg-orange-500 hover:text-black font-black py-3 rounded-2xl active:scale-95"
+                    >
+                      Baking
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => updateOrderStatus(order.id, "packing")}
+                      className="border border-blue-500/50 text-blue-300 hover:bg-blue-500 hover:text-black font-black py-3 rounded-2xl active:scale-95"
+                    >
+                      Packing
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => updateOrderStatus(order.id, "completed")}
+                      className="border border-green-500/50 text-green-300 hover:bg-green-500 hover:text-black font-black py-3 rounded-2xl active:scale-95"
+                    >
+                      Completed
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </section>
 
         <form
@@ -353,12 +725,6 @@ export default function SellerDashboard() {
               </button>
             )}
           </div>
-
-          {message && (
-            <div className="mt-5 bg-black border border-[#333] rounded-2xl p-4 text-sm text-gray-300">
-              {message}
-            </div>
-          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
             <input
@@ -423,9 +789,7 @@ export default function SellerDashboard() {
               <label className="flex flex-col items-center justify-center border-2 border-dashed border-[#333] hover:border-yellow-500/50 bg-black rounded-3xl p-8 cursor-pointer transition-all">
                 <div className="text-5xl mb-3">📸</div>
 
-                <p className="text-white font-semibold">
-                  Tap to upload image
-                </p>
+                <p className="text-white font-semibold">Tap to upload image</p>
 
                 <p className="text-gray-500 text-sm mt-1">
                   JPG, PNG, WEBP · Max 5 MB
@@ -464,11 +828,7 @@ export default function SellerDashboard() {
             disabled={loading}
             className="mt-5 w-full sm:w-auto bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 text-black font-bold px-6 py-3 rounded-2xl"
           >
-            {loading
-              ? "Saving..."
-              : editingFood
-              ? "Update Dish"
-              : "Add Dish"}
+            {loading ? "Saving..." : editingFood ? "Update Dish" : "Add Dish"}
           </button>
         </form>
 
@@ -560,10 +920,10 @@ export default function SellerDashboard() {
 
                       <button
                         type="button"
-                        onClick={() => markSoldOut(food.id)}
+                        onClick={() => toggleStock(food)}
                         className="border border-yellow-500/50 text-yellow-400 hover:bg-yellow-500 hover:text-black font-bold py-2 rounded-xl"
                       >
-                        Sold
+                        {Number(food.stock) === 0 ? "In Stock" : "Sold Out"}
                       </button>
 
                       <button

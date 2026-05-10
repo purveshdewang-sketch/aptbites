@@ -9,7 +9,7 @@ export default function SellerLogin() {
         {/* Header */}
         <div className="text-center">
           <p className="text-yellow-400 font-semibold tracking-wide">
-            AptBites Seller Portal
+            Quickbites Seller Portal
           </p>
 
           <h1 className="text-4xl font-bold mt-3">
