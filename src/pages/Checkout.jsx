@@ -14,6 +14,7 @@ export default function Checkout() {
   const navigate = useNavigate();
 
   const subtotalAmount = Number(cartTotal || 0);
+  const totalAmount = subtotalAmount + PLATFORM_FEE;
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -25,14 +26,6 @@ export default function Checkout() {
 
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const deliveryFee =
-    formData.deliveryType === "Doorstep delivery"
-      ? DELIVERY_FEE
-      : 0;
-
-  const totalAmount =
-    subtotalAmount + PLATFORM_FEE + deliveryFee;
 
   useEffect(() => {
     async function loadProfile() {
@@ -103,16 +96,12 @@ export default function Checkout() {
     const sellerId = getSellerIdFromCart();
 
     if (sellerId === "MIXED_SELLERS") {
-      alert(
-        "Please order from one seller at a time."
-      );
+      alert("Please order from one seller at a time.");
       return;
     }
 
     if (!sellerId) {
-      alert(
-        "Seller details missing. Please add dishes again."
-      );
+      alert("Seller details missing. Please add dishes again.");
       return;
     }
 
@@ -128,25 +117,29 @@ export default function Checkout() {
       notes: formData.notes,
       subtotal_amount: subtotalAmount,
       platform_fee: PLATFORM_FEE,
-      delivery_fee: deliveryFee,
       total_amount: totalAmount,
       status: "confirmed",
       items: cartItems,
     };
 
-    const { error: stockError } = await supabase.rpc("decrement_food_stock", {
-  order_items: cartItems,
-});
+    const { error: stockError } = await supabase.rpc(
+      "decrement_food_stock",
+      {
+        order_items: cartItems,
+      }
+    );
 
-if (stockError) {
-  setLoading(false);
-  alert(`Could not place order: ${stockError.message}`);
-  return;
-}
+    if (stockError) {
+      setLoading(false);
+      alert(`Could not place order: ${stockError.message}`);
+      return;
+    }
 
-const { error } = await supabase
-  .from("orders")
-  .insert([orderPayload]);
+    const { error } = await supabase
+      .from("orders")
+      .insert([orderPayload]);
+
+    setLoading(false);
 
     if (error) {
       alert(`Failed to place order: ${error.message}`);
@@ -216,7 +209,6 @@ const { error } = await supabase
               Homemade food prepared inside your apartment community.
             </p>
 
-            {/* Inputs */}
             <div className="mt-8 space-y-4">
               <input
                 name="fullName"
@@ -241,55 +233,6 @@ const { error } = await supabase
                 className="w-full bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
                 placeholder="Tower B • Flat 1204"
               />
-
-              {/* Delivery Type */}
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFormData((current) => ({
-                      ...current,
-                      deliveryType: "Doorstep delivery",
-                    }))
-                  }
-                  className={`rounded-2xl p-4 border text-left transition-all ${
-                    formData.deliveryType === "Doorstep delivery"
-                      ? "border-yellow-500 bg-yellow-500/10"
-                      : "border-[#333] bg-black"
-                  }`}
-                >
-                  <p className="font-black text-lg">
-                    🚪 Doorstep
-                  </p>
-
-                  <p className="text-gray-500 text-sm mt-1">
-                    Delivered to your flat
-                  </p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFormData((current) => ({
-                      ...current,
-                      deliveryType: "Self pickup",
-                    }))
-                  }
-                  className={`rounded-2xl p-4 border text-left transition-all ${
-                    formData.deliveryType === "Self pickup"
-                      ? "border-yellow-500 bg-yellow-500/10"
-                      : "border-[#333] bg-black"
-                  }`}
-                >
-                  <p className="font-black text-lg">
-                    🏃 Pickup
-                  </p>
-
-                  <p className="text-gray-500 text-sm mt-1">
-                    Collect from seller
-                  </p>
-                </button>
-              </div>
 
               <textarea
                 name="notes"
@@ -355,10 +298,10 @@ const { error } = await supabase
               ))}
             </div>
 
-            {/* Pricing */}
             <div className="mt-8 border-t border-[#222] pt-6 space-y-4">
               <div className="flex items-center justify-between text-sm">
                 <p className="text-gray-400">Subtotal</p>
+
                 <p className="font-bold text-white">
                   ₹{subtotalAmount}
                 </p>
@@ -366,6 +309,7 @@ const { error } = await supabase
 
               <div className="flex items-center justify-between text-sm">
                 <p className="text-gray-400">Platform Fee</p>
+
                 <p className="font-bold text-yellow-400">
                   ₹{PLATFORM_FEE}
                 </p>
@@ -387,7 +331,6 @@ const { error } = await supabase
                 </p>
               </div>
 
-              {/* CTA */}
               <button
                 onClick={handlePlaceOrder}
                 disabled={loading}
