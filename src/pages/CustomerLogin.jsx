@@ -4,7 +4,9 @@ import { supabase } from "../lib/supabaseClient";
 
 export default function CustomerLogin() {
   const navigate = useNavigate();
+
   const [isSignUp, setIsSignUp] = useState(false);
+  const [selectedRole, setSelectedRole] = useState("customer");
 
   const [formData, setFormData] = useState({
     email: "",
@@ -34,6 +36,7 @@ export default function CustomerLogin() {
 
   async function handleAuth(event) {
     event.preventDefault();
+
     setLoading(true);
     setMessage("");
 
@@ -45,7 +48,10 @@ export default function CustomerLogin() {
           !formData.apartmentName.trim() ||
           !formData.flatNo.trim()
         ) {
-          setMessage("Please fill your name, phone, apartment name, and flat number.");
+          setMessage(
+            "Please fill your name, phone, apartment name, and flat number."
+          );
+
           setLoading(false);
           return;
         }
@@ -68,7 +74,7 @@ export default function CustomerLogin() {
               apartment_name: formData.apartmentName.trim(),
               block: formData.block.trim(),
               flat_no: formData.flatNo.trim(),
-              role: "customer",
+              role: selectedRole,
             },
           },
         });
@@ -90,19 +96,44 @@ export default function CustomerLogin() {
             apartment_name: formData.apartmentName.trim(),
             block: formData.block.trim(),
             flat_no: formData.flatNo.trim(),
-            role: "customer",
+            role: selectedRole,
+            is_seller: selectedRole === "seller",
           });
         }
 
-        navigate("/marketplace");
+        if (selectedRole === "seller") {
+          navigate("/seller-dashboard");
+        } else {
+          navigate("/marketplace");
+        }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: formData.email,
           password: formData.password,
         });
 
         if (error) {
           setMessage(error.message);
+          setLoading(false);
+          return;
+        }
+
+        const user = data?.user;
+
+        if (!user) {
+          setMessage("Login failed.");
+          setLoading(false);
+          return;
+        }
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+
+        if (profile?.role === "seller") {
+          navigate("/seller-dashboard");
         } else {
           navigate("/marketplace");
         }
@@ -119,20 +150,51 @@ export default function CustomerLogin() {
       <div className="absolute top-0 right-0 w-72 h-72 bg-yellow-500/10 blur-[100px] rounded-full" />
 
       <div className="relative w-full max-w-lg bg-[#111111] border border-[#2a2a2a] rounded-[2rem] p-6 sm:p-8 shadow-2xl shadow-black/50">
+
+        {/* Logo */}
         <div className="flex items-center justify-center mb-6">
           <div className="w-14 h-14 rounded-3xl bg-yellow-500 flex items-center justify-center shadow-lg shadow-yellow-500/20">
             <span className="text-black text-2xl font-black">Q</span>
           </div>
         </div>
 
+        {/* Role Selector */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <button
+            type="button"
+            onClick={() => setSelectedRole("customer")}
+            className={`py-3 rounded-2xl font-bold transition-all ${
+              selectedRole === "customer"
+                ? "bg-yellow-500 text-black"
+                : "bg-black border border-[#333] text-gray-400"
+            }`}
+          >
+            Customer
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSelectedRole("seller")}
+            className={`py-3 rounded-2xl font-bold transition-all ${
+              selectedRole === "seller"
+                ? "bg-yellow-500 text-black"
+                : "bg-black border border-[#333] text-gray-400"
+            }`}
+          >
+            Seller
+          </button>
+        </div>
+
         <h1 className="text-3xl font-black text-center">
-          {isSignUp ? "Create Your QuickBites Account" : "Welcome Back"}
+          {isSignUp
+            ? `Create ${selectedRole === "seller" ? "Seller" : "Customer"} Account`
+            : `Welcome Back`}
         </h1>
 
         <p className="text-gray-400 mt-3 text-center leading-relaxed">
-          {isSignUp
-            ? "Enter your phone, email, name, and apartment address before ordering."
-            : "Sign in to continue ordering homemade food from your apartment."}
+          {selectedRole === "seller"
+            ? "Manage dishes, stock, and realtime apartment food orders."
+            : "Order homemade food from your apartment community."}
         </p>
 
         {message && (
@@ -142,6 +204,7 @@ export default function CustomerLogin() {
         )}
 
         <form onSubmit={handleAuth} className="mt-7 space-y-4">
+
           {isSignUp && (
             <div className="grid sm:grid-cols-2 gap-4">
               <input
@@ -227,7 +290,11 @@ export default function CustomerLogin() {
             disabled={loading}
             className="w-full mt-2 bg-yellow-500 hover:bg-yellow-400 active:scale-[0.99] disabled:opacity-50 text-black font-black py-4 rounded-2xl"
           >
-            {loading ? "Please wait..." : isSignUp ? "Create Account" : "Sign In"}
+            {loading
+              ? "Please wait..."
+              : isSignUp
+              ? "Create Account"
+              : "Sign In"}
           </button>
         </form>
 
@@ -244,9 +311,13 @@ export default function CustomerLogin() {
             : "New here? Create an account"}
         </button>
 
-        <Link to="/marketplace" className="block text-gray-500 text-sm mt-6 text-center">
+        <Link
+          to="/"
+          className="block text-gray-500 text-sm mt-6 text-center"
+        >
           Continue to QuickBites
         </Link>
+
       </div>
     </main>
   );
