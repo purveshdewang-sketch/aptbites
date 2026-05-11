@@ -30,16 +30,9 @@ export default function Navbar() {
         return;
       }
 
-      const metadataRole = String(
-        user?.user_metadata?.role || ""
-      ).toLowerCase();
+      const metadataRole = String(user?.user_metadata?.role || "").toLowerCase();
 
-      const localSellerAccess =
-        localStorage.getItem(
-          `quickbites_seller_access_${user.id}`
-        ) === "yes";
-
-      if (metadataRole === "seller" || localSellerAccess) {
+      if (metadataRole === "seller") {
         setIsSeller(true);
         return;
       }
@@ -55,22 +48,9 @@ export default function Navbar() {
         return;
       }
 
-      const profileRole = String(
-        data?.role || ""
-      ).toLowerCase();
+      const profileRole = String(data?.role || "").toLowerCase();
 
-      const sellerAllowed =
-        profileRole === "seller" ||
-        data?.is_seller === true;
-
-      setIsSeller(sellerAllowed);
-
-      if (sellerAllowed) {
-        localStorage.setItem(
-          `quickbites_seller_access_${user.id}`,
-          "yes"
-        );
-      }
+      setIsSeller(profileRole === "seller" || data?.is_seller === true);
     }
 
     checkSellerRole();
@@ -78,24 +58,15 @@ export default function Navbar() {
 
   useEffect(() => {
     function handleClickOutside(event) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setProfileOpen(false);
       }
     }
 
-    document.addEventListener(
-      "mousedown",
-      handleClickOutside
-    );
+    document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutside
-      );
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -110,20 +81,15 @@ export default function Navbar() {
 
     setSwitchingSeller(true);
 
-    const { error } = await supabase
-      .from("profiles")
-      .upsert({
-        id: user.id,
-        email: user.email,
-        role: "seller",
-        is_seller: true,
-      });
+    const { error } = await supabase.from("profiles").upsert({
+      id: user.id,
+      email: user.email,
+      role: "seller",
+      is_seller: true,
+    });
 
     if (error) {
-      alert(
-        `Could not switch account: ${error.message}`
-      );
-
+      alert(`Could not switch account: ${error.message}`);
       setSwitchingSeller(false);
       return;
     }
@@ -134,11 +100,6 @@ export default function Navbar() {
       },
     });
 
-    localStorage.setItem(
-      `quickbites_seller_access_${user.id}`,
-      "yes"
-    );
-
     setIsSeller(true);
     setProfileOpen(false);
     setMenuOpen(false);
@@ -148,18 +109,10 @@ export default function Navbar() {
   }
 
   async function handleLogout() {
-    if (user?.id) {
-      localStorage.removeItem(
-        `quickbites_seller_access_${user.id}`
-      );
-    }
-
     await signOut();
-
     setProfileOpen(false);
     setMenuOpen(false);
     setIsSeller(false);
-
     navigate("/");
   }
 
@@ -176,7 +129,6 @@ export default function Navbar() {
 
   function getInitial() {
     if (!user?.email) return "Q";
-
     return user.email.charAt(0).toUpperCase();
   }
 
@@ -192,14 +144,9 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 bg-black/80 backdrop-blur-2xl border-b border-[#1d1d1d]">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="h-16 sm:h-[72px] flex items-center justify-between">
-          <Link
-            to="/"
-            className="flex items-center gap-2 group"
-          >
+          <Link to="/" className="flex items-center gap-2 group">
             <div className="w-9 h-9 rounded-2xl bg-yellow-500 flex items-center justify-center shadow-lg shadow-yellow-500/20">
-              <span className="text-black font-black text-sm">
-                Q
-              </span>
+              <span className="text-black font-black text-sm">Q</span>
             </div>
 
             <div className="leading-none">
@@ -215,8 +162,7 @@ export default function Navbar() {
 
           <div className="hidden md:flex items-center gap-7">
             {navLinks.map((link) => {
-              const isActive =
-                location.pathname === link.path;
+              const isActive = location.pathname === link.path;
 
               return (
                 <Link
@@ -245,15 +191,10 @@ export default function Navbar() {
             )}
 
             {user && (
-              <div
-                className="relative hidden md:block"
-                ref={dropdownRef}
-              >
+              <div className="relative hidden md:block" ref={dropdownRef}>
                 <button
                   type="button"
-                  onClick={() =>
-                    setProfileOpen(!profileOpen)
-                  }
+                  onClick={() => setProfileOpen(!profileOpen)}
                   className="w-11 h-11 rounded-2xl bg-yellow-500 hover:bg-yellow-400 text-black font-black flex items-center justify-center transition-all duration-200"
                 >
                   {getInitial()}
@@ -267,9 +208,7 @@ export default function Navbar() {
                       </p>
 
                       <p className="text-gray-500 text-sm mt-1">
-                        {isSeller
-                          ? "Seller account"
-                          : "Customer account"}
+                        {isSeller ? "Seller account" : "Customer account"}
                       </p>
                     </div>
 
@@ -356,6 +295,97 @@ export default function Navbar() {
             </button>
           </div>
         </div>
+
+        {menuOpen && (
+          <div className="md:hidden pb-4">
+            <div className="bg-[#111111] border border-[#222] rounded-3xl p-3 shadow-2xl shadow-black/40">
+              <div className="grid gap-1">
+                {navLinks.map((link) => {
+                  const isActive = location.pathname === link.path;
+
+                  return (
+                    <Link
+                      key={link.name}
+                      to={link.path}
+                      className={`px-4 py-3 rounded-2xl text-sm font-medium transition-all duration-200 ${
+                        isActive
+                          ? "bg-yellow-500 text-black"
+                          : "text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400"
+                      }`}
+                    >
+                      {link.name}
+                    </Link>
+                  );
+                })}
+
+                <div className="h-px bg-[#222] my-2" />
+
+                {!user ? (
+                  <Link
+                    to="/customer-login"
+                    className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-4 py-3 rounded-2xl text-center"
+                  >
+                    Sign In
+                  </Link>
+                ) : (
+                  <>
+                    <div className="px-4 py-3">
+                      <p className="text-white font-semibold truncate">
+                        {user.email}
+                      </p>
+
+                      <p className="text-gray-500 text-sm mt-1">
+                        {isSeller ? "Seller account" : "Customer account"}
+                      </p>
+                    </div>
+
+                    <Link
+                      to="/orders"
+                      className="px-4 py-3 rounded-2xl text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400"
+                    >
+                      Active Orders
+                    </Link>
+
+                    <Link
+                      to="/order-history"
+                      className="px-4 py-3 rounded-2xl text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400"
+                    >
+                      Order History
+                    </Link>
+
+                    {isSeller ? (
+                      <Link
+                        to="/seller-dashboard"
+                        className="px-4 py-3 rounded-2xl text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400"
+                      >
+                        Seller Dashboard
+                      </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleSwitchToSeller}
+                        disabled={switchingSeller}
+                        className="text-left px-4 py-3 rounded-2xl text-yellow-400 hover:bg-yellow-500/10 disabled:opacity-50"
+                      >
+                        {switchingSeller
+                          ? "Switching..."
+                          : "Switch to Seller Account"}
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="mt-2 bg-red-500/10 text-red-400 font-bold px-4 py-3 rounded-2xl"
+                    >
+                      Sign Out
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </nav>
     </header>
   );
