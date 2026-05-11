@@ -11,6 +11,7 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [isSeller, setIsSeller] = useState(false);
+  const [switchingSeller, setSwitchingSeller] = useState(false);
 
   const dropdownRef = useRef(null);
 
@@ -68,6 +69,44 @@ export default function Navbar() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  async function handleSwitchToSeller() {
+    if (!user) return;
+
+    const confirmSwitch = window.confirm(
+      "Switch this account to a seller account? You will get access to Seller Dashboard."
+    );
+
+    if (!confirmSwitch) return;
+
+    setSwitchingSeller(true);
+
+    const { error } = await supabase.from("profiles").upsert({
+      id: user.id,
+      email: user.email,
+      role: "seller",
+      is_seller: true,
+    });
+
+    if (error) {
+      alert(`Could not switch account: ${error.message}`);
+      setSwitchingSeller(false);
+      return;
+    }
+
+    await supabase.auth.updateUser({
+      data: {
+        role: "seller",
+      },
+    });
+
+    setIsSeller(true);
+    setProfileOpen(false);
+    setMenuOpen(false);
+    setSwitchingSeller(false);
+
+    navigate("/seller-dashboard");
+  }
 
   async function handleLogout() {
     await signOut();
@@ -195,13 +234,24 @@ export default function Navbar() {
                         Order History
                       </Link>
 
-                      {isSeller && (
+                      {isSeller ? (
                         <Link
                           to="/seller-dashboard"
                           className="block px-4 py-3 rounded-2xl text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400 transition-all"
                         >
                           Seller Dashboard
                         </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleSwitchToSeller}
+                          disabled={switchingSeller}
+                          className="w-full text-left px-4 py-3 rounded-2xl text-yellow-400 hover:bg-yellow-500/10 transition-all disabled:opacity-50"
+                        >
+                          {switchingSeller
+                            ? "Switching..."
+                            : "Switch to Seller Account"}
+                        </button>
                       )}
 
                       <button
@@ -303,13 +353,24 @@ export default function Navbar() {
                       Order History
                     </Link>
 
-                    {isSeller && (
+                    {isSeller ? (
                       <Link
                         to="/seller-dashboard"
                         className="px-4 py-3 rounded-2xl text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400"
                       >
                         Seller Dashboard
                       </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleSwitchToSeller}
+                        disabled={switchingSeller}
+                        className="text-left px-4 py-3 rounded-2xl text-yellow-400 hover:bg-yellow-500/10 disabled:opacity-50"
+                      >
+                        {switchingSeller
+                          ? "Switching..."
+                          : "Switch to Seller Account"}
+                      </button>
                     )}
 
                     <button
