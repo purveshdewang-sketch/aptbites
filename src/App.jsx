@@ -36,26 +36,34 @@ function SellerOnlyRoute({ children }) {
   const { user, authLoading } = useAuth();
 
   const [checkingRole, setCheckingRole] = useState(true);
-  const [isSeller, setIsSeller] = useState(false);
+  const [sellerAllowed, setSellerAllowed] = useState(false);
 
   useEffect(() => {
-    async function checkSellerRole() {
+    let cancelled = false;
+
+    async function checkSellerAccess() {
+      if (authLoading) return;
+
       if (!user) {
-        setIsSeller(false);
-        setCheckingRole(false);
+        if (!cancelled) {
+          setSellerAllowed(false);
+          setCheckingRole(false);
+        }
         return;
       }
 
       setCheckingRole(true);
 
-      const metadataRole = String(user?.user_metadata?.role || "").toLowerCase();
-
       const localSellerAccess =
         localStorage.getItem(`quickbites_seller_access_${user.id}`) === "yes";
 
-      if (metadataRole === "seller" || localSellerAccess) {
-        setIsSeller(true);
-        setCheckingRole(false);
+      const metadataRole = String(user?.user_metadata?.role || "").toLowerCase();
+
+      if (localSellerAccess || metadataRole === "seller") {
+        if (!cancelled) {
+          setSellerAllowed(true);
+          setCheckingRole(false);
+        }
         return;
       }
 
@@ -65,31 +73,39 @@ function SellerOnlyRoute({ children }) {
         .eq("id", user.id)
         .maybeSingle();
 
+      if (cancelled) return;
+
       if (error) {
-        setIsSeller(false);
-      } else {
-        const profileRole = String(data?.role || "").toLowerCase();
-        const sellerAllowed =
-          profileRole === "seller" || data?.is_seller === true;
-
-        setIsSeller(sellerAllowed);
-
-        if (sellerAllowed) {
-          localStorage.setItem(`quickbites_seller_access_${user.id}`, "yes");
-        }
+        setSellerAllowed(false);
+        setCheckingRole(false);
+        return;
       }
 
+      const profileRole = String(data?.role || "").toLowerCase();
+
+      const isSeller =
+        profileRole === "seller" || data?.is_seller === true;
+
+      if (isSeller) {
+        localStorage.setItem(`quickbites_seller_access_${user.id}`, "yes");
+      }
+
+      setSellerAllowed(isSeller);
       setCheckingRole(false);
     }
 
-    checkSellerRole();
-  }, [user]);
+    checkSellerAccess();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, authLoading]);
 
   if (authLoading || checkingRole) return <LoadingScreen />;
 
   if (!user) return <Navigate to="/customer-login" replace />;
 
-  if (!isSeller) return <Navigate to="/marketplace" replace />;
+  if (!sellerAllowed) return <Navigate to="/customer-login" replace />;
 
   return children;
 }
