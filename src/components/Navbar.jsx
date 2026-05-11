@@ -29,22 +29,31 @@ export default function Navbar() {
         return;
       }
 
+      const metadataRole = String(user?.user_metadata?.role || "").toLowerCase();
+
+      if (metadataRole === "seller") {
+        setIsSeller(true);
+        return;
+      }
+
       const { data, error } = await supabase
         .from("profiles")
         .select("role, is_seller")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         setIsSeller(false);
         return;
       }
 
-      setIsSeller(data?.role === "seller" || data?.is_seller === true);
+      const profileRole = String(data?.role || "").toLowerCase();
+
+      setIsSeller(profileRole === "seller" || data?.is_seller === true);
     }
 
     checkSellerRole();
-  }, [user]);
+  }, [user, location.pathname]);
 
   useEffect(() => {
     function handleClickOutside(event) {
