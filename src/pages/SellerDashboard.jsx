@@ -109,24 +109,10 @@ export default function SellerDashboard() {
   }
 }
 
-    audio
-      .play()
-      .then(() => {
-        audio.pause();
-        audio.currentTime = 0;
-        setAudioReady(true);
-        setMessage("Order notification sound enabled.");
-      })
-      .catch(() => {
-        setMessage("Tap again to enable notification sound.");
-      });
-  }
-
-  function playTingSound(forcePlay = false) {
+function playTingSound(forcePlay = false) {
   if (!audioReady && !forcePlay) return;
 
-  const AudioContextClass =
-    window.AudioContext || window.webkitAudioContext;
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
 
   if (!AudioContextClass) return;
 
@@ -150,22 +136,11 @@ export default function SellerDashboard() {
 
     const frequencies = [1400, 1600, 1800];
 
-    oscillator.frequency.setValueAtTime(
-      frequencies[index],
-      now + delay
-    );
+    oscillator.frequency.setValueAtTime(frequencies[index], now + delay);
 
     gain.gain.setValueAtTime(0.0001, now + delay);
-
-    gain.gain.exponentialRampToValueAtTime(
-      0.25,
-      now + delay + 0.01
-    );
-
-    gain.gain.exponentialRampToValueAtTime(
-      0.0001,
-      now + delay + 0.08
-    );
+    gain.gain.exponentialRampToValueAtTime(0.25, now + delay + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.08);
 
     oscillator.connect(gain);
     gain.connect(audioContext.destination);
@@ -174,7 +149,6 @@ export default function SellerDashboard() {
     oscillator.stop(now + delay + 0.08);
   });
 }
-
   function handleChange(event) {
     const { name, value } = event.target;
 
@@ -1024,3 +998,4 @@ export default function SellerDashboard() {
       </div>
     </main>
   );
+}
