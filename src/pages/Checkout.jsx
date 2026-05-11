@@ -6,7 +6,6 @@ import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabaseClient";
 
 const PLATFORM_FEE = 10;
-const DELIVERY_FEE = 20;
 
 export default function Checkout() {
   const { cartItems, cartTotal, clearCart } = useCart();
@@ -362,13 +361,6 @@ const { error } = await supabase
                 <p className="text-gray-400">Subtotal</p>
                 <p className="font-bold text-white">
                   ₹{subtotalAmount}
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between text-sm">
-                <p className="text-gray-400">Delivery Fee</p>
-                <p className="font-bold text-white">
-                  ₹{deliveryFee}
                 </p>
               </div>
 
