@@ -50,7 +50,10 @@ function SellerOnlyRoute({ children }) {
 
       const metadataRole = String(user?.user_metadata?.role || "").toLowerCase();
 
-      if (metadataRole === "seller") {
+      const localSellerAccess =
+        localStorage.getItem(`quickbites_seller_access_${user.id}`) === "yes";
+
+      if (metadataRole === "seller" || localSellerAccess) {
         setIsSeller(true);
         setCheckingRole(false);
         return;
@@ -66,7 +69,14 @@ function SellerOnlyRoute({ children }) {
         setIsSeller(false);
       } else {
         const profileRole = String(data?.role || "").toLowerCase();
-        setIsSeller(profileRole === "seller" || data?.is_seller === true);
+        const sellerAllowed =
+          profileRole === "seller" || data?.is_seller === true;
+
+        setIsSeller(sellerAllowed);
+
+        if (sellerAllowed) {
+          localStorage.setItem(`quickbites_seller_access_${user.id}`, "yes");
+        }
       }
 
       setCheckingRole(false);
