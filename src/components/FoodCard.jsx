@@ -18,7 +18,15 @@ export default function FoodCard({ item }) {
 
   const quantity = cartItem ? cartItem.quantity : 0;
 
+  const stock = Number(item.stock || 0);
+
+  const isLowStock = stock > 0 && stock <= 2;
+  const isSellingFast = stock > 2 && stock <= 5;
+  const isSoldOut = stock <= 0;
+
   function handleAddToCart() {
+    if (isSoldOut) return;
+
     addToCart(item);
 
     setShowToast(true);
@@ -59,18 +67,21 @@ export default function FoodCard({ item }) {
       )}
 
       {/* Card */}
-      <div className="group bg-[#111111] border border-[#222] hover:border-yellow-500/30 rounded-[1.75rem] overflow-hidden shadow-lg hover:shadow-yellow-500/10 transition-all duration-300">
+      <div className="group bg-[#111111] border border-[#222] hover:border-yellow-500/30 rounded-[2rem] overflow-hidden shadow-xl hover:shadow-yellow-500/10 transition-all duration-300 hover:-translate-y-1">
         {/* Image */}
         <div className="relative overflow-hidden">
-          <div className="bg-[#161616] p-3 sm:p-4 flex justify-center items-center h-44 sm:h-48">
+          <div className="aspect-square bg-[#161616] overflow-hidden">
             <img
               src={item.image}
               alt={item.name}
-              className="h-full w-full object-cover rounded-2xl transition-all duration-500 group-hover:scale-105"
+              className={`h-full w-full object-cover transition-all duration-700 group-hover:scale-110 ${
+                isSoldOut ? "opacity-40 grayscale" : ""
+              }`}
             />
           </div>
 
-          <div className="absolute top-5 left-5 flex gap-2">
+          {/* Food Type */}
+          <div className="absolute top-4 left-4 flex gap-2">
             <span
               className={`text-[11px] font-semibold px-3 py-1 rounded-full backdrop-blur-md ${
                 item.type === "Non-Veg"
@@ -81,24 +92,48 @@ export default function FoodCard({ item }) {
               {item.type || "Veg"}
             </span>
           </div>
+
+          {/* Urgency Badge */}
+          {!isSoldOut && (
+            <div className="absolute top-4 right-4">
+              {isLowStock ? (
+                <span className="bg-red-500 text-white text-[11px] font-black px-3 py-1 rounded-full shadow-lg">
+                  🔥 Only {stock} left
+                </span>
+              ) : isSellingFast ? (
+                <span className="bg-yellow-500 text-black text-[11px] font-black px-3 py-1 rounded-full shadow-lg">
+                  Selling Fast
+                </span>
+              ) : null}
+            </div>
+          )}
+
+          {/* Sold Out Overlay */}
+          {isSoldOut && (
+            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+              <div className="bg-red-500 text-white font-black px-5 py-3 rounded-2xl shadow-2xl">
+                SOLD OUT
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Content */}
         <div className="p-4 sm:p-5">
           {/* Name + Price */}
           <div className="flex items-start justify-between gap-3">
-            <div>
-              <h3 className="text-white font-bold text-lg leading-tight">
+            <div className="min-w-0">
+              <h3 className="text-white font-black text-lg leading-tight truncate">
                 {item.name}
               </h3>
 
-              <p className="text-gray-500 text-sm mt-2">
+              <p className="text-gray-500 text-sm mt-2 truncate">
                 Homemade by {item.seller}
               </p>
             </div>
 
             <div className="text-right shrink-0">
-              <p className="text-yellow-400 font-black text-xl">
+              <p className="text-yellow-400 font-black text-2xl">
                 ₹{item.price}
               </p>
 
@@ -108,53 +143,76 @@ export default function FoodCard({ item }) {
             </div>
           </div>
 
-          {/* Bottom */}
-          <div className="flex items-center justify-between mt-5 gap-3">
+          {/* Stats */}
+          <div className="flex items-center justify-between mt-5">
             <div>
-              <p className="text-gray-500 text-xs">
-                Ready in
+              <p className="text-gray-500 text-xs uppercase tracking-wide">
+                Ready In
               </p>
 
-              <p className="text-white text-sm font-semibold mt-1">
+              <p className="text-white text-sm font-bold mt-1">
                 {item.time}
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="bg-yellow-900/20 border border-yellow-500/10 text-yellow-300 text-xs px-3 py-2 rounded-full whitespace-nowrap">
-                {item.stock} left
-              </span>
+            <div className="text-right">
+              <p className="text-gray-500 text-xs uppercase tracking-wide">
+                Availability
+              </p>
 
-              {/* Add / Quantity */}
-              {quantity === 0 ? (
-                <button
-                  onClick={handleAddToCart}
-                  className="bg-yellow-500 hover:bg-yellow-400 active:scale-95 text-black font-bold px-4 py-2.5 rounded-2xl transition-all duration-200 shadow-lg shadow-yellow-500/20"
-                >
-                  + Add
-                </button>
-              ) : (
-                <div className="flex items-center overflow-hidden rounded-2xl bg-yellow-500 text-black font-bold shadow-lg shadow-yellow-500/20">
-                  <button
-                    onClick={() => decreaseQuantity(item.id)}
-                    className="px-3 py-2.5 hover:bg-yellow-400 active:scale-95 transition-all duration-200"
-                  >
-                    −
-                  </button>
-
-                  <span className="px-4 py-2.5 bg-yellow-400 text-sm">
-                    {quantity}
-                  </span>
-
-                  <button
-                    onClick={() => increaseQuantity(item.id)}
-                    className="px-3 py-2.5 hover:bg-yellow-400 active:scale-95 transition-all duration-200"
-                  >
-                    +
-                  </button>
-                </div>
-              )}
+              <p
+                className={`text-sm font-black mt-1 ${
+                  isLowStock
+                    ? "text-red-400"
+                    : isSellingFast
+                    ? "text-yellow-400"
+                    : "text-green-400"
+                }`}
+              >
+                {isSoldOut
+                  ? "Sold Out"
+                  : isLowStock
+                  ? `${stock} left`
+                  : `${stock} available`}
+              </p>
             </div>
+          </div>
+
+          {/* Add / Quantity */}
+          <div className="mt-5">
+            {quantity === 0 ? (
+              <button
+                onClick={handleAddToCart}
+                disabled={isSoldOut}
+                className={`w-full font-black py-4 rounded-2xl transition-all duration-200 shadow-lg text-base ${
+                  isSoldOut
+                    ? "bg-[#1a1a1a] text-gray-600 cursor-not-allowed"
+                    : "bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black shadow-yellow-500/20"
+                }`}
+              >
+                {isSoldOut ? "Unavailable" : "+ Add to Cart"}
+              </button>
+            ) : (
+              <div className="flex items-center justify-between overflow-hidden rounded-2xl bg-yellow-500 text-black font-black shadow-lg shadow-yellow-500/20">
+                <button
+                  onClick={() => decreaseQuantity(item.id)}
+                  className="flex-1 py-4 text-xl hover:bg-yellow-400 active:scale-95 transition-all duration-200"
+                >
+                  −
+                </button>
+
+                <span className="px-5 py-4 bg-yellow-400 text-lg min-w-[70px] text-center">
+                  {quantity}
+                </span>
+
+                <button
+                  onClick={() => increaseQuantity(item.id)}
+                  className="flex-1 py-4 text-xl hover:bg-yellow-400 active:scale-95 transition-all duration-200"
+                >
+                  +
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

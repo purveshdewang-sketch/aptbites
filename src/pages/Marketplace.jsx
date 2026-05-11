@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import FoodCard from "../components/FoodCard";
 import Navbar from "../components/Navbar";
 import { supabase } from "../lib/supabaseClient";
+import { useCart } from "../context/CartContext";
 
 export default function Marketplace() {
+  const { cartCount } = useCart();
+
   const [foods, setFoods] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState("All");
@@ -63,12 +67,21 @@ export default function Marketplace() {
         item.seller?.toLowerCase().includes(searchValue) ||
         item.time?.toLowerCase().includes(searchValue);
 
-      const matchesType =
-        selectedType === "All" || item.type === selectedType;
+      const matchesType = selectedType === "All" || item.type === selectedType;
 
       return matchesSearch && matchesType;
     });
   }, [foods, searchTerm, selectedType]);
+
+  const availableFoods = useMemo(() => {
+    return foods.filter((item) => Number(item.stock || 0) > 0);
+  }, [foods]);
+
+  const lowStockCount = useMemo(() => {
+    return foods.filter(
+      (item) => Number(item.stock || 0) > 0 && Number(item.stock || 0) <= 2
+    ).length;
+  }, [foods]);
 
   function clearFilters() {
     setSearchTerm("");
@@ -85,9 +98,9 @@ export default function Marketplace() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-black text-white overflow-hidden">
+      <main className="min-h-screen bg-black text-white overflow-hidden pb-28">
         {/* Hero */}
-        <section className="relative px-4 sm:px-6 pt-7 pb-6 sm:py-10 border-b border-[#1f1f1f]">
+        <section className="relative px-4 sm:px-6 pt-6 pb-6 sm:py-10 border-b border-[#1f1f1f]">
           <div className="absolute top-0 right-0 w-72 h-72 bg-yellow-500/10 rounded-full blur-[90px]" />
 
           <div className="relative max-w-7xl mx-auto">
@@ -95,7 +108,7 @@ export default function Marketplace() {
               Marketplace
             </p>
 
-            <h1 className="text-[2.25rem] sm:text-5xl md:text-6xl font-black text-white mt-3 leading-[1.03] tracking-tight">
+            <h1 className="text-[2.15rem] sm:text-5xl md:text-6xl font-black text-white mt-3 leading-[1.03] tracking-tight">
               Fresh homemade food
               <span className="block text-yellow-400">
                 from your community.
@@ -107,6 +120,36 @@ export default function Marketplace() {
               trusted home chefs inside your apartment complex.
             </p>
 
+            {/* Live Stats */}
+            <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-4">
+                <p className="text-gray-500 text-xs uppercase font-bold">
+                  Available Now
+                </p>
+                <p className="text-2xl font-black text-yellow-400 mt-1">
+                  {availableFoods.length}
+                </p>
+              </div>
+
+              <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-4">
+                <p className="text-gray-500 text-xs uppercase font-bold">
+                  Selling Fast
+                </p>
+                <p className="text-2xl font-black text-red-400 mt-1">
+                  {lowStockCount}
+                </p>
+              </div>
+
+              <div className="hidden sm:block bg-[#111111] border border-[#2a2a2a] rounded-2xl p-4">
+                <p className="text-gray-500 text-xs uppercase font-bold">
+                  Food Drops
+                </p>
+                <p className="text-2xl font-black text-white mt-1">
+                  {foods.length}
+                </p>
+              </div>
+            </div>
+
             {/* Search + Filters */}
             <div className="mt-7 grid grid-cols-1 gap-3 lg:flex lg:items-center lg:gap-4">
               <input
@@ -114,7 +157,7 @@ export default function Marketplace() {
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder="Search dishes, seller, or ready time..."
-                className="bg-[#111111] border border-[#2a2a2a] text-white rounded-2xl px-5 py-4 w-full lg:max-w-lg outline-none focus:border-yellow-500 transition-all duration-200"
+                className="bg-[#111111] border border-[#2a2a2a] text-white rounded-2xl px-5 py-4 w-full lg:max-w-lg outline-none focus:border-yellow-500 transition-all duration-200 text-base"
               />
 
               <div className="relative w-full lg:w-60">
@@ -158,11 +201,9 @@ export default function Marketplace() {
               <button
                 type="button"
                 onClick={
-                  searchTerm || selectedType !== "All"
-                    ? clearFilters
-                    : undefined
+                  searchTerm || selectedType !== "All" ? clearFilters : undefined
                 }
-                className={`font-bold px-8 py-4 rounded-2xl transition-all duration-200 ${
+                className={`font-bold px-8 py-4 rounded-2xl transition-all duration-200 min-h-[56px] ${
                   searchTerm || selectedType !== "All"
                     ? "border border-yellow-500 text-yellow-400 hover:bg-yellow-500 hover:text-black"
                     : "bg-yellow-500 hover:bg-yellow-400 text-black"
@@ -205,16 +246,17 @@ export default function Marketplace() {
 
             {loading && (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
-                {[1, 2, 3, 4].map((item) => (
+                {[1, 2, 3, 4, 5, 6].map((item) => (
                   <div
                     key={item}
                     className="bg-[#111111] border border-[#222] rounded-[1.75rem] overflow-hidden animate-pulse"
                   >
-                    <div className="h-44 sm:h-48 bg-[#1a1a1a]" />
+                    <div className="aspect-square bg-[#1a1a1a]" />
                     <div className="p-5 space-y-4">
                       <div className="h-5 bg-[#1a1a1a] rounded-full w-3/4" />
                       <div className="h-4 bg-[#1a1a1a] rounded-full w-1/2" />
-                      <div className="h-10 bg-[#1a1a1a] rounded-2xl" />
+                      <div className="h-4 bg-[#1a1a1a] rounded-full w-2/3" />
+                      <div className="h-12 bg-[#1a1a1a] rounded-2xl" />
                     </div>
                   </div>
                 ))}
@@ -280,6 +322,18 @@ export default function Marketplace() {
             )}
           </div>
         </section>
+
+        {cartCount > 0 && (
+          <Link
+            to="/cart"
+            className="fixed bottom-5 left-4 right-4 z-50 sm:left-auto sm:right-6 sm:w-auto bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black font-black px-6 py-4 rounded-2xl shadow-2xl shadow-yellow-500/20 flex items-center justify-center gap-3 transition-all"
+          >
+            <span>🛒</span>
+            <span>
+              View Cart • {cartCount} {cartCount === 1 ? "item" : "items"}
+            </span>
+          </Link>
+        )}
       </main>
     </>
   );

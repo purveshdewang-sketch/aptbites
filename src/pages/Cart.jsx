@@ -12,12 +12,18 @@ export default function Cart() {
     clearCart,
   } = useCart();
 
+  const deliveryFee = cartItems.length > 0 ? 20 : 0;
+  const platformFee = cartItems.length > 0 ? 5 : 0;
+
+  const finalTotal = cartTotal + deliveryFee + platformFee;
+
   return (
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-black text-white px-4 sm:px-6 py-7 sm:py-10">
+      <main className="min-h-screen bg-black text-white px-4 sm:px-6 py-7 sm:py-10 pb-40">
         <div className="max-w-5xl mx-auto">
+          {/* Header */}
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
@@ -43,6 +49,7 @@ export default function Cart() {
             )}
           </div>
 
+          {/* Empty */}
           {cartItems.length === 0 ? (
             <div className="mt-10 bg-[#111111] border border-[#2a2a2a] rounded-[2rem] p-8 text-center">
               <div className="w-20 h-20 mx-auto bg-yellow-500/10 rounded-full flex items-center justify-center text-4xl">
@@ -66,56 +73,82 @@ export default function Cart() {
             </div>
           ) : (
             <>
+              {/* Cart Items */}
               <div className="mt-8 space-y-4">
                 {cartItems.map((item) => (
                   <div
                     key={item.id}
-                    className="bg-[#111111] border border-[#222] rounded-[1.75rem] p-4 sm:p-5"
+                    className="bg-[#111111] border border-[#222] hover:border-yellow-500/20 rounded-[2rem] p-4 sm:p-5 transition-all duration-300"
                   >
                     <div className="flex gap-4">
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-2xl shrink-0"
-                      />
+                      {/* Image */}
+                      <div className="relative shrink-0">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-3xl"
+                        />
 
+                        {Number(item.stock || 0) <= 2 && (
+                          <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded-full shadow-lg">
+                            HOT
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <h2 className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                            <h2 className="text-lg sm:text-2xl font-black leading-tight truncate">
                               {item.name}
                             </h2>
 
                             <p className="text-gray-500 text-sm mt-1 truncate">
-                              By {item.seller}
+                              Homemade by {item.seller}
                             </p>
+
+                            <div className="flex items-center gap-2 mt-2 flex-wrap">
+                              <span className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-[11px] font-bold px-3 py-1 rounded-full">
+                                Ready in {item.time}
+                              </span>
+
+                              {Number(item.stock || 0) <= 2 && (
+                                <span className="bg-red-500/10 border border-red-500/20 text-red-400 text-[11px] font-bold px-3 py-1 rounded-full">
+                                  🔥 Only {item.stock} left
+                                </span>
+                              )}
+                            </div>
                           </div>
 
-                          <p className="text-yellow-400 text-lg sm:text-2xl font-black shrink-0">
-                            ₹{item.price * item.quantity}
-                          </p>
+                          <div className="text-right shrink-0">
+                            <p className="text-yellow-400 text-xl sm:text-3xl font-black">
+                              ₹{item.price * item.quantity}
+                            </p>
+
+                            <p className="text-gray-500 text-xs mt-1">
+                              ₹{item.price} each
+                            </p>
+                          </div>
                         </div>
 
-                        <p className="text-gray-500 text-xs mt-2">
-                          ₹{item.price} per plate
-                        </p>
-
-                        <div className="flex items-center justify-between gap-3 mt-4">
-                          <div className="flex items-center bg-black border border-[#333] rounded-2xl overflow-hidden">
+                        {/* Quantity Controls */}
+                        <div className="flex items-center justify-between gap-3 mt-5">
+                          <div className="flex items-center bg-black border border-[#333] rounded-2xl overflow-hidden shadow-lg">
                             <button
                               onClick={() => decreaseQuantity(item.id)}
-                              className="w-10 h-10 text-yellow-400 hover:bg-[#1a1a1a] font-black text-xl"
+                              className="w-12 h-12 text-yellow-400 hover:bg-[#1a1a1a] font-black text-2xl transition-all"
                             >
                               −
                             </button>
 
-                            <span className="w-11 h-10 border-x border-[#333] flex items-center justify-center font-black">
+                            <span className="w-14 h-12 border-x border-[#333] flex items-center justify-center font-black text-lg">
                               {item.quantity}
                             </span>
 
                             <button
                               onClick={() => increaseQuantity(item.id)}
-                              className="w-10 h-10 text-yellow-400 hover:bg-[#1a1a1a] font-black text-xl"
+                              className="w-12 h-12 text-yellow-400 hover:bg-[#1a1a1a] font-black text-2xl transition-all"
                             >
                               +
                             </button>
@@ -134,33 +167,81 @@ export default function Cart() {
                 ))}
               </div>
 
-              <div className="mt-8 bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-8">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-500 text-sm">Total Amount</p>
-                    <p className="text-gray-400 text-xs mt-1">
-                      Taxes/delivery can be added later
-                    </p>
+              {/* Sticky Checkout */}
+              <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-2xl border-t border-[#222]">
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4">
+                  {/* Pricing */}
+                  <div className="bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-6 shadow-2xl">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-400">
+                          Item Total
+                        </span>
+
+                        <span className="font-bold">
+                          ₹{cartTotal}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-400">
+                          Delivery Fee
+                        </span>
+
+                        <span className="font-bold">
+                          ₹{deliveryFee}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-400">
+                          Platform Fee
+                        </span>
+
+                        <span className="font-bold">
+                          ₹{platformFee}
+                        </span>
+                      </div>
+
+                      <div className="border-t border-[#222] pt-3 flex items-center justify-between">
+                        <div>
+                          <p className="text-gray-400 text-sm">
+                            Grand Total
+                          </p>
+
+                          <p className="text-yellow-400 text-3xl font-black mt-1">
+                            ₹{finalTotal}
+                          </p>
+                        </div>
+
+                        <div className="text-right">
+                          <p className="text-green-400 text-xs font-bold">
+                            Fresh homemade food
+                          </p>
+
+                          <p className="text-gray-500 text-xs mt-1">
+                            Prepared inside your apartment
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Buttons */}
+                    <Link
+                      to="/checkout"
+                      className="block text-center w-full mt-6 bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black font-black py-4 rounded-2xl text-lg transition-all duration-200 shadow-lg shadow-yellow-500/20"
+                    >
+                      Proceed to Checkout
+                    </Link>
+
+                    <Link
+                      to="/marketplace"
+                      className="block text-center w-full mt-3 border border-[#333] hover:border-yellow-500/50 text-gray-300 hover:text-yellow-400 font-bold py-3 rounded-2xl transition-all"
+                    >
+                      Add More Items
+                    </Link>
                   </div>
-
-                  <h2 className="text-3xl sm:text-4xl font-black text-yellow-400">
-                    ₹{cartTotal}
-                  </h2>
                 </div>
-
-                <Link
-                  to="/checkout"
-                  className="block text-center w-full mt-6 bg-yellow-500 hover:bg-yellow-400 active:scale-95 text-black font-black py-4 rounded-2xl text-base sm:text-lg transition-all duration-200 shadow-lg shadow-yellow-500/20"
-                >
-                  Proceed to Checkout
-                </Link>
-
-                <Link
-                  to="/marketplace"
-                  className="block text-center w-full mt-3 border border-[#333] hover:border-yellow-500/50 text-gray-300 hover:text-yellow-400 font-bold py-3 rounded-2xl transition-all"
-                >
-                  Add More Items
-                </Link>
               </div>
             </>
           )}
