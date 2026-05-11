@@ -449,10 +449,11 @@ function playTingSound(forcePlay = false) {
     const currentStatus = normalizeStatus(status);
 
     if (currentStatus === "placed") return "New Order";
-    if (currentStatus === "confirmed") return "Confirmed";
-    if (currentStatus === "baking") return "Baking";
+      if (currentStatus === "confirmed") return "Confirmed";
+    if (currentStatus === "cooking") return "Cooking";
     if (currentStatus === "packing") return "Packing";
-    if (currentStatus === "completed") return "Completed";
+    if (currentStatus === "out_for_delivery") return "Out for Delivery";
+    if (currentStatus === "completed") return "Delivered";
 
     return status || "New Order";
   }
@@ -464,13 +465,17 @@ function playTingSound(forcePlay = false) {
       return "bg-green-900/40 text-green-300 border-green-500/20";
     }
 
-    if (currentStatus === "baking") {
-      return "bg-orange-900/40 text-orange-300 border-orange-500/20";
+    if (currentStatus === "cooking") {
+     return "bg-orange-900/40 text-orange-300 border-orange-500/20";
     }
 
     if (currentStatus === "packing") {
-      return "bg-blue-900/40 text-blue-300 border-blue-500/20";
+     return "bg-blue-900/40 text-blue-300 border-blue-500/20";
     }
+
+      if (currentStatus === "out_for_delivery") {
+       return "bg-purple-900/40 text-purple-300 border-purple-500/20";
+}
 
     return "bg-yellow-900/30 text-yellow-300 border-yellow-500/20";
   }
@@ -722,39 +727,49 @@ function playTingSound(forcePlay = false) {
   </a>
 </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-5">
-                    <button
-                      type="button"
-                      onClick={() => updateOrderStatus(order.id, "confirmed")}
-                      className="bg-yellow-500 hover:bg-yellow-400 text-black font-black py-3 rounded-2xl active:scale-95"
-                    >
-                      Confirmed
-                    </button>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-5">
+  <button
+    type="button"
+    onClick={() => updateOrderStatus(order.id, "confirmed")}
+    className="bg-yellow-500 hover:bg-yellow-400 text-black font-black py-3 rounded-2xl active:scale-95 transition-all"
+  >
+    Confirm
+  </button>
 
-                    <button
-                      type="button"
-                      onClick={() => updateOrderStatus(order.id, "baking")}
-                      className="border border-orange-500/50 text-orange-300 hover:bg-orange-500 hover:text-black font-black py-3 rounded-2xl active:scale-95"
-                    >
-                      Baking
-                    </button>
+  <button
+    type="button"
+    onClick={() => updateOrderStatus(order.id, "cooking")}
+    className="border border-orange-500/50 text-orange-300 hover:bg-orange-500 hover:text-black font-black py-3 rounded-2xl active:scale-95 transition-all"
+  >
+    Cooking
+  </button>
 
-                    <button
-                      type="button"
-                      onClick={() => updateOrderStatus(order.id, "packing")}
-                      className="border border-blue-500/50 text-blue-300 hover:bg-blue-500 hover:text-black font-black py-3 rounded-2xl active:scale-95"
-                    >
-                      Packing
-                    </button>
+  <button
+    type="button"
+    onClick={() => updateOrderStatus(order.id, "packing")}
+    className="border border-blue-500/50 text-blue-300 hover:bg-blue-500 hover:text-black font-black py-3 rounded-2xl active:scale-95 transition-all"
+  >
+    Packing
+  </button>
 
-                    <button
-                      type="button"
-                      onClick={() => updateOrderStatus(order.id, "completed")}
-                      className="border border-green-500/50 text-green-300 hover:bg-green-500 hover:text-black font-black py-3 rounded-2xl active:scale-95"
-                    >
-                      Completed
-                    </button>
-                  </div>
+  <button
+    type="button"
+    onClick={() =>
+      updateOrderStatus(order.id, "out_for_delivery")
+    }
+    className="border border-purple-500/50 text-purple-300 hover:bg-purple-500 hover:text-black font-black py-3 rounded-2xl active:scale-95 transition-all"
+  >
+    Out
+  </button>
+
+  <button
+    type="button"
+    onClick={() => updateOrderStatus(order.id, "completed")}
+    className="border border-green-500/50 text-green-300 hover:bg-green-500 hover:text-black font-black py-3 rounded-2xl active:scale-95 transition-all"
+  >
+    Delivered
+  </button>
+</div>
                 </article>
               ))}
             </div>
@@ -915,12 +930,12 @@ function playTingSound(forcePlay = false) {
               {sellerFoods.map((food) => (
                 <div
                   key={food.id}
-                  className="bg-[#111] border border-[#2a2a2a] rounded-3xl overflow-hidden"
+                  className="bg-[#111] border border-[#2a2a2a] rounded-3xl overflow-hidden hover:border-yellow-500/30 transition-all"
                 >
                   <img
                     src={food.image}
                     alt={food.name}
-                    className="w-full h-48 object-cover"
+                    className="w-full aspect-square object-cover"
                   />
 
                   <div className="p-5">
@@ -936,9 +951,19 @@ function playTingSound(forcePlay = false) {
                         <p className="text-yellow-400 font-bold text-2xl">
                           ₹{food.price}
                         </p>
-                        <p className="text-gray-500 text-sm">
-                          {food.stock} left
-                        </p>
+                        <p
+  className={`text-sm font-semibold ${
+    Number(food.stock) <= 2
+      ? "text-red-400"
+      : Number(food.stock) <= 5
+      ? "text-yellow-400"
+      : "text-gray-500"
+  }`}
+>
+  {Number(food.stock) <= 2
+    ? `🔥 Only ${food.stock} left`
+    : `${food.stock} left`}
+</p>
                       </div>
                     </div>
 
