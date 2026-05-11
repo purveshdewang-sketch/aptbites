@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 export default function SellerDashboard() {
   const { user } = useAuth();
 
-  const audioRef = useRef(null);
+  const audioContextRef = useRef(null);
   const previousOrderIdsRef = useRef([]);
 
   const [formData, setFormData] = useState({
@@ -68,22 +68,46 @@ export default function SellerDashboard() {
     };
   }, [user]);
 
+  useEffect(() => {
+  if (!user) return;
+
+  const savedSoundSetting = localStorage.getItem(
+    `quickbites_seller_sound_${user.id}`
+  );
+
+  if (savedSoundSetting === "on") {
+    setAudioReady(true);
+  }
+}, [user]);
+
   function getSellerStorageKey() {
     return user ? `Quickbites_seller_name_${user.id}` : "Quickbites_seller_name";
   }
 
-  function toggleNotificationSound() {
-    const audio = audioRef.current;
+ function toggleNotificationSound() {
+  if (!user) return;
 
-    if (!audio) return;
+  const nextValue = !audioReady;
 
-    if (audioReady) {
-      audio.pause();
-      audio.currentTime = 0;
-      setAudioReady(false);
-      setMessage("Order notification sound disabled.");
-      return;
-    }
+  setAudioReady(nextValue);
+
+  localStorage.setItem(
+    `quickbites_seller_sound_${user.id}`,
+    nextValue ? "on" : "off"
+  );
+
+  setMessage(
+    nextValue
+      ? "Order notification sound enabled."
+      : "Order notification sound disabled."
+  );
+
+  if (nextValue) {
+    setTimeout(() => {
+      playTingSound(true);
+    }, 100);
+  }
+}
 
     audio
       .play()
@@ -98,14 +122,58 @@ export default function SellerDashboard() {
       });
   }
 
-  function playTingSound() {
-    const audio = audioRef.current;
+  function playTingSound(forcePlay = false) {
+  if (!audioReady && !forcePlay) return;
 
-    if (!audio || !audioReady) return;
+  const AudioContextClass =
+    window.AudioContext || window.webkitAudioContext;
 
-    audio.currentTime = 0;
-    audio.play().catch(() => {});
+  if (!AudioContextClass) return;
+
+  if (!audioContextRef.current) {
+    audioContextRef.current = new AudioContextClass();
   }
+
+  const audioContext = audioContextRef.current;
+
+  if (audioContext.state === "suspended") {
+    audioContext.resume();
+  }
+
+  const now = audioContext.currentTime;
+
+  [0, 0.1, 0.2].forEach((delay, index) => {
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+
+    oscillator.type = "sine";
+
+    const frequencies = [1400, 1600, 1800];
+
+    oscillator.frequency.setValueAtTime(
+      frequencies[index],
+      now + delay
+    );
+
+    gain.gain.setValueAtTime(0.0001, now + delay);
+
+    gain.gain.exponentialRampToValueAtTime(
+      0.25,
+      now + delay + 0.01
+    );
+
+    gain.gain.exponentialRampToValueAtTime(
+      0.0001,
+      now + delay + 0.08
+    );
+
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+
+    oscillator.start(now + delay);
+    oscillator.stop(now + delay + 0.08);
+  });
+}
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -475,11 +543,6 @@ export default function SellerDashboard() {
 
   return (
     <main className="min-h-screen bg-black text-white px-4 sm:px-6 py-8 sm:py-10">
-      <audio
-        ref={audioRef}
-        preload="auto"
-        src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
-      />
 
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
@@ -666,6 +729,24 @@ export default function SellerDashboard() {
                       Note: {order.notes}
                     </p>
                   )}
+
+                  <div className="grid grid-cols-2 gap-3 mt-5">
+  <a
+    href={`tel:${order.phone}`}
+    className="bg-green-500 hover:bg-green-400 active:scale-95 text-black font-black py-3 rounded-2xl text-center transition-all"
+  >
+    📞 Call Customer
+  </a>
+
+  <a
+    href={`https://wa.me/91${String(order.phone).replace(/\D/g, "")}`}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="bg-[#25D366] hover:brightness-110 active:scale-95 text-black font-black py-3 rounded-2xl text-center transition-all"
+  >
+    💬 WhatsApp
+  </a>
+</div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-5">
                     <button
@@ -943,4 +1024,3 @@ export default function SellerDashboard() {
       </div>
     </main>
   );
-}

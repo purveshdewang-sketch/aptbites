@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 
 export default function OrderHistory() {
   const { user } = useAuth();
+  const { addToCart, clearCart } = useCart();
+  const navigate = useNavigate();
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -63,6 +66,29 @@ export default function OrderHistory() {
     setLoading(false);
   }
 
+  function handleReorder(order) {
+    if (!order.items || order.items.length === 0) {
+      alert("This order has no items to reorder.");
+      return;
+    }
+
+    clearCart();
+
+    order.items.forEach((item) => {
+      const quantity = Number(item.quantity || 1);
+
+      for (let i = 0; i < quantity; i++) {
+        addToCart({
+          ...item,
+          seller_id: order.seller_id,
+          quantity: 1,
+        });
+      }
+    });
+
+    navigate("/cart");
+  }
+
   return (
     <>
       <Navbar />
@@ -79,7 +105,7 @@ export default function OrderHistory() {
             </h1>
 
             <p className="text-gray-400 mt-4 max-w-2xl leading-relaxed">
-              View your past completed Quickbites orders.
+              View your past completed QuickBites orders and quickly reorder your favorites.
             </p>
           </div>
 
@@ -211,6 +237,13 @@ export default function OrderHistory() {
                       Note: {order.notes}
                     </p>
                   )}
+
+                  <button
+                    onClick={() => handleReorder(order)}
+                    className="mt-5 w-full bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black font-black py-3 rounded-2xl transition-all duration-200"
+                  >
+                    Re-order
+                  </button>
                 </article>
               ))}
             </div>

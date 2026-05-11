@@ -28,6 +28,10 @@ export default function CustomerLogin() {
     }));
   }
 
+  function cleanPhone(phone) {
+    return phone.replace(/\D/g, "");
+  }
+
   async function handleAuth(event) {
     event.preventDefault();
     setLoading(true);
@@ -36,26 +40,34 @@ export default function CustomerLogin() {
     try {
       if (isSignUp) {
         if (
-          !formData.fullName ||
-          !formData.phone ||
-          !formData.apartmentName ||
-          !formData.flatNo
+          !formData.fullName.trim() ||
+          !formData.phone.trim() ||
+          !formData.apartmentName.trim() ||
+          !formData.flatNo.trim()
         ) {
           setMessage("Please fill your name, phone, apartment name, and flat number.");
           setLoading(false);
           return;
         }
 
-        const { error } = await supabase.auth.signUp({
+        const cleanedPhone = cleanPhone(formData.phone);
+
+        if (cleanedPhone.length < 10) {
+          setMessage("Please enter a valid phone number.");
+          setLoading(false);
+          return;
+        }
+
+        const { data, error } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
           options: {
             data: {
-              full_name: formData.fullName,
-              phone: formData.phone,
-              apartment_name: formData.apartmentName,
-              block: formData.block,
-              flat_no: formData.flatNo,
+              full_name: formData.fullName.trim(),
+              phone: cleanedPhone,
+              apartment_name: formData.apartmentName.trim(),
+              block: formData.block.trim(),
+              flat_no: formData.flatNo.trim(),
               role: "customer",
             },
           },
@@ -63,9 +75,26 @@ export default function CustomerLogin() {
 
         if (error) {
           setMessage(error.message);
-        } else {
-          navigate("/marketplace");
+          setLoading(false);
+          return;
         }
+
+        const newUser = data?.user;
+
+        if (newUser) {
+          await supabase.from("profiles").upsert({
+            id: newUser.id,
+            full_name: formData.fullName.trim(),
+            phone: cleanedPhone,
+            email: formData.email.trim(),
+            apartment_name: formData.apartmentName.trim(),
+            block: formData.block.trim(),
+            flat_no: formData.flatNo.trim(),
+            role: "customer",
+          });
+        }
+
+        navigate("/marketplace");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: formData.email,
@@ -92,17 +121,17 @@ export default function CustomerLogin() {
       <div className="relative w-full max-w-lg bg-[#111111] border border-[#2a2a2a] rounded-[2rem] p-6 sm:p-8 shadow-2xl shadow-black/50">
         <div className="flex items-center justify-center mb-6">
           <div className="w-14 h-14 rounded-3xl bg-yellow-500 flex items-center justify-center shadow-lg shadow-yellow-500/20">
-            <span className="text-black text-2xl font-black">A</span>
+            <span className="text-black text-2xl font-black">Q</span>
           </div>
         </div>
 
         <h1 className="text-3xl font-black text-center">
-          {isSignUp ? "Create Your Quickbites Account" : "Welcome Back"}
+          {isSignUp ? "Create Your QuickBites Account" : "Welcome Back"}
         </h1>
 
         <p className="text-gray-400 mt-3 text-center leading-relaxed">
           {isSignUp
-            ? "Verify your apartment details so Quickbites stays private to your community."
+            ? "Enter your phone, email, name, and apartment address before ordering."
             : "Sign in to continue ordering homemade food from your apartment."}
         </p>
 
@@ -119,6 +148,7 @@ export default function CustomerLogin() {
                 name="fullName"
                 value={formData.fullName}
                 onChange={handleChange}
+                required
                 placeholder="Full name"
                 className="bg-black border border-[#333] rounded-2xl px-4 py-4 outline-none focus:border-yellow-500"
               />
@@ -127,6 +157,7 @@ export default function CustomerLogin() {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
+                required
                 placeholder="Phone number"
                 className="bg-black border border-[#333] rounded-2xl px-4 py-4 outline-none focus:border-yellow-500"
               />
@@ -164,6 +195,7 @@ export default function CustomerLogin() {
                   name="apartmentName"
                   value={formData.apartmentName}
                   onChange={handleChange}
+                  required
                   placeholder="Apartment name"
                   className="w-full bg-black border border-[#333] rounded-2xl px-4 py-4 outline-none focus:border-yellow-500"
                 />
@@ -181,6 +213,7 @@ export default function CustomerLogin() {
                     name="flatNo"
                     value={formData.flatNo}
                     onChange={handleChange}
+                    required
                     placeholder="Flat No."
                     className="bg-black border border-[#333] rounded-2xl px-4 py-4 outline-none focus:border-yellow-500"
                   />
@@ -211,8 +244,8 @@ export default function CustomerLogin() {
             : "New here? Create an account"}
         </button>
 
-        <Link to="/" className="block text-gray-500 text-sm mt-6 text-center">
-          Back to home
+        <Link to="/marketplace" className="block text-gray-500 text-sm mt-6 text-center">
+          Continue to QuickBites
         </Link>
       </div>
     </main>

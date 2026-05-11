@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Home from "./pages/Home";
 import CustomerLogin from "./pages/CustomerLogin";
@@ -9,54 +9,107 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
 import OrderHistory from "./pages/OrderHistory";
+import SellerGate from "./components/SellerGate";
+
+import { useAuth } from "./context/AuthContext";
+
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center text-white">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/customer-login" replace />;
+  }
+
+  return children;
+}
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home />} />
+        {/* LOGIN ROUTES */}
+        <Route path="/customer-login" element={<CustomerLogin />} />
 
-        <Route
-          path="/customer-login"
-          element={<CustomerLogin />}
-        />
+        <Route path="/seller-login" element={<SellerLogin />} />
 
+        {/* PROTECTED ROUTES */}
         <Route
-          path="/seller-login"
-          element={<SellerLogin />}
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          }
         />
 
         <Route
           path="/marketplace"
-          element={<Marketplace />}
+          element={
+            <ProtectedRoute>
+              <Marketplace />
+            </ProtectedRoute>
+          }
         />
 
         <Route
           path="/seller-dashboard"
-          element={<SellerDashboard />}
+          element={
+            <ProtectedRoute>
+              <SellerGate>
+                <SellerDashboard />
+              </SellerGate>
+            </ProtectedRoute>
+          }
         />
 
         <Route
           path="/cart"
-          element={<Cart />}
+          element={
+            <ProtectedRoute>
+              <Cart />
+            </ProtectedRoute>
+          }
         />
 
         <Route
           path="/checkout"
-          element={<Checkout />}
+          element={
+            <ProtectedRoute>
+              <Checkout />
+            </ProtectedRoute>
+          }
         />
 
-        {/* ACTIVE / LIVE ORDERS */}
+        {/* ACTIVE ORDERS */}
         <Route
           path="/orders"
-          element={<Orders />}
+          element={
+            <ProtectedRoute>
+              <Orders />
+            </ProtectedRoute>
+          }
         />
 
         {/* COMPLETED ORDERS */}
         <Route
           path="/order-history"
-          element={<OrderHistory />}
+          element={
+            <ProtectedRoute>
+              <OrderHistory />
+            </ProtectedRoute>
+          }
         />
+
+        {/* FALLBACK */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
