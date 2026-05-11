@@ -21,7 +21,7 @@ export default function Cart() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-black text-white px-4 sm:px-6 py-7 sm:py-10 pb-40">
+      <main className="min-h-screen bg-black text-white px-4 sm:px-6 py-7 sm:py-10 pb-24">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
           <div className="flex items-start justify-between gap-4">
@@ -49,7 +49,7 @@ export default function Cart() {
             )}
           </div>
 
-          {/* Empty */}
+          {/* Empty State */}
           {cartItems.length === 0 ? (
             <div className="mt-10 bg-[#111111] border border-[#2a2a2a] rounded-[2rem] p-8 text-center">
               <div className="w-20 h-20 mx-auto bg-yellow-500/10 rounded-full flex items-center justify-center text-4xl">
@@ -167,81 +167,77 @@ export default function Cart() {
                 ))}
               </div>
 
-              {/* Sticky Checkout */}
-              <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-2xl border-t border-[#222]">
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4">
-                  {/* Pricing */}
-                  <div className="bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-6 shadow-2xl">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-400">
-                          Item Total
-                        </span>
+              {/* Checkout Summary */}
+              <div className="bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-6 shadow-2xl mt-8">
+                {/* Pricing */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400">
+                      Item Total
+                    </span>
 
-                        <span className="font-bold">
-                          ₹{cartTotal}
-                        </span>
-                      </div>
+                    <span className="font-bold">
+                      ₹{cartTotal}
+                    </span>
+                  </div>
 
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-400">
-                          Delivery Fee
-                        </span>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400">
+                      Delivery Fee
+                    </span>
 
-                        <span className="font-bold">
-                          ₹{deliveryFee}
-                        </span>
-                      </div>
+                    <span className="font-bold">
+                      ₹{deliveryFee}
+                    </span>
+                  </div>
 
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-400">
-                          Platform Fee
-                        </span>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400">
+                      Platform Fee
+                    </span>
 
-                        <span className="font-bold">
-                          ₹{platformFee}
-                        </span>
-                      </div>
+                    <span className="font-bold">
+                      ₹{platformFee}
+                    </span>
+                  </div>
 
-                      <div className="border-t border-[#222] pt-3 flex items-center justify-between">
-                        <div>
-                          <p className="text-gray-400 text-sm">
-                            Grand Total
-                          </p>
+                  <div className="border-t border-[#222] pt-4 flex items-center justify-between">
+                    <div>
+                      <p className="text-gray-400 text-sm">
+                        Grand Total
+                      </p>
 
-                          <p className="text-yellow-400 text-3xl font-black mt-1">
-                            ₹{finalTotal}
-                          </p>
-                        </div>
-
-                        <div className="text-right">
-                          <p className="text-green-400 text-xs font-bold">
-                            Fresh homemade food
-                          </p>
-
-                          <p className="text-gray-500 text-xs mt-1">
-                            Prepared inside your apartment
-                          </p>
-                        </div>
-                      </div>
+                      <p className="text-yellow-400 text-3xl font-black mt-1">
+                        ₹{finalTotal}
+                      </p>
                     </div>
 
-                    {/* Buttons */}
-                    <Link
-                      to="/checkout"
-                      className="block text-center w-full mt-6 bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black font-black py-4 rounded-2xl text-lg transition-all duration-200 shadow-lg shadow-yellow-500/20"
-                    >
-                      Proceed to Checkout
-                    </Link>
+                    <div className="text-right">
+                      <p className="text-green-400 text-xs font-bold">
+                        Fresh homemade food
+                      </p>
 
-                    <Link
-                      to="/marketplace"
-                      className="block text-center w-full mt-3 border border-[#333] hover:border-yellow-500/50 text-gray-300 hover:text-yellow-400 font-bold py-3 rounded-2xl transition-all"
-                    >
-                      Add More Items
-                    </Link>
+                      <p className="text-gray-500 text-xs mt-1">
+                        Prepared inside your apartment
+                      </p>
+                    </div>
                   </div>
                 </div>
+
+                {/* Buttons */}
+                <Link
+                  to="/checkout"
+                  className="block text-center w-full mt-6 bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black font-black py-4 rounded-2xl text-lg transition-all duration-200 shadow-lg shadow-yellow-500/20"
+                >
+                  Proceed to Checkout
+                </Link>
+
+                <Link
+                  to="/marketplace"
+                  className="block text-center w-full mt-3 border border-[#333] hover:border-yellow-500/50 text-gray-300 hover:text-yellow-400 font-bold py-3 rounded-2xl transition-all"
+                >
+                  Add More Items
+                </Link>
               </div>
             </>
           )}
