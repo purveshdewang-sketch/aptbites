@@ -25,13 +25,9 @@ function LoadingScreen() {
 function ProtectedRoute({ children }) {
   const { user, authLoading } = useAuth();
 
-  if (authLoading) {
-    return <LoadingScreen />;
-  }
+  if (authLoading) return <LoadingScreen />;
 
-  if (!user) {
-    return <Navigate to="/customer-login" replace />;
-  }
+  if (!user) return <Navigate to="/customer-login" replace />;
 
   return children;
 }
@@ -45,23 +41,32 @@ function SellerOnlyRoute({ children }) {
   useEffect(() => {
     async function checkSellerRole() {
       if (!user) {
-        setCheckingRole(false);
         setIsSeller(false);
+        setCheckingRole(false);
         return;
       }
 
       setCheckingRole(true);
 
+      const metadataRole = String(user?.user_metadata?.role || "").toLowerCase();
+
+      if (metadataRole === "seller") {
+        setIsSeller(true);
+        setCheckingRole(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from("profiles")
         .select("role, is_seller")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         setIsSeller(false);
       } else {
-        setIsSeller(data?.role === "seller" || data?.is_seller === true);
+        const profileRole = String(data?.role || "").toLowerCase();
+        setIsSeller(profileRole === "seller" || data?.is_seller === true);
       }
 
       setCheckingRole(false);
@@ -70,17 +75,11 @@ function SellerOnlyRoute({ children }) {
     checkSellerRole();
   }, [user]);
 
-  if (authLoading || checkingRole) {
-    return <LoadingScreen />;
-  }
+  if (authLoading || checkingRole) return <LoadingScreen />;
 
-  if (!user) {
-    return <Navigate to="/customer-login" replace />;
-  }
+  if (!user) return <Navigate to="/customer-login" replace />;
 
-  if (!isSeller) {
-    return <Navigate to="/marketplace" replace />;
-  }
+  if (!isSeller) return <Navigate to="/marketplace" replace />;
 
   return children;
 }
@@ -89,12 +88,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* LOGIN ROUTES */}
         <Route path="/customer-login" element={<CustomerLogin />} />
-
         <Route path="/seller-login" element={<SellerLogin />} />
 
-        {/* PROTECTED ROUTES */}
         <Route
           path="/"
           element={
@@ -140,7 +136,6 @@ export default function App() {
           }
         />
 
-        {/* ACTIVE ORDERS */}
         <Route
           path="/orders"
           element={
@@ -150,7 +145,6 @@ export default function App() {
           }
         />
 
-        {/* COMPLETED ORDERS */}
         <Route
           path="/order-history"
           element={
@@ -160,7 +154,6 @@ export default function App() {
           }
         />
 
-        {/* FALLBACK */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
