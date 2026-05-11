@@ -2,14 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import { supabase } from "../lib/supabaseClient";
 
 export default function Navbar() {
   const { cartCount } = useCart();
-
   const { user, signOut, authLoading } = useAuth();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [isSeller, setIsSeller] = useState(false);
 
   const dropdownRef = useRef(null);
 
@@ -20,6 +21,30 @@ export default function Navbar() {
     setMenuOpen(false);
     setProfileOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    async function checkSellerRole() {
+      if (!user) {
+        setIsSeller(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role, is_seller")
+        .eq("id", user.id)
+        .single();
+
+      if (error) {
+        setIsSeller(false);
+        return;
+      }
+
+      setIsSeller(data?.role === "seller" || data?.is_seller === true);
+    }
+
+    checkSellerRole();
+  }, [user]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -39,6 +64,7 @@ export default function Navbar() {
     await signOut();
     setProfileOpen(false);
     setMenuOpen(false);
+    setIsSeller(false);
     navigate("/");
   }
 
@@ -54,8 +80,7 @@ export default function Navbar() {
   ];
 
   function getInitial() {
-    if (!user?.email) return "A";
-
+    if (!user?.email) return "Q";
     return user.email.charAt(0).toUpperCase();
   }
 
@@ -73,12 +98,12 @@ export default function Navbar() {
         <div className="h-16 sm:h-[72px] flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
             <div className="w-9 h-9 rounded-2xl bg-yellow-500 flex items-center justify-center shadow-lg shadow-yellow-500/20">
-              <span className="text-black font-black text-sm">A</span>
+              <span className="text-black font-black text-sm">Q</span>
             </div>
 
             <div className="leading-none">
               <p className="text-white font-bold text-lg tracking-tight group-hover:text-yellow-400 transition-all">
-                Quickbites
+                QuickBites
               </p>
 
               <p className="text-[10px] text-gray-500 mt-1 tracking-wide uppercase">
@@ -134,7 +159,9 @@ export default function Navbar() {
                         {user.email}
                       </p>
 
-                      <p className="text-gray-500 text-sm mt-1">Logged in</p>
+                      <p className="text-gray-500 text-sm mt-1">
+                        {isSeller ? "Seller account" : "Customer account"}
+                      </p>
                     </div>
 
                     <div className="p-2">
@@ -159,12 +186,14 @@ export default function Navbar() {
                         Order History
                       </Link>
 
-                      <Link
-                        to="/seller-dashboard"
-                        className="block px-4 py-3 rounded-2xl text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400 transition-all"
-                      >
-                        Seller Dashboard
-                      </Link>
+                      {isSeller && (
+                        <Link
+                          to="/seller-dashboard"
+                          className="block px-4 py-3 rounded-2xl text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400 transition-all"
+                        >
+                          Seller Dashboard
+                        </Link>
+                      )}
 
                       <button
                         type="button"
@@ -246,7 +275,9 @@ export default function Navbar() {
                         {user.email}
                       </p>
 
-                      <p className="text-gray-500 text-sm mt-1">Logged in</p>
+                      <p className="text-gray-500 text-sm mt-1">
+                        {isSeller ? "Seller account" : "Customer account"}
+                      </p>
                     </div>
 
                     <Link
@@ -263,12 +294,14 @@ export default function Navbar() {
                       Order History
                     </Link>
 
-                    <Link
-                      to="/seller-dashboard"
-                      className="px-4 py-3 rounded-2xl text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400"
-                    >
-                      Seller Dashboard
-                    </Link>
+                    {isSeller && (
+                      <Link
+                        to="/seller-dashboard"
+                        className="px-4 py-3 rounded-2xl text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400"
+                      >
+                        Seller Dashboard
+                      </Link>
+                    )}
 
                     <button
                       type="button"
