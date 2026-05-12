@@ -12,6 +12,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.105.4",
     "@tailwindcss/vite": "^4.2.4",
+    "cashfree-dropjs": "^1.1.5",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-router-dom": "^7.15.0",

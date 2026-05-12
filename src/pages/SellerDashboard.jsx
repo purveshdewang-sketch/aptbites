@@ -30,6 +30,18 @@ export default function SellerDashboard() {
   const [message, setMessage] = useState("");
   const [audioReady, setAudioReady] = useState(false);
 
+  const [sellerProfile, setSellerProfile] = useState({
+  seller_name: "",
+  phone: "",
+  upi_id: "",
+  bank_account_holder: "",
+  bank_account_number: "",
+  ifsc_code: "",
+  pan_number: "",
+});
+
+const [profileLoading, setProfileLoading] = useState(false);
+
   useEffect(() => {
     if (!user) return;
 
@@ -46,6 +58,7 @@ export default function SellerDashboard() {
 
     fetchSellerFoods();
     fetchSellerOrders();
+    fetchSellerProfile();
 
     const channel = supabase
       .channel(`seller-orders-${user.id}`)
@@ -149,57 +162,169 @@ function playTingSound(forcePlay = false) {
     oscillator.stop(now + delay + 0.08);
   });
 }
-  function handleChange(event) {
-    const { name, value } = event.target;
 
-    setFormData((currentData) => ({
-      ...currentData,
-      [name]: value,
-    }));
+async function fetchSellerProfile() {
+  if (!user) return;
 
-    if (name === "seller") {
-      localStorage.setItem(getSellerStorageKey(), value);
-    }
+  const { data, error } = await supabase
+    .from("seller_profiles")
+    .select("*")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    setMessage(`Could not load seller profile: ${error.message}`);
+    return;
   }
+
+  if (data) {
+    setSellerProfile({
+      seller_name: data.seller_name || "",
+      phone: data.phone || "",
+      upi_id: data.upi_id || "",
+      bank_account_holder: data.bank_account_holder || "",
+      bank_account_number: data.bank_account_number || "",
+      ifsc_code: data.ifsc_code || "",
+      pan_number: data.pan_number || "",
+    });
+  }
+}
+
+function handleSellerProfileChange(event) {
+  const { name, value } = event.target;
+
+  setSellerProfile((current) => ({
+    ...current,
+    [name]: value,
+  }));
+}
+
+async function saveSellerProfile(event) {
+  event.preventDefault();
+
+  if (!user) {
+    setMessage("Please login before saving seller payment details.");
+    return;
+  }
+
+  if (
+    !sellerProfile.seller_name ||
+    !sellerProfile.phone ||
+    !sellerProfile.upi_id ||
+    !sellerProfile.bank_account_holder ||
+    !sellerProfile.bank_account_number ||
+    !sellerProfile.ifsc_code ||
+    !sellerProfile.pan_number
+  ) {
+    setMessage("Please fill all seller payment profile details.");
+    return;
+  }
+
+  setProfileLoading(true);
+  setMessage("");
+
+  const payload = {
+    user_id: user.id,
+    seller_name: sellerProfile.seller_name,
+    phone: sellerProfile.phone,
+    upi_id: sellerProfile.upi_id,
+    bank_account_holder: sellerProfile.bank_account_holder,
+    bank_account_number: sellerProfile.bank_account_number,
+    ifsc_code: sellerProfile.ifsc_code.toUpperCase(),
+    pan_number: sellerProfile.pan_number.toUpperCase(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error: saveError } = await supabase
+    .from("seller_profiles")
+    .upsert(payload, {
+      onConflict: "user_id",
+    });
+
+  if (saveError) {
+    setProfileLoading(false);
+    setMessage(`Could not save seller profile: ${saveError.message}`);
+    return;
+  }
+
+  const { data, error: vendorError } = await supabase.functions.invoke(
+    "create-cashfree-vendor",
+    {
+      method: "POST",
+    }
+  );
+
+  setProfileLoading(false);
+
+  if (vendorError) {
+    setMessage(`Profile saved, but Cashfree vendor failed: ${vendorError.message}`);
+    return;
+  }
+
+  if (data?.error) {
+    setMessage(`Profile saved, but Cashfree vendor failed: ${data.error}`);
+    return;
+  }
+
+  setMessage("Seller profile saved and Cashfree vendor created successfully.");
+  fetchSellerProfile();
+}
+
+    function handleChange(event) {
+  const { name, value } = event.target;
+
+  setFormData((currentData) => ({
+    ...currentData,
+    [name]: value,
+  }));
+
+  if (name === "seller") {
+    localStorage.setItem(getSellerStorageKey(), value);
+  }
+}
+
+async function fetchSellerFoods() {
+  if (!user) return;
+
+  setFoodsLoading(true);
+
+  const { data, error } = await supabase
+    .from("foods")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("id", { ascending: false });
+
+  if (!error) {
+    setSellerFoods(data || []);
+  } else {
+    setMessage(`Could not load dishes: ${error.message}`);
+  }
+
+  setFoodsLoading(false);
+}
 
   function handleImageChange(event) {
-    const file = event.target.files[0];
+  const file = event.target.files[0];
 
-    if (!file) return;
+  if (!file) return;
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    const maxSizeInBytes = 5 * 1024 * 1024;
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+  const maxSizeInBytes = 5 * 1024 * 1024;
 
-    if (!allowedTypes.includes(file.type)) {
-      setMessage("Please upload a JPG, PNG, or WEBP image.");
-      return;
-    }
-
-    if (file.size > maxSizeInBytes) {
-      setMessage("Image is too large. Please upload an image below 5 MB.");
-      return;
-    }
-
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
-    setMessage("");
+  if (!allowedTypes.includes(file.type)) {
+    setMessage("Please upload a JPG, PNG, or WEBP image.");
+    return;
   }
 
-  async function fetchSellerFoods() {
-    setFoodsLoading(true);
-
-    const { data, error } = await supabase
-      .from("foods")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("id", { ascending: false });
-
-    if (!error) {
-      setSellerFoods(data || []);
-    }
-
-    setFoodsLoading(false);
+  if (file.size > maxSizeInBytes) {
+    setMessage("Image is too large. Please upload an image below 5 MB.");
+    return;
   }
+
+  setImageFile(file);
+  setImagePreview(URL.createObjectURL(file));
+  setMessage("");
+}
 
   async function fetchSellerOrders(shouldCheckNewOrder = false) {
     if (!user) return;
@@ -667,7 +792,7 @@ function playTingSound(forcePlay = false) {
                   </div>
 
                   <div className="mt-4 bg-[#111] border border-[#222] rounded-2xl p-4 space-y-3">
-                    {(order.items || []).map((item) => (
+                    {getOrderItems(order).map((item) => (
                       <div
                         key={`${order.id}-${item.id}`}
                         className="flex items-center justify-between gap-4"
@@ -775,6 +900,94 @@ function playTingSound(forcePlay = false) {
             </div>
           )}
         </section>
+
+          
+        <section className="mt-8 bg-[#111] border border-[#2a2a2a] rounded-3xl p-5 sm:p-6">
+  <div>
+    <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
+         Seller Profile
+    </p>
+
+    <h2 className="text-2xl sm:text-3xl font-bold mt-1">
+         Payment & Payout Details
+    </h2>
+
+    <p className="text-gray-500 mt-3 text-sm leading-relaxed">
+      Your payout details for receiving payments from customer orders.
+      </p>
+  </div>
+
+  <form
+  onSubmit={saveSellerProfile}
+    className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6"
+  >
+    <input
+      name="seller_name"
+      value={sellerProfile.seller_name}
+      onChange={handleSellerProfileChange}
+      className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500"
+      placeholder="Seller / Kitchen Name"
+    />
+
+    <input
+      name="phone"
+      value={sellerProfile.phone}
+      onChange={handleSellerProfileChange}
+      className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500"
+      placeholder="Seller Phone Number"
+    />
+
+    <input
+      name="upi_id"
+      value={sellerProfile.upi_id}
+      onChange={handleSellerProfileChange}
+      className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500"
+      placeholder="UPI ID"
+    />
+
+    <input
+      name="bank_account_holder"
+      value={sellerProfile.bank_account_holder}
+      onChange={handleSellerProfileChange}
+      className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500"
+      placeholder="Bank Account Holder Name"
+    />
+
+    <input
+      name="bank_account_number"
+      value={sellerProfile.bank_account_number}
+      onChange={handleSellerProfileChange}
+      className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500"
+      placeholder="Bank Account Number"
+    />
+
+    <input
+      name="ifsc_code"
+      value={sellerProfile.ifsc_code}
+      onChange={handleSellerProfileChange}
+      className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500 uppercase"
+      placeholder="IFSC Code"
+    />
+
+    <input
+      name="pan_number"
+      value={sellerProfile.pan_number}
+      onChange={handleSellerProfileChange}
+      className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500 uppercase"
+      placeholder="PAN Number"
+    />
+
+    <button
+      type="submit"
+      disabled={profileLoading}
+      className="md:col-span-2 bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 text-black font-black px-6 py-4 rounded-2xl active:scale-95 transition-all"
+    >
+      {profileLoading
+  ? "Saving & Creating Vendor..."
+  : "Save Profile & Create Vendor"}
+    </button>
+  </form>
+</section>
 
         <form
           onSubmit={handleSubmit}
