@@ -34,6 +34,16 @@ export default function CustomerLogin() {
     return phone.replace(/\D/g, "");
   }
 
+  function buildFlatAddress() {
+    return [
+      formData.apartmentName.trim(),
+      formData.block.trim(),
+      formData.flatNo.trim(),
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }
+
   async function handleAuth(event) {
     event.preventDefault();
 
@@ -64,8 +74,10 @@ export default function CustomerLogin() {
           return;
         }
 
+        const flatAddress = buildFlatAddress();
+
         const { data, error } = await supabase.auth.signUp({
-          email: formData.email,
+          email: formData.email.trim(),
           password: formData.password,
           options: {
             data: {
@@ -74,6 +86,7 @@ export default function CustomerLogin() {
               apartment_name: formData.apartmentName.trim(),
               block: formData.block.trim(),
               flat_no: formData.flatNo.trim(),
+              flat: flatAddress,
               role: selectedRole,
             },
           },
@@ -88,17 +101,26 @@ export default function CustomerLogin() {
         const newUser = data?.user;
 
         if (newUser) {
-          await supabase.from("profiles").upsert({
-            id: newUser.id,
-            full_name: formData.fullName.trim(),
-            phone: cleanedPhone,
-            email: formData.email.trim(),
-            apartment_name: formData.apartmentName.trim(),
-            block: formData.block.trim(),
-            flat_no: formData.flatNo.trim(),
-            role: selectedRole,
-            is_seller: selectedRole === "seller",
-          });
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .upsert({
+              id: newUser.id,
+              full_name: formData.fullName.trim(),
+              phone: cleanedPhone,
+              email: formData.email.trim(),
+              apartment_name: formData.apartmentName.trim(),
+              block: formData.block.trim(),
+              flat_no: formData.flatNo.trim(),
+              flat: flatAddress,
+              role: selectedRole,
+              is_seller: selectedRole === "seller",
+            });
+
+          if (profileError) {
+            setMessage(`Profile save failed: ${profileError.message}`);
+            setLoading(false);
+            return;
+          }
         }
 
         if (selectedRole === "seller") {
@@ -108,7 +130,7 @@ export default function CustomerLogin() {
         }
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
-          email: formData.email,
+          email: formData.email.trim(),
           password: formData.password,
         });
 
@@ -150,15 +172,12 @@ export default function CustomerLogin() {
       <div className="absolute top-0 right-0 w-72 h-72 bg-yellow-500/10 blur-[100px] rounded-full" />
 
       <div className="relative w-full max-w-lg bg-[#111111] border border-[#2a2a2a] rounded-[2rem] p-6 sm:p-8 shadow-2xl shadow-black/50">
-
-        {/* Logo */}
         <div className="flex items-center justify-center mb-6">
           <div className="w-14 h-14 rounded-3xl bg-yellow-500 flex items-center justify-center shadow-lg shadow-yellow-500/20">
             <span className="text-black text-2xl font-black">Q</span>
           </div>
         </div>
 
-        {/* Role Selector */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           <button
             type="button"
@@ -187,8 +206,10 @@ export default function CustomerLogin() {
 
         <h1 className="text-3xl font-black text-center">
           {isSignUp
-            ? `Create ${selectedRole === "seller" ? "Seller" : "Customer"} Account`
-            : `Welcome Back`}
+            ? `Create ${
+                selectedRole === "seller" ? "Seller" : "Customer"
+              } Account`
+            : "Welcome Back"}
         </h1>
 
         <p className="text-gray-400 mt-3 text-center leading-relaxed">
@@ -204,7 +225,6 @@ export default function CustomerLogin() {
         )}
 
         <form onSubmit={handleAuth} className="mt-7 space-y-4">
-
           {isSignUp && (
             <div className="grid sm:grid-cols-2 gap-4">
               <input
@@ -311,13 +331,9 @@ export default function CustomerLogin() {
             : "New here? Create an account"}
         </button>
 
-        <Link
-          to="/"
-          className="block text-gray-500 text-sm mt-6 text-center"
-        >
+        <Link to="/" className="block text-gray-500 text-sm mt-6 text-center">
           Continue to QuickBites
         </Link>
-
       </div>
     </main>
   );
