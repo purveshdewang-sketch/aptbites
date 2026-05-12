@@ -20,6 +20,7 @@ export default function SellerDashboard() {
   });
 
   const [sellerFoods, setSellerFoods] = useState([]);
+  const [timerTick, setTimerTick] = useState(0);
   const [sellerOrders, setSellerOrders] = useState([]);
   const [editingFood, setEditingFood] = useState(null);
   const [imageFile, setImageFile] = useState(null);
@@ -67,6 +68,14 @@ export default function SellerDashboard() {
       supabase.removeChannel(channel);
     };
   }, [user]);
+
+  useEffect(() => {
+  const interval = setInterval(() => {
+    setTimerTick((current) => current + 1);
+  }, 60000);
+
+  return () => clearInterval(interval);
+}, []);
 
   useEffect(() => {
     if (!user) return;
@@ -462,16 +471,16 @@ export default function SellerDashboard() {
   }
 
   function getAutoStatus(order) {
-    function getProgressPercentage(status) {
-  const currentStatus = normalizeStatus(status);
+  timerTick;
 
-  if (currentStatus === "confirmed") return 20;
-  if (currentStatus === "cooking") return 40;
-  if (currentStatus === "packing") return 65;
-  if (currentStatus === "out_for_delivery") return 90;
-  if (currentStatus === "completed") return 100;
+  const createdAt = new Date(order.created_at || Date.now()).getTime();
+  const minutesPassed = Math.floor((Date.now() - createdAt) / 60000);
 
-  return 10;
+  if (minutesPassed >= 40) return "completed";
+  if (minutesPassed >= 30) return "out_for_delivery";
+  if (minutesPassed >= 20) return "packing";
+  if (minutesPassed >= 10) return "cooking";
+  return "confirmed";
 }
     const createdAt = new Date(order.created_at || Date.now()).getTime();
     const minutesPassed = Math.floor((Date.now() - createdAt) / 60000);
@@ -1034,4 +1043,3 @@ export default function SellerDashboard() {
       </div>
     </main>
   );
-}
