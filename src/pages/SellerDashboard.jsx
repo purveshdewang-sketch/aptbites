@@ -484,7 +484,6 @@ function getAutoStatus(order) {
   return "confirmed";
 }
     
-  }
 
   function getStatusLabel(status) {
     const currentStatus = normalizeStatus(status);
@@ -1037,3 +1036,4 @@ function getAutoStatus(order) {
       </div>
     </main>
   );
+}
