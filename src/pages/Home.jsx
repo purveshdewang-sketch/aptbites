@@ -16,7 +16,7 @@ export default function Home() {
               <div className="inline-flex items-center gap-2 bg-[#111] border border-[#2a2a2a] rounded-full px-3 py-2 mb-5">
                 <span className="w-2 h-2 rounded-full bg-yellow-400" />
                 <p className="text-yellow-400 font-semibold text-xs tracking-wide uppercase">
-                  Apartment-only homemade food
+                  neighbourhood homemade food
                 </p>
               </div>
 
