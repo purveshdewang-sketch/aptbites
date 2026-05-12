@@ -170,16 +170,17 @@ export default function Orders() {
 
     if (!confirmCancel) return;
 
-    const { error } = await supabase
+      const { data, error } = await supabase
       .from("orders")
       .update({ status: "cancelled" })
       .eq("id", orderId)
-      .eq("user_id", user.id);
+      .eq("user_id", user.id)
+      .select("id, status");
 
-    if (error) {
-      alert(`Could not cancel order: ${error.message}`);
-      return;
-    }
+    if (!data || data.length === 0) {
+  alert("Cancel failed: this order does not belong to the current logged-in user.");
+  return;
+}
 
     setCancelMessage("Order cancelled successfully.");
 
