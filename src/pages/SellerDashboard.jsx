@@ -220,7 +220,7 @@ useEffect(() => {
     if (!file) return;
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    const maxSizeInBytes = 5 * 1024 * 1024;
+    const maxSizeInBytes = 2 * 1024 * 1024;
 
     if (!allowedTypes.includes(file.type)) {
       setMessage("Please upload a JPG, PNG, or WEBP image.");
@@ -388,7 +388,16 @@ useEffect(() => {
     setMessage("");
 
     try {
-      const imageUrl = await uploadDishImage();
+      let imageUrl = "";
+
+try {
+  imageUrl = await uploadDishImage();
+} catch (error) {
+  console.error(error);
+  setMessage(`Image upload failed: ${error.message}`);
+  setLoading(false);
+  return;
+}
 
       const payload = {
         user_id: user.id,
