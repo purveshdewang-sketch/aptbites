@@ -530,13 +530,21 @@ function getAutoStatus(order) {
   return 10;
 }
 
-  const activeSellerOrders = sellerOrders.filter(
-    (order) => normalizeStatus(getAutoStatus(order)) !== "completed"
-  );
+  const activeSellerOrders = sellerOrders.filter((order) => {
+  const status = normalizeStatus(order.status);
 
-  const soldOrders = sellerOrders.filter(
-    (order) => normalizeStatus(getAutoStatus(order)) === "completed"
-  );
+  if (status === "cancelled") return false;
+
+  return normalizeStatus(getAutoStatus(order)) !== "completed";
+});
+
+  const soldOrders = sellerOrders.filter((order) => {
+  const status = normalizeStatus(order.status);
+
+  if (status === "cancelled") return false;
+
+  return normalizeStatus(getAutoStatus(order)) === "completed";
+});
 
   const totalOrdersCount = sellerOrders.length;
   const activeOrdersCount = activeSellerOrders.length;

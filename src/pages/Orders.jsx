@@ -92,6 +92,8 @@ export default function Orders() {
   function getAutoStatus(order) {
     timerTick;
 
+    if (normalizeStatus(order.status) === "cancelled") return "cancelled";
+
     const createdAt = new Date(order.created_at || Date.now()).getTime();
     const minutesPassed = Math.floor((Date.now() - createdAt) / 60000);
 
@@ -130,12 +132,17 @@ export default function Orders() {
     if (currentStatus === "cooking") return "Cooking";
     if (currentStatus === "packing") return "Packing";
     if (currentStatus === "completed") return "Delivered";
+    if (currentStatus === "cancelled") return "Cancelled";
 
     return "Order Confirmed";
   }
 
   function getStatusStyle(status) {
     const currentStatus = normalizeStatus(status);
+
+    if (currentStatus === "cancelled") {
+      return "bg-red-900/40 text-red-300 border-red-500/20";
+    }
 
     if (currentStatus === "completed") {
       return "bg-green-900/40 text-green-300 border-green-500/20";
@@ -150,6 +157,27 @@ export default function Orders() {
     }
 
     return "bg-yellow-900/30 text-yellow-300 border-yellow-500/20";
+  }
+
+  async function cancelOrder(orderId) {
+    const confirmCancel = window.confirm("Cancel this order?");
+
+    if (!confirmCancel) return;
+
+    const { error } = await supabase
+      .from("orders")
+      .update({ status: "cancelled" })
+      .eq("id", orderId)
+      .eq("user_id", user.id);
+
+    if (error) {
+      alert(`Could not cancel order: ${error.message}`);
+      return;
+    }
+
+    setOrders((currentOrders) =>
+      currentOrders.filter((order) => order.id !== orderId)
+    );
   }
 
   function OrderStatusBar({ status }) {
@@ -198,9 +226,10 @@ export default function Orders() {
     );
   }
 
-  const visibleOrders = orders.filter(
-    (order) => normalizeStatus(getAutoStatus(order)) !== "completed"
-  );
+  const visibleOrders = orders.filter((order) => {
+    const status = normalizeStatus(getAutoStatus(order));
+    return status !== "completed" && status !== "cancelled";
+  });
 
   return (
     <>
@@ -313,6 +342,14 @@ export default function Orders() {
                     </div>
 
                     <OrderStatusBar status={autoStatus} />
+
+                    <button
+                      type="button"
+                      onClick={() => cancelOrder(order.id)}
+                      className="mt-5 w-full border border-red-500/50 text-red-400 hover:bg-red-500 hover:text-black font-black py-3 rounded-2xl active:scale-95 transition-all"
+                    >
+                      Cancel Order
+                    </button>
 
                     <div className="mt-5 bg-black/40 border border-[#222] rounded-3xl p-4 space-y-3">
                       {getOrderItems(order).map((item) => (
