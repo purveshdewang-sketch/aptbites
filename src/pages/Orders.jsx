@@ -37,24 +37,55 @@ export default function Orders() {
     fetchOrders();
 
     const channel = supabase
-      .channel(`customer-active-orders-${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "orders",
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          fetchOrders();
-        }
-      )
-      .subscribe();
+  .channel(`seller-orders-${user.id}`)
+  .on(
+    "postgres_changes",
+    {
+      event: "INSERT",
+      schema: "public",
+      table: "orders",
+      filter: `seller_id=eq.${user.id}`,
+    },
+    (payload) => {
+      const newOrder = payload.new;
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+      setSellerOrders((currentOrders) => {
+        const alreadyExists = currentOrders.some(
+          (order) => order.id === newOrder.id
+        );
+
+        if (alreadyExists) return currentOrders;
+
+        return [newOrder, ...currentOrders];
+      });
+
+      playTingSound();
+      setMessage("🔔 New order received.");
+    }
+  )
+  .on(
+    "postgres_changes",
+    {
+      event: "UPDATE",
+      schema: "public",
+      table: "orders",
+      filter: `seller_id=eq.${user.id}`,
+    },
+    (payload) => {
+      const updatedOrder = payload.new;
+
+      setSellerOrders((currentOrders) =>
+        currentOrders.map((order) =>
+          order.id === updatedOrder.id ? updatedOrder : order
+        )
+      );
+    }
+  )
+  .subscribe();
+  
+return () => {
+  supabase.removeChannel(channel);
+};
   }, [user]);
 
   async function fetchOrders() {
