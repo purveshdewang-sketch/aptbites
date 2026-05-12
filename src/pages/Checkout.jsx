@@ -10,7 +10,12 @@ const PLATFORM_FEE = 10;
 export default function Checkout() {
   const { cartItems, cartTotal, clearCart } = useCart();
   const { user } = useAuth();
-  console.log("CURRENT LOGIN USER:", user);
+  console.log("CURRENT LOGIN USER DETAILS:", {
+  id: user?.id,
+  email: user?.email,
+  phone: user?.phone,
+  metadata: user?.user_metadata,
+});
 
   const navigate = useNavigate();
 
