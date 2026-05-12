@@ -8,7 +8,6 @@ const ORDER_STEPS = [
   { key: "confirmed", label: "Confirmed", icon: "✅" },
   { key: "cooking", label: "Cooking", icon: "🍳" },
   { key: "packing", label: "Packing", icon: "📦" },
-  { key: "out_for_delivery", label: "Out", icon: "🛵" },
   { key: "completed", label: "Delivered", icon: "🏁" },
 ];
 
@@ -16,8 +15,17 @@ export default function Orders() {
   const { user } = useAuth();
 
   const [orders, setOrders] = useState([]);
+  const [timerTick, setTimerTick] = useState(0);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimerTick((current) => current + 1);
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (!user) {
@@ -58,7 +66,6 @@ export default function Orders() {
       .from("orders")
       .select("*")
       .eq("user_id", user.id)
-      .neq("status", "completed")
       .order("id", { ascending: false });
 
     if (error) {
@@ -77,8 +84,37 @@ export default function Orders() {
     if (value === "placed") return "confirmed";
     if (value === "baking") return "cooking";
     if (value === "delivered") return "completed";
+    if (value === "out_for_delivery") return "completed";
 
     return value;
+  }
+
+  function getAutoStatus(order) {
+    timerTick;
+
+    const createdAt = new Date(order.created_at || Date.now()).getTime();
+    const minutesPassed = Math.floor((Date.now() - createdAt) / 60000);
+
+    if (minutesPassed >= 30) return "completed";
+    if (minutesPassed >= 20) return "packing";
+    if (minutesPassed >= 10) return "cooking";
+
+    return "confirmed";
+  }
+
+  function getOrderItems(order) {
+    if (Array.isArray(order.items)) return order.items;
+
+    if (typeof order.items === "string") {
+      try {
+        const parsedItems = JSON.parse(order.items);
+        return Array.isArray(parsedItems) ? parsedItems : [];
+      } catch {
+        return [];
+      }
+    }
+
+    return [];
   }
 
   function getStepIndex(status) {
@@ -93,7 +129,6 @@ export default function Orders() {
     if (currentStatus === "confirmed") return "Order Confirmed";
     if (currentStatus === "cooking") return "Cooking";
     if (currentStatus === "packing") return "Packing";
-    if (currentStatus === "out_for_delivery") return "Out for Delivery";
     if (currentStatus === "completed") return "Delivered";
 
     return "Order Confirmed";
@@ -102,8 +137,8 @@ export default function Orders() {
   function getStatusStyle(status) {
     const currentStatus = normalizeStatus(status);
 
-    if (currentStatus === "out_for_delivery") {
-      return "bg-purple-900/40 text-purple-300 border-purple-500/20";
+    if (currentStatus === "completed") {
+      return "bg-green-900/40 text-green-300 border-green-500/20";
     }
 
     if (currentStatus === "packing") {
@@ -114,10 +149,6 @@ export default function Orders() {
       return "bg-orange-900/40 text-orange-300 border-orange-500/20";
     }
 
-    if (currentStatus === "completed") {
-      return "bg-green-900/40 text-green-300 border-green-500/20";
-    }
-
     return "bg-yellow-900/30 text-yellow-300 border-yellow-500/20";
   }
 
@@ -126,7 +157,7 @@ export default function Orders() {
 
     return (
       <div className="mt-5">
-        <div className="grid grid-cols-5 gap-1 sm:gap-2">
+        <div className="grid grid-cols-4 gap-1 sm:gap-2">
           {ORDER_STEPS.map((step, index) => {
             const isActive = index <= activeIndex;
             const isCurrent = index === activeIndex;
@@ -163,12 +194,13 @@ export default function Orders() {
             }}
           />
         </div>
-
-        <p className="text-gray-500 text-xs mt-3 text-center">
-        </p>
       </div>
     );
   }
+
+  const visibleOrders = orders.filter(
+    (order) => normalizeStatus(getAutoStatus(order)) !== "completed"
+  );
 
   return (
     <>
@@ -186,7 +218,7 @@ export default function Orders() {
             </h1>
 
             <p className="text-gray-400 mt-4 max-w-2xl leading-relaxed">
-              Track your QuickBites orders in real time from kitchen confirmation to delivery.
+              Track your QuickBites orders from kitchen confirmation to delivery.
             </p>
           </div>
 
@@ -225,7 +257,7 @@ export default function Orders() {
             </div>
           )}
 
-          {user && !loading && !errorMessage && orders.length === 0 && (
+          {user && !loading && !errorMessage && visibleOrders.length === 0 && (
             <div className="mt-10 bg-[#111111] border border-[#222] rounded-[2rem] p-8 sm:p-10 text-center">
               <div className="w-20 h-20 mx-auto rounded-full bg-yellow-500/10 flex items-center justify-center text-4xl">
                 🍲
@@ -248,59 +280,65 @@ export default function Orders() {
             </div>
           )}
 
-          {user && !loading && !errorMessage && orders.length > 0 && (
+          {user && !loading && !errorMessage && visibleOrders.length > 0 && (
             <div className="mt-8 space-y-5">
-              {orders.map((order) => (
-                <article
-                  key={order.id}
-                  className="bg-[#111111] border border-[#222] rounded-[2rem] p-4 sm:p-6 shadow-xl shadow-black/20"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                    <div>
-                      <p className="text-gray-500 text-sm">Order #{order.id}</p>
+              {visibleOrders.map((order) => {
+                const autoStatus = getAutoStatus(order);
 
-                      <h2 className="text-2xl sm:text-3xl font-black mt-1">
-                        ₹{order.total_amount}
-                      </h2>
+                return (
+                  <article
+                    key={order.id}
+                    className="bg-[#111111] border border-[#222] rounded-[2rem] p-4 sm:p-6 shadow-xl shadow-black/20"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                      <div>
+                        <p className="text-gray-500 text-sm">Order #{order.id}</p>
 
-                      <p className="text-gray-400 text-sm mt-2">
-                        {order.delivery_type || "Delivery"} • {order.flat}
-                      </p>
-                    </div>
+                        <h2 className="text-2xl sm:text-3xl font-black mt-1">
+                          ₹{order.total_amount}
+                        </h2>
 
-                    <span
-                      className={`w-fit border text-xs font-bold px-3 py-1.5 rounded-full ${getStatusStyle(
-                        order.status
-                      )}`}
-                    >
-                      {getStatusLabel(order.status)}
-                    </span>
-                  </div>
-
-                  <OrderStatusBar status={order.status} />
-
-                  <div className="mt-5 bg-black/40 border border-[#222] rounded-3xl p-4 space-y-3">
-                    {(order.items || []).map((item) => (
-                      <div
-                        key={`${order.id}-${item.id}`}
-                        className="flex items-center justify-between gap-4"
-                      >
-                        <div className="min-w-0">
-                          <p className="font-semibold truncate">{item.name}</p>
-
-                          <p className="text-gray-500 text-sm">
-                            Qty {item.quantity} × ₹{item.price}
-                          </p>
-                        </div>
-
-                        <p className="text-yellow-400 font-bold shrink-0">
-                          ₹{Number(item.price || 0) * Number(item.quantity || 0)}
+                        <p className="text-gray-400 text-sm mt-2">
+                          {order.delivery_type || "Delivery"} • {order.flat}
                         </p>
                       </div>
-                    ))}
-                  </div>
-                </article>
-              ))}
+
+                      <span
+                        className={`w-fit border text-xs font-bold px-3 py-1.5 rounded-full ${getStatusStyle(
+                          autoStatus
+                        )}`}
+                      >
+                        {getStatusLabel(autoStatus)}
+                      </span>
+                    </div>
+
+                    <OrderStatusBar status={autoStatus} />
+
+                    <div className="mt-5 bg-black/40 border border-[#222] rounded-3xl p-4 space-y-3">
+                      {getOrderItems(order).map((item) => (
+                        <div
+                          key={`${order.id}-${item.id}`}
+                          className="flex items-center justify-between gap-4"
+                        >
+                          <div className="min-w-0">
+                            <p className="font-semibold truncate">{item.name}</p>
+
+                            <p className="text-gray-500 text-sm">
+                              Qty {item.quantity} × ₹{item.price}
+                            </p>
+                          </div>
+
+                          <p className="text-yellow-400 font-bold shrink-0">
+                            ₹
+                            {Number(item.price || 0) *
+                              Number(item.quantity || 0)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </div>

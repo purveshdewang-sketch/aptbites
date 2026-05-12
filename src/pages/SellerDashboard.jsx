@@ -522,11 +522,10 @@ function getAutoStatus(order) {
     function getProgressPercentage(status) {
   const currentStatus = normalizeStatus(status);
 
-  if (currentStatus === "confirmed") return 20;
-  if (currentStatus === "cooking") return 10;
+  if (currentStatus === "confirmed") return 10;
+  if (currentStatus === "cooking") return 15;
   if (currentStatus === "packing") return 35;
-  if (currentStatus === "out_for_delivery") return 50;
-  if (currentStatus === "completed") return 70;
+  if (currentStatus === "completed") return 50;
 
   return 10;
 }
