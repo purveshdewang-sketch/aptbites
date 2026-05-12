@@ -67,6 +67,7 @@ export default function Orders() {
       .from("orders")
       .select("*")
       .eq("user_id", user.id)
+      .not("status", "in", '("cancelled","completed")')
       .order("id", { ascending: false });
 
     if (error) {
@@ -82,6 +83,7 @@ export default function Orders() {
   function normalizeStatus(status) {
     const value = String(status || "confirmed").toLowerCase();
 
+    if (value === "cancelled") return "cancelled";
     if (value === "placed") return "confirmed";
     if (value === "baking") return "cooking";
     if (value === "delivered") return "completed";
@@ -93,7 +95,10 @@ export default function Orders() {
   function getAutoStatus(order) {
     timerTick;
 
-    if (normalizeStatus(order.status) === "cancelled") return "cancelled";
+    const dbStatus = normalizeStatus(order.status);
+
+    if (dbStatus === "cancelled") return "cancelled";
+    if (dbStatus === "completed") return "completed";
 
     const createdAt = new Date(order.created_at || Date.now()).getTime();
     const minutesPassed = Math.floor((Date.now() - createdAt) / 60000);
@@ -178,12 +183,13 @@ export default function Orders() {
 
     setCancelMessage("Order cancelled successfully.");
 
-setTimeout(() => {
-  setCancelMessage("");
-  setOrders((currentOrders) =>
-    currentOrders.filter((order) => order.id !== orderId)
-  );
-}, 1500);
+    setOrders((currentOrders) =>
+      currentOrders.filter((order) => order.id !== orderId)
+    );
+
+    setTimeout(() => {
+      setCancelMessage("");
+    }, 1500);
   }
 
   function OrderStatusBar({ status }) {
@@ -232,15 +238,16 @@ setTimeout(() => {
     );
   }
 
- const visibleOrders = orders.filter((order) => {
-  const dbStatus = normalizeStatus(order.status);
-  const autoStatus = normalizeStatus(getAutoStatus(order));
+  const visibleOrders = orders.filter((order) => {
+    const dbStatus = normalizeStatus(order.status);
+    const autoStatus = normalizeStatus(getAutoStatus(order));
 
-  if (dbStatus === "cancelled") return false;
-  if (autoStatus === "completed") return false;
+    if (dbStatus === "cancelled") return false;
+    if (dbStatus === "completed") return false;
+    if (autoStatus === "completed") return false;
 
-  return true;
-});
+    return true;
+  });
 
   return (
     <>
@@ -261,11 +268,12 @@ setTimeout(() => {
               Track your QuickBites orders from kitchen confirmation to delivery.
             </p>
           </div>
+
           {cancelMessage && (
-  <div className="mt-5 bg-red-950/40 border border-red-500/40 text-red-300 rounded-2xl p-4 text-sm font-bold">
-    {cancelMessage}
-  </div>
-)}
+            <div className="mt-5 bg-red-950/40 border border-red-500/40 text-red-300 rounded-2xl p-4 text-sm font-bold">
+              {cancelMessage}
+            </div>
+          )}
 
           {!user && (
             <div className="mt-10 bg-[#111111] border border-[#222] rounded-[2rem] p-8 text-center">
