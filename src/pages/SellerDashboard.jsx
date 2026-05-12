@@ -685,6 +685,18 @@ export default function SellerDashboard() {
                         )}`}
                       >
                         {getStatusLabel(autoStatus)}
+
+                        <div className="mt-3">
+                        <div className="w-full h-2 bg-[#222] rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-yellow-400 transition-all duration-1000 ease-in-out"
+                            style={{
+                              width: `${getProgressPercentage(autoStatus)}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+
                       </span>
                     </div>
 
