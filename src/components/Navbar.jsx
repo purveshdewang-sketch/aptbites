@@ -155,7 +155,7 @@ export default function Navbar() {
               </p>
 
               <p className="text-[10px] text-gray-500 mt-1 tracking-wide uppercase">
-                Apartment Food
+                neighbourhood food
               </p>
             </div>
           </Link>

@@ -93,7 +93,7 @@ export default function SellerLogin() {
           </h1>
 
           <p className="text-gray-400 mt-3 text-sm leading-relaxed">
-            Access your kitchen dashboard and manage live apartment food orders.
+            Access your kitchen dashboard and manage live neighbourhood food orders.
           </p>
         </div>
 

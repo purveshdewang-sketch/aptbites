@@ -214,7 +214,7 @@ export default function CustomerLogin() {
 
         <p className="text-gray-400 mt-3 text-center leading-relaxed">
           {selectedRole === "seller"
-            ? "Manage dishes, stock, and realtime apartment food orders."
+            ? "Manage dishes, stock, and realtime neighbourhood food orders."
             : "Order homemade food from your apartment community."}
         </p>
 
