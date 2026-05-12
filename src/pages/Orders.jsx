@@ -15,6 +15,7 @@ export default function Orders() {
   const { user } = useAuth();
 
   const [orders, setOrders] = useState([]);
+  const [cancelMessage, setCancelMessage] = useState("");
   const [timerTick, setTimerTick] = useState(0);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -175,9 +176,14 @@ export default function Orders() {
       return;
     }
 
-    setOrders((currentOrders) =>
-      currentOrders.filter((order) => order.id !== orderId)
-    );
+    setCancelMessage("Order cancelled successfully.");
+
+setTimeout(() => {
+  setCancelMessage("");
+  setOrders((currentOrders) =>
+    currentOrders.filter((order) => order.id !== orderId)
+  );
+}, 1500);
   }
 
   function OrderStatusBar({ status }) {
@@ -226,10 +232,15 @@ export default function Orders() {
     );
   }
 
-  const visibleOrders = orders.filter((order) => {
-    const status = normalizeStatus(getAutoStatus(order));
-    return status !== "completed" && status !== "cancelled";
-  });
+ const visibleOrders = orders.filter((order) => {
+  const dbStatus = normalizeStatus(order.status);
+  const autoStatus = normalizeStatus(getAutoStatus(order));
+
+  if (dbStatus === "cancelled") return false;
+  if (autoStatus === "completed") return false;
+
+  return true;
+});
 
   return (
     <>
@@ -250,6 +261,11 @@ export default function Orders() {
               Track your QuickBites orders from kitchen confirmation to delivery.
             </p>
           </div>
+          {cancelMessage && (
+  <div className="mt-5 bg-red-950/40 border border-red-500/40 text-red-300 rounded-2xl p-4 text-sm font-bold">
+    {cancelMessage}
+  </div>
+)}
 
           {!user && (
             <div className="mt-10 bg-[#111111] border border-[#222] rounded-[2rem] p-8 text-center">

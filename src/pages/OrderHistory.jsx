@@ -53,7 +53,7 @@ export default function OrderHistory() {
       .from("orders")
       .select("*")
       .eq("user_id", user.id)
-      .eq("status", "completed")
+      .in("status", ["completed", "cancelled"])
       .order("id", { ascending: false });
 
     if (error) {
@@ -66,15 +66,58 @@ export default function OrderHistory() {
     setLoading(false);
   }
 
+  function normalizeStatus(status) {
+    return String(status || "completed").toLowerCase();
+  }
+
+  function getStatusLabel(status) {
+    const currentStatus = normalizeStatus(status);
+
+    if (currentStatus === "cancelled") return "Cancelled";
+    return "Delivered";
+  }
+
+  function getStatusStyle(status) {
+    const currentStatus = normalizeStatus(status);
+
+    if (currentStatus === "cancelled") {
+      return "bg-red-900/40 text-red-300 border-red-500/20";
+    }
+
+    return "bg-green-900/40 text-green-300 border-green-500/20";
+  }
+
+  function getOrderItems(order) {
+    if (Array.isArray(order.items)) return order.items;
+
+    if (typeof order.items === "string") {
+      try {
+        const parsedItems = JSON.parse(order.items);
+        return Array.isArray(parsedItems) ? parsedItems : [];
+      } catch {
+        return [];
+      }
+    }
+
+    return [];
+  }
+
   function handleReorder(order) {
-    if (!order.items || order.items.length === 0) {
+    if (normalizeStatus(order.status) === "cancelled") {
+      alert("Cancelled orders cannot be reordered directly.");
+      return;
+    }
+
+    const orderItems = getOrderItems(order);
+
+    if (orderItems.length === 0) {
       alert("This order has no items to reorder.");
       return;
     }
 
     clearCart();
 
-    order.items.forEach((item) => {
+    orderItems.forEach((item) => {
       const quantity = Number(item.quantity || 1);
 
       for (let i = 0; i < quantity; i++) {
@@ -101,11 +144,11 @@ export default function OrderHistory() {
             </p>
 
             <h1 className="text-4xl sm:text-5xl font-black mt-3 tracking-tight">
-              Completed Orders
+              Past Orders
             </h1>
 
             <p className="text-gray-400 mt-4 max-w-2xl leading-relaxed">
-              View your past completed QuickBites orders and quickly reorder your favorites.
+              View your delivered and cancelled QuickBites orders.
             </p>
           </div>
 
@@ -150,12 +193,11 @@ export default function OrderHistory() {
               </div>
 
               <h2 className="text-2xl sm:text-3xl font-bold mt-6">
-                No completed orders yet
+                No order history yet
               </h2>
 
               <p className="text-gray-500 mt-3 max-w-md mx-auto">
-                Completed orders will appear here after the seller marks them as
-                completed.
+                Delivered and cancelled orders will appear here.
               </p>
 
               <Link
@@ -169,83 +211,102 @@ export default function OrderHistory() {
 
           {user && !loading && !errorMessage && orders.length > 0 && (
             <div className="mt-10 space-y-5">
-              {orders.map((order) => (
-                <article
-                  key={order.id}
-                  className="bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-6"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                    <div>
-                      <p className="text-gray-500 text-sm">
-                        Order #{order.id}
-                      </p>
+              {orders.map((order) => {
+                const orderStatus = normalizeStatus(order.status);
+                const orderItems = getOrderItems(order);
 
-                      <h2 className="text-2xl font-black mt-1">
-                        ₹{order.total_amount}
-                      </h2>
+                return (
+                  <article
+                    key={order.id}
+                    className="bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-6"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                      <div>
+                        <p className="text-gray-500 text-sm">
+                          Order #{order.id}
+                        </p>
 
-                      <p className="text-gray-400 text-sm mt-2">
-                        {order.delivery_type} • {order.flat}
-                      </p>
-                    </div>
+                        <h2 className="text-2xl font-black mt-1">
+                          ₹{order.total_amount}
+                        </h2>
 
-                    <span className="w-fit border text-xs font-bold px-3 py-1.5 rounded-full bg-green-900/40 text-green-300 border-green-500/20">
-                      Completed
-                    </span>
-                  </div>
-
-                  <div className="mt-5 bg-black/40 border border-[#222] rounded-3xl p-4 space-y-3">
-                    {(order.items || []).map((item) => (
-                      <div
-                        key={`${order.id}-${item.id}`}
-                        className="flex items-center justify-between gap-4"
-                      >
-                        <div className="min-w-0">
-                          <p className="font-semibold truncate">{item.name}</p>
-
-                          <p className="text-gray-500 text-sm">
-                            Qty {item.quantity} × ₹{item.price}
-                          </p>
-                        </div>
-
-                        <p className="text-yellow-400 font-bold shrink-0">
-                          ₹{Number(item.price || 0) * Number(item.quantity || 0)}
+                        <p className="text-gray-400 text-sm mt-2">
+                          {order.delivery_type} • {order.flat}
                         </p>
                       </div>
-                    ))}
-                  </div>
 
-                  <div className="mt-4 bg-black/30 border border-[#222] rounded-2xl p-4 space-y-2 text-sm">
-                    <div className="flex justify-between text-gray-400">
-                      <span>Subtotal</span>
-                      <span>₹{order.subtotal_amount || 0}</span>
+                      <span
+                        className={`w-fit border text-xs font-bold px-3 py-1.5 rounded-full ${getStatusStyle(
+                          order.status
+                        )}`}
+                      >
+                        {getStatusLabel(order.status)}
+                      </span>
                     </div>
 
-                    <div className="flex justify-between text-gray-400">
-                      <span>Platform Fee</span>
-                      <span>₹{order.platform_fee || 10}</span>
+                    <div className="mt-5 bg-black/40 border border-[#222] rounded-3xl p-4 space-y-3">
+                      {orderItems.map((item) => (
+                        <div
+                          key={`${order.id}-${item.id}`}
+                          className="flex items-center justify-between gap-4"
+                        >
+                          <div className="min-w-0">
+                            <p className="font-semibold truncate">
+                              {item.name}
+                            </p>
+
+                            <p className="text-gray-500 text-sm">
+                              Qty {item.quantity} × ₹{item.price}
+                            </p>
+                          </div>
+
+                          <p className="text-yellow-400 font-bold shrink-0">
+                            ₹
+                            {Number(item.price || 0) *
+                              Number(item.quantity || 0)}
+                          </p>
+                        </div>
+                      ))}
                     </div>
 
-                    <div className="flex justify-between text-yellow-400 font-black border-t border-[#222] pt-2">
-                      <span>Total</span>
-                      <span>₹{order.total_amount || 0}</span>
+                    <div className="mt-4 bg-black/30 border border-[#222] rounded-2xl p-4 space-y-2 text-sm">
+                      <div className="flex justify-between text-gray-400">
+                        <span>Subtotal</span>
+                        <span>₹{order.subtotal_amount || 0}</span>
+                      </div>
+
+                      <div className="flex justify-between text-gray-400">
+                        <span>Platform Fee</span>
+                        <span>₹{order.platform_fee || 10}</span>
+                      </div>
+
+                      <div className="flex justify-between text-yellow-400 font-black border-t border-[#222] pt-2">
+                        <span>Total</span>
+                        <span>₹{order.total_amount || 0}</span>
+                      </div>
                     </div>
-                  </div>
 
-                  {order.notes && (
-                    <p className="text-gray-500 text-sm mt-4">
-                      Note: {order.notes}
-                    </p>
-                  )}
+                    {order.notes && (
+                      <p className="text-gray-500 text-sm mt-4">
+                        Note: {order.notes}
+                      </p>
+                    )}
 
-                  <button
-                    onClick={() => handleReorder(order)}
-                    className="mt-5 w-full bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black font-black py-3 rounded-2xl transition-all duration-200"
-                  >
-                    Re-order
-                  </button>
-                </article>
-              ))}
+                    {orderStatus === "cancelled" ? (
+                      <div className="mt-5 w-full border border-red-500/30 text-red-300 bg-red-950/20 font-black py-3 rounded-2xl text-center">
+                        Cancelled
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleReorder(order)}
+                        className="mt-5 w-full bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black font-black py-3 rounded-2xl transition-all duration-200"
+                      >
+                        Re-order
+                      </button>
+                    )}
+                  </article>
+                );
+              })}
             </div>
           )}
         </div>
