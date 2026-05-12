@@ -445,6 +445,17 @@ export default function SellerDashboard() {
   }
 
   function getAutoStatus(order) {
+    function getProgressPercentage(status) {
+  const currentStatus = normalizeStatus(status);
+
+  if (currentStatus === "confirmed") return 20;
+  if (currentStatus === "cooking") return 40;
+  if (currentStatus === "packing") return 65;
+  if (currentStatus === "out_for_delivery") return 90;
+  if (currentStatus === "completed") return 100;
+
+  return 10;
+}
     const createdAt = new Date(order.created_at || Date.now()).getTime();
     const minutesPassed = Math.floor((Date.now() - createdAt) / 60000);
 

@@ -165,7 +165,6 @@ export default function Orders() {
         </div>
 
         <p className="text-gray-500 text-xs mt-3 text-center">
-          Live status updates automatically when the seller updates your order.
         </p>
       </div>
     );
