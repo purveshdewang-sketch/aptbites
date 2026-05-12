@@ -246,27 +246,7 @@ async function saveSellerProfile(event) {
     setMessage(`Could not save seller profile: ${saveError.message}`);
     return;
   }
-
-  const { data, error: vendorError } = await supabase.functions.invoke(
-    "create-cashfree-vendor",
-    {
-      method: "POST",
-    }
-  );
-
-  setProfileLoading(false);
-
-  if (vendorError) {
-    setMessage(`Profile saved, but Cashfree vendor failed: ${vendorError.message}`);
-    return;
-  }
-
-  if (data?.error) {
-    setMessage(`Profile saved, but Cashfree vendor failed: ${data.error}`);
-    return;
-  }
-
-  setMessage("Seller profile saved and Cashfree vendor created successfully.");
+setMessage("Seller profile saved successfully.");
   fetchSellerProfile();
 }
 
@@ -983,8 +963,8 @@ async function fetchSellerFoods() {
       className="md:col-span-2 bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 text-black font-black px-6 py-4 rounded-2xl active:scale-95 transition-all"
     >
       {profileLoading
-  ? "Saving & Creating Vendor..."
-  : "Save Profile & Create Vendor"}
+  ? "Saving..."
+  : "Save Profile"}
     </button>
   </form>
 </section>

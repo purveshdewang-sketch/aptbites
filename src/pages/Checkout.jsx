@@ -332,50 +332,6 @@ export default function Checkout() {
               </div>
 
               <button
-  type="button"
-  onClick={async () => {
-    const { data, error } = await supabase.functions.invoke(
-      "create-payment-session",
-      {
-        body: {
-          customer_name: "Test Customer",
-          phone: "9999999999",
-          flat: "A-101",
-          delivery_type: "Delivery",
-          items: [
-            {
-              id: 1,
-              name: "Test Dish",
-              price: 100,
-              quantity: 1,
-            },
-          ],
-          subtotal_amount: 100,
-          platform_fee: 10,
-          total_amount: 110,
-          notes: "Test order",
-          seller_id: "test-seller-id",
-        },
-      }
-    );
-
-    console.log("PAYMENT SESSION DATA:", data);
-console.log("PAYMENT SESSION ERROR:", error);
-
-if (error?.context) {
-  const errorText = await error.context.text();
-  console.log("PAYMENT SESSION ERROR BODY:", errorText);
-  alert(errorText);
-} else {
-  alert(JSON.stringify(data));
-}
-  }}
-  className="w-full bg-blue-500 text-white font-bold py-3 rounded-2xl mb-4"
->
-  Test Payment Session
-</button>
-
-              <button
                 onClick={handlePlaceOrder}
                 disabled={loading}
                 className="w-full mt-3 bg-yellow-500 hover:bg-yellow-400 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-black font-black py-5 rounded-2xl text-lg transition-all duration-200 shadow-lg shadow-yellow-500/20"
