@@ -470,7 +470,7 @@ export default function SellerDashboard() {
     return String(status || "confirmed").toLowerCase();
   }
 
-  function getAutoStatus(order) {
+function getAutoStatus(order) {
   timerTick;
 
   const createdAt = new Date(order.created_at || Date.now()).getTime();
@@ -480,16 +480,10 @@ export default function SellerDashboard() {
   if (minutesPassed >= 30) return "out_for_delivery";
   if (minutesPassed >= 20) return "packing";
   if (minutesPassed >= 10) return "cooking";
+
   return "confirmed";
 }
-    const createdAt = new Date(order.created_at || Date.now()).getTime();
-    const minutesPassed = Math.floor((Date.now() - createdAt) / 60000);
-
-    if (minutesPassed >= 40) return "completed";
-    if (minutesPassed >= 30) return "out_for_delivery";
-    if (minutesPassed >= 20) return "packing";
-    if (minutesPassed >= 10) return "cooking";
-    return "confirmed";
+    
   }
 
   function getStatusLabel(status) {
