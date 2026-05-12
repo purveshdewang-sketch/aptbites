@@ -500,6 +500,18 @@ export default function SellerDashboard() {
     return "bg-yellow-900/30 text-yellow-300 border-yellow-500/20";
   }
 
+    function getProgressPercentage(status) {
+  const currentStatus = normalizeStatus(status);
+
+  if (currentStatus === "confirmed") return 20;
+  if (currentStatus === "cooking") return 40;
+  if (currentStatus === "packing") return 65;
+  if (currentStatus === "out_for_delivery") return 90;
+  if (currentStatus === "completed") return 100;
+
+  return 10;
+}
+
   const activeSellerOrders = sellerOrders.filter(
     (order) => normalizeStatus(getAutoStatus(order)) !== "completed"
   );
