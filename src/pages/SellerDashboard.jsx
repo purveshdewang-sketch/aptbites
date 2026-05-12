@@ -30,16 +30,6 @@ export default function SellerDashboard() {
   const [message, setMessage] = useState("");
   const [audioReady, setAudioReady] = useState(false);
 
-  const [sellerProfile, setSellerProfile] = useState({
-  seller_name: "",
-  phone: "",
-  upi_id: "",
-  bank_account_holder: "",
-  bank_account_number: "",
-  ifsc_code: "",
-  pan_number: "",
-});
-
 const [profileLoading, setProfileLoading] = useState(false);
 
   useEffect(() => {
@@ -58,7 +48,6 @@ const [profileLoading, setProfileLoading] = useState(false);
 
     fetchSellerFoods();
     fetchSellerOrders();
-    fetchSellerProfile();
 
     const channel = supabase
       .channel(`seller-orders-${user.id}`)
@@ -161,106 +150,6 @@ function playTingSound(forcePlay = false) {
     oscillator.start(now + delay);
     oscillator.stop(now + delay + 0.08);
   });
-}
-
-async function fetchSellerProfile() {
-  if (!user) return;
-
-  const { data, error } = await supabase
-    .from("seller_profiles")
-    .select("*")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (error) {
-    setMessage(`Could not load seller profile: ${error.message}`);
-    return;
-  }
-
-  if (data) {
-    setSellerProfile({
-      seller_name: data.seller_name || "",
-      phone: data.phone || "",
-      upi_id: data.upi_id || "",
-      bank_account_holder: data.bank_account_holder || "",
-      bank_account_number: data.bank_account_number || "",
-      ifsc_code: data.ifsc_code || "",
-      pan_number: data.pan_number || "",
-    });
-  }
-}
-
-function handleSellerProfileChange(event) {
-  const { name, value } = event.target;
-
-  setSellerProfile((current) => ({
-    ...current,
-    [name]: value,
-  }));
-}
-
-async function saveSellerProfile(event) {
-  event.preventDefault();
-
-  if (!user) {
-    setMessage("Please login before saving seller payment details.");
-    return;
-  }
-
-  if (
-    !sellerProfile.seller_name ||
-    !sellerProfile.phone ||
-    !sellerProfile.upi_id ||
-    !sellerProfile.bank_account_holder ||
-    !sellerProfile.bank_account_number ||
-    !sellerProfile.ifsc_code ||
-    !sellerProfile.pan_number
-  ) {
-    setMessage("Please fill all seller payment profile details.");
-    return;
-  }
-
-  setProfileLoading(true);
-  setMessage("");
-
-  const payload = {
-    user_id: user.id,
-    seller_name: sellerProfile.seller_name,
-    phone: sellerProfile.phone,
-    upi_id: sellerProfile.upi_id,
-    bank_account_holder: sellerProfile.bank_account_holder,
-    bank_account_number: sellerProfile.bank_account_number,
-    ifsc_code: sellerProfile.ifsc_code.toUpperCase(),
-    pan_number: sellerProfile.pan_number.toUpperCase(),
-    updated_at: new Date().toISOString(),
-  };
-
-  const { error: saveError } = await supabase
-    .from("seller_profiles")
-    .upsert(payload, {
-      onConflict: "user_id",
-    });
-
-  if (saveError) {
-    setProfileLoading(false);
-    setMessage(`Could not save seller profile: ${saveError.message}`);
-    return;
-  }
-setMessage("Seller profile saved successfully.");
-  fetchSellerProfile();
-}
-
-    function handleChange(event) {
-  const { name, value } = event.target;
-
-  setFormData((currentData) => ({
-    ...currentData,
-    [name]: value,
-  }));
-
-  if (name === "seller") {
-    localStorage.setItem(getSellerStorageKey(), value);
-  }
 }
 
 async function fetchSellerFoods() {
@@ -791,22 +680,7 @@ async function fetchSellerFoods() {
                     ))}
                   </div>
 
-                  <div className="mt-4 bg-[#111] border border-[#222] rounded-2xl p-4 space-y-2 text-sm">
-                    <div className="flex justify-between text-gray-400">
-                      <span>Subtotal</span>
-                      <span>₹{order.subtotal_amount || 0}</span>
-                    </div>
-
-                    <div className="flex justify-between text-gray-400">
-                      <span>Platform Fee</span>
-                      <span>₹{order.platform_fee || 10}</span>
-                    </div>
-
-                    <div className="flex justify-between text-yellow-400 font-black border-t border-[#222] pt-2">
-                      <span>Total Paid</span>
-                      <span>₹{order.total_amount || 0}</span>
-                    </div>
-                  </div>
+                  
 
                   {order.notes && (
                     <p className="text-gray-500 text-sm mt-4">
@@ -831,143 +705,11 @@ async function fetchSellerFoods() {
     💬 WhatsApp
   </a>
 </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-5">
-  <button
-    type="button"
-    onClick={() => updateOrderStatus(order.id, "confirmed")}
-    className="bg-yellow-500 hover:bg-yellow-400 text-black font-black py-3 rounded-2xl active:scale-95 transition-all"
-  >
-    Confirm
-  </button>
-
-  <button
-    type="button"
-    onClick={() => updateOrderStatus(order.id, "cooking")}
-    className="border border-orange-500/50 text-orange-300 hover:bg-orange-500 hover:text-black font-black py-3 rounded-2xl active:scale-95 transition-all"
-  >
-    Cooking
-  </button>
-
-  <button
-    type="button"
-    onClick={() => updateOrderStatus(order.id, "packing")}
-    className="border border-blue-500/50 text-blue-300 hover:bg-blue-500 hover:text-black font-black py-3 rounded-2xl active:scale-95 transition-all"
-  >
-    Packing
-  </button>
-
-  <button
-    type="button"
-    onClick={() =>
-      updateOrderStatus(order.id, "out_for_delivery")
-    }
-    className="border border-purple-500/50 text-purple-300 hover:bg-purple-500 hover:text-black font-black py-3 rounded-2xl active:scale-95 transition-all"
-  >
-    Out
-  </button>
-
-  <button
-    type="button"
-    onClick={() => updateOrderStatus(order.id, "completed")}
-    className="border border-green-500/50 text-green-300 hover:bg-green-500 hover:text-black font-black py-3 rounded-2xl active:scale-95 transition-all"
-  >
-    Delivered
-  </button>
-</div>
                 </article>
               ))}
             </div>
           )}
         </section>
-
-          
-        <section className="mt-8 bg-[#111] border border-[#2a2a2a] rounded-3xl p-5 sm:p-6">
-  <div>
-    <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
-         Seller Profile
-    </p>
-
-    <h2 className="text-2xl sm:text-3xl font-bold mt-1">
-         Payment & Payout Details
-    </h2>
-
-    <p className="text-gray-500 mt-3 text-sm leading-relaxed">
-      Your payout details for receiving payments from customer orders.
-      </p>
-  </div>
-
-  <form
-  onSubmit={saveSellerProfile}
-    className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6"
-  >
-    <input
-      name="seller_name"
-      value={sellerProfile.seller_name}
-      onChange={handleSellerProfileChange}
-      className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500"
-      placeholder="Seller / Kitchen Name"
-    />
-
-    <input
-      name="phone"
-      value={sellerProfile.phone}
-      onChange={handleSellerProfileChange}
-      className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500"
-      placeholder="Seller Phone Number"
-    />
-
-    <input
-      name="upi_id"
-      value={sellerProfile.upi_id}
-      onChange={handleSellerProfileChange}
-      className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500"
-      placeholder="UPI ID"
-    />
-
-    <input
-      name="bank_account_holder"
-      value={sellerProfile.bank_account_holder}
-      onChange={handleSellerProfileChange}
-      className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500"
-      placeholder="Bank Account Holder Name"
-    />
-
-    <input
-      name="bank_account_number"
-      value={sellerProfile.bank_account_number}
-      onChange={handleSellerProfileChange}
-      className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500"
-      placeholder="Bank Account Number"
-    />
-
-    <input
-      name="ifsc_code"
-      value={sellerProfile.ifsc_code}
-      onChange={handleSellerProfileChange}
-      className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500 uppercase"
-      placeholder="IFSC Code"
-    />
-
-    <input
-      name="pan_number"
-      value={sellerProfile.pan_number}
-      onChange={handleSellerProfileChange}
-      className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500 uppercase"
-      placeholder="PAN Number"
-    />
-
-    <button
-      type="submit"
-      disabled={profileLoading}
-      className="md:col-span-2 bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 text-black font-black px-6 py-4 rounded-2xl active:scale-95 transition-all"
-    >
-      {profileLoading
-  ? "Saving..."
-  : "Save Profile"}
-    </button>
-  </form>
-</section>
 
         <form
           onSubmit={handleSubmit}
