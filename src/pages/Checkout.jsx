@@ -16,6 +16,9 @@ export default function Checkout() {
   const subtotalAmount = Number(cartTotal || 0);
   const totalAmount = subtotalAmount + PLATFORM_FEE;
 
+  const getCheckoutStorageKey = () =>
+    user ? `quickbites_checkout_details_${user.id}` : "quickbites_checkout_details_guest";
+
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
@@ -28,7 +31,25 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    async function loadProfile() {
+    async function loadSavedCheckoutDetails() {
+      const savedDetails = localStorage.getItem(getCheckoutStorageKey());
+
+      if (savedDetails) {
+        try {
+          const parsedDetails = JSON.parse(savedDetails);
+
+          setFormData((current) => ({
+            ...current,
+            fullName: parsedDetails.fullName || "",
+            phone: parsedDetails.phone || "",
+            flat: parsedDetails.flat || "",
+            deliveryType: parsedDetails.deliveryType || "Doorstep delivery",
+          }));
+        } catch {
+          localStorage.removeItem(getCheckoutStorageKey());
+        }
+      }
+
       if (!user) return;
 
       const { data } = await supabase
@@ -41,14 +62,28 @@ export default function Checkout() {
 
       setFormData((current) => ({
         ...current,
-        fullName: data.full_name || "",
-        phone: data.phone || "",
-        flat: data.flat || "",
+        fullName: current.fullName || data.full_name || "",
+        phone: current.phone || data.phone || "",
+        flat: current.flat || data.flat || "",
       }));
     }
 
-    loadProfile();
+    loadSavedCheckoutDetails();
   }, [user]);
+
+  useEffect(() => {
+    const detailsToSave = {
+      fullName: formData.fullName,
+      phone: formData.phone,
+      flat: formData.flat,
+      deliveryType: formData.deliveryType,
+    };
+
+    localStorage.setItem(
+      getCheckoutStorageKey(),
+      JSON.stringify(detailsToSave)
+    );
+  }, [formData.fullName, formData.phone, formData.flat, formData.deliveryType, user]);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -122,12 +157,9 @@ export default function Checkout() {
       items: cartItems,
     };
 
-    const { error: stockError } = await supabase.rpc(
-      "decrement_food_stock",
-      {
-        order_items: cartItems,
-      }
-    );
+    const { error: stockError } = await supabase.rpc("decrement_food_stock", {
+      order_items: cartItems,
+    });
 
     if (stockError) {
       setLoading(false);
@@ -135,9 +167,7 @@ export default function Checkout() {
       return;
     }
 
-    const { error } = await supabase
-      .from("orders")
-      .insert([orderPayload]);
+    const { error } = await supabase.from("orders").insert([orderPayload]);
 
     setLoading(false);
 
@@ -145,6 +175,16 @@ export default function Checkout() {
       alert(`Failed to place order: ${error.message}`);
       return;
     }
+
+    localStorage.setItem(
+      getCheckoutStorageKey(),
+      JSON.stringify({
+        fullName: formData.fullName,
+        phone: formData.phone,
+        flat: formData.flat,
+        deliveryType: formData.deliveryType,
+      })
+    );
 
     clearCart();
     setOrderPlaced(true);
@@ -195,7 +235,6 @@ export default function Checkout() {
 
       <main className="min-h-screen bg-black text-white px-4 sm:px-6 py-7 sm:py-10 pb-40">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-[1.1fr_0.9fr] gap-6 lg:gap-8">
-          {/* LEFT */}
           <section className="bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-8">
             <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
               Checkout
@@ -245,7 +284,6 @@ export default function Checkout() {
             </div>
           </section>
 
-          {/* RIGHT */}
           <section className="bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-8 h-fit lg:sticky lg:top-24">
             <div className="flex items-center justify-between">
               <div>
@@ -278,9 +316,7 @@ export default function Checkout() {
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between gap-3">
                       <div>
-                        <p className="font-black truncate">
-                          {item.name}
-                        </p>
+                        <p className="font-black truncate">{item.name}</p>
 
                         <p className="text-gray-500 text-sm mt-1">
                           Qty {item.quantity}
@@ -302,24 +338,18 @@ export default function Checkout() {
               <div className="flex items-center justify-between text-sm">
                 <p className="text-gray-400">Subtotal</p>
 
-                <p className="font-bold text-white">
-                  ₹{subtotalAmount}
-                </p>
+                <p className="font-bold text-white">₹{subtotalAmount}</p>
               </div>
 
               <div className="flex items-center justify-between text-sm">
                 <p className="text-gray-400">Platform Fee</p>
 
-                <p className="font-bold text-yellow-400">
-                  ₹{PLATFORM_FEE}
-                </p>
+                <p className="font-bold text-yellow-400">₹{PLATFORM_FEE}</p>
               </div>
 
               <div className="border-t border-[#222] pt-5 flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-sm">
-                    Total Amount
-                  </p>
+                  <p className="text-gray-400 text-sm">Total Amount</p>
 
                   <p className="text-gray-500 text-xs mt-1">
                     Fresh homemade food
