@@ -83,6 +83,16 @@ export default function SellerDashboard() {
   Notification.requestPermission();
 }
 
+useEffect(() => {
+  if (!user) return;
+
+  const interval = setInterval(() => {
+    fetchSellerOrders(true);
+  }, 5000);
+
+  return () => clearInterval(interval);
+}, [user]);
+
     const savedSoundSetting = localStorage.getItem(
       `quickbites_seller_sound_${user.id}`
     );
@@ -672,13 +682,6 @@ const soldOrders = sellerOrders.filter((order) => {
               </h2>
             </div>
 
-            <button
-              type="button"
-              onClick={() => fetchSellerOrders()}
-              className="bg-black border border-[#333] hover:border-yellow-500/50 text-gray-300 hover:text-yellow-400 font-bold px-4 py-3 rounded-2xl transition-all"
-            >
-              Refresh
-            </button>
           </div>
 
           {ordersLoading ? (
