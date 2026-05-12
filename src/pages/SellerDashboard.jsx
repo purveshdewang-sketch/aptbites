@@ -69,29 +69,12 @@ export default function SellerDashboard() {
     };
   }, [user]);
 
-  useEffect(() => {
-  const interval = setInterval(() => {
-    setTimerTick((current) => current + 1);
-  }, 60000);
-
-  return () => clearInterval(interval);
-}, []);
 
   useEffect(() => {
     if (!user) return;
     if ("Notification" in window) {
   Notification.requestPermission();
 }
-
-useEffect(() => {
-  if (!user) return;
-
-  const interval = setInterval(() => {
-    fetchSellerOrders(true);
-  }, 5000);
-
-  return () => clearInterval(interval);
-}, [user]);
 
     const savedSoundSetting = localStorage.getItem(
       `quickbites_seller_sound_${user.id}`
@@ -101,6 +84,24 @@ useEffect(() => {
       setAudioReady(true);
     }
   }, [user]);
+
+  useEffect(() => {
+  if (!user) return;
+
+  const interval = setInterval(() => {
+    fetchSellerOrders(true);
+  }, 5000);
+
+  useEffect(() => {
+  const interval = setInterval(() => {
+    setTimerTick((current) => current + 1);
+  }, 60000);
+
+  return () => clearInterval(interval);
+}, []);
+
+  return () => clearInterval(interval);
+}, [user]);
 
   function getSellerStorageKey() {
     return user ? `Quickbites_seller_name_${user.id}` : "Quickbites_seller_name";
