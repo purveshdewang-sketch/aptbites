@@ -522,28 +522,31 @@ function getAutoStatus(order) {
     function getProgressPercentage(status) {
   const currentStatus = normalizeStatus(status);
 
-  if (currentStatus === "confirmed") return 10;
-  if (currentStatus === "cooking") return 15;
-  if (currentStatus === "packing") return 35;
-  if (currentStatus === "completed") return 50;
+  if (currentStatus === "confirmed") return 20;
+  if (currentStatus === "cooking") return 40;
+  if (currentStatus === "packing") return 70;
+  if (currentStatus === "completed") return 100;
 
   return 10;
 }
 
-  const activeSellerOrders = sellerOrders.filter((order) => {
-  const status = normalizeStatus(order.status);
+const activeSellerOrders = sellerOrders.filter((order) => {
+  const dbStatus = normalizeStatus(order.status);
+  const autoStatus = normalizeStatus(getAutoStatus(order));
 
-  if (status === "cancelled") return false;
+  if (dbStatus === "cancelled") return false;
+  if (autoStatus === "completed") return false;
 
-  return normalizeStatus(getAutoStatus(order)) !== "completed";
+  return true;
 });
 
-  const soldOrders = sellerOrders.filter((order) => {
-  const status = normalizeStatus(order.status);
+const soldOrders = sellerOrders.filter((order) => {
+  const dbStatus = normalizeStatus(order.status);
+  const autoStatus = normalizeStatus(getAutoStatus(order));
 
-  if (status === "cancelled") return false;
+  if (dbStatus === "cancelled") return false;
 
-  return normalizeStatus(getAutoStatus(order)) === "completed";
+  return autoStatus === "completed";
 });
 
   const totalOrdersCount = sellerOrders.length;
