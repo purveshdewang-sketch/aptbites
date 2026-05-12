@@ -30,8 +30,6 @@ export default function SellerDashboard() {
   const [message, setMessage] = useState("");
   const [audioReady, setAudioReady] = useState(false);
 
-const [profileLoading, setProfileLoading] = useState(false);
-
   useEffect(() => {
     if (!user) return;
 
@@ -71,129 +69,156 @@ const [profileLoading, setProfileLoading] = useState(false);
   }, [user]);
 
   useEffect(() => {
-  if (!user) return;
+    if (!user) return;
 
-  const savedSoundSetting = localStorage.getItem(
-    `quickbites_seller_sound_${user.id}`
-  );
+    const savedSoundSetting = localStorage.getItem(
+      `quickbites_seller_sound_${user.id}`
+    );
 
-  if (savedSoundSetting === "on") {
-    setAudioReady(true);
-  }
-}, [user]);
+    if (savedSoundSetting === "on") {
+      setAudioReady(true);
+    }
+  }, [user]);
 
   function getSellerStorageKey() {
     return user ? `Quickbites_seller_name_${user.id}` : "Quickbites_seller_name";
   }
 
- function toggleNotificationSound() {
-  if (!user) return;
+  function toggleNotificationSound() {
+    if (!user) return;
 
-  const nextValue = !audioReady;
+    const nextValue = !audioReady;
 
-  setAudioReady(nextValue);
+    setAudioReady(nextValue);
 
-  localStorage.setItem(
-    `quickbites_seller_sound_${user.id}`,
-    nextValue ? "on" : "off"
-  );
+    localStorage.setItem(
+      `quickbites_seller_sound_${user.id}`,
+      nextValue ? "on" : "off"
+    );
 
-  setMessage(
-    nextValue
-      ? "Order notification sound enabled."
-      : "Order notification sound disabled."
-  );
+    setMessage(
+      nextValue
+        ? "Order notification sound enabled."
+        : "Order notification sound disabled."
+    );
 
-  if (nextValue) {
-    setTimeout(() => {
-      playTingSound(true);
-    }, 100);
-  }
-}
-
-function playTingSound(forcePlay = false) {
-  if (!audioReady && !forcePlay) return;
-
-  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-
-  if (!AudioContextClass) return;
-
-  if (!audioContextRef.current) {
-    audioContextRef.current = new AudioContextClass();
+    if (nextValue) {
+      setTimeout(() => {
+        playTingSound(true);
+      }, 100);
+    }
   }
 
-  const audioContext = audioContextRef.current;
+  function playTingSound(forcePlay = false) {
+    if (!audioReady && !forcePlay) return;
 
-  if (audioContext.state === "suspended") {
-    audioContext.resume();
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioContextClass();
+    }
+
+    const audioContext = audioContextRef.current;
+
+    if (audioContext.state === "suspended") {
+      audioContext.resume();
+    }
+
+    const now = audioContext.currentTime;
+
+    [0, 0.1, 0.2].forEach((delay, index) => {
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+
+      oscillator.type = "sine";
+
+      const frequencies = [1400, 1600, 1800];
+
+      oscillator.frequency.setValueAtTime(frequencies[index], now + delay);
+
+      gain.gain.setValueAtTime(0.0001, now + delay);
+      gain.gain.exponentialRampToValueAtTime(0.25, now + delay + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.08);
+
+      oscillator.connect(gain);
+      gain.connect(audioContext.destination);
+
+      oscillator.start(now + delay);
+      oscillator.stop(now + delay + 0.08);
+    });
   }
 
-  const now = audioContext.currentTime;
+  function handleChange(event) {
+    const { name, value } = event.target;
 
-  [0, 0.1, 0.2].forEach((delay, index) => {
-    const oscillator = audioContext.createOscillator();
-    const gain = audioContext.createGain();
+    setFormData((currentData) => ({
+      ...currentData,
+      [name]: value,
+    }));
 
-    oscillator.type = "sine";
-
-    const frequencies = [1400, 1600, 1800];
-
-    oscillator.frequency.setValueAtTime(frequencies[index], now + delay);
-
-    gain.gain.setValueAtTime(0.0001, now + delay);
-    gain.gain.exponentialRampToValueAtTime(0.25, now + delay + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.08);
-
-    oscillator.connect(gain);
-    gain.connect(audioContext.destination);
-
-    oscillator.start(now + delay);
-    oscillator.stop(now + delay + 0.08);
-  });
-}
-
-async function fetchSellerFoods() {
-  if (!user) return;
-
-  setFoodsLoading(true);
-
-  const { data, error } = await supabase
-    .from("foods")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("id", { ascending: false });
-
-  if (!error) {
-    setSellerFoods(data || []);
-  } else {
-    setMessage(`Could not load dishes: ${error.message}`);
+    if (name === "seller") {
+      localStorage.setItem(getSellerStorageKey(), value);
+    }
   }
 
-  setFoodsLoading(false);
-}
+  function getOrderItems(order) {
+    if (Array.isArray(order.items)) return order.items;
+
+    if (typeof order.items === "string") {
+      try {
+        const parsedItems = JSON.parse(order.items);
+        return Array.isArray(parsedItems) ? parsedItems : [];
+      } catch {
+        return [];
+      }
+    }
+
+    return [];
+  }
+
+  async function fetchSellerFoods() {
+    if (!user) return;
+
+    setFoodsLoading(true);
+
+    const { data, error } = await supabase
+      .from("foods")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("id", { ascending: false });
+
+    if (!error) {
+      setSellerFoods(data || []);
+    } else {
+      setMessage(`Could not load dishes: ${error.message}`);
+    }
+
+    setFoodsLoading(false);
+  }
 
   function handleImageChange(event) {
-  const file = event.target.files[0];
+    const file = event.target.files[0];
 
-  if (!file) return;
+    if (!file) return;
 
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-  const maxSizeInBytes = 5 * 1024 * 1024;
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    const maxSizeInBytes = 5 * 1024 * 1024;
 
-  if (!allowedTypes.includes(file.type)) {
-    setMessage("Please upload a JPG, PNG, or WEBP image.");
-    return;
+    if (!allowedTypes.includes(file.type)) {
+      setMessage("Please upload a JPG, PNG, or WEBP image.");
+      return;
+    }
+
+    if (file.size > maxSizeInBytes) {
+      setMessage("Image is too large. Please upload an image below 5 MB.");
+      return;
+    }
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+    setMessage("");
   }
-
-  if (file.size > maxSizeInBytes) {
-    setMessage("Image is too large. Please upload an image below 5 MB.");
-    return;
-  }
-
-  setImageFile(file);
-  setImagePreview(URL.createObjectURL(file));
-  setMessage("");
-}
 
   async function fetchSellerOrders(shouldCheckNewOrder = false) {
     if (!user) return;
@@ -225,6 +250,8 @@ async function fetchSellerFoods() {
 
       previousOrderIdsRef.current = nextOrders.map((order) => order.id);
       setSellerOrders(nextOrders);
+    } else {
+      setMessage(`Could not load seller orders: ${error.message}`);
     }
 
     setOrdersLoading(false);
@@ -373,7 +400,6 @@ async function fetchSellerFoods() {
 
   async function deleteDish(foodId) {
     const confirmDelete = window.confirm("Delete this dish permanently?");
-
     if (!confirmDelete) return;
 
     const { error } = await supabase
@@ -414,42 +440,31 @@ async function fetchSellerFoods() {
     fetchSellerFoods();
   }
 
-  async function updateOrderStatus(orderId, nextStatus) {
-    const { error } = await supabase
-      .from("orders")
-      .update({ status: nextStatus })
-      .eq("id", orderId)
-      .eq("seller_id", user.id);
-
-    if (error) {
-      setMessage(`Could not update order: ${error.message}`);
-      return;
-    }
-
-    setMessage(
-      nextStatus === "completed"
-        ? "Order completed and moved to Sold Orders."
-        : `Order marked as ${nextStatus}.`
-    );
-
-    fetchSellerOrders();
+  function normalizeStatus(status) {
+    return String(status || "confirmed").toLowerCase();
   }
 
-  function normalizeStatus(status) {
-    return String(status || "placed").toLowerCase();
+  function getAutoStatus(order) {
+    const createdAt = new Date(order.created_at || Date.now()).getTime();
+    const minutesPassed = Math.floor((Date.now() - createdAt) / 60000);
+
+    if (minutesPassed >= 40) return "completed";
+    if (minutesPassed >= 30) return "out_for_delivery";
+    if (minutesPassed >= 20) return "packing";
+    if (minutesPassed >= 10) return "cooking";
+    return "confirmed";
   }
 
   function getStatusLabel(status) {
     const currentStatus = normalizeStatus(status);
 
-    if (currentStatus === "placed") return "New Order";
-      if (currentStatus === "confirmed") return "Confirmed";
+    if (currentStatus === "confirmed") return "Confirmed";
     if (currentStatus === "cooking") return "Cooking";
     if (currentStatus === "packing") return "Packing";
     if (currentStatus === "out_for_delivery") return "Out for Delivery";
     if (currentStatus === "completed") return "Delivered";
 
-    return status || "New Order";
+    return "Confirmed";
   }
 
   function getStatusBadgeClass(status) {
@@ -460,26 +475,26 @@ async function fetchSellerFoods() {
     }
 
     if (currentStatus === "cooking") {
-     return "bg-orange-900/40 text-orange-300 border-orange-500/20";
+      return "bg-orange-900/40 text-orange-300 border-orange-500/20";
     }
 
     if (currentStatus === "packing") {
-     return "bg-blue-900/40 text-blue-300 border-blue-500/20";
+      return "bg-blue-900/40 text-blue-300 border-blue-500/20";
     }
 
-      if (currentStatus === "out_for_delivery") {
-       return "bg-purple-900/40 text-purple-300 border-purple-500/20";
-}
+    if (currentStatus === "out_for_delivery") {
+      return "bg-purple-900/40 text-purple-300 border-purple-500/20";
+    }
 
     return "bg-yellow-900/30 text-yellow-300 border-yellow-500/20";
   }
 
   const activeSellerOrders = sellerOrders.filter(
-    (order) => normalizeStatus(order.status) !== "completed"
+    (order) => normalizeStatus(getAutoStatus(order)) !== "completed"
   );
 
   const soldOrders = sellerOrders.filter(
-    (order) => normalizeStatus(order.status) === "completed"
+    (order) => normalizeStatus(getAutoStatus(order)) === "completed"
   );
 
   const totalOrdersCount = sellerOrders.length;
@@ -516,7 +531,6 @@ async function fetchSellerFoods() {
 
   return (
     <main className="min-h-screen bg-black text-white px-4 sm:px-6 py-8 sm:py-10">
-
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
           <div>
@@ -629,84 +643,93 @@ async function fetchSellerFoods() {
             </div>
           ) : (
             <div className="mt-6 space-y-5">
-              {activeSellerOrders.map((order) => (
-                <article
-                  key={order.id}
-                  className="bg-black/40 border border-[#222] rounded-3xl p-4 sm:p-5"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                    <div>
-                      <p className="text-gray-500 text-sm">Order #{order.id}</p>
+              {activeSellerOrders.map((order) => {
+                const autoStatus = getAutoStatus(order);
 
-                      <h3 className="text-2xl font-black mt-1">
-                        ₹{order.total_amount}
-                      </h3>
+                return (
+                  <article
+                    key={order.id}
+                    className="bg-black/40 border border-[#222] rounded-3xl p-4 sm:p-5"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                      <div>
+                        <p className="text-gray-500 text-sm">Order #{order.id}</p>
 
-                      <p className="text-gray-400 text-sm mt-2">
-                        {order.customer_name} • {order.phone}
-                      </p>
+                        <h3 className="text-2xl font-black mt-1">
+                          ₹{order.total_amount}
+                        </h3>
 
-                      <p className="text-gray-500 text-sm mt-1">
-                        {order.delivery_type} • {order.flat}
-                      </p>
-                    </div>
+                        <p className="text-gray-400 text-sm mt-2">
+                          {order.customer_name} • {order.phone}
+                        </p>
 
-                    <span
-                      className={`w-fit border text-xs font-bold px-3 py-1.5 rounded-full ${getStatusBadgeClass(
-                        order.status
-                      )}`}
-                    >
-                      {getStatusLabel(order.status)}
-                    </span>
-                  </div>
-
-                  <div className="mt-4 bg-[#111] border border-[#222] rounded-2xl p-4 space-y-3">
-                    {getOrderItems(order).map((item) => (
-                      <div
-                        key={`${order.id}-${item.id}`}
-                        className="flex items-center justify-between gap-4"
-                      >
-                        <div className="min-w-0">
-                          <p className="font-semibold truncate">{item.name}</p>
-                          <p className="text-gray-500 text-sm">
-                            Qty {item.quantity} × ₹{item.price}
-                          </p>
-                        </div>
-
-                        <p className="text-yellow-400 font-bold shrink-0">
-                          ₹{Number(item.price || 0) * Number(item.quantity || 0)}
+                        <p className="text-gray-500 text-sm mt-1">
+                          {order.delivery_type} • {order.flat}
                         </p>
                       </div>
-                    ))}
-                  </div>
 
-                  
+                      <span
+                        className={`w-fit border text-xs font-bold px-3 py-1.5 rounded-full ${getStatusBadgeClass(
+                          autoStatus
+                        )}`}
+                      >
+                        {getStatusLabel(autoStatus)}
+                      </span>
+                    </div>
 
-                  {order.notes && (
-                    <p className="text-gray-500 text-sm mt-4">
-                      Note: {order.notes}
-                    </p>
-                  )}
+                    <div className="mt-4 bg-[#111] border border-[#222] rounded-2xl p-4 space-y-3">
+                      {getOrderItems(order).map((item) => (
+                        <div
+                          key={`${order.id}-${item.id}`}
+                          className="flex items-center justify-between gap-4"
+                        >
+                          <div className="min-w-0">
+                            <p className="font-semibold truncate">
+                              {item.name}
+                            </p>
+                            <p className="text-gray-500 text-sm">
+                              Qty {item.quantity} × ₹{item.price}
+                            </p>
+                          </div>
 
-                  <div className="grid grid-cols-2 gap-3 mt-5">
-  <a
-    href={`tel:${order.phone}`}
-    className="bg-green-500 hover:bg-green-400 active:scale-95 text-black font-black py-3 rounded-2xl text-center transition-all"
-  >
-    📞 Call Customer
-  </a>
+                          <p className="text-yellow-400 font-bold shrink-0">
+                            ₹
+                            {Number(item.price || 0) *
+                              Number(item.quantity || 0)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
 
-  <a
-    href={`https://wa.me/91${String(order.phone).replace(/\D/g, "")}`}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="bg-[#25D366] hover:brightness-110 active:scale-95 text-black font-black py-3 rounded-2xl text-center transition-all"
-  >
-    💬 WhatsApp
-  </a>
-</div>
-                </article>
-              ))}
+                    {order.notes && (
+                      <p className="text-gray-500 text-sm mt-4">
+                        Note: {order.notes}
+                      </p>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-3 mt-5">
+                      <a
+                        href={`tel:${order.phone}`}
+                        className="bg-green-500 hover:bg-green-400 active:scale-95 text-black font-black py-3 rounded-2xl text-center transition-all"
+                      >
+                        📞 Call Customer
+                      </a>
+
+                      <a
+                        href={`https://wa.me/91${String(order.phone).replace(
+                          /\D/g,
+                          ""
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-[#25D366] hover:brightness-110 active:scale-95 text-black font-black py-3 rounded-2xl text-center transition-all"
+                      >
+                        💬 WhatsApp
+                      </a>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>
@@ -886,19 +909,20 @@ async function fetchSellerFoods() {
                         <p className="text-yellow-400 font-bold text-2xl">
                           ₹{food.price}
                         </p>
+
                         <p
-  className={`text-sm font-semibold ${
-    Number(food.stock) <= 2
-      ? "text-red-400"
-      : Number(food.stock) <= 5
-      ? "text-yellow-400"
-      : "text-gray-500"
-  }`}
->
-  {Number(food.stock) <= 2
-    ? `🔥 Only ${food.stock} left`
-    : `${food.stock} left`}
-</p>
+                          className={`text-sm font-semibold ${
+                            Number(food.stock) <= 2
+                              ? "text-red-400"
+                              : Number(food.stock) <= 5
+                              ? "text-yellow-400"
+                              : "text-gray-500"
+                          }`}
+                        >
+                          {Number(food.stock) <= 2
+                            ? `🔥 Only ${food.stock} left`
+                            : `${food.stock} left`}
+                        </p>
                       </div>
                     </div>
 
