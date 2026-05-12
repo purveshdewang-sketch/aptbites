@@ -523,10 +523,10 @@ function getAutoStatus(order) {
   const currentStatus = normalizeStatus(status);
 
   if (currentStatus === "confirmed") return 20;
-  if (currentStatus === "cooking") return 40;
-  if (currentStatus === "packing") return 65;
-  if (currentStatus === "out_for_delivery") return 90;
-  if (currentStatus === "completed") return 100;
+  if (currentStatus === "cooking") return 10;
+  if (currentStatus === "packing") return 35;
+  if (currentStatus === "out_for_delivery") return 50;
+  if (currentStatus === "completed") return 70;
 
   return 10;
 }
