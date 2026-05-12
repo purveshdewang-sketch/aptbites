@@ -70,6 +70,9 @@ export default function SellerDashboard() {
 
   useEffect(() => {
     if (!user) return;
+    if ("Notification" in window) {
+  Notification.requestPermission();
+}
 
     const savedSoundSetting = localStorage.getItem(
       `quickbites_seller_sound_${user.id}`
@@ -242,10 +245,24 @@ export default function SellerDashboard() {
             normalizeStatus(order.status) !== "completed"
         );
 
-        if (newActiveOrderFound) {
-          playTingSound();
-          setMessage("New order received.");
+       if (newActiveOrderFound) {
+  playTingSound();
+
+  document.title = "🔔 New Order - QuickBites";
+
+  setTimeout(() => {
+    document.title = "QuickBites Seller";
+  }, 5000);
+
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification("🍔 New QuickBites Order", {
+            body: "You received a new food order.",
+            icon: "/favicon.ico",
+          });
         }
+
+        setMessage("🔔 New order received.");
+      }
       }
 
       previousOrderIdsRef.current = nextOrders.map((order) => order.id);
