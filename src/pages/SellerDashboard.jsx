@@ -85,23 +85,7 @@ export default function SellerDashboard() {
     }
   }, [user]);
 
-  useEffect(() => {
-  if (!user) return;
 
-  const interval = setInterval(() => {
-    fetchSellerOrders(true);
-  }, 5000);
-
-  useEffect(() => {
-  const interval = setInterval(() => {
-    setTimerTick((current) => current + 1);
-  }, 60000);
-
-  return () => clearInterval(interval);
-}, []);
-
-  return () => clearInterval(interval);
-}, [user]);
 
   function getSellerStorageKey() {
     return user ? `Quickbites_seller_name_${user.id}` : "Quickbites_seller_name";
@@ -171,6 +155,16 @@ export default function SellerDashboard() {
       oscillator.stop(now + delay + 0.08);
     });
   }
+
+useEffect(() => {
+  if (!user) return;
+
+  const interval = setInterval(() => {
+    fetchSellerOrders(true);
+  }, 5000);
+
+  return () => clearInterval(interval);
+}, [user]);
 
   function handleChange(event) {
     const { name, value } = event.target;
