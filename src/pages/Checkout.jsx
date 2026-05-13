@@ -10,12 +10,6 @@ const PLATFORM_FEE = 10;
 export default function Checkout() {
   const { cartItems, cartTotal, clearCart } = useCart();
   const { user } = useAuth();
-  console.log("CURRENT LOGIN USER DETAILS:", {
-  id: user?.id,
-  email: user?.email,
-  phone: user?.phone,
-  metadata: user?.user_metadata,
-});
 
   const navigate = useNavigate();
 
@@ -23,7 +17,9 @@ export default function Checkout() {
   const totalAmount = subtotalAmount + PLATFORM_FEE;
 
   const getCheckoutStorageKey = () =>
-    user ? `quickbites_checkout_details_${user.id}` : "quickbites_checkout_details_guest";
+    user
+      ? `quickbites_checkout_details_${user.id}`
+      : "quickbites_checkout_details_guest";
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -47,7 +43,6 @@ export default function Checkout() {
           setFormData((current) => ({
             ...current,
             fullName: parsedDetails.fullName || "",
-            phone: parsedDetails.phone || "",
             flat: parsedDetails.flat || "",
             deliveryType: parsedDetails.deliveryType || "Doorstep delivery",
           }));
@@ -64,13 +59,17 @@ export default function Checkout() {
         .eq("id", user.id)
         .maybeSingle();
 
-      if (!data) return;
+      const lockedPhone =
+        data?.phone ||
+        user?.phone ||
+        user?.user_metadata?.phone ||
+        "";
 
       setFormData((current) => ({
         ...current,
-        fullName: current.fullName || data.full_name || "",
-        phone: current.phone || data.phone || "",
-        flat: current.flat || data.flat || "",
+        fullName: current.fullName || data?.full_name || user?.user_metadata?.full_name || "",
+        phone: lockedPhone,
+        flat: current.flat || data?.flat || user?.user_metadata?.flat || "",
       }));
     }
 
@@ -80,19 +79,17 @@ export default function Checkout() {
   useEffect(() => {
     const detailsToSave = {
       fullName: formData.fullName,
-      phone: formData.phone,
       flat: formData.flat,
       deliveryType: formData.deliveryType,
     };
 
-    localStorage.setItem(
-      getCheckoutStorageKey(),
-      JSON.stringify(detailsToSave)
-    );
-  }, [formData.fullName, formData.phone, formData.flat, formData.deliveryType, user]);
+    localStorage.setItem(getCheckoutStorageKey(), JSON.stringify(detailsToSave));
+  }, [formData.fullName, formData.flat, formData.deliveryType, user]);
 
   function handleChange(event) {
     const { name, value } = event.target;
+
+    if (name === "phone") return;
 
     setFormData((currentData) => ({
       ...currentData,
@@ -110,10 +107,7 @@ export default function Checkout() {
     const uniqueSellerIds = [...new Set(sellerIds)];
 
     if (uniqueSellerIds.length === 0) return null;
-
-    if (uniqueSellerIds.length > 1) {
-      return "MIXED_SELLERS";
-    }
+    if (uniqueSellerIds.length > 1) return "MIXED_SELLERS";
 
     return uniqueSellerIds[0];
   }
@@ -125,7 +119,7 @@ export default function Checkout() {
     }
 
     if (!formData.fullName || !formData.phone || !formData.flat) {
-      alert("Please fill name, phone number, and flat details.");
+      alert("Please fill name and flat details. Phone number is taken from your login profile.");
       return;
     }
 
@@ -186,7 +180,6 @@ export default function Checkout() {
       getCheckoutStorageKey(),
       JSON.stringify({
         fullName: formData.fullName,
-        phone: formData.phone,
         flat: formData.flat,
         deliveryType: formData.deliveryType,
       })
@@ -251,7 +244,7 @@ export default function Checkout() {
             </h1>
 
             <p className="text-gray-500 mt-4 text-sm sm:text-base leading-relaxed">
-              Homemade food prepared inside your apartment community.
+              Homemade food prepared inside your neighbourhood community.
             </p>
 
             <div className="mt-8 space-y-4">
@@ -263,13 +256,19 @@ export default function Checkout() {
                 placeholder="Full Name"
               />
 
-              <input
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className="w-full bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
-                placeholder="Phone Number"
-              />
+              <div>
+                <input
+                  name="phone"
+                  value={formData.phone}
+                  disabled
+                  readOnly
+                  className="w-full bg-[#111] border border-[#333] rounded-2xl px-5 py-4 outline-none text-gray-400 cursor-not-allowed"
+                  placeholder="Phone Number"
+                />
+                <p className="text-gray-600 text-xs mt-2 px-1">
+                  Phone number is locked from your login profile.
+                </p>
+              </div>
 
               <input
                 name="flat"
@@ -343,20 +342,17 @@ export default function Checkout() {
             <div className="mt-8 border-t border-[#222] pt-6 space-y-4">
               <div className="flex items-center justify-between text-sm">
                 <p className="text-gray-400">Subtotal</p>
-
                 <p className="font-bold text-white">₹{subtotalAmount}</p>
               </div>
 
               <div className="flex items-center justify-between text-sm">
                 <p className="text-gray-400">Platform Fee</p>
-
                 <p className="font-bold text-yellow-400">₹{PLATFORM_FEE}</p>
               </div>
 
               <div className="border-t border-[#222] pt-5 flex items-center justify-between">
                 <div>
                   <p className="text-gray-400 text-sm">Total Amount</p>
-
                   <p className="text-gray-500 text-xs mt-1">
                     Fresh homemade food
                   </p>
