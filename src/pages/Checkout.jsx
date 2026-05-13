@@ -60,14 +60,15 @@ export default function Checkout() {
         .maybeSingle();
 
       const lockedPhone =
-        data?.phone ||
-        user?.phone ||
-        user?.user_metadata?.phone ||
-        "";
+        data?.phone || user?.phone || user?.user_metadata?.phone || "";
 
       setFormData((current) => ({
         ...current,
-        fullName: current.fullName || data?.full_name || user?.user_metadata?.full_name || "",
+        fullName:
+          current.fullName ||
+          data?.full_name ||
+          user?.user_metadata?.full_name ||
+          "",
         phone: lockedPhone,
         flat: current.flat || data?.flat || user?.user_metadata?.flat || "",
       }));
@@ -97,6 +98,13 @@ export default function Checkout() {
     }));
   }
 
+  function selectDeliveryType(deliveryType) {
+    setFormData((currentData) => ({
+      ...currentData,
+      deliveryType,
+    }));
+  }
+
   function getSellerIdFromCart() {
     if (!cartItems || cartItems.length === 0) return null;
 
@@ -119,7 +127,9 @@ export default function Checkout() {
     }
 
     if (!formData.fullName || !formData.phone || !formData.flat) {
-      alert("Please fill name and flat details. Phone number is taken from your login profile.");
+      alert(
+        "Please fill name and flat details. Phone number is taken from your login profile."
+      );
       return;
     }
 
@@ -265,9 +275,6 @@ export default function Checkout() {
                   className="w-full bg-[#111] border border-[#333] rounded-2xl px-5 py-4 outline-none text-gray-400 cursor-not-allowed"
                   placeholder="Phone Number"
                 />
-                <p className="text-gray-600 text-xs mt-2 px-1">
-                  Phone number is locked from your login profile.
-                </p>
               </div>
 
               <input
@@ -277,6 +284,38 @@ export default function Checkout() {
                 className="w-full bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
                 placeholder="Tower B • Flat 1204"
               />
+
+              <div>
+                <p className="text-gray-400 text-sm font-bold mb-3">
+                  Delivery Option
+                </p>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => selectDeliveryType("Doorstep delivery")}
+                    className={`py-4 rounded-2xl font-black border transition-all ${
+                      formData.deliveryType === "Doorstep delivery"
+                        ? "bg-yellow-500 text-black border-yellow-400"
+                        : "bg-black text-gray-400 border-[#333]"
+                    }`}
+                  >
+                    🚚 Delivery
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => selectDeliveryType("Self pickup")}
+                    className={`py-4 rounded-2xl font-black border transition-all ${
+                      formData.deliveryType === "Self pickup"
+                        ? "bg-yellow-500 text-black border-yellow-400"
+                        : "bg-black text-gray-400 border-[#333]"
+                    }`}
+                  >
+                    🛍️ Self Pickup
+                  </button>
+                </div>
+              </div>
 
               <textarea
                 name="notes"
