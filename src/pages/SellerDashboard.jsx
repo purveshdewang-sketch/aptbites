@@ -372,15 +372,15 @@ useEffect(() => {
     }
 
     if (
-    !formData.name ||
-    !formData.price ||
-    !formData.seller ||
-    !formData.time ||
-    formData.stock === ""
-  ) {
-    setMessage("Please fill dish name, price, seller, ready time, and stock.");
-    return;
-  }
+  !formData.name ||
+  !formData.price ||
+  !formData.seller ||
+  !formData.time ||
+  formData.stock === ""
+) {
+  setMessage("Please fill dish name, price, seller, ready time, and stock.");
+  return;
+}
 
 if (!editingFood && !imageFile) {
   setMessage("Please upload a dish image before adding this dish.");
