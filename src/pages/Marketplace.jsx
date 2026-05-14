@@ -71,7 +71,11 @@ export default function Marketplace() {
     }
 
     const sellerIds = [
-      ...new Set((foodData || []).map((food) => food.user_id).filter(Boolean)),
+      ...new Set(
+        (foodData || [])
+          .map((food) => food.user_id || food.seller_id)
+          .filter(Boolean)
+      ),
     ];
 
     let sellerStatusMap = {};
@@ -82,16 +86,20 @@ export default function Marketplace() {
         .select("id, seller_online")
         .in("id", sellerIds);
 
-      sellerStatusMap = (profileData || {}).reduce((map, profile) => {
+      sellerStatusMap = (profileData || []).reduce((map, profile) => {
         map[profile.id] = profile.seller_online !== false;
         return map;
       }, {});
     }
 
-    const enrichedFoods = (foodData || []).map((food) => ({
-      ...food,
-      seller_online: sellerStatusMap[food.user_id] !== false,
-    }));
+    const enrichedFoods = (foodData || []).map((food) => {
+      const sellerId = food.user_id || food.seller_id;
+
+      return {
+        ...food,
+        seller_online: sellerStatusMap[sellerId] !== false,
+      };
+    });
 
     setFoods(enrichedFoods);
     setLoading(false);
@@ -113,6 +121,20 @@ export default function Marketplace() {
       return matchesSearch && matchesType;
     });
   }, [foods, searchTerm, selectedType]);
+
+  const closedSellerFoods = useMemo(() => {
+    return filteredFoods.filter((item) => item.seller_online === false);
+  }, [filteredFoods]);
+
+  const closedSellerNames = useMemo(() => {
+    return [
+      ...new Set(
+        closedSellerFoods
+          .map((item) => item.seller)
+          .filter(Boolean)
+      ),
+    ];
+  }, [closedSellerFoods]);
 
   const availableFoods = useMemo(() => {
     return foods.filter(
@@ -285,6 +307,32 @@ export default function Marketplace() {
                 </button>
               )}
             </div>
+
+            {!loading && !errorMessage && closedSellerFoods.length > 0 && (
+              <div className="mb-6 bg-red-950/60 border border-red-500/40 text-red-100 rounded-3xl p-5 shadow-lg shadow-red-500/10">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div>
+                    <p className="font-black text-lg">
+                      🔴 Some sellers are closed right now
+                    </p>
+
+                    <p className="text-red-300/90 text-sm mt-1">
+                      Their dishes are visible, but ordering is temporarily disabled.
+                    </p>
+
+                    {closedSellerNames.length > 0 && (
+                      <p className="text-red-200 text-sm mt-2 font-bold">
+                        Closed: {closedSellerNames.join(", ")}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="bg-red-600 text-white font-black px-4 py-2 rounded-full text-sm w-fit">
+                    {closedSellerFoods.length} dishes closed
+                  </div>
+                </div>
+              </div>
+            )}
 
             {loading && (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">

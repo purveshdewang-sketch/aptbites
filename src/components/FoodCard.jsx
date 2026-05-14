@@ -67,7 +67,7 @@ export default function FoodCard({ item }) {
       <div
         className={`group bg-[#111111] border rounded-[1.75rem] overflow-hidden transition-all duration-300 ${
           sellerIsClosed
-            ? "border-red-500/30 opacity-70"
+            ? "border-red-500/60 shadow-lg shadow-red-500/10"
             : "border-[#222] hover:border-yellow-500/40 hover:-translate-y-1"
         }`}
       >
@@ -77,7 +77,7 @@ export default function FoodCard({ item }) {
             alt={item.name}
             className={`w-full h-full object-cover transition-all duration-500 ${
               sellerIsClosed
-                ? "grayscale opacity-60"
+                ? "grayscale opacity-45"
                 : "group-hover:scale-105"
             }`}
           />
@@ -100,10 +100,10 @@ export default function FoodCard({ item }) {
             )}
           </div>
 
-          <div className="absolute top-3 right-3">
+          <div className="absolute top-3 right-3 z-20">
             {sellerIsClosed ? (
-              <span className="text-xs font-black px-3 py-1.5 rounded-full bg-red-500 text-white">
-                Closed
+              <span className="text-xs font-black px-3 py-1.5 rounded-full bg-red-600 text-white shadow-lg shadow-red-500/30">
+                CLOSED
               </span>
             ) : isSoldOut ? (
               <span className="text-xs font-black px-3 py-1.5 rounded-full bg-gray-800 text-gray-400">
@@ -125,9 +125,12 @@ export default function FoodCard({ item }) {
           </div>
 
           {sellerIsClosed && (
-            <div className="absolute inset-0 bg-black/55 flex items-center justify-center px-4 text-center">
-              <div className="bg-red-950/80 border border-red-500/40 text-red-200 font-black px-4 py-3 rounded-2xl">
-                Seller is closed right now
+            <div className="absolute inset-0 z-10 bg-black/70 flex items-center justify-center px-4 text-center">
+              <div className="bg-red-600 text-white font-black px-5 py-4 rounded-2xl shadow-xl shadow-red-500/30">
+                <p className="text-lg leading-tight">🔴 Seller Closed</p>
+                <p className="text-xs mt-1 opacity-90">
+                  Ordering is temporarily unavailable
+                </p>
               </div>
             </div>
           )}
@@ -136,7 +139,11 @@ export default function FoodCard({ item }) {
         <div className="p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="text-xl font-black text-white truncate">
+              <h3
+                className={`text-xl font-black truncate ${
+                  sellerIsClosed ? "text-gray-400" : "text-white"
+                }`}
+              >
                 {item.name}
               </h3>
 
@@ -145,7 +152,11 @@ export default function FoodCard({ item }) {
               </p>
             </div>
 
-            <p className="text-yellow-400 font-black text-2xl shrink-0">
+            <p
+              className={`font-black text-2xl shrink-0 ${
+                sellerIsClosed ? "text-gray-500" : "text-yellow-400"
+              }`}
+            >
               ₹{item.price}
             </p>
           </div>
@@ -173,7 +184,7 @@ export default function FoodCard({ item }) {
               }`}
             >
               {sellerIsClosed
-                ? "Closed"
+                ? "Seller Closed"
                 : isSoldOut
                 ? "Unavailable"
                 : `${stock} left`}
@@ -181,8 +192,8 @@ export default function FoodCard({ item }) {
           </div>
 
           {sellerIsClosed && (
-            <div className="mt-4 bg-red-950/50 border border-red-500/30 text-red-300 text-sm font-bold px-4 py-3 rounded-2xl">
-              Seller is closed right now
+            <div className="mt-4 bg-red-600 text-white text-sm font-black px-4 py-3 rounded-2xl text-center shadow-lg shadow-red-500/20">
+              🔴 Seller is closed right now
             </div>
           )}
 
@@ -194,7 +205,7 @@ export default function FoodCard({ item }) {
                 disabled={isBlocked}
                 className={`w-full font-black py-4 rounded-2xl transition-all duration-200 shadow-lg text-base ${
                   isBlocked
-                    ? "bg-[#1a1a1a] text-gray-600 cursor-not-allowed"
+                    ? "bg-[#1a1a1a] text-gray-600 cursor-not-allowed border border-red-500/20"
                     : "bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black shadow-yellow-500/20"
                 }`}
               >
