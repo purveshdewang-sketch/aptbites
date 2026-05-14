@@ -289,24 +289,24 @@ async function toggleAcceptScheduledOrders() {
   }
 
   async function fetchSellerFoods() {
-    if (!user) return;
+  if (!user) return;
 
-    setFoodsLoading(true);
+  setFoodsLoading(true);
 
-    const { data, error } = await supabase
-      .from("foods")
-      .select("*, profiles:seller_id(seller_online)")
-      .eq("user_id", user.id)
-      .order("id", { ascending: false });
+  const { data, error } = await supabase
+    .from("foods")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("id", { ascending: false });
 
-    if (!error) {
-      setSellerFoods(data || []);
-    } else {
-      setMessage(`Could not load dishes: ${error.message}`);
-    }
-
-    setFoodsLoading(false);
+  if (!error) {
+    setSellerFoods(data || []);
+  } else {
+    setMessage(`Could not load dishes: ${error.message}`);
   }
+
+  setFoodsLoading(false);
+}
 
   async function fetchSellerOrders(shouldCheckNewOrder = false) {
     if (!user) return;
