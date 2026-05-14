@@ -811,7 +811,7 @@ export default function SellerDashboard() {
     return total + Number(order.subtotal_amount || 0);
   }, 0);
 
-  const platformFeesEstimate = completedOrders.length * PLATFORM_FEE;
+  
   const averageOrderValue =
     completedOrders.length > 0
       ? Math.round(grossEarnings / completedOrders.length)
@@ -1020,16 +1020,8 @@ export default function SellerDashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-5 mt-5">
-            <div className="bg-black/40 border border-[#222] rounded-3xl p-5">
-              <p className="text-gray-400 text-sm">Platform Fee Estimate</p>
-              <h3 className="text-3xl font-black text-red-300 mt-3">
-                ₹{platformFeesEstimate}
-              </h3>
-              <p className="text-gray-600 text-sm mt-3">
-                Estimate only: ₹{PLATFORM_FEE} × completed orders.
-              </p>
-            </div>
+          <div className="grid grid-cols-1 gap-5 mt-5">
+            
 
             <div className="bg-black/40 border border-[#222] rounded-3xl p-5">
               <div className="flex items-center justify-between gap-3">
