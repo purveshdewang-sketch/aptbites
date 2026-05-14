@@ -11,6 +11,7 @@ export default function FoodCard({ item }) {
   const quantity = cartItem ? cartItem.quantity : 0;
 
   const stock = Number(item.stock || 0);
+  const category = item.category || "Meals";
 
   const sellerIsClosed = item.seller_online === false;
   const isLowStock = stock > 0 && stock <= 2;
@@ -18,7 +19,10 @@ export default function FoodCard({ item }) {
   const isSoldOut = stock <= 0;
   const isBlocked = sellerIsClosed || isSoldOut;
 
-  function handleAddToCart() {
+  function handleAddToCart(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
     if (sellerIsClosed) {
       alert("Seller is closed right now.");
       return;
@@ -33,6 +37,25 @@ export default function FoodCard({ item }) {
     setTimeout(() => {
       setShowToast(false);
     }, 2200);
+  }
+
+  function handleDecrease(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    decreaseQuantity(item.id);
+  }
+
+  function handleIncrease(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (quantity >= stock) {
+      alert(`Only ${stock} available.`);
+      return;
+    }
+
+    increaseQuantity(item.id);
   }
 
   return (
@@ -64,8 +87,9 @@ export default function FoodCard({ item }) {
         </div>
       )}
 
-      <div
-        className={`group bg-[#111111] border rounded-[1.75rem] overflow-hidden transition-all duration-300 ${
+      <Link
+        to={`/food/${item.id}`}
+        className={`block group bg-[#111111] border rounded-[1.75rem] overflow-hidden transition-all duration-300 ${
           sellerIsClosed
             ? "border-red-500/60 shadow-lg shadow-red-500/10"
             : "border-[#222] hover:border-yellow-500/40 hover:-translate-y-1"
@@ -76,9 +100,7 @@ export default function FoodCard({ item }) {
             src={item.image}
             alt={item.name}
             className={`w-full h-full object-cover transition-all duration-500 ${
-              sellerIsClosed
-                ? "grayscale opacity-45"
-                : "group-hover:scale-105"
+              sellerIsClosed ? "grayscale opacity-45" : "group-hover:scale-105"
             }`}
           />
 
@@ -93,7 +115,9 @@ export default function FoodCard({ item }) {
               {item.type}
             </span>
 
-    
+            <span className="w-fit text-xs font-black px-3 py-1.5 rounded-full bg-black/70 text-yellow-400 border border-yellow-500/20">
+              {category}
+            </span>
           </div>
 
           <div className="absolute top-3 right-3 z-20">
@@ -215,7 +239,7 @@ export default function FoodCard({ item }) {
               <div className="flex items-center justify-between overflow-hidden rounded-2xl bg-yellow-500 text-black font-black shadow-lg shadow-yellow-500/20">
                 <button
                   type="button"
-                  onClick={() => decreaseQuantity(item.id)}
+                  onClick={handleDecrease}
                   className="flex-1 py-4 text-xl hover:bg-yellow-400 active:scale-95 transition-all duration-200"
                 >
                   −
@@ -227,16 +251,25 @@ export default function FoodCard({ item }) {
 
                 <button
                   type="button"
-                  onClick={() => increaseQuantity(item.id)}
-                  className="flex-1 py-4 text-xl hover:bg-yellow-400 active:scale-95 transition-all duration-200"
+                  onClick={handleIncrease}
+                  disabled={quantity >= stock}
+                  className={`flex-1 py-4 text-xl transition-all duration-200 ${
+                    quantity >= stock
+                      ? "opacity-40 cursor-not-allowed"
+                      : "hover:bg-yellow-400 active:scale-95"
+                  }`}
                 >
                   +
                 </button>
               </div>
             )}
           </div>
+
+          <p className="text-gray-600 text-xs text-center mt-3">
+            Tap card to view seller’s other dishes
+          </p>
         </div>
-      </div>
+      </Link>
     </>
   );
 }

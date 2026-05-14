@@ -5,12 +5,52 @@ import Navbar from "../components/Navbar";
 import { supabase } from "../lib/supabaseClient";
 import { useCart } from "../context/CartContext";
 
+const FOOD_CATEGORIES = [
+  {
+    label: "All",
+    emoji: "🍽️",
+  },
+  {
+    label: "Meals",
+    emoji: "🍛",
+  },
+  {
+    label: "Breakfast",
+    emoji: "🥞",
+  },
+  {
+    label: "Snacks",
+    emoji: "🥪",
+  },
+  {
+    label: "Sweets",
+    emoji: "🍰",
+  },
+  {
+    label: "Drinks",
+    emoji: "🥤",
+  },
+  {
+    label: "Healthy",
+    emoji: "🥗",
+  },
+  {
+    label: "Tiffin",
+    emoji: "🍱",
+  },
+  {
+    label: "Specials",
+    emoji: "⭐",
+  },
+];
+
 export default function Marketplace() {
   const { cartCount } = useCart();
 
   const [foods, setFoods] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -105,36 +145,47 @@ export default function Marketplace() {
     setLoading(false);
   }
 
+  const categoryCounts = useMemo(() => {
+    const counts = {};
+
+    FOOD_CATEGORIES.forEach((category) => {
+      counts[category.label] = 0;
+    });
+
+    foods.forEach((food) => {
+      const foodCategory = food.category || "Meals";
+
+      counts.All += 1;
+
+      if (counts[foodCategory] !== undefined) {
+        counts[foodCategory] += 1;
+      }
+    });
+
+    return counts;
+  }, [foods]);
+
   const filteredFoods = useMemo(() => {
     return foods.filter((item) => {
       const searchValue = searchTerm.trim().toLowerCase();
+
+      const foodCategory = item.category || "Meals";
 
       const matchesSearch =
         searchValue === "" ||
         item.name?.toLowerCase().includes(searchValue) ||
         item.seller?.toLowerCase().includes(searchValue) ||
         item.time?.toLowerCase().includes(searchValue) ||
-        item.category?.toLowerCase().includes(searchValue);
+        foodCategory.toLowerCase().includes(searchValue);
 
       const matchesType = selectedType === "All" || item.type === selectedType;
 
-      return matchesSearch && matchesType;
+      const matchesCategory =
+        selectedCategory === "All" || foodCategory === selectedCategory;
+
+      return matchesSearch && matchesType && matchesCategory;
     });
-  }, [foods, searchTerm, selectedType]);
-
-  const closedSellerFoods = useMemo(() => {
-    return filteredFoods.filter((item) => item.seller_online === false);
-  }, [filteredFoods]);
-
-  const closedSellerNames = useMemo(() => {
-    return [
-      ...new Set(
-        closedSellerFoods
-          .map((item) => item.seller)
-          .filter(Boolean)
-      ),
-    ];
-  }, [closedSellerFoods]);
+  }, [foods, searchTerm, selectedType, selectedCategory]);
 
   const availableFoods = useMemo(() => {
     return foods.filter(
@@ -154,6 +205,7 @@ export default function Marketplace() {
   function clearFilters() {
     setSearchTerm("");
     setSelectedType("All");
+    setSelectedCategory("All");
     setTypeDropdownOpen(false);
   }
 
@@ -161,6 +213,38 @@ export default function Marketplace() {
     if (type === "All") return "All Food Types";
     return type;
   }
+
+  function getCategoryHeading() {
+    if (selectedCategory === "All") return "Today’s Specials";
+    return `${selectedCategory} near you`;
+  }
+
+  function getCategorySubheading() {
+    if (searchTerm || selectedType !== "All" || selectedCategory !== "All") {
+      const parts = [];
+
+      if (selectedCategory !== "All") {
+        parts.push(selectedCategory);
+      }
+
+      if (selectedType !== "All") {
+        parts.push(selectedType);
+      }
+
+      if (searchTerm) {
+        parts.push(`"${searchTerm}"`);
+      }
+
+      return `Showing ${filteredFoods.length} result${
+        filteredFoods.length === 1 ? "" : "s"
+      } for ${parts.join(" • ")}`;
+    }
+
+    return "Limited homemade food drops available now.";
+  }
+
+  const hasActiveFilters =
+    searchTerm || selectedType !== "All" || selectedCategory !== "All";
 
   return (
     <>
@@ -265,17 +349,51 @@ export default function Marketplace() {
 
               <button
                 type="button"
-                onClick={
-                  searchTerm || selectedType !== "All" ? clearFilters : undefined
-                }
+                onClick={hasActiveFilters ? clearFilters : undefined}
                 className={`font-bold px-8 py-4 rounded-2xl transition-all duration-200 min-h-[56px] ${
-                  searchTerm || selectedType !== "All"
+                  hasActiveFilters
                     ? "border border-yellow-500 text-yellow-400 hover:bg-yellow-500 hover:text-black"
                     : "bg-yellow-500 hover:bg-yellow-400 text-black"
                 }`}
               >
-                {searchTerm || selectedType !== "All" ? "Clear" : "Search"}
+                {hasActiveFilters ? "Clear" : "Search"}
               </button>
+            </div>
+          </div>
+        </section>
+
+        <section className="px-4 sm:px-6 pt-5 pb-2 bg-black border-b border-[#151515] sticky top-0 z-30">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {FOOD_CATEGORIES.map((category) => {
+                const isActive = selectedCategory === category.label;
+                const count = categoryCounts[category.label] || 0;
+
+                return (
+                  <button
+                    key={category.label}
+                    type="button"
+                    onClick={() => setSelectedCategory(category.label)}
+                    className={`shrink-0 min-w-[92px] sm:min-w-[110px] rounded-2xl border px-4 py-3 transition-all duration-200 ${
+                      isActive
+                        ? "bg-yellow-500 text-black border-yellow-400 shadow-lg shadow-yellow-500/20"
+                        : "bg-[#111111] text-gray-300 border-[#2a2a2a] hover:border-yellow-500/50 hover:text-yellow-400"
+                    }`}
+                  >
+                    <div className="text-2xl">{category.emoji}</div>
+                    <div className="font-black text-sm mt-1">
+                      {category.label}
+                    </div>
+                    <div
+                      className={`text-xs mt-0.5 ${
+                        isActive ? "text-black/70" : "text-gray-500"
+                      }`}
+                    >
+                      {count} item{count === 1 ? "" : "s"}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </section>
@@ -285,19 +403,15 @@ export default function Marketplace() {
             <div className="flex items-end justify-between gap-4 mb-6 sm:mb-8">
               <div>
                 <h2 className="text-2xl sm:text-3xl font-black text-white">
-                  Today’s Specials
+                  {getCategoryHeading()}
                 </h2>
 
                 <p className="text-gray-500 mt-2 text-sm sm:text-base">
-                  {searchTerm || selectedType !== "All"
-                    ? `Showing ${getTypeLabel(selectedType)} results ${
-                        searchTerm ? `for "${searchTerm}"` : ""
-                      }`
-                    : "Limited homemade food drops available now."}
+                  {getCategorySubheading()}
                 </p>
               </div>
 
-              {(searchTerm || selectedType !== "All") && (
+              {hasActiveFilters && (
                 <button
                   type="button"
                   onClick={clearFilters}
@@ -308,7 +422,42 @@ export default function Marketplace() {
               )}
             </div>
 
-            
+            {loading && (
+              <div className="bg-[#111111] border border-[#2a2a2a] rounded-3xl p-8 text-center">
+                <p className="text-gray-400 font-bold">Loading food drops...</p>
+              </div>
+            )}
+
+            {!loading && errorMessage && (
+              <div className="bg-red-950/40 border border-red-500/30 rounded-3xl p-8 text-center">
+                <p className="text-red-300 font-bold">
+                  Could not load marketplace.
+                </p>
+                <p className="text-red-200/70 text-sm mt-2">{errorMessage}</p>
+              </div>
+            )}
+
+            {!loading && !errorMessage && filteredFoods.length === 0 && (
+              <div className="bg-[#111111] border border-[#2a2a2a] rounded-3xl p-8 text-center">
+                <div className="text-5xl">🍽️</div>
+                <p className="text-gray-300 font-black mt-4">
+                  No dishes found.
+                </p>
+                <p className="text-gray-500 text-sm mt-2">
+                  Try another category, food type, or search term.
+                </p>
+
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="mt-5 bg-yellow-500 hover:bg-yellow-400 text-black font-black px-6 py-3 rounded-2xl"
+                  >
+                    View All Food
+                  </button>
+                )}
+              </div>
+            )}
 
             {!loading && !errorMessage && filteredFoods.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">

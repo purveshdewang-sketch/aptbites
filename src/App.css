@@ -1,184 +1,196 @@
-.counter {
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-  margin-bottom: 24px;
+import { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-  &:hover {
-    border-color: var(--accent-border);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
+import Home from "./pages/Home";
+import CustomerLogin from "./pages/CustomerLogin";
+import SellerLogin from "./pages/SellerLogin";
+import Marketplace from "./pages/Marketplace";
+import SellerDashboard from "./pages/SellerDashboard";
+import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import Orders from "./pages/Orders";
+import OrderHistory from "./pages/OrderHistory";
+import FoodDetails from "./pages/FoodDetails";
+
+import { useAuth } from "./context/AuthContext";
+import { supabase } from "./lib/supabaseClient";
+
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen bg-black flex items-center justify-center text-white">
+      Loading...
+    </div>
+  );
 }
 
-.hero {
-  position: relative;
+function ProtectedRoute({ children }) {
+  const { user, authLoading } = useAuth();
 
-  .base,
-  .framework,
-  .vite {
-    inset-inline: 0;
-    margin: 0 auto;
-  }
+  if (authLoading) return <LoadingScreen />;
 
-  .base {
-    width: 170px;
-    position: relative;
-    z-index: 0;
-  }
+  if (!user) return <Navigate to="/customer-login" replace />;
 
-  .framework,
-  .vite {
-    position: absolute;
-  }
-
-  .framework {
-    z-index: 1;
-    top: 34px;
-    height: 28px;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
-      scale(1.4);
-  }
-
-  .vite {
-    z-index: 0;
-    top: 107px;
-    height: 26px;
-    width: auto;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
-      scale(0.8);
-  }
+  return children;
 }
 
-#center {
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
-  place-content: center;
-  place-items: center;
-  flex-grow: 1;
+function SellerOnlyRoute({ children }) {
+  const { user, authLoading } = useAuth();
 
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 18px;
-  }
-}
+  const [checkingRole, setCheckingRole] = useState(true);
+  const [sellerAllowed, setSellerAllowed] = useState(false);
 
-#next-steps {
-  display: flex;
-  border-top: 1px solid var(--border);
-  text-align: left;
+  useEffect(() => {
+    let cancelled = false;
 
-  & > div {
-    flex: 1 1 0;
-    padding: 32px;
-    @media (max-width: 1024px) {
-      padding: 24px 20px;
-    }
-  }
+    async function checkSellerAccess() {
+      if (authLoading) return;
 
-  .icon {
-    margin-bottom: 16px;
-    width: 22px;
-    height: 22px;
-  }
+      if (!user) {
+        if (!cancelled) {
+          setSellerAllowed(false);
+          setCheckingRole(false);
+        }
+        return;
+      }
 
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    text-align: center;
-  }
-}
+      setCheckingRole(true);
 
-#docs {
-  border-right: 1px solid var(--border);
+      const localSellerAccess =
+        localStorage.getItem(`quickbites_seller_access_${user.id}`) === "yes";
 
-  @media (max-width: 1024px) {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-}
+      const metadataRole = String(user?.user_metadata?.role || "").toLowerCase();
 
-#next-steps ul {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  gap: 8px;
-  margin: 32px 0 0;
+      if (localSellerAccess || metadataRole === "seller") {
+        if (!cancelled) {
+          setSellerAllowed(true);
+          setCheckingRole(false);
+        }
+        return;
+      }
 
-  .logo {
-    height: 18px;
-  }
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role, is_seller")
+        .eq("id", user.id)
+        .maybeSingle();
 
-  a {
-    color: var(--text-h);
-    font-size: 16px;
-    border-radius: 6px;
-    background: var(--social-bg);
-    display: flex;
-    padding: 6px 12px;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: box-shadow 0.3s;
+      if (cancelled) return;
 
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    .button-icon {
-      height: 18px;
-      width: 18px;
-    }
-  }
+      if (error) {
+        setSellerAllowed(false);
+        setCheckingRole(false);
+        return;
+      }
 
-  @media (max-width: 1024px) {
-    margin-top: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
+      const profileRole = String(data?.role || "").toLowerCase();
 
-    li {
-      flex: 1 1 calc(50% - 8px);
+      const isSeller = profileRole === "seller" || data?.is_seller === true;
+
+      if (isSeller) {
+        localStorage.setItem(`quickbites_seller_access_${user.id}`, "yes");
+      }
+
+      setSellerAllowed(isSeller);
+      setCheckingRole(false);
     }
 
-    a {
-      width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
-    }
-  }
+    checkSellerAccess();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, authLoading]);
+
+  if (authLoading || checkingRole) return <LoadingScreen />;
+
+  if (!user) return <Navigate to="/customer-login" replace />;
+
+  if (!sellerAllowed) return <Navigate to="/customer-login" replace />;
+
+  return children;
 }
 
-#spacer {
-  height: 88px;
-  border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
-    height: 48px;
-  }
-}
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/customer-login" element={<CustomerLogin />} />
+        <Route path="/seller-login" element={<SellerLogin />} />
 
-.ticks {
-  position: relative;
-  width: 100%;
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
 
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -4.5px;
-    border: 5px solid transparent;
-  }
+        <Route
+          path="/marketplace"
+          element={
+            <ProtectedRoute>
+              <Marketplace />
+            </ProtectedRoute>
+          }
+        />
 
-  &::before {
-    left: 0;
-    border-left-color: var(--border);
-  }
-  &::after {
-    right: 0;
-    border-right-color: var(--border);
-  }
+        <Route
+          path="/food/:id"
+          element={
+            <ProtectedRoute>
+              <FoodDetails />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/seller-dashboard"
+          element={
+            <SellerOnlyRoute>
+              <SellerDashboard />
+            </SellerOnlyRoute>
+          }
+        />
+
+        <Route
+          path="/cart"
+          element={
+            <ProtectedRoute>
+              <Cart />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/checkout"
+          element={
+            <ProtectedRoute>
+              <Checkout />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/orders"
+          element={
+            <ProtectedRoute>
+              <Orders />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/order-history"
+          element={
+            <ProtectedRoute>
+              <OrderHistory />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
