@@ -571,6 +571,26 @@ export default function SellerDashboard() {
     fetchSellerOrders();
   }
 
+  async function completeOrder(orderId) {
+  const confirmComplete = window.confirm("Mark this order as completed?");
+
+  if (!confirmComplete) return;
+
+  const { error } = await supabase
+    .from("orders")
+    .update({ status: "completed" })
+    .eq("id", orderId)
+    .eq("seller_id", user.id);
+
+  if (error) {
+    setMessage(`Could not complete order: ${error.message}`);
+    return;
+  }
+
+  setMessage("Order completed.");
+  fetchSellerOrders();
+}
+
   async function markReadyForPickup(orderId) {
     const { error } = await supabase
       .from("orders")
@@ -605,30 +625,29 @@ export default function SellerDashboard() {
   }
 
   function getAutoStatus(order) {
-    timerTick;
+  timerTick;
 
-    const dbStatus = normalizeStatus(order.status);
-    const sellerResponse = normalizeSellerResponse(order.seller_response);
+  const dbStatus = normalizeStatus(order.status);
+  const sellerResponse = normalizeSellerResponse(order.seller_response);
 
-    if (dbStatus === "cancelled" || sellerResponse === "rejected") {
-      return "cancelled";
-    }
-
-    if (dbStatus === "completed") return "completed";
-
-    if (sellerResponse === "pending") return "pending";
-
-    if (order.ready_for_pickup) return "ready_for_pickup";
-
-    const createdAt = new Date(order.created_at || Date.now()).getTime();
-    const minutesPassed = Math.floor((Date.now() - createdAt) / 60000);
-
-    if (minutesPassed >= 30) return "completed";
-    if (minutesPassed >= 20) return "packing";
-    if (minutesPassed >= 10) return "cooking";
-
-    return "accepted";
+  if (dbStatus === "cancelled" || sellerResponse === "rejected") {
+    return "cancelled";
   }
+
+  if (dbStatus === "completed") {
+    return "completed";
+  }
+
+  if (sellerResponse === "pending") {
+    return "pending";
+  }
+
+  if (order.ready_for_pickup) {
+    return "ready_for_pickup";
+  }
+
+  return "accepted";
+}
 
   function getStatusLabel(status) {
     const currentStatus = normalizeStatus(status);
@@ -763,10 +782,10 @@ export default function SellerDashboard() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+          <div className="flex flex-wrap gap-3 lg:justify-end">
             <Link
               to="/"
-              className="border border-[#333] hover:border-yellow-500/50 text-gray-300 hover:text-yellow-400 active:scale-95 font-bold px-5 py-3 rounded-2xl text-center transition-all"
+              className="border border-[#333] hover:border-yellow-500/50 text-gray-300 hover:text-yellow-400 active:scale-95 font-bold px-5 py-3 rounded-full min-w-[140px] text-center transition-all"
             >
               ← Home
             </Link>
@@ -1005,6 +1024,16 @@ export default function SellerDashboard() {
                         Ready for Pickup
                       </div>
                     )}
+
+                    {sellerResponse === "accepted" && (
+  <button
+    type="button"
+    onClick={() => completeOrder(order.id)}
+    className="mt-5 w-full bg-yellow-500 hover:bg-yellow-400 active:scale-95 text-black font-black py-3 rounded-2xl transition-all"
+  >
+    Complete Order
+  </button>
+)}
 
                     <div className="grid grid-cols-2 gap-3 mt-5">
                       <a
