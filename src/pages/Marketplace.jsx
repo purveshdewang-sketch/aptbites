@@ -18,7 +18,7 @@ export default function Marketplace() {
   useEffect(() => {
     fetchFoods();
 
-    const channel = supabase
+    const foodsChannel = supabase
       .channel("foods-realtime-channel")
       .on(
         "postgres_changes",
@@ -33,8 +33,24 @@ export default function Marketplace() {
       )
       .subscribe();
 
+    const profilesChannel = supabase
+      .channel("seller-status-realtime-channel")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "profiles",
+        },
+        () => {
+          fetchFoods();
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(foodsChannel);
+      supabase.removeChannel(profilesChannel);
     };
   }, []);
 
@@ -42,18 +58,42 @@ export default function Marketplace() {
     setLoading(true);
     setErrorMessage("");
 
-    const { data, error } = await supabase
+    const { data: foodData, error: foodError } = await supabase
       .from("foods")
       .select("*")
       .order("id", { ascending: false });
 
-    if (error) {
-      setErrorMessage(error.message);
+    if (foodError) {
+      setErrorMessage(foodError.message);
       setFoods([]);
-    } else {
-      setFoods(data || []);
+      setLoading(false);
+      return;
     }
 
+    const sellerIds = [
+      ...new Set((foodData || []).map((food) => food.user_id).filter(Boolean)),
+    ];
+
+    let sellerStatusMap = {};
+
+    if (sellerIds.length > 0) {
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("id, seller_online")
+        .in("id", sellerIds);
+
+      sellerStatusMap = (profileData || {}).reduce((map, profile) => {
+        map[profile.id] = profile.seller_online !== false;
+        return map;
+      }, {});
+    }
+
+    const enrichedFoods = (foodData || []).map((food) => ({
+      ...food,
+      seller_online: sellerStatusMap[food.user_id] !== false,
+    }));
+
+    setFoods(enrichedFoods);
     setLoading(false);
   }
 
@@ -65,7 +105,8 @@ export default function Marketplace() {
         searchValue === "" ||
         item.name?.toLowerCase().includes(searchValue) ||
         item.seller?.toLowerCase().includes(searchValue) ||
-        item.time?.toLowerCase().includes(searchValue);
+        item.time?.toLowerCase().includes(searchValue) ||
+        item.category?.toLowerCase().includes(searchValue);
 
       const matchesType = selectedType === "All" || item.type === selectedType;
 
@@ -74,12 +115,17 @@ export default function Marketplace() {
   }, [foods, searchTerm, selectedType]);
 
   const availableFoods = useMemo(() => {
-    return foods.filter((item) => Number(item.stock || 0) > 0);
+    return foods.filter(
+      (item) => Number(item.stock || 0) > 0 && item.seller_online !== false
+    );
   }, [foods]);
 
   const lowStockCount = useMemo(() => {
     return foods.filter(
-      (item) => Number(item.stock || 0) > 0 && Number(item.stock || 0) <= 2
+      (item) =>
+        item.seller_online !== false &&
+        Number(item.stock || 0) > 0 &&
+        Number(item.stock || 0) <= 2
     ).length;
   }, [foods]);
 
@@ -99,7 +145,6 @@ export default function Marketplace() {
       <Navbar />
 
       <main className="min-h-screen bg-black text-white overflow-hidden pb-28">
-        {/* Hero */}
         <section className="relative px-4 sm:px-6 pt-6 pb-6 sm:py-10 border-b border-[#1f1f1f]">
           <div className="absolute top-0 right-0 w-72 h-72 bg-yellow-500/10 rounded-full blur-[90px]" />
 
@@ -117,10 +162,9 @@ export default function Marketplace() {
 
             <p className="text-gray-400 text-[15px] sm:text-lg mt-5 max-w-2xl leading-relaxed">
               Discover meals, snacks, desserts, and special dishes prepared by
-              trusted home chefs inside your apartment complex.
+              trusted home chefs inside your neighbourhood.
             </p>
 
-            {/* Live Stats */}
             <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-4">
                 <p className="text-gray-500 text-xs uppercase font-bold">
@@ -150,13 +194,12 @@ export default function Marketplace() {
               </div>
             </div>
 
-            {/* Search + Filters */}
             <div className="mt-7 grid grid-cols-1 gap-3 lg:flex lg:items-center lg:gap-4">
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Search dishes, seller, or ready time..."
+                placeholder="Search dishes, seller, category, or ready time..."
                 className="bg-[#111111] border border-[#2a2a2a] text-white rounded-2xl px-5 py-4 w-full lg:max-w-lg outline-none focus:border-yellow-500 transition-all duration-200 text-base"
               />
 
@@ -215,7 +258,6 @@ export default function Marketplace() {
           </div>
         </section>
 
-        {/* Grid */}
         <section className="px-4 sm:px-6 py-7 sm:py-10">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-end justify-between gap-4 mb-6 sm:mb-8">
@@ -300,7 +342,7 @@ export default function Marketplace() {
                   </h3>
 
                   <p className="text-gray-500 mt-2">
-                    Try another dish, seller, ready time, or food type.
+                    Try another dish, seller, ready time, category, or food type.
                   </p>
 
                   <button

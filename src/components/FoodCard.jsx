@@ -3,28 +3,27 @@ import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 
 export default function FoodCard({ item }) {
-  const {
-    cartItems,
-    addToCart,
-    increaseQuantity,
-    decreaseQuantity,
-  } = useCart();
+  const { cartItems, addToCart, increaseQuantity, decreaseQuantity } = useCart();
 
   const [showToast, setShowToast] = useState(false);
 
-  const cartItem = cartItems.find(
-    (cartItem) => cartItem.id === item.id
-  );
-
+  const cartItem = cartItems.find((cartItem) => cartItem.id === item.id);
   const quantity = cartItem ? cartItem.quantity : 0;
 
   const stock = Number(item.stock || 0);
 
+  const sellerIsClosed = item.seller_online === false;
   const isLowStock = stock > 0 && stock <= 2;
   const isSellingFast = stock > 2 && stock <= 5;
   const isSoldOut = stock <= 0;
+  const isBlocked = sellerIsClosed || isSoldOut;
 
   function handleAddToCart() {
+    if (sellerIsClosed) {
+      alert("Seller is closed right now.");
+      return;
+    }
+
     if (isSoldOut) return;
 
     addToCart(item);
@@ -38,9 +37,8 @@ export default function FoodCard({ item }) {
 
   return (
     <>
-      {/* Toast */}
       {showToast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 sm:left-auto sm:right-6 sm:translate-x-0 z-[999] w-[92%] sm:w-[340px] bg-[#111111] border border-yellow-500/30 rounded-[1.75rem] p-4 shadow-2xl shadow-yellow-500/20 animate-[fadeIn_.2s_ease]">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 sm:left-auto sm:right-6 sm:translate-x-0 z-[999] w-[92%] sm:w-[340px] bg-[#111111] border border-yellow-500/30 rounded-[1.75rem] p-4 shadow-2xl shadow-yellow-500/20">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-yellow-400 font-bold text-base">
@@ -66,135 +64,150 @@ export default function FoodCard({ item }) {
         </div>
       )}
 
-      {/* Card */}
-      <div className="group bg-[#111111] border border-[#222] hover:border-yellow-500/30 rounded-[2rem] overflow-hidden shadow-xl hover:shadow-yellow-500/10 transition-all duration-300 hover:-translate-y-1">
-        {/* Image */}
-        <div className="relative overflow-hidden">
-          <div className="aspect-square bg-[#161616] overflow-hidden">
-            <img
-              src={item.image}
-              alt={item.name}
-              className={`h-full w-full object-cover transition-all duration-700 group-hover:scale-110 ${
-                isSoldOut ? "opacity-40 grayscale" : ""
-              }`}
-            />
-          </div>
+      <div
+        className={`group bg-[#111111] border rounded-[1.75rem] overflow-hidden transition-all duration-300 ${
+          sellerIsClosed
+            ? "border-red-500/30 opacity-70"
+            : "border-[#222] hover:border-yellow-500/40 hover:-translate-y-1"
+        }`}
+      >
+        <div className="relative aspect-square overflow-hidden bg-[#1a1a1a]">
+          <img
+            src={item.image}
+            alt={item.name}
+            className={`w-full h-full object-cover transition-all duration-500 ${
+              sellerIsClosed
+                ? "grayscale opacity-60"
+                : "group-hover:scale-105"
+            }`}
+          />
 
-          {/* Food Type */}
-          <div className="absolute top-4 left-4 flex gap-2">
+          <div className="absolute top-3 left-3 flex flex-col gap-2">
             <span
-              className={`text-[11px] font-semibold px-3 py-1 rounded-full backdrop-blur-md ${
+              className={`w-fit text-xs font-black px-3 py-1.5 rounded-full ${
                 item.type === "Non-Veg"
-                  ? "bg-red-900/60 text-red-300 border border-red-500/20"
-                  : "bg-green-900/60 text-green-300 border border-green-500/20"
+                  ? "bg-red-500 text-white"
+                  : "bg-green-500 text-black"
               }`}
             >
-              {item.type || "Veg"}
+              {item.type}
             </span>
+
+            {item.category && (
+              <span className="w-fit text-xs font-black px-3 py-1.5 rounded-full bg-blue-500/90 text-white">
+                {item.category}
+              </span>
+            )}
           </div>
 
-          {/* Urgency Badge */}
-          {!isSoldOut && (
-            <div className="absolute top-4 right-4">
-              {isLowStock ? (
-                <span className="bg-red-500 text-white text-[11px] font-black px-3 py-1 rounded-full shadow-lg">
-                  🔥 Only {stock} left
-                </span>
-              ) : isSellingFast ? (
-                <span className="bg-yellow-500 text-black text-[11px] font-black px-3 py-1 rounded-full shadow-lg">
-                  Selling Fast
-                </span>
-              ) : null}
-            </div>
-          )}
+          <div className="absolute top-3 right-3">
+            {sellerIsClosed ? (
+              <span className="text-xs font-black px-3 py-1.5 rounded-full bg-red-500 text-white">
+                Closed
+              </span>
+            ) : isSoldOut ? (
+              <span className="text-xs font-black px-3 py-1.5 rounded-full bg-gray-800 text-gray-400">
+                Sold Out
+              </span>
+            ) : isLowStock ? (
+              <span className="text-xs font-black px-3 py-1.5 rounded-full bg-red-500 text-white">
+                Only {stock} left
+              </span>
+            ) : isSellingFast ? (
+              <span className="text-xs font-black px-3 py-1.5 rounded-full bg-yellow-500 text-black">
+                Selling Fast
+              </span>
+            ) : (
+              <span className="text-xs font-black px-3 py-1.5 rounded-full bg-black/70 text-yellow-400 border border-yellow-500/20">
+                Available
+              </span>
+            )}
+          </div>
 
-          {/* Sold Out Overlay */}
-          {isSoldOut && (
-            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-              <div className="bg-red-500 text-white font-black px-5 py-3 rounded-2xl shadow-2xl">
-                SOLD OUT
+          {sellerIsClosed && (
+            <div className="absolute inset-0 bg-black/55 flex items-center justify-center px-4 text-center">
+              <div className="bg-red-950/80 border border-red-500/40 text-red-200 font-black px-4 py-3 rounded-2xl">
+                Seller is closed right now
               </div>
             </div>
           )}
         </div>
 
-        {/* Content */}
-        <div className="p-4 sm:p-5">
-          {/* Name + Price */}
+        <div className="p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="text-white font-black text-lg leading-tight truncate">
+              <h3 className="text-xl font-black text-white truncate">
                 {item.name}
               </h3>
 
-              <p className="text-gray-500 text-sm mt-2 truncate">
-                Homemade by {item.seller}
+              <p className="text-gray-500 text-sm mt-1 truncate">
+                {item.seller}
               </p>
             </div>
 
-            <div className="text-right shrink-0">
-              <p className="text-yellow-400 font-black text-2xl">
-                ₹{item.price}
-              </p>
-
-              <p className="text-[11px] text-gray-500 mt-1">
-                per plate
-              </p>
-            </div>
+            <p className="text-yellow-400 font-black text-2xl shrink-0">
+              ₹{item.price}
+            </p>
           </div>
 
-          {/* Stats */}
-          <div className="flex items-center justify-between mt-5">
-            <div>
-              <p className="text-gray-500 text-xs uppercase tracking-wide">
-                Ready In
-              </p>
+          {item.description && (
+            <p className="text-gray-500 text-sm mt-3 line-clamp-2">
+              {item.description}
+            </p>
+          )}
 
-              <p className="text-white text-sm font-bold mt-1">
-                {item.time}
-              </p>
-            </div>
+          <div className="flex items-center justify-between gap-3 mt-4">
+            <p className="text-gray-500 text-sm">
+              Ready: <span className="text-gray-300">{item.time}</span>
+            </p>
 
-            <div className="text-right">
-              <p className="text-gray-500 text-xs uppercase tracking-wide">
-                Availability
-              </p>
-
-              <p
-                className={`text-sm font-black mt-1 ${
-                  isLowStock
-                    ? "text-red-400"
-                    : isSellingFast
-                    ? "text-yellow-400"
-                    : "text-green-400"
-                }`}
-              >
-                {isSoldOut
-                  ? "Sold Out"
+            <p
+              className={`text-sm font-bold ${
+                sellerIsClosed
+                  ? "text-red-400"
+                  : isSoldOut
+                  ? "text-gray-600"
                   : isLowStock
-                  ? `${stock} left`
-                  : `${stock} available`}
-              </p>
-            </div>
+                  ? "text-red-400"
+                  : "text-gray-400"
+              }`}
+            >
+              {sellerIsClosed
+                ? "Closed"
+                : isSoldOut
+                ? "Unavailable"
+                : `${stock} left`}
+            </p>
           </div>
 
-          {/* Add / Quantity */}
+          {sellerIsClosed && (
+            <div className="mt-4 bg-red-950/50 border border-red-500/30 text-red-300 text-sm font-bold px-4 py-3 rounded-2xl">
+              Seller is closed right now
+            </div>
+          )}
+
           <div className="mt-5">
-            {quantity === 0 ? (
+            {quantity === 0 || sellerIsClosed ? (
               <button
+                type="button"
                 onClick={handleAddToCart}
-                disabled={isSoldOut}
+                disabled={isBlocked}
                 className={`w-full font-black py-4 rounded-2xl transition-all duration-200 shadow-lg text-base ${
-                  isSoldOut
+                  isBlocked
                     ? "bg-[#1a1a1a] text-gray-600 cursor-not-allowed"
                     : "bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black shadow-yellow-500/20"
                 }`}
               >
-                {isSoldOut ? "Unavailable" : "+ Add to Cart"}
+                {sellerIsClosed
+                  ? "Seller Closed"
+                  : isSoldOut
+                  ? "Unavailable"
+                  : "+ Add to Cart"}
               </button>
             ) : (
               <div className="flex items-center justify-between overflow-hidden rounded-2xl bg-yellow-500 text-black font-black shadow-lg shadow-yellow-500/20">
                 <button
+                  type="button"
                   onClick={() => decreaseQuantity(item.id)}
                   className="flex-1 py-4 text-xl hover:bg-yellow-400 active:scale-95 transition-all duration-200"
                 >
@@ -206,6 +219,7 @@ export default function FoodCard({ item }) {
                 </span>
 
                 <button
+                  type="button"
                   onClick={() => increaseQuantity(item.id)}
                   className="flex-1 py-4 text-xl hover:bg-yellow-400 active:scale-95 transition-all duration-200"
                 >

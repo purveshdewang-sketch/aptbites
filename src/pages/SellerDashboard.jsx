@@ -254,7 +254,7 @@ export default function SellerDashboard() {
 
     const { data, error } = await supabase
       .from("foods")
-      .select("*")
+      .select("*, profiles:seller_id(seller_online)")
       .eq("user_id", user.id)
       .order("id", { ascending: false });
 
