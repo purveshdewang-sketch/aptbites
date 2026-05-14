@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { useCart } from "../context/CartContext";
@@ -14,6 +15,21 @@ export default function Cart() {
 
   const platformFee = cartItems.length > 0 ? 10 : 0;
   const finalTotal = cartTotal + platformFee;
+
+  const [orderTiming, setOrderTiming] = useState("now");
+  const [scheduledDate, setScheduledDate] = useState("");
+  const [scheduledTime, setScheduledTime] = useState("");
+
+  useEffect(() => {
+    localStorage.setItem(
+      "quickbites_cart_order_timing",
+      JSON.stringify({
+        orderTiming,
+        scheduledDate,
+        scheduledTime,
+      })
+    );
+  }, [orderTiming, scheduledDate, scheduledTime]);
 
   return (
     <>
@@ -150,28 +166,55 @@ export default function Cart() {
                   Order now or schedule for later
                 </h2>
 
-                <p className="text-gray-500 text-sm mt-2">
-                  Scheduling will be enabled in checkout after seller permission
-                  is connected.
-                </p>
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
-                  <div className="bg-yellow-500 text-black border border-yellow-400 rounded-2xl p-4">
+                  <button
+                    type="button"
+                    onClick={() => setOrderTiming("now")}
+                    className={`text-left rounded-2xl p-4 border transition-all ${
+                      orderTiming === "now"
+                        ? "bg-yellow-500 text-black border-yellow-400"
+                        : "bg-black text-gray-300 border-[#333]"
+                    }`}
+                  >
                     <p className="font-black text-lg">⚡ Order Now</p>
-                    <p className="text-black/70 text-sm mt-1">
+                    <p className="text-sm mt-1 opacity-70">
                       Place the order immediately.
                     </p>
-                  </div>
+                  </button>
 
-                  <div className="bg-black border border-[#333] rounded-2xl p-4 opacity-70">
-                    <p className="font-black text-lg text-gray-300">
-                      🕒 Schedule Later
+                  <button
+                    type="button"
+                    onClick={() => setOrderTiming("scheduled")}
+                    className={`text-left rounded-2xl p-4 border transition-all ${
+                      orderTiming === "scheduled"
+                        ? "bg-yellow-500 text-black border-yellow-400"
+                        : "bg-black text-gray-300 border-[#333]"
+                    }`}
+                  >
+                    <p className="font-black text-lg">🕒 Schedule Later</p>
+                    <p className="text-sm mt-1 opacity-70">
+                      Choose date and time.
                     </p>
-                    <p className="text-gray-500 text-sm mt-1">
-                      Coming next: choose date and time.
-                    </p>
-                  </div>
+                  </button>
                 </div>
+
+                {orderTiming === "scheduled" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                    <input
+                      type="date"
+                      value={scheduledDate}
+                      onChange={(event) => setScheduledDate(event.target.value)}
+                      className="bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500"
+                    />
+
+                    <input
+                      type="time"
+                      value={scheduledTime}
+                      onChange={(event) => setScheduledTime(event.target.value)}
+                      className="bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-6 shadow-2xl mt-8">

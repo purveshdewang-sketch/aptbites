@@ -62,6 +62,22 @@ export default function Checkout() {
         }
       }
 
+      const cartTimingDetails = localStorage.getItem(
+        "quickbites_cart_order_timing"
+      );
+
+      if (cartTimingDetails) {
+        try {
+          const parsedTiming = JSON.parse(cartTimingDetails);
+
+          setOrderTiming(parsedTiming.orderTiming || "now");
+          setScheduledDate(parsedTiming.scheduledDate || "");
+          setScheduledTime(parsedTiming.scheduledTime || "");
+        } catch {
+          localStorage.removeItem("quickbites_cart_order_timing");
+        }
+      }
+
       if (!user) return;
 
       const { data } = await supabase
@@ -201,6 +217,23 @@ export default function Checkout() {
     return scheduledDateTime.toISOString();
   }
 
+  function formatScheduledDateTime(dateValue, timeValue) {
+    if (!dateValue || !timeValue) return "";
+
+    const date = new Date(`${dateValue}T${timeValue}`);
+
+    if (Number.isNaN(date.getTime())) return "";
+
+    return date.toLocaleString([], {
+      weekday: "long",
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
+
   async function validateLiveStockBeforeOrder() {
     const foodIds = cartItems.map((item) => item.id);
 
@@ -279,7 +312,9 @@ export default function Checkout() {
       const scheduledFor = getScheduledDateTime();
 
       if (orderTiming === "scheduled" && !sellerAcceptsScheduledOrders) {
-        throw new Error("This seller is not accepting scheduled orders right now.");
+        throw new Error(
+          "This seller is not accepting scheduled orders right now."
+        );
       }
 
       await validateLiveStockBeforeOrder();
@@ -326,6 +361,8 @@ export default function Checkout() {
           scheduledTime,
         })
       );
+
+      localStorage.removeItem("quickbites_cart_order_timing");
 
       clearCart();
       setOrderPlaced(true);
@@ -376,6 +413,11 @@ export default function Checkout() {
       </>
     );
   }
+
+  const formattedSchedule = formatScheduledDateTime(
+    scheduledDate,
+    scheduledTime
+  );
 
   return (
     <>
@@ -499,20 +541,31 @@ export default function Checkout() {
                 )}
 
                 {orderTiming === "scheduled" && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                  <div className="space-y-3 mt-4">
                     <input
                       type="date"
                       value={scheduledDate}
                       onChange={(event) => setScheduledDate(event.target.value)}
-                      className="bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
+                      className="w-full bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
                     />
 
                     <input
                       type="time"
                       value={scheduledTime}
                       onChange={(event) => setScheduledTime(event.target.value)}
-                      className="bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
+                      className="w-full bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
                     />
+
+                    {formattedSchedule && (
+                      <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4">
+                        <p className="text-yellow-400 text-sm font-black">
+                          Selected schedule
+                        </p>
+                        <p className="text-white text-base font-bold mt-1">
+                          {formattedSchedule}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -579,13 +632,13 @@ export default function Checkout() {
             </div>
 
             <div className="mt-8 border-t border-[#222] pt-6 space-y-4">
-              {orderTiming === "scheduled" && scheduledDate && scheduledTime && (
+              {orderTiming === "scheduled" && formattedSchedule && (
                 <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4">
                   <p className="text-yellow-400 text-sm font-black">
                     Scheduled Order
                   </p>
                   <p className="text-gray-300 text-sm mt-1">
-                    {scheduledDate} at {scheduledTime}
+                    {formattedSchedule}
                   </p>
                 </div>
               )}
