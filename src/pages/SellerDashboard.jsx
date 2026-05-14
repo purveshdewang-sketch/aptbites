@@ -3,6 +3,17 @@ import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../context/AuthContext";
 
+const FOOD_CATEGORIES = [
+  "Meals",
+  "Breakfast",
+  "Snacks",
+  "Sweets",
+  "Drinks",
+  "Healthy",
+  "Tiffin",
+  "Specials",
+];
+
 export default function SellerDashboard() {
   const { user } = useAuth();
 
@@ -16,12 +27,14 @@ export default function SellerDashboard() {
     time: "",
     stock: "",
     type: "Veg",
+    category: "Meals",
     description: "",
   });
 
   const [sellerFoods, setSellerFoods] = useState([]);
-  const [timerTick, setTimerTick] = useState(0);
   const [sellerOrders, setSellerOrders] = useState([]);
+  const [sellerOnline, setSellerOnline] = useState(true);
+  const [timerTick, setTimerTick] = useState(0);
   const [editingFood, setEditingFood] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
@@ -45,6 +58,7 @@ export default function SellerDashboard() {
       }));
     }
 
+    fetchSellerProfile();
     fetchSellerFoods();
     fetchSellerOrders();
 
@@ -69,12 +83,20 @@ export default function SellerDashboard() {
     };
   }, [user]);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimerTick((current) => current + 1);
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
+
     if ("Notification" in window) {
-  Notification.requestPermission();
-}
+      Notification.requestPermission();
+    }
 
     const savedSoundSetting = localStorage.getItem(
       `quickbites_seller_sound_${user.id}`
@@ -85,17 +107,58 @@ export default function SellerDashboard() {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (!user) return;
 
+    const interval = setInterval(() => {
+      fetchSellerOrders(true);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [user]);
 
   function getSellerStorageKey() {
     return user ? `Quickbites_seller_name_${user.id}` : "Quickbites_seller_name";
+  }
+
+  async function fetchSellerProfile() {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("seller_online")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (!error && data) {
+      setSellerOnline(data.seller_online !== false);
+    }
+  }
+
+  async function toggleSellerOnline() {
+    if (!user) return;
+
+    const nextStatus = !sellerOnline;
+    setSellerOnline(nextStatus);
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ seller_online: nextStatus })
+      .eq("id", user.id);
+
+    if (error) {
+      setSellerOnline(!nextStatus);
+      setMessage(`Could not update online status: ${error.message}`);
+      return;
+    }
+
+    setMessage(nextStatus ? "You are now online." : "You are now offline.");
   }
 
   function toggleNotificationSound() {
     if (!user) return;
 
     const nextValue = !audioReady;
-
     setAudioReady(nextValue);
 
     localStorage.setItem(
@@ -156,16 +219,6 @@ export default function SellerDashboard() {
     });
   }
 
-useEffect(() => {
-  if (!user) return;
-
-  const interval = setInterval(() => {
-    fetchSellerOrders(true);
-  }, 5000);
-
-  return () => clearInterval(interval);
-}, [user]);
-
   function handleChange(event) {
     const { name, value } = event.target;
 
@@ -214,29 +267,6 @@ useEffect(() => {
     setFoodsLoading(false);
   }
 
-  function handleImageChange(event) {
-    const file = event.target.files[0];
-
-    if (!file) return;
-
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    const maxSizeInBytes = 2 * 1024 * 1024;
-
-    if (!allowedTypes.includes(file.type)) {
-      setMessage("Please upload a JPG, PNG, or WEBP image.");
-      return;
-    }
-
-    if (file.size > maxSizeInBytes) {
-      setMessage("Image is too large. Please upload an image below 5 MB.");
-      return;
-    }
-
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
-    setMessage("");
-  }
-
   async function fetchSellerOrders(shouldCheckNewOrder = false) {
     if (!user) return;
 
@@ -253,30 +283,34 @@ useEffect(() => {
 
       if (shouldCheckNewOrder) {
         const previousIds = previousOrderIdsRef.current;
-        const newActiveOrderFound = nextOrders.some(
-          (order) =>
+
+        const newActiveOrderFound = nextOrders.some((order) => {
+          const dbStatus = normalizeStatus(order.status);
+          return (
             !previousIds.includes(order.id) &&
-            normalizeStatus(order.status) !== "completed"
-        );
+            dbStatus !== "completed" &&
+            dbStatus !== "cancelled"
+          );
+        });
 
-       if (newActiveOrderFound) {
-  playTingSound();
+        if (newActiveOrderFound) {
+          playTingSound();
 
-  document.title = "🔔 New Order - QuickBites";
+          document.title = "🔔 New Order - QuickBites";
 
-  setTimeout(() => {
-    document.title = "QuickBites Seller";
-  }, 5000);
+          setTimeout(() => {
+            document.title = "QuickBites Seller";
+          }, 5000);
 
-        if ("Notification" in window && Notification.permission === "granted") {
-          new Notification("🍔 New QuickBites Order", {
-            body: "You received a new food order.",
-            icon: "/favicon.ico",
-          });
+          if ("Notification" in window && Notification.permission === "granted") {
+            new Notification("🍔 New QuickBites Order", {
+              body: "You received a new food order.",
+              icon: "/favicon.ico",
+            });
+          }
+
+          setMessage("🔔 New order received.");
         }
-
-        setMessage("🔔 New order received.");
-      }
       }
 
       previousOrderIdsRef.current = nextOrders.map((order) => order.id);
@@ -288,12 +322,32 @@ useEffect(() => {
     setOrdersLoading(false);
   }
 
+  function handleImageChange(event) {
+    const file = event.target.files[0];
+
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    const maxSizeInBytes = 2 * 1024 * 1024;
+
+    if (!allowedTypes.includes(file.type)) {
+      setMessage("Please upload a JPG, PNG, or WEBP image.");
+      return;
+    }
+
+    if (file.size > maxSizeInBytes) {
+      setMessage("Image is too large. Please upload an image below 2 MB.");
+      return;
+    }
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+    setMessage("");
+  }
+
   async function uploadDishImage() {
     if (!imageFile) {
-      return (
-        editingFood?.image ||
-        "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1200&auto=format&fit=crop"
-      );
+      return editingFood?.image || "";
     }
 
     const fileExtension = imageFile.name.split(".").pop();
@@ -330,6 +384,7 @@ useEffect(() => {
       time: "",
       stock: "",
       type: "Veg",
+      category: "Meals",
       description: "",
     });
 
@@ -348,6 +403,7 @@ useEffect(() => {
       time: food.time || "",
       stock: food.stock || "",
       type: food.type || "Veg",
+      category: food.category || "Meals",
       description: food.description || "",
     });
 
@@ -372,20 +428,20 @@ useEffect(() => {
     }
 
     if (
-  !formData.name ||
-  !formData.price ||
-  !formData.seller ||
-  !formData.time ||
-  formData.stock === ""
-) {
-  setMessage("Please fill dish name, price, seller, ready time, and stock.");
-  return;
-}
+      !formData.name ||
+      !formData.price ||
+      !formData.seller ||
+      !formData.time ||
+      formData.stock === ""
+    ) {
+      setMessage("Please fill dish name, price, seller, ready time, and stock.");
+      return;
+    }
 
-if (!editingFood && !imageFile) {
-  setMessage("Please upload a dish image before adding this dish.");
-  return;
-}
+    if (!editingFood && !imageFile) {
+      setMessage("Please upload a dish image before adding this dish.");
+      return;
+    }
 
     localStorage.setItem(getSellerStorageKey(), formData.seller);
 
@@ -393,16 +449,7 @@ if (!editingFood && !imageFile) {
     setMessage("");
 
     try {
-      let imageUrl = "";
-
-try {
-  imageUrl = await uploadDishImage();
-} catch (error) {
-  console.error(error);
-  setMessage(`Image upload failed: ${error.message}`);
-  setLoading(false);
-  return;
-}
+      const imageUrl = await uploadDishImage();
 
       const payload = {
         user_id: user.id,
@@ -412,6 +459,7 @@ try {
         time: formData.time,
         stock: Number(formData.stock),
         type: formData.type,
+        category: formData.category,
         description: formData.description,
         image: imageUrl,
       };
@@ -485,88 +533,183 @@ try {
     fetchSellerFoods();
   }
 
+  async function acceptOrder(orderId) {
+    const { error } = await supabase
+      .from("orders")
+      .update({ seller_response: "accepted" })
+      .eq("id", orderId)
+      .eq("seller_id", user.id);
+
+    if (error) {
+      setMessage(`Could not accept order: ${error.message}`);
+      return;
+    }
+
+    setMessage("Order accepted.");
+    fetchSellerOrders();
+  }
+
+  async function rejectOrder(orderId) {
+    const confirmReject = window.confirm("Reject this order?");
+    if (!confirmReject) return;
+
+    const { error } = await supabase
+      .from("orders")
+      .update({
+        seller_response: "rejected",
+        status: "cancelled",
+      })
+      .eq("id", orderId)
+      .eq("seller_id", user.id);
+
+    if (error) {
+      setMessage(`Could not reject order: ${error.message}`);
+      return;
+    }
+
+    setMessage("Order rejected.");
+    fetchSellerOrders();
+  }
+
+  async function markReadyForPickup(orderId) {
+    const { error } = await supabase
+      .from("orders")
+      .update({
+        ready_for_pickup: true,
+        seller_response: "accepted",
+      })
+      .eq("id", orderId)
+      .eq("seller_id", user.id);
+
+    if (error) {
+      setMessage(`Could not mark ready for pickup: ${error.message}`);
+      return;
+    }
+
+    setMessage("Order marked ready for pickup.");
+    fetchSellerOrders();
+  }
+
   function normalizeStatus(status) {
     return String(status || "confirmed").toLowerCase();
   }
 
-function getAutoStatus(order) {
-  timerTick;
+  function normalizeSellerResponse(response) {
+    return String(response || "pending").toLowerCase();
+  }
 
-  const createdAt = new Date(order.created_at || Date.now()).getTime();
-  const minutesPassed = Math.floor((Date.now() - createdAt) / 60000);
+  function isSelfPickup(order) {
+    return String(order.delivery_type || "")
+      .toLowerCase()
+      .includes("pickup");
+  }
 
-  if (minutesPassed >= 40) return "completed";
-  if (minutesPassed >= 30) return "out_for_delivery";
-  if (minutesPassed >= 20) return "packing";
-  if (minutesPassed >= 10) return "cooking";
+  function getAutoStatus(order) {
+    timerTick;
 
-  return "confirmed";
-}
-    
+    const dbStatus = normalizeStatus(order.status);
+    const sellerResponse = normalizeSellerResponse(order.seller_response);
+
+    if (dbStatus === "cancelled" || sellerResponse === "rejected") {
+      return "cancelled";
+    }
+
+    if (dbStatus === "completed") return "completed";
+
+    if (sellerResponse === "pending") return "pending";
+
+    if (order.ready_for_pickup) return "ready_for_pickup";
+
+    const createdAt = new Date(order.created_at || Date.now()).getTime();
+    const minutesPassed = Math.floor((Date.now() - createdAt) / 60000);
+
+    if (minutesPassed >= 30) return "completed";
+    if (minutesPassed >= 20) return "packing";
+    if (minutesPassed >= 10) return "cooking";
+
+    return "accepted";
+  }
 
   function getStatusLabel(status) {
     const currentStatus = normalizeStatus(status);
 
+    if (currentStatus === "pending") return "New Order";
+    if (currentStatus === "accepted") return "Accepted";
     if (currentStatus === "confirmed") return "Confirmed";
     if (currentStatus === "cooking") return "Cooking";
     if (currentStatus === "packing") return "Packing";
-    if (currentStatus === "out_for_delivery") return "Out for Delivery";
+    if (currentStatus === "ready_for_pickup") return "Ready for Pickup";
     if (currentStatus === "completed") return "Delivered";
+    if (currentStatus === "cancelled") return "Cancelled";
 
-    return "Confirmed";
+    return "New Order";
   }
 
   function getStatusBadgeClass(status) {
     const currentStatus = normalizeStatus(status);
 
+    if (currentStatus === "cancelled") {
+      return "bg-red-900/40 text-red-300 border-red-500/20";
+    }
+
     if (currentStatus === "completed") {
       return "bg-green-900/40 text-green-300 border-green-500/20";
     }
 
-    if (currentStatus === "cooking") {
-      return "bg-orange-900/40 text-orange-300 border-orange-500/20";
+    if (currentStatus === "ready_for_pickup") {
+      return "bg-emerald-900/40 text-emerald-300 border-emerald-500/20";
     }
 
     if (currentStatus === "packing") {
       return "bg-blue-900/40 text-blue-300 border-blue-500/20";
     }
 
-    if (currentStatus === "out_for_delivery") {
-      return "bg-purple-900/40 text-purple-300 border-purple-500/20";
+    if (currentStatus === "cooking") {
+      return "bg-orange-900/40 text-orange-300 border-orange-500/20";
     }
 
-    return "bg-yellow-900/30 text-yellow-300 border-yellow-500/20";
+    if (currentStatus === "accepted") {
+      return "bg-yellow-900/30 text-yellow-300 border-yellow-500/20";
+    }
+
+    return "bg-purple-900/40 text-purple-300 border-purple-500/20";
   }
 
-    function getProgressPercentage(status) {
-  const currentStatus = normalizeStatus(status);
+  function getProgressPercentage(status) {
+    const currentStatus = normalizeStatus(status);
 
-  if (currentStatus === "confirmed") return 20;
-  if (currentStatus === "cooking") return 40;
-  if (currentStatus === "packing") return 70;
-  if (currentStatus === "completed") return 100;
+    if (currentStatus === "pending") return 10;
+    if (currentStatus === "accepted") return 25;
+    if (currentStatus === "cooking") return 45;
+    if (currentStatus === "packing") return 75;
+    if (currentStatus === "ready_for_pickup") return 90;
+    if (currentStatus === "completed") return 100;
 
-  return 10;
-}
+    return 10;
+  }
 
-const activeSellerOrders = sellerOrders.filter((order) => {
-  const dbStatus = normalizeStatus(order.status);
-  const autoStatus = normalizeStatus(getAutoStatus(order));
+  const activeSellerOrders = sellerOrders.filter((order) => {
+    const dbStatus = normalizeStatus(order.status);
+    const autoStatus = normalizeStatus(getAutoStatus(order));
+    const sellerResponse = normalizeSellerResponse(order.seller_response);
 
-  if (dbStatus === "cancelled") return false;
-  if (autoStatus === "completed") return false;
+    if (dbStatus === "cancelled") return false;
+    if (sellerResponse === "rejected") return false;
+    if (autoStatus === "completed") return false;
 
-  return true;
-});
+    return true;
+  });
 
-const soldOrders = sellerOrders.filter((order) => {
-  const dbStatus = normalizeStatus(order.status);
-  const autoStatus = normalizeStatus(getAutoStatus(order));
+  const soldOrders = sellerOrders.filter((order) => {
+    const dbStatus = normalizeStatus(order.status);
+    const autoStatus = normalizeStatus(getAutoStatus(order));
+    const sellerResponse = normalizeSellerResponse(order.seller_response);
 
-  if (dbStatus === "cancelled") return false;
+    if (dbStatus === "cancelled") return false;
+    if (sellerResponse === "rejected") return false;
 
-  return autoStatus === "completed";
-});
+    return autoStatus === "completed";
+  });
 
   const totalOrdersCount = sellerOrders.length;
   const activeOrdersCount = activeSellerOrders.length;
@@ -612,15 +755,33 @@ const soldOrders = sellerOrders.filter((order) => {
             <h1 className="text-3xl sm:text-5xl font-black mt-2 tracking-tight">
               Manage your food drops
             </h1>
+
+            <p className="text-gray-500 mt-3">
+              {sellerOnline
+                ? "You are online and accepting orders."
+                : "You are offline. Customers should not place new orders."}
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <Link
               to="/"
               className="border border-[#333] hover:border-yellow-500/50 text-gray-300 hover:text-yellow-400 active:scale-95 font-bold px-5 py-3 rounded-2xl text-center transition-all"
             >
-              ← Back to Home
+              ← Home
             </Link>
+
+            <button
+              type="button"
+              onClick={toggleSellerOnline}
+              className={`active:scale-95 font-bold px-5 py-3 rounded-2xl text-center transition-all ${
+                sellerOnline
+                  ? "bg-green-500 text-black"
+                  : "bg-red-500 text-black"
+              }`}
+            >
+              {sellerOnline ? "🟢 Online" : "🔴 Offline"}
+            </button>
 
             <button
               type="button"
@@ -631,14 +792,14 @@ const soldOrders = sellerOrders.filter((order) => {
                   : "bg-[#111] text-yellow-400 border border-yellow-500/40"
               } active:scale-95 font-bold px-5 py-3 rounded-2xl text-center transition-all`}
             >
-              {audioReady ? "🔕 Turn Sound Off" : "🔔 Turn Sound On"}
+              {audioReady ? "🔕 Sound Off" : "🔔 Sound On"}
             </button>
 
             <Link
               to="/marketplace"
               className="bg-yellow-500 hover:bg-yellow-400 active:scale-95 text-black font-bold px-5 py-3 rounded-2xl text-center transition-all"
             >
-              View Marketplace
+              Marketplace
             </Link>
           </div>
         </div>
@@ -680,17 +841,14 @@ const soldOrders = sellerOrders.filter((order) => {
         </section>
 
         <section className="mt-8 bg-[#111] border border-[#2a2a2a] rounded-3xl p-5 sm:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
-                Incoming Orders
-              </p>
+          <div>
+            <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
+              Incoming Orders
+            </p>
 
-              <h2 className="text-2xl sm:text-3xl font-bold mt-1">
-                Active Order Panel
-              </h2>
-            </div>
-
+            <h2 className="text-2xl sm:text-3xl font-bold mt-1">
+              Active Order Panel
+            </h2>
           </div>
 
           {ordersLoading ? (
@@ -709,6 +867,10 @@ const soldOrders = sellerOrders.filter((order) => {
             <div className="mt-6 space-y-5">
               {activeSellerOrders.map((order) => {
                 const autoStatus = getAutoStatus(order);
+                const sellerResponse = normalizeSellerResponse(
+                  order.seller_response
+                );
+                const orderIsSelfPickup = isSelfPickup(order);
 
                 return (
                   <article
@@ -730,6 +892,30 @@ const soldOrders = sellerOrders.filter((order) => {
                         <p className="text-gray-500 text-sm mt-1">
                           {order.delivery_type} • {order.flat}
                         </p>
+
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          <span
+                            className={`text-xs font-bold px-3 py-1 rounded-full ${
+                              orderIsSelfPickup
+                                ? "bg-emerald-900/40 text-emerald-300"
+                                : "bg-blue-900/40 text-blue-300"
+                            }`}
+                          >
+                            {orderIsSelfPickup ? "🛍️ Self Pickup" : "🚚 Delivery"}
+                          </span>
+
+                          <span
+                            className={`text-xs font-bold px-3 py-1 rounded-full ${
+                              sellerResponse === "accepted"
+                                ? "bg-green-900/40 text-green-300"
+                                : "bg-purple-900/40 text-purple-300"
+                            }`}
+                          >
+                            {sellerResponse === "accepted"
+                              ? "Accepted"
+                              : "Needs Response"}
+                          </span>
+                        </div>
                       </div>
 
                       <span
@@ -740,16 +926,15 @@ const soldOrders = sellerOrders.filter((order) => {
                         {getStatusLabel(autoStatus)}
 
                         <div className="mt-3">
-                        <div className="w-full h-2 bg-[#222] rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-yellow-400 transition-all duration-1000 ease-in-out"
-                            style={{
-                              width: `${getProgressPercentage(autoStatus)}%`,
-                            }}
-                          />
+                          <div className="w-full h-2 bg-[#222] rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-yellow-400 transition-all duration-1000 ease-in-out"
+                              style={{
+                                width: `${getProgressPercentage(autoStatus)}%`,
+                              }}
+                            />
+                          </div>
                         </div>
-                      </div>
-
                       </span>
                     </div>
 
@@ -781,6 +966,44 @@ const soldOrders = sellerOrders.filter((order) => {
                       <p className="text-gray-500 text-sm mt-4">
                         Note: {order.notes}
                       </p>
+                    )}
+
+                    {sellerResponse === "pending" && (
+                      <div className="grid grid-cols-2 gap-3 mt-5">
+                        <button
+                          type="button"
+                          onClick={() => acceptOrder(order.id)}
+                          className="bg-green-500 hover:bg-green-400 active:scale-95 text-black font-black py-3 rounded-2xl transition-all"
+                        >
+                          Accept
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => rejectOrder(order.id)}
+                          className="bg-red-500 hover:bg-red-400 active:scale-95 text-black font-black py-3 rounded-2xl transition-all"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
+
+                    {sellerResponse === "accepted" &&
+                      orderIsSelfPickup &&
+                      !order.ready_for_pickup && (
+                        <button
+                          type="button"
+                          onClick={() => markReadyForPickup(order.id)}
+                          className="mt-5 w-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-black font-black py-3 rounded-2xl transition-all"
+                        >
+                          Mark Ready for Pickup
+                        </button>
+                      )}
+
+                    {order.ready_for_pickup && orderIsSelfPickup && (
+                      <div className="mt-5 w-full bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 font-black py-3 rounded-2xl text-center">
+                        Ready for Pickup
+                      </div>
                     )}
 
                     <div className="grid grid-cols-2 gap-3 mt-5">
@@ -868,6 +1091,17 @@ const soldOrders = sellerOrders.filter((order) => {
             />
 
             <select
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500"
+            >
+              {FOOD_CATEGORIES.map((category) => (
+                <option key={category}>{category}</option>
+              ))}
+            </select>
+
+            <select
               name="type"
               value={formData.type}
               onChange={handleChange}
@@ -881,7 +1115,7 @@ const soldOrders = sellerOrders.filter((order) => {
               name="seller"
               value={formData.seller}
               onChange={handleChange}
-              className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500"
+              className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500 md:col-span-2"
               placeholder="Seller flat / kitchen name e.g. A-1204"
             />
 
@@ -896,7 +1130,7 @@ const soldOrders = sellerOrders.filter((order) => {
                 <p className="text-white font-semibold">Tap to upload image</p>
 
                 <p className="text-gray-500 text-sm mt-1">
-                  JPG, PNG, WEBP · Max 5 MB
+                  JPG, PNG, WEBP · Max 2 MB
                 </p>
 
                 <input
@@ -1003,15 +1237,21 @@ const soldOrders = sellerOrders.filter((order) => {
                     </div>
 
                     <div className="flex items-center justify-between mt-5">
-                      <span
-                        className={`text-xs px-3 py-1 rounded-full ${
-                          food.type === "Non-Veg"
-                            ? "bg-red-900/40 text-red-400"
-                            : "bg-green-900/40 text-green-400"
-                        }`}
-                      >
-                        {food.type}
-                      </span>
+                      <div className="flex gap-2">
+                        <span
+                          className={`text-xs px-3 py-1 rounded-full ${
+                            food.type === "Non-Veg"
+                              ? "bg-red-900/40 text-red-400"
+                              : "bg-green-900/40 text-green-400"
+                          }`}
+                        >
+                          {food.type}
+                        </span>
+
+                        <span className="text-xs px-3 py-1 rounded-full bg-blue-900/40 text-blue-300">
+                          {food.category || "Meals"}
+                        </span>
+                      </div>
 
                       <span
                         className={`text-xs px-3 py-1 rounded-full ${
