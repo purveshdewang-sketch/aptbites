@@ -36,6 +36,7 @@ export default function SellerDashboard() {
   const [sellerFoods, setSellerFoods] = useState([]);
   const [sellerOrders, setSellerOrders] = useState([]);
   const [sellerOnline, setSellerOnline] = useState(true);
+  const [acceptScheduledOrders, setAcceptScheduledOrders] = useState(true);
   const [timerTick, setTimerTick] = useState(0);
   const [editingFood, setEditingFood] = useState(null);
   const [imageFile, setImageFile] = useState(null);
