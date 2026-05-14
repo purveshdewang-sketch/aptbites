@@ -9,7 +9,6 @@ const FOOD_CATEGORIES = [
   "Snacks",
   "Sweets",
   "Drinks",
-  "Healthy",
   "Tiffin",
   "Specials",
 ];
@@ -139,23 +138,11 @@ export default function SellerDashboard() {
   }
 }
 
-<button
-  type="button"
-  onClick={toggleAcceptScheduledOrders}
-  className={`active:scale-95 font-bold px-5 py-3 rounded-2xl text-center transition-all ${
-    acceptScheduledOrders
-      ? "bg-yellow-500 text-black"
-      : "bg-[#111] text-gray-400 border border-[#333]"
-  }`}
->
-  {acceptScheduledOrders ? "🕒 Schedule ON" : "🕒 Schedule OFF"}
-</button>
 
   async function toggleSellerOnline() {
     if (!user) return;
 
     const nextStatus = !sellerOnline;
-    const [acceptScheduledOrders, setAcceptScheduledOrders] = useState(true);
     setSellerOnline(nextStatus);
 
     const { error } = await supabase
@@ -287,6 +274,28 @@ async function toggleAcceptScheduledOrders() {
 
     return [];
   }
+
+function isScheduledOrder(order) {
+  return order.scheduled_order === true || Boolean(order.scheduled_for);
+}
+
+function formatScheduledDateTime(value) {
+  if (!value) return "Schedule time not available";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Schedule time not available";
+  }
+
+  return date.toLocaleString([], {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
 
   async function fetchSellerFoods() {
   if (!user) return;
@@ -956,6 +965,18 @@ async function toggleAcceptScheduledOrders() {
             </button>
 
             <button
+  type="button"
+  onClick={toggleAcceptScheduledOrders}
+  className={`active:scale-95 font-bold px-5 py-3 rounded-2xl text-center transition-all ${
+    acceptScheduledOrders
+      ? "bg-yellow-500 text-black"
+      : "bg-[#111] text-gray-400 border border-[#333]"
+  }`}
+>
+  {acceptScheduledOrders ? "🕒 Schedule ON" : "🕒 Schedule OFF"}
+</button>
+
+            <button
               type="button"
               onClick={toggleNotificationSound}
               className={`${
@@ -1127,11 +1148,15 @@ async function toggleAcceptScheduledOrders() {
           ) : (
             <div className="mt-6 space-y-5">
               {activeSellerOrders.map((order) => {
+                
                 const autoStatus = getAutoStatus(order);
                 const sellerResponse = normalizeSellerResponse(
+                  
                   order.seller_response
                 );
+                
                 const orderIsSelfPickup = isSelfPickup(order);
+                const scheduled = isScheduledOrder(order);
 
                 return (
                   <article
@@ -1172,6 +1197,18 @@ async function toggleAcceptScheduledOrders() {
         : "bg-purple-900/40 text-purple-300"
     }`}
   >
+{scheduled && (
+  <div className="mt-4 bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4">
+    <p className="text-yellow-300 text-sm font-black">
+      Scheduled for
+    </p>
+
+    <p className="text-white text-lg font-black mt-1">
+      {formatScheduledDateTime(order.scheduled_for)}
+    </p>
+  </div>
+)}
+
     {sellerResponse === "accepted"
       ? "Accepted"
       : "Needs Response"}

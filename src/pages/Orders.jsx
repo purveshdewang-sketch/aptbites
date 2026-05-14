@@ -104,6 +104,28 @@ export default function Orders() {
     return String(order.delivery_type || "").toLowerCase().includes("pickup");
   }
 
+  function isScheduledOrder(order) {
+    return order.scheduled_order === true || Boolean(order.scheduled_for);
+  }
+
+  function formatScheduledDateTime(value) {
+    if (!value) return "Schedule time not available";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return "Schedule time not available";
+    }
+
+    return date.toLocaleString([], {
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
+
   function getAutoStatus(order) {
     timerTick;
 
@@ -155,13 +177,18 @@ export default function Orders() {
   function getStatusLabel(order) {
     const currentStatus = getAutoStatus(order);
 
-    if (currentStatus === "confirmed") return "Order Confirmed";
+    if (currentStatus === "confirmed") {
+      return isScheduledOrder(order) ? "Scheduled Order" : "Order Confirmed";
+    }
+
     if (currentStatus === "cooking") return "Cooking";
     if (currentStatus === "packing") return "Almost Ready";
     if (currentStatus === "ready_for_pickup") return "Ready for Pickup";
+
     if (currentStatus === "completed") {
       return isSelfPickup(order) ? "Picked Up" : "Delivered";
     }
+
     if (currentStatus === "cancelled") return "Cancelled";
 
     return "Order Confirmed";
@@ -224,7 +251,9 @@ export default function Orders() {
     }
 
     if (!data || data.length === 0) {
-      alert("Cancel failed: this order does not belong to the current logged-in user.");
+      alert(
+        "Cancel failed: this order does not belong to the current logged-in user."
+      );
       return;
     }
 
@@ -284,9 +313,16 @@ export default function Orders() {
           />
         </div>
 
+        {isScheduledOrder(order) && status === "confirmed" && (
+          <div className="mt-4 bg-yellow-500/10 border border-yellow-500/20 text-yellow-300 rounded-2xl p-4 font-bold">
+            🕒 Scheduled for {formatScheduledDateTime(order.scheduled_for)}
+          </div>
+        )}
+
         {status === "packing" && (
           <p className="text-gray-500 text-xs mt-3">
-            Your order is almost ready. It will finish only when the seller marks it complete.
+            Your order is almost ready. It will finish only when the seller marks
+            it complete.
           </p>
         )}
 
@@ -326,7 +362,8 @@ export default function Orders() {
             </h1>
 
             <p className="text-gray-400 mt-4 max-w-2xl leading-relaxed">
-              Track your QuickBites orders from kitchen confirmation to final completion.
+              Track your QuickBites orders from kitchen confirmation to final
+              completion.
             </p>
           </div>
 
@@ -382,7 +419,7 @@ export default function Orders() {
               </h2>
 
               <p className="text-gray-500 mt-3 max-w-md mx-auto">
-                Your running orders will appear here after checkout.
+                Your running or scheduled orders will appear here after checkout.
               </p>
 
               <Link
@@ -398,6 +435,7 @@ export default function Orders() {
             <div className="mt-8 space-y-5">
               {visibleOrders.map((order) => {
                 const autoStatus = getAutoStatus(order);
+                const scheduled = isScheduledOrder(order);
 
                 return (
                   <article
@@ -415,6 +453,26 @@ export default function Orders() {
                         <p className="text-gray-400 text-sm mt-2">
                           {order.delivery_type || "Delivery"} • {order.flat}
                         </p>
+
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          {scheduled && (
+                            <span className="text-xs font-bold px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-300 border border-yellow-500/20">
+                              🕒 Scheduled
+                            </span>
+                          )}
+
+                          {scheduled && (
+                            <span className="text-xs font-bold px-3 py-1 rounded-full bg-black border border-[#333] text-gray-300">
+                              {formatScheduledDateTime(order.scheduled_for)}
+                            </span>
+                          )}
+
+                          {isSelfPickup(order) && (
+                            <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-900/40 text-emerald-300 border border-emerald-500/20">
+                              🛍️ Self Pickup
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <span
