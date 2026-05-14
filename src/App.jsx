@@ -10,6 +10,7 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
 import OrderHistory from "./pages/OrderHistory";
+import FoodDetails from "./pages/FoodDetails";
 
 import { useAuth } from "./context/AuthContext";
 import { supabase } from "./lib/supabaseClient";
@@ -83,8 +84,7 @@ function SellerOnlyRoute({ children }) {
 
       const profileRole = String(data?.role || "").toLowerCase();
 
-      const isSeller =
-        profileRole === "seller" || data?.is_seller === true;
+      const isSeller = profileRole === "seller" || data?.is_seller === true;
 
       if (isSeller) {
         localStorage.setItem(`quickbites_seller_access_${user.id}`, "yes");
@@ -131,6 +131,15 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Marketplace />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/food/:id"
+          element={
+            <ProtectedRoute>
+              <FoodDetails />
             </ProtectedRoute>
           }
         />

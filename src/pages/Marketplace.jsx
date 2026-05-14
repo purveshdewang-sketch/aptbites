@@ -31,10 +31,6 @@ const FOOD_CATEGORIES = [
     emoji: "🥤",
   },
   {
-    label: "Healthy",
-    emoji: "🥗",
-  },
-  {
     label: "Tiffin",
     emoji: "🍱",
   },
