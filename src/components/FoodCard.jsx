@@ -93,11 +93,7 @@ export default function FoodCard({ item }) {
               {item.type}
             </span>
 
-            {item.category && (
-              <span className="w-fit text-xs font-black px-3 py-1.5 rounded-full bg-blue-500/90 text-white">
-                {item.category}
-              </span>
-            )}
+    
           </div>
 
           <div className="absolute top-3 right-3 z-20">

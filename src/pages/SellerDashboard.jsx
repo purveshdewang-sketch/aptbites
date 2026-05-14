@@ -27,7 +27,6 @@ export default function SellerDashboard() {
     time: "",
     stock: "",
     type: "Veg",
-    category: "Meals",
     description: "",
   });
 
@@ -384,7 +383,6 @@ export default function SellerDashboard() {
       time: "",
       stock: "",
       type: "Veg",
-      category: "Meals",
       description: "",
     });
 
@@ -1277,9 +1275,7 @@ export default function SellerDashboard() {
                           {food.type}
                         </span>
 
-                        <span className="text-xs px-3 py-1 rounded-full bg-blue-900/40 text-blue-300">
-                          {food.category || "Meals"}
-                        </span>
+                      
                       </div>
 
                       <span
