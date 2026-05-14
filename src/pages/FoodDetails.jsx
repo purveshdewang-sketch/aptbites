@@ -5,6 +5,16 @@ import Navbar from "../components/Navbar";
 import { supabase } from "../lib/supabaseClient";
 import { useCart } from "../context/CartContext";
 
+const SELLER_MENU_CATEGORIES = [
+  "Meals",
+  "Breakfast",
+  "Snacks",
+  "Sweets",
+  "Drinks",
+  "Tiffin",
+  "Specials",
+];
+
 export default function FoodDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -15,6 +25,7 @@ export default function FoodDetails() {
   const [food, setFood] = useState(null);
   const [sellerFoods, setSellerFoods] = useState([]);
   const [sellerOnline, setSellerOnline] = useState(true);
+  const [selectedSellerCategory, setSelectedSellerCategory] = useState("All");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
@@ -147,6 +158,34 @@ export default function FoodDetails() {
     return sellerFoods.filter((item) => Number(item.stock || 0) > 0);
   }, [sellerFoods]);
 
+  const sellerCategoryCounts = useMemo(() => {
+    const counts = {
+      All: sellerFoods.length,
+    };
+
+    SELLER_MENU_CATEGORIES.forEach((categoryName) => {
+      counts[categoryName] = 0;
+    });
+
+    sellerFoods.forEach((item) => {
+      const itemCategory = item.category || "Meals";
+
+      if (counts[itemCategory] !== undefined) {
+        counts[itemCategory] += 1;
+      }
+    });
+
+    return counts;
+  }, [sellerFoods]);
+
+  const visibleSellerFoods = useMemo(() => {
+    if (selectedSellerCategory === "All") return sellerFoods;
+
+    return sellerFoods.filter(
+      (item) => (item.category || "Meals") === selectedSellerCategory
+    );
+  }, [sellerFoods, selectedSellerCategory]);
+
   function handleAddToCart() {
     if (!food) return;
 
@@ -222,18 +261,18 @@ export default function FoodDetails() {
       <Navbar />
 
       <main className="min-h-screen bg-black text-white pb-32">
-        <section className="px-4 sm:px-6 py-6 sm:py-10">
+        <section className="px-4 sm:px-6 py-5 sm:py-10">
           <div className="max-w-7xl mx-auto">
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="text-gray-400 hover:text-yellow-400 font-bold mb-5"
+              className="text-gray-400 hover:text-yellow-400 font-bold mb-4"
             >
               ← Back
             </button>
 
-            <div className="grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-7 lg:gap-10">
-              <div className="relative bg-[#111] border border-[#222] rounded-[2rem] overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-5 lg:gap-10">
+              <div className="relative bg-[#111] border border-[#222] rounded-[1.75rem] sm:rounded-[2rem] overflow-hidden">
                 <img
                   src={food.image}
                   alt={food.name}
@@ -242,7 +281,7 @@ export default function FoodDetails() {
                   }`}
                 />
 
-                <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 flex flex-wrap gap-2">
                   <span
                     className={`text-xs font-black px-3 py-1.5 rounded-full ${
                       food.type === "Non-Veg"
@@ -258,7 +297,7 @@ export default function FoodDetails() {
                   </span>
                 </div>
 
-                <div className="absolute top-4 right-4">
+                <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
                   {sellerIsClosed ? (
                     <span className="text-xs font-black px-3 py-1.5 rounded-full bg-red-600 text-white">
                       CLOSED
@@ -283,12 +322,12 @@ export default function FoodDetails() {
                 </div>
               </div>
 
-              <div className="bg-[#111] border border-[#222] rounded-[2rem] p-5 sm:p-8 h-fit">
+              <div className="bg-[#111] border border-[#222] rounded-[1.75rem] sm:rounded-[2rem] p-5 sm:p-8 h-fit">
                 <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
                   {food.seller}
                 </p>
 
-                <h1 className="text-4xl sm:text-6xl font-black mt-3 leading-tight">
+                <h1 className="text-3xl sm:text-6xl font-black mt-3 leading-tight">
                   {food.name}
                 </h1>
 
@@ -318,7 +357,7 @@ export default function FoodDetails() {
                   </p>
                 )}
 
-                <div className="mt-7 bg-black/40 border border-[#222] rounded-3xl p-5">
+                <div className="mt-6 bg-black/40 border border-[#222] rounded-3xl p-5">
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <p className="text-gray-500 text-sm">Availability</p>
@@ -345,7 +384,7 @@ export default function FoodDetails() {
                   </div>
                 </div>
 
-                <div className="mt-7">
+                <div className="mt-6">
                   {quantity === 0 || sellerIsClosed ? (
                     <button
                       type="button"
@@ -406,14 +445,14 @@ export default function FoodDetails() {
 
         <section className="px-4 sm:px-6 py-4 sm:py-8">
           <div className="max-w-7xl mx-auto">
-            <div className="flex items-end justify-between gap-4 mb-6">
+            <div className="flex items-end justify-between gap-4 mb-5">
               <div>
                 <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
                   More from seller
                 </p>
 
                 <h2 className="text-2xl sm:text-3xl font-black mt-1">
-                  Other dishes from {food.seller}
+                  {food.seller} menu
                 </h2>
               </div>
 
@@ -425,10 +464,49 @@ export default function FoodDetails() {
               </Link>
             </div>
 
+            {sellerFoods.length > 0 && (
+              <div className="flex gap-3 overflow-x-auto pb-3 mb-5">
+                <button
+                  type="button"
+                  onClick={() => setSelectedSellerCategory("All")}
+                  className={`shrink-0 px-4 py-3 rounded-2xl border font-black text-sm ${
+                    selectedSellerCategory === "All"
+                      ? "bg-yellow-500 text-black border-yellow-400"
+                      : "bg-[#111] text-gray-300 border-[#333]"
+                  }`}
+                >
+                  All ({sellerCategoryCounts.All || 0})
+                </button>
+
+                {SELLER_MENU_CATEGORIES.filter(
+                  (categoryName) => sellerCategoryCounts[categoryName] > 0
+                ).map((categoryName) => (
+                  <button
+                    key={categoryName}
+                    type="button"
+                    onClick={() => setSelectedSellerCategory(categoryName)}
+                    className={`shrink-0 px-4 py-3 rounded-2xl border font-black text-sm ${
+                      selectedSellerCategory === categoryName
+                        ? "bg-yellow-500 text-black border-yellow-400"
+                        : "bg-[#111] text-gray-300 border-[#333]"
+                    }`}
+                  >
+                    {categoryName} ({sellerCategoryCounts[categoryName]})
+                  </button>
+                ))}
+              </div>
+            )}
+
             {sellerFoods.length === 0 ? (
               <div className="bg-[#111] border border-[#222] rounded-3xl p-8 text-center">
                 <p className="text-gray-500">
                   No other dishes from this seller right now.
+                </p>
+              </div>
+            ) : visibleSellerFoods.length === 0 ? (
+              <div className="bg-[#111] border border-[#222] rounded-3xl p-8 text-center">
+                <p className="text-gray-500">
+                  No dishes in this category right now.
                 </p>
               </div>
             ) : (
@@ -442,7 +520,7 @@ export default function FoodDetails() {
                 )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
-                  {sellerFoods.map((item) => (
+                  {visibleSellerFoods.map((item) => (
                     <FoodCard key={item.id} item={item} />
                   ))}
                 </div>
