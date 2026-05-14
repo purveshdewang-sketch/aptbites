@@ -29,6 +29,13 @@ export default function Checkout() {
     notes: "",
   });
 
+  const [orderTiming, setOrderTiming] = useState("now");
+  const [scheduledDate, setScheduledDate] = useState("");
+  const [scheduledTime, setScheduledTime] = useState("");
+  const [sellerAcceptsScheduledOrders, setSellerAcceptsScheduledOrders] =
+    useState(false);
+  const [checkingSellerSchedule, setCheckingSellerSchedule] = useState(true);
+
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -46,6 +53,10 @@ export default function Checkout() {
             flat: parsedDetails.flat || "",
             deliveryType: parsedDetails.deliveryType || "Doorstep delivery",
           }));
+
+          setOrderTiming(parsedDetails.orderTiming || "now");
+          setScheduledDate(parsedDetails.scheduledDate || "");
+          setScheduledTime(parsedDetails.scheduledTime || "");
         } catch {
           localStorage.removeItem(getCheckoutStorageKey());
         }
@@ -82,10 +93,51 @@ export default function Checkout() {
       fullName: formData.fullName,
       flat: formData.flat,
       deliveryType: formData.deliveryType,
+      orderTiming,
+      scheduledDate,
+      scheduledTime,
     };
 
     localStorage.setItem(getCheckoutStorageKey(), JSON.stringify(detailsToSave));
-  }, [formData.fullName, formData.flat, formData.deliveryType, user]);
+  }, [
+    formData.fullName,
+    formData.flat,
+    formData.deliveryType,
+    orderTiming,
+    scheduledDate,
+    scheduledTime,
+    user,
+  ]);
+
+  useEffect(() => {
+    async function checkSellerSchedulePermission() {
+      const sellerId = getSellerIdFromCart();
+
+      if (!sellerId || sellerId === "MIXED_SELLERS") {
+        setSellerAcceptsScheduledOrders(false);
+        setCheckingSellerSchedule(false);
+        return;
+      }
+
+      setCheckingSellerSchedule(true);
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("accept_scheduled_orders")
+        .eq("id", sellerId)
+        .maybeSingle();
+
+      if (error) {
+        setSellerAcceptsScheduledOrders(false);
+      } else {
+        setSellerAcceptsScheduledOrders(data?.accept_scheduled_orders === true);
+      }
+
+      setCheckingSellerSchedule(false);
+    }
+
+    checkSellerSchedulePermission();
+  }, [cartItems]);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -105,6 +157,15 @@ export default function Checkout() {
     }));
   }
 
+  function selectOrderTiming(nextTiming) {
+    if (nextTiming === "scheduled" && !sellerAcceptsScheduledOrders) {
+      alert("This seller is not accepting scheduled orders right now.");
+      return;
+    }
+
+    setOrderTiming(nextTiming);
+  }
+
   function getSellerIdFromCart() {
     if (!cartItems || cartItems.length === 0) return null;
 
@@ -118,6 +179,26 @@ export default function Checkout() {
     if (uniqueSellerIds.length > 1) return "MIXED_SELLERS";
 
     return uniqueSellerIds[0];
+  }
+
+  function getScheduledDateTime() {
+    if (orderTiming !== "scheduled") return null;
+
+    if (!scheduledDate || !scheduledTime) {
+      throw new Error("Please select schedule date and time.");
+    }
+
+    const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
+
+    if (Number.isNaN(scheduledDateTime.getTime())) {
+      throw new Error("Invalid schedule date or time.");
+    }
+
+    if (scheduledDateTime.getTime() <= Date.now()) {
+      throw new Error("Scheduled time must be in the future.");
+    }
+
+    return scheduledDateTime.toISOString();
   }
 
   async function validateLiveStockBeforeOrder() {
@@ -195,6 +276,12 @@ export default function Checkout() {
     setLoading(true);
 
     try {
+      const scheduledFor = getScheduledDateTime();
+
+      if (orderTiming === "scheduled" && !sellerAcceptsScheduledOrders) {
+        throw new Error("This seller is not accepting scheduled orders right now.");
+      }
+
       await validateLiveStockBeforeOrder();
 
       const orderPayload = {
@@ -210,6 +297,8 @@ export default function Checkout() {
         total_amount: totalAmount,
         status: "confirmed",
         items: cartItems,
+        scheduled_order: orderTiming === "scheduled",
+        scheduled_for: scheduledFor,
       };
 
       const { error: stockError } = await supabase.rpc("decrement_food_stock", {
@@ -232,6 +321,9 @@ export default function Checkout() {
           fullName: formData.fullName,
           flat: formData.flat,
           deliveryType: formData.deliveryType,
+          orderTiming,
+          scheduledDate,
+          scheduledTime,
         })
       );
 
@@ -260,11 +352,13 @@ export default function Checkout() {
             </div>
 
             <p className="text-yellow-400 font-semibold uppercase tracking-wide mt-6">
-              Order Confirmed
+              {orderTiming === "scheduled" ? "Order Scheduled" : "Order Confirmed"}
             </p>
 
             <h1 className="text-3xl sm:text-5xl font-black mt-4 leading-tight">
-              Your food is now being prepared.
+              {orderTiming === "scheduled"
+                ? "Your order has been scheduled."
+                : "Your food is now being prepared."}
             </h1>
 
             <p className="text-gray-400 mt-5 leading-relaxed">
@@ -360,6 +454,69 @@ export default function Checkout() {
                 </div>
               </div>
 
+              <div>
+                <p className="text-gray-400 text-sm font-bold mb-3">
+                  Order Timing
+                </p>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => selectOrderTiming("now")}
+                    className={`py-4 rounded-2xl font-black border transition-all ${
+                      orderTiming === "now"
+                        ? "bg-yellow-500 text-black border-yellow-400"
+                        : "bg-black text-gray-400 border-[#333]"
+                    }`}
+                  >
+                    ⚡ Order Now
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => selectOrderTiming("scheduled")}
+                    disabled={
+                      checkingSellerSchedule || !sellerAcceptsScheduledOrders
+                    }
+                    className={`py-4 rounded-2xl font-black border transition-all ${
+                      orderTiming === "scheduled"
+                        ? "bg-yellow-500 text-black border-yellow-400"
+                        : "bg-black text-gray-400 border-[#333]"
+                    } ${
+                      checkingSellerSchedule || !sellerAcceptsScheduledOrders
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }`}
+                  >
+                    🕒 Schedule
+                  </button>
+                </div>
+
+                {!checkingSellerSchedule && !sellerAcceptsScheduledOrders && (
+                  <p className="text-red-400 text-xs mt-3">
+                    This seller is not accepting scheduled orders right now.
+                  </p>
+                )}
+
+                {orderTiming === "scheduled" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                    <input
+                      type="date"
+                      value={scheduledDate}
+                      onChange={(event) => setScheduledDate(event.target.value)}
+                      className="bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
+                    />
+
+                    <input
+                      type="time"
+                      value={scheduledTime}
+                      onChange={(event) => setScheduledTime(event.target.value)}
+                      className="bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
+                    />
+                  </div>
+                )}
+              </div>
+
               <textarea
                 name="notes"
                 value={formData.notes}
@@ -422,6 +579,17 @@ export default function Checkout() {
             </div>
 
             <div className="mt-8 border-t border-[#222] pt-6 space-y-4">
+              {orderTiming === "scheduled" && scheduledDate && scheduledTime && (
+                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4">
+                  <p className="text-yellow-400 text-sm font-black">
+                    Scheduled Order
+                  </p>
+                  <p className="text-gray-300 text-sm mt-1">
+                    {scheduledDate} at {scheduledTime}
+                  </p>
+                </div>
+              )}
+
               <div className="flex items-center justify-between text-sm">
                 <p className="text-gray-400">Subtotal</p>
                 <p className="font-bold text-white">₹{subtotalAmount}</p>
@@ -452,6 +620,8 @@ export default function Checkout() {
               >
                 {loading
                   ? "Checking live stock..."
+                  : orderTiming === "scheduled"
+                  ? `Schedule Order • ₹${totalAmount}`
                   : `Place Order • ₹${totalAmount}`}
               </button>
 

@@ -124,23 +124,37 @@ export default function SellerDashboard() {
   }
 
   async function fetchSellerProfile() {
-    if (!user) return;
+  if (!user) return;
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("seller_online")
-      .eq("id", user.id)
-      .maybeSingle();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("seller_online, accept_scheduled_orders")
+    .eq("id", user.id)
+    .maybeSingle();
 
-    if (!error && data) {
-      setSellerOnline(data.seller_online !== false);
-    }
+  if (!error && data) {
+    setSellerOnline(data.seller_online !== false);
+    setAcceptScheduledOrders(data.accept_scheduled_orders !== false);
   }
+}
+
+<button
+  type="button"
+  onClick={toggleAcceptScheduledOrders}
+  className={`active:scale-95 font-bold px-5 py-3 rounded-2xl text-center transition-all ${
+    acceptScheduledOrders
+      ? "bg-yellow-500 text-black"
+      : "bg-[#111] text-gray-400 border border-[#333]"
+  }`}
+>
+  {acceptScheduledOrders ? "🕒 Schedule ON" : "🕒 Schedule OFF"}
+</button>
 
   async function toggleSellerOnline() {
     if (!user) return;
 
     const nextStatus = !sellerOnline;
+    const [acceptScheduledOrders, setAcceptScheduledOrders] = useState(true);
     setSellerOnline(nextStatus);
 
     const { error } = await supabase
@@ -156,6 +170,30 @@ export default function SellerDashboard() {
 
     setMessage(nextStatus ? "You are now online." : "You are now offline.");
   }
+
+async function toggleAcceptScheduledOrders() {
+  if (!user) return;
+
+  const nextStatus = !acceptScheduledOrders;
+  setAcceptScheduledOrders(nextStatus);
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ accept_scheduled_orders: nextStatus })
+    .eq("id", user.id);
+
+  if (error) {
+    setAcceptScheduledOrders(!nextStatus);
+    setMessage(`Could not update scheduled order status: ${error.message}`);
+    return;
+  }
+
+  setMessage(
+    nextStatus
+      ? "Scheduled orders are now accepted."
+      : "Scheduled orders are now turned off."
+  );
+}
 
   function toggleNotificationSound() {
     if (!user) return;
@@ -1116,28 +1154,34 @@ export default function SellerDashboard() {
                         </p>
 
                         <div className="flex flex-wrap gap-2 mt-3">
-                          <span
-                            className={`text-xs font-bold px-3 py-1 rounded-full ${
-                              orderIsSelfPickup
-                                ? "bg-emerald-900/40 text-emerald-300"
-                                : "bg-blue-900/40 text-blue-300"
-                            }`}
-                          >
-                            {orderIsSelfPickup ? "🛍️ Self Pickup" : "🚚 Delivery"}
-                          </span>
+  <span
+    className={`text-xs font-bold px-3 py-1 rounded-full ${
+      orderIsSelfPickup
+        ? "bg-emerald-900/40 text-emerald-300"
+        : "bg-blue-900/40 text-blue-300"
+    }`}
+  >
+    {orderIsSelfPickup ? "🛍️ Self Pickup" : "🚚 Delivery"}
+  </span>
 
-                          <span
-                            className={`text-xs font-bold px-3 py-1 rounded-full ${
-                              sellerResponse === "accepted"
-                                ? "bg-green-900/40 text-green-300"
-                                : "bg-purple-900/40 text-purple-300"
-                            }`}
-                          >
-                            {sellerResponse === "accepted"
-                              ? "Accepted"
-                              : "Needs Response"}
-                          </span>
-                        </div>
+  <span
+    className={`text-xs font-bold px-3 py-1 rounded-full ${
+      sellerResponse === "accepted"
+        ? "bg-green-900/40 text-green-300"
+        : "bg-purple-900/40 text-purple-300"
+    }`}
+  >
+    {sellerResponse === "accepted"
+      ? "Accepted"
+      : "Needs Response"}
+  </span>
+
+  {order.scheduled_order && (
+    <span className="text-xs font-bold px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-300 border border-yellow-500/20">
+      🕒 Scheduled
+    </span>
+  )}
+</div>
                       </div>
 
                       <span

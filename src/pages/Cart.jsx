@@ -141,6 +141,39 @@ export default function Cart() {
                 ))}
               </div>
 
+              <div className="mt-8 bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-6">
+                <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
+                  Order Timing
+                </p>
+
+                <h2 className="text-2xl font-black mt-2">
+                  Order now or schedule for later
+                </h2>
+
+                <p className="text-gray-500 text-sm mt-2">
+                  Scheduling will be enabled in checkout after seller permission
+                  is connected.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
+                  <div className="bg-yellow-500 text-black border border-yellow-400 rounded-2xl p-4">
+                    <p className="font-black text-lg">⚡ Order Now</p>
+                    <p className="text-black/70 text-sm mt-1">
+                      Place the order immediately.
+                    </p>
+                  </div>
+
+                  <div className="bg-black border border-[#333] rounded-2xl p-4 opacity-70">
+                    <p className="font-black text-lg text-gray-300">
+                      🕒 Schedule Later
+                    </p>
+                    <p className="text-gray-500 text-sm mt-1">
+                      Coming next: choose date and time.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div className="bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-6 shadow-2xl mt-8">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-sm">

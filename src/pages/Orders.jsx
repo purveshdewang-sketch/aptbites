@@ -8,7 +8,8 @@ const ORDER_STEPS = [
   { key: "confirmed", label: "Confirmed", icon: "✅" },
   { key: "cooking", label: "Cooking", icon: "🍳" },
   { key: "packing", label: "Packing", icon: "📦" },
-  { key: "completed", label: "Delivered", icon: "🏁" },
+  { key: "ready_for_pickup", label: "Ready", icon: "🛍️" },
+  { key: "completed", label: "Completed", icon: "🏁" },
 ];
 
 export default function Orders() {
@@ -37,61 +38,33 @@ export default function Orders() {
     fetchOrders();
 
     const channel = supabase
-  .channel(`seller-orders-${user.id}`)
-  .on(
-    "postgres_changes",
-    {
-      event: "INSERT",
-      schema: "public",
-      table: "orders",
-      filter: `seller_id=eq.${user.id}`,
-    },
-    (payload) => {
-      const newOrder = payload.new;
+      .channel(`customer-orders-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          fetchOrders(false);
+        }
+      )
+      .subscribe();
 
-      setSellerOrders((currentOrders) => {
-        const alreadyExists = currentOrders.some(
-          (order) => order.id === newOrder.id
-        );
-
-        if (alreadyExists) return currentOrders;
-
-        return [newOrder, ...currentOrders];
-      });
-
-      playTingSound();
-      setMessage("🔔 New order received.");
-    }
-  )
-  .on(
-    "postgres_changes",
-    {
-      event: "UPDATE",
-      schema: "public",
-      table: "orders",
-      filter: `seller_id=eq.${user.id}`,
-    },
-    (payload) => {
-      const updatedOrder = payload.new;
-
-      setSellerOrders((currentOrders) =>
-        currentOrders.map((order) =>
-          order.id === updatedOrder.id ? updatedOrder : order
-        )
-      );
-    }
-  )
-  .subscribe();
-  
-return () => {
-  supabase.removeChannel(channel);
-};
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
-  async function fetchOrders() {
+  async function fetchOrders(showLoading = true) {
     if (!user) return;
 
-    setLoading(true);
+    if (showLoading) {
+      setLoading(true);
+    }
+
     setErrorMessage("");
 
     const { data, error } = await supabase
@@ -118,23 +91,40 @@ return () => {
     if (value === "placed") return "confirmed";
     if (value === "baking") return "cooking";
     if (value === "delivered") return "completed";
-    if (value === "out_for_delivery") return "completed";
+    if (value === "out_for_delivery") return "packing";
 
     return value;
+  }
+
+  function normalizeSellerResponse(response) {
+    return String(response || "pending").toLowerCase();
+  }
+
+  function isSelfPickup(order) {
+    return String(order.delivery_type || "").toLowerCase().includes("pickup");
   }
 
   function getAutoStatus(order) {
     timerTick;
 
     const dbStatus = normalizeStatus(order.status);
+    const sellerResponse = normalizeSellerResponse(order.seller_response);
 
-    if (dbStatus === "cancelled") return "cancelled";
-    if (dbStatus === "completed") return "completed";
+    if (dbStatus === "cancelled" || sellerResponse === "rejected") {
+      return "cancelled";
+    }
+
+    if (dbStatus === "completed") {
+      return "completed";
+    }
+
+    if (order.ready_for_pickup) {
+      return "ready_for_pickup";
+    }
 
     const createdAt = new Date(order.created_at || Date.now()).getTime();
     const minutesPassed = Math.floor((Date.now() - createdAt) / 60000);
 
-    if (minutesPassed >= 30) return "completed";
     if (minutesPassed >= 20) return "packing";
     if (minutesPassed >= 10) return "cooking";
 
@@ -162,13 +152,16 @@ return () => {
     return index === -1 ? 0 : index;
   }
 
-  function getStatusLabel(status) {
-    const currentStatus = normalizeStatus(status);
+  function getStatusLabel(order) {
+    const currentStatus = getAutoStatus(order);
 
     if (currentStatus === "confirmed") return "Order Confirmed";
     if (currentStatus === "cooking") return "Cooking";
-    if (currentStatus === "packing") return "Packing";
-    if (currentStatus === "completed") return "Delivered";
+    if (currentStatus === "packing") return "Almost Ready";
+    if (currentStatus === "ready_for_pickup") return "Ready for Pickup";
+    if (currentStatus === "completed") {
+      return isSelfPickup(order) ? "Picked Up" : "Delivered";
+    }
     if (currentStatus === "cancelled") return "Cancelled";
 
     return "Order Confirmed";
@@ -185,6 +178,10 @@ return () => {
       return "bg-green-900/40 text-green-300 border-green-500/20";
     }
 
+    if (currentStatus === "ready_for_pickup") {
+      return "bg-emerald-900/40 text-emerald-300 border-emerald-500/20";
+    }
+
     if (currentStatus === "packing") {
       return "bg-blue-900/40 text-blue-300 border-blue-500/20";
     }
@@ -196,22 +193,40 @@ return () => {
     return "bg-yellow-900/30 text-yellow-300 border-yellow-500/20";
   }
 
+  function getProgressWidth(status) {
+    const currentStatus = normalizeStatus(status);
+
+    if (currentStatus === "cancelled") return 0;
+    if (currentStatus === "confirmed") return 15;
+    if (currentStatus === "cooking") return 45;
+    if (currentStatus === "packing") return 85;
+    if (currentStatus === "ready_for_pickup") return 92;
+    if (currentStatus === "completed") return 100;
+
+    return 15;
+  }
+
   async function cancelOrder(orderId) {
     const confirmCancel = window.confirm("Cancel this order?");
 
     if (!confirmCancel) return;
 
-      const { data, error } = await supabase
+    const { data, error } = await supabase
       .from("orders")
       .update({ status: "cancelled" })
       .eq("id", orderId)
       .eq("user_id", user.id)
       .select("id, status");
 
+    if (error) {
+      alert(`Cancel failed: ${error.message}`);
+      return;
+    }
+
     if (!data || data.length === 0) {
-  alert("Cancel failed: this order does not belong to the current logged-in user.");
-  return;
-}
+      alert("Cancel failed: this order does not belong to the current logged-in user.");
+      return;
+    }
 
     setCancelMessage("Order cancelled successfully.");
 
@@ -224,12 +239,14 @@ return () => {
     }, 1500);
   }
 
-  function OrderStatusBar({ status }) {
+  function OrderStatusBar({ order }) {
+    const status = getAutoStatus(order);
     const activeIndex = getStepIndex(status);
+    const progressWidth = getProgressWidth(status);
 
     return (
       <div className="mt-5">
-        <div className="grid grid-cols-4 gap-1 sm:gap-2">
+        <div className="grid grid-cols-5 gap-1 sm:gap-2">
           {ORDER_STEPS.map((step, index) => {
             const isActive = index <= activeIndex;
             const isCurrent = index === activeIndex;
@@ -262,21 +279,33 @@ return () => {
           <div
             className="h-full bg-yellow-500 transition-all duration-700 ease-out"
             style={{
-              width: `${((activeIndex + 1) / ORDER_STEPS.length) * 100}%`,
+              width: `${progressWidth}%`,
             }}
           />
         </div>
+
+        {status === "packing" && (
+          <p className="text-gray-500 text-xs mt-3">
+            Your order is almost ready. It will finish only when the seller marks it complete.
+          </p>
+        )}
+
+        {status === "ready_for_pickup" && (
+          <div className="mt-4 bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 rounded-2xl p-4 font-bold">
+            🛍️ Your order is ready. Please pick it up from the seller.
+          </div>
+        )}
       </div>
     );
   }
 
   const visibleOrders = orders.filter((order) => {
     const dbStatus = normalizeStatus(order.status);
-    const autoStatus = normalizeStatus(getAutoStatus(order));
+    const sellerResponse = normalizeSellerResponse(order.seller_response);
 
     if (dbStatus === "cancelled") return false;
     if (dbStatus === "completed") return false;
-    if (autoStatus === "completed") return false;
+    if (sellerResponse === "rejected") return false;
 
     return true;
   });
@@ -297,7 +326,7 @@ return () => {
             </h1>
 
             <p className="text-gray-400 mt-4 max-w-2xl leading-relaxed">
-              Track your QuickBites orders from kitchen confirmation to delivery.
+              Track your QuickBites orders from kitchen confirmation to final completion.
             </p>
           </div>
 
@@ -393,11 +422,11 @@ return () => {
                           autoStatus
                         )}`}
                       >
-                        {getStatusLabel(autoStatus)}
+                        {getStatusLabel(order)}
                       </span>
                     </div>
 
-                    <OrderStatusBar status={autoStatus} />
+                    <OrderStatusBar order={order} />
 
                     <button
                       type="button"
