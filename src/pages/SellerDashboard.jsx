@@ -14,6 +14,8 @@ const FOOD_CATEGORIES = [
   "Specials",
 ];
 
+const PLATFORM_FEE = 10;
+
 export default function SellerDashboard() {
   const { user } = useAuth();
 
@@ -27,6 +29,7 @@ export default function SellerDashboard() {
     time: "",
     stock: "",
     type: "Veg",
+    category: "Meals",
     description: "",
   });
 
@@ -321,27 +324,95 @@ export default function SellerDashboard() {
     setOrdersLoading(false);
   }
 
-  function handleImageChange(event) {
+  async function handleImageChange(event) {
     const file = event.target.files[0];
 
     if (!file) return;
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    const maxSizeInBytes = 2 * 1024 * 1024;
 
     if (!allowedTypes.includes(file.type)) {
       setMessage("Please upload a JPG, PNG, or WEBP image.");
       return;
     }
 
-    if (file.size > maxSizeInBytes) {
-      setMessage("Image is too large. Please upload an image below 2 MB.");
-      return;
-    }
+    try {
+      setMessage("Compressing image...");
 
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
-    setMessage("");
+      const compressedFile = await compressImage(file);
+
+      setImageFile(compressedFile);
+
+      const previewUrl = URL.createObjectURL(compressedFile);
+
+      setImagePreview(previewUrl);
+
+      setMessage(
+        `Image optimized (${(compressedFile.size / 1024 / 1024).toFixed(2)} MB)`
+      );
+    } catch (error) {
+      setMessage("Could not process image.");
+    }
+  }
+
+  function compressImage(file) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+
+      image.onload = () => {
+        const canvas = document.createElement("canvas");
+
+        const MAX_WIDTH = 1200;
+        const MAX_HEIGHT = 1200;
+
+        let width = image.width;
+        let height = image.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+
+        ctx.drawImage(image, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error("Compression failed"));
+              return;
+            }
+
+            const compressedFile = new File(
+              [blob],
+              `${Date.now()}-quickbites.jpg`,
+              {
+                type: "image/jpeg",
+              }
+            );
+
+            resolve(compressedFile);
+          },
+          "image/jpeg",
+          0.75
+        );
+      };
+
+      image.onerror = reject;
+
+      image.src = URL.createObjectURL(file);
+    });
   }
 
   async function uploadDishImage() {
@@ -366,9 +437,7 @@ export default function SellerDashboard() {
 
     if (error) throw error;
 
-    const { data } = supabase.storage
-      .from("food-images")
-      .getPublicUrl(filePath);
+    const { data } = supabase.storage.from("food-images").getPublicUrl(filePath);
 
     return data.publicUrl;
   }
@@ -383,6 +452,7 @@ export default function SellerDashboard() {
       time: "",
       stock: "",
       type: "Veg",
+      category: "Meals",
       description: "",
     });
 
@@ -570,24 +640,24 @@ export default function SellerDashboard() {
   }
 
   async function completeOrder(orderId) {
-  const confirmComplete = window.confirm("Mark this order as completed?");
+    const confirmComplete = window.confirm("Mark this order as completed?");
 
-  if (!confirmComplete) return;
+    if (!confirmComplete) return;
 
-  const { error } = await supabase
-    .from("orders")
-    .update({ status: "completed" })
-    .eq("id", orderId)
-    .eq("seller_id", user.id);
+    const { error } = await supabase
+      .from("orders")
+      .update({ status: "completed" })
+      .eq("id", orderId)
+      .eq("seller_id", user.id);
 
-  if (error) {
-    setMessage(`Could not complete order: ${error.message}`);
-    return;
+    if (error) {
+      setMessage(`Could not complete order: ${error.message}`);
+      return;
+    }
+
+    setMessage("Order completed.");
+    fetchSellerOrders();
   }
-
-  setMessage("Order completed.");
-  fetchSellerOrders();
-}
 
   async function markReadyForPickup(orderId) {
     const { error } = await supabase
@@ -617,35 +687,33 @@ export default function SellerDashboard() {
   }
 
   function isSelfPickup(order) {
-    return String(order.delivery_type || "")
-      .toLowerCase()
-      .includes("pickup");
+    return String(order.delivery_type || "").toLowerCase().includes("pickup");
   }
 
   function getAutoStatus(order) {
-  timerTick;
+    timerTick;
 
-  const dbStatus = normalizeStatus(order.status);
-  const sellerResponse = normalizeSellerResponse(order.seller_response);
+    const dbStatus = normalizeStatus(order.status);
+    const sellerResponse = normalizeSellerResponse(order.seller_response);
 
-  if (dbStatus === "cancelled" || sellerResponse === "rejected") {
-    return "cancelled";
+    if (dbStatus === "cancelled" || sellerResponse === "rejected") {
+      return "cancelled";
+    }
+
+    if (dbStatus === "completed") {
+      return "completed";
+    }
+
+    if (sellerResponse === "pending") {
+      return "pending";
+    }
+
+    if (order.ready_for_pickup) {
+      return "ready_for_pickup";
+    }
+
+    return "accepted";
   }
-
-  if (dbStatus === "completed") {
-    return "completed";
-  }
-
-  if (sellerResponse === "pending") {
-    return "pending";
-  }
-
-  if (order.ready_for_pickup) {
-    return "ready_for_pickup";
-  }
-
-  return "accepted";
-}
 
   function getStatusLabel(status) {
     const currentStatus = normalizeStatus(status);
@@ -717,20 +785,68 @@ export default function SellerDashboard() {
     return true;
   });
 
-  const soldOrders = sellerOrders.filter((order) => {
+  const completedOrders = sellerOrders.filter((order) => {
     const dbStatus = normalizeStatus(order.status);
-    const autoStatus = normalizeStatus(getAutoStatus(order));
     const sellerResponse = normalizeSellerResponse(order.seller_response);
 
-    if (dbStatus === "cancelled") return false;
+    if (dbStatus !== "completed") return false;
     if (sellerResponse === "rejected") return false;
 
-    return autoStatus === "completed";
+    return true;
   });
+
+  const todayDateString = new Date().toDateString();
+
+  const todayCompletedOrders = completedOrders.filter((order) => {
+    if (!order.created_at) return false;
+
+    return new Date(order.created_at).toDateString() === todayDateString;
+  });
+
+  const grossEarnings = completedOrders.reduce((total, order) => {
+    return total + Number(order.subtotal_amount || 0);
+  }, 0);
+
+  const todayEarnings = todayCompletedOrders.reduce((total, order) => {
+    return total + Number(order.subtotal_amount || 0);
+  }, 0);
+
+  const platformFeesEstimate = completedOrders.length * PLATFORM_FEE;
+  const averageOrderValue =
+    completedOrders.length > 0
+      ? Math.round(grossEarnings / completedOrders.length)
+      : 0;
+
+  const itemSalesMap = {};
+
+  completedOrders.forEach((order) => {
+    const items = getOrderItems(order);
+
+    items.forEach((item) => {
+      const itemName = item.name || "Unknown item";
+      const itemQuantity = Number(item.quantity || 0);
+      const itemRevenue = Number(item.price || 0) * itemQuantity;
+
+      if (!itemSalesMap[itemName]) {
+        itemSalesMap[itemName] = {
+          name: itemName,
+          quantity: 0,
+          revenue: 0,
+        };
+      }
+
+      itemSalesMap[itemName].quantity += itemQuantity;
+      itemSalesMap[itemName].revenue += itemRevenue;
+    });
+  });
+
+  const bestSellingItems = Object.values(itemSalesMap)
+    .sort((a, b) => b.quantity - a.quantity)
+    .slice(0, 5);
 
   const totalOrdersCount = sellerOrders.length;
   const activeOrdersCount = activeSellerOrders.length;
-  const soldOrdersCount = soldOrders.length;
+  const soldOrdersCount = completedOrders.length;
 
   if (!user) {
     return (
@@ -854,6 +970,103 @@ export default function SellerDashboard() {
             <h2 className="text-4xl font-black text-yellow-400 mt-3">
               {sellerFoods.filter((food) => Number(food.stock) > 0).length}
             </h2>
+          </div>
+        </section>
+
+        <section className="mt-8 bg-[#111] border border-[#2a2a2a] rounded-3xl p-5 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+            <div>
+              <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
+                Earnings Analytics
+              </p>
+
+              <h2 className="text-2xl sm:text-3xl font-bold mt-1">
+                Seller Earnings
+              </h2>
+            </div>
+
+            <p className="text-gray-500 text-sm">
+              Calculated from completed orders only.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-6">
+            <div className="bg-black/40 border border-[#222] rounded-3xl p-5">
+              <p className="text-gray-400 text-sm">Today’s Earnings</p>
+              <h3 className="text-3xl font-black text-yellow-400 mt-3">
+                ₹{todayEarnings}
+              </h3>
+            </div>
+
+            <div className="bg-black/40 border border-[#222] rounded-3xl p-5">
+              <p className="text-gray-400 text-sm">Gross Earnings</p>
+              <h3 className="text-3xl font-black text-yellow-400 mt-3">
+                ₹{grossEarnings}
+              </h3>
+            </div>
+
+            <div className="bg-black/40 border border-[#222] rounded-3xl p-5">
+              <p className="text-gray-400 text-sm">Completed Orders</p>
+              <h3 className="text-3xl font-black text-yellow-400 mt-3">
+                {completedOrders.length}
+              </h3>
+            </div>
+
+            <div className="bg-black/40 border border-[#222] rounded-3xl p-5">
+              <p className="text-gray-400 text-sm">Avg Order Value</p>
+              <h3 className="text-3xl font-black text-yellow-400 mt-3">
+                ₹{averageOrderValue}
+              </h3>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-5 mt-5">
+            <div className="bg-black/40 border border-[#222] rounded-3xl p-5">
+              <p className="text-gray-400 text-sm">Platform Fee Estimate</p>
+              <h3 className="text-3xl font-black text-red-300 mt-3">
+                ₹{platformFeesEstimate}
+              </h3>
+              <p className="text-gray-600 text-sm mt-3">
+                Estimate only: ₹{PLATFORM_FEE} × completed orders.
+              </p>
+            </div>
+
+            <div className="bg-black/40 border border-[#222] rounded-3xl p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-gray-400 text-sm">Best Selling Dishes</p>
+                  <h3 className="text-xl font-black mt-1">Top 5 items</h3>
+                </div>
+              </div>
+
+              {bestSellingItems.length === 0 ? (
+                <p className="text-gray-600 text-sm mt-5">
+                  No completed order data yet.
+                </p>
+              ) : (
+                <div className="mt-5 space-y-3">
+                  {bestSellingItems.map((item, index) => (
+                    <div
+                      key={item.name}
+                      className="flex items-center justify-between gap-4 border border-[#222] rounded-2xl p-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-bold truncate">
+                          #{index + 1} {item.name}
+                        </p>
+                        <p className="text-gray-500 text-sm">
+                          {item.quantity} sold
+                        </p>
+                      </div>
+
+                      <p className="text-yellow-400 font-black shrink-0">
+                        ₹{item.revenue}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </section>
 
@@ -1024,14 +1237,14 @@ export default function SellerDashboard() {
                     )}
 
                     {sellerResponse === "accepted" && (
-  <button
-    type="button"
-    onClick={() => completeOrder(order.id)}
-    className="mt-5 w-full bg-yellow-500 hover:bg-yellow-400 active:scale-95 text-black font-black py-3 rounded-2xl transition-all"
-  >
-    Complete Order
-  </button>
-)}
+                      <button
+                        type="button"
+                        onClick={() => completeOrder(order.id)}
+                        className="mt-5 w-full bg-yellow-500 hover:bg-yellow-400 active:scale-95 text-black font-black py-3 rounded-2xl transition-all"
+                      >
+                        Complete Order
+                      </button>
+                    )}
 
                     <div className="grid grid-cols-2 gap-3 mt-5">
                       <a
@@ -1157,7 +1370,7 @@ export default function SellerDashboard() {
                 <p className="text-white font-semibold">Tap to upload image</p>
 
                 <p className="text-gray-500 text-sm mt-1">
-                  JPG, PNG, WEBP · Max 2 MB
+                  JPG, PNG, WEBP · Auto optimized for mobile
                 </p>
 
                 <input
@@ -1274,8 +1487,6 @@ export default function SellerDashboard() {
                         >
                           {food.type}
                         </span>
-
-                      
                       </div>
 
                       <span

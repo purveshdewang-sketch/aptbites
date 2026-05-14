@@ -120,6 +120,48 @@ export default function Checkout() {
     return uniqueSellerIds[0];
   }
 
+  async function validateLiveStockBeforeOrder() {
+    const foodIds = cartItems.map((item) => item.id);
+
+    const { data, error } = await supabase
+      .from("foods")
+      .select("id, name, stock, seller_id, user_id")
+      .in("id", foodIds);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    const latestFoodMap = new Map();
+
+    (data || []).forEach((food) => {
+      latestFoodMap.set(food.id, food);
+    });
+
+    for (const cartItem of cartItems) {
+      const latestFood = latestFoodMap.get(cartItem.id);
+
+      if (!latestFood) {
+        throw new Error(`${cartItem.name} is no longer available.`);
+      }
+
+      const liveStock = Number(latestFood.stock || 0);
+      const requestedQty = Number(cartItem.quantity || 0);
+
+      if (liveStock <= 0) {
+        throw new Error(`${cartItem.name} is sold out.`);
+      }
+
+      if (requestedQty > liveStock) {
+        throw new Error(
+          `${cartItem.name} has only ${liveStock} left. Please update your cart.`
+        );
+      }
+    }
+
+    return true;
+  }
+
   async function handlePlaceOrder() {
     if (!user) {
       alert("Please login before placing your order.");
@@ -152,55 +194,58 @@ export default function Checkout() {
 
     setLoading(true);
 
-    const orderPayload = {
-      user_id: user.id,
-      seller_id: sellerId,
-      customer_name: formData.fullName,
-      phone: formData.phone,
-      flat: formData.flat,
-      delivery_type: formData.deliveryType,
-      notes: formData.notes,
-      subtotal_amount: subtotalAmount,
-      platform_fee: PLATFORM_FEE,
-      total_amount: totalAmount,
-      status: "confirmed",
-      items: cartItems,
-    };
+    try {
+      await validateLiveStockBeforeOrder();
 
-    const { error: stockError } = await supabase.rpc("decrement_food_stock", {
-      order_items: cartItems,
-    });
-
-    if (stockError) {
-      setLoading(false);
-      alert(`Could not place order: ${stockError.message}`);
-      return;
-    }
-
-    const { error } = await supabase.from("orders").insert([orderPayload]);
-
-    setLoading(false);
-
-    if (error) {
-      alert(`Failed to place order: ${error.message}`);
-      return;
-    }
-
-    localStorage.setItem(
-      getCheckoutStorageKey(),
-      JSON.stringify({
-        fullName: formData.fullName,
+      const orderPayload = {
+        user_id: user.id,
+        seller_id: sellerId,
+        customer_name: formData.fullName,
+        phone: formData.phone,
         flat: formData.flat,
-        deliveryType: formData.deliveryType,
-      })
-    );
+        delivery_type: formData.deliveryType,
+        notes: formData.notes,
+        subtotal_amount: subtotalAmount,
+        platform_fee: PLATFORM_FEE,
+        total_amount: totalAmount,
+        status: "confirmed",
+        items: cartItems,
+      };
 
-    clearCart();
-    setOrderPlaced(true);
+      const { error: stockError } = await supabase.rpc("decrement_food_stock", {
+        order_items: cartItems,
+      });
 
-    setTimeout(() => {
-      navigate("/orders");
-    }, 1500);
+      if (stockError) {
+        throw new Error(stockError.message);
+      }
+
+      const { error } = await supabase.from("orders").insert([orderPayload]);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      localStorage.setItem(
+        getCheckoutStorageKey(),
+        JSON.stringify({
+          fullName: formData.fullName,
+          flat: formData.flat,
+          deliveryType: formData.deliveryType,
+        })
+      );
+
+      clearCart();
+      setOrderPlaced(true);
+
+      setTimeout(() => {
+        navigate("/orders");
+      }, 1500);
+    } catch (error) {
+      alert(`Could not place order: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
   }
 
   if (orderPlaced) {
@@ -266,16 +311,14 @@ export default function Checkout() {
                 placeholder="Full Name"
               />
 
-              <div>
-                <input
-                  name="phone"
-                  value={formData.phone}
-                  disabled
-                  readOnly
-                  className="w-full bg-[#111] border border-[#333] rounded-2xl px-5 py-4 outline-none text-gray-400 cursor-not-allowed"
-                  placeholder="Phone Number"
-                />
-              </div>
+              <input
+                name="phone"
+                value={formData.phone}
+                disabled
+                readOnly
+                className="w-full bg-[#111] border border-[#333] rounded-2xl px-5 py-4 outline-none text-gray-400 cursor-not-allowed"
+                placeholder="Phone Number"
+              />
 
               <input
                 name="flat"
@@ -408,7 +451,7 @@ export default function Checkout() {
                 className="w-full mt-3 bg-yellow-500 hover:bg-yellow-400 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-black font-black py-5 rounded-2xl text-lg transition-all duration-200 shadow-lg shadow-yellow-500/20"
               >
                 {loading
-                  ? "Confirming Order..."
+                  ? "Checking live stock..."
                   : `Place Order • ₹${totalAmount}`}
               </button>
 
