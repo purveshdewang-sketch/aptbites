@@ -705,12 +705,48 @@ const [showQr, setShowQr] = useState(false);
 
                 {paymentMethod === "upi" ? (
                   <div className="mt-5">
-                    <a
-                      href={upiPaymentLink}
-                      className="block text-center w-full bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black font-black py-4 rounded-2xl transition-all shadow-lg shadow-yellow-500/20"
-                    >
-                      Pay via UPI App
-                    </a>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  <a
+    href={upiPaymentLink}
+    className="block text-center w-full bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black font-black py-4 rounded-2xl transition-all shadow-lg shadow-yellow-500/20"
+  >
+    Pay via UPI App
+  </a>
+
+  <button
+    type="button"
+    onClick={() => setShowQr((current) => !current)}
+    className="block text-center w-full bg-black border border-yellow-500/40 hover:border-yellow-500 text-yellow-400 font-black py-4 rounded-2xl transition-all"
+  >
+    {showQr ? "Hide QR" : "Scan QR"}
+  </button>
+</div>
+
+{showQr && (
+  <div className="mt-5 bg-black border border-[#333] rounded-[2rem] p-5 text-center">
+    <p className="text-yellow-400 text-sm font-black uppercase tracking-wide">
+      Scan & Pay
+    </p>
+
+    <div className="mt-4 bg-white rounded-3xl p-4 w-fit mx-auto">
+      <img
+        src={qrCodeUrl}
+        alt="QuickBites UPI QR Code"
+        className="w-56 h-56 object-contain"
+      />
+    </div>
+
+    <p className="text-white font-black mt-4">₹{totalAmount}</p>
+
+    <p className="text-gray-500 text-sm mt-1 break-all">
+      {QUICKBITES_UPI_ID}
+    </p>
+
+    <p className="text-gray-500 text-xs mt-3 leading-relaxed">
+      Scan this QR using any UPI app. After payment, enter the transaction reference below.
+    </p>
+  </div>
+)}
 
                     <p className="text-gray-500 text-sm text-center mt-3">
                       Opens your installed UPI app if supported by your phone.
