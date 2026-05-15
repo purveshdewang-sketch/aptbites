@@ -156,7 +156,7 @@ export default function Navbar() {
 
   function LogoMark() {
     return (
-      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#55F3A5] to-[#A77BE8] flex items-center justify-center overflow-hidden shadow-lg shrink-0">
+      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#55F3A5] to-[#A77BE8] flex items-center justify-center overflow-hidden shadow-lg shadow-[#55F3A5]/10 shrink-0">
         {!logoFailed ? (
           <img
             src="/quickbites-logo.png"
@@ -173,7 +173,7 @@ export default function Navbar() {
 
   if (authLoading) {
     return (
-      <header className="sticky top-0 z-50 bg-[#0d0b09] border-b border-[#241c16]">
+      <header className="sticky top-0 z-50 bg-[#0F0D1F] border-b border-[#34305A]">
         <div className="h-16 sm:h-[72px]" />
       </header>
     );
@@ -181,18 +181,18 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-[#0d0b09]/90 backdrop-blur-2xl border-b border-[#241c16]">
+      <header className="sticky top-0 z-50 bg-[#0F0D1F]/92 backdrop-blur-2xl border-b border-[#34305A]">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="h-16 sm:h-[72px] flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3 group min-w-0">
               <LogoMark />
 
               <div className="leading-none min-w-0">
-                <p className="text-white font-bold text-lg tracking-tight group-hover:text-orange-300 transition-all truncate">
+                <p className="text-white font-bold text-lg tracking-tight group-hover:text-[#55F3A5] transition-all truncate">
                   QuickBites
                 </p>
 
-                <p className="text-[10px] text-[#8f8379] mt-1 tracking-wide uppercase truncate">
+                <p className="text-[10px] text-[#A8A3C2] mt-1 tracking-wide uppercase truncate">
                   neighbourhood food
                 </p>
               </div>
@@ -208,8 +208,8 @@ export default function Navbar() {
                     to={link.path}
                     className={`text-sm font-medium transition-all duration-200 ${
                       isActive
-                        ? "text-orange-300"
-                        : "text-[#9d9186] hover:text-orange-300"
+                        ? "text-[#55F3A5]"
+                        : "text-[#A8A3C2] hover:text-[#55F3A5]"
                     }`}
                   >
                     {link.name}
@@ -222,8 +222,8 @@ export default function Navbar() {
                   to="/owner-dashboard"
                   className={`text-sm font-medium transition-all duration-200 ${
                     location.pathname === "/owner-dashboard"
-                      ? "text-orange-300"
-                      : "text-[#9d9186] hover:text-orange-300"
+                      ? "text-[#55F3A5]"
+                      : "text-[#A8A3C2] hover:text-[#55F3A5]"
                   }`}
                 >
                   Owner Dashboard
@@ -235,7 +235,7 @@ export default function Navbar() {
               {!user && (
                 <Link
                   to="/customer-login"
-                  className="hidden md:flex bg-orange-500 hover:bg-orange-400 active:scale-95 text-black text-sm font-bold px-5 py-2.5 rounded-2xl transition-all duration-200 shadow-lg shadow-orange-500/10"
+                  className="hidden md:flex bg-[#55F3A5] hover:bg-[#7CFFC0] active:scale-95 text-[#0F0D1F] text-sm font-black px-5 py-2.5 rounded-2xl transition-all duration-200 shadow-lg shadow-[#55F3A5]/20"
                 >
                   Sign In
                 </Link>
@@ -243,7 +243,7 @@ export default function Navbar() {
 
               <Link
                 to="/cart"
-                className="relative bg-[#171310] hover:bg-[#211912] border border-[#2a211b] hover:border-orange-500/40 active:scale-95 text-white w-11 h-11 sm:w-auto sm:h-auto sm:px-4 sm:py-2 rounded-2xl transition-all duration-200 flex items-center justify-center gap-2"
+                className="relative bg-[#1B1938] hover:bg-[#2B284F] border border-[#34305A] hover:border-[#55F3A5]/50 active:scale-95 text-white w-11 h-11 sm:w-auto sm:h-auto sm:px-4 sm:py-2 rounded-2xl transition-all duration-200 flex items-center justify-center gap-2"
               >
                 <span className="text-lg">🛒</span>
 
@@ -252,8 +252,8 @@ export default function Navbar() {
                 </span>
 
                 {cartCount > 0 && (
-                  <div className="absolute -top-2 -right-2 min-w-[22px] h-[22px] px-1 bg-orange-500 rounded-full flex items-center justify-center">
-                    <span className="text-black text-[11px] font-black">
+                  <div className="absolute -top-2 -right-2 min-w-[22px] h-[22px] px-1 bg-[#55F3A5] rounded-full flex items-center justify-center">
+                    <span className="text-[#0F0D1F] text-[11px] font-black">
                       {cartCount}
                     </span>
                   </div>
@@ -266,19 +266,19 @@ export default function Navbar() {
                     <button
                       type="button"
                       onClick={() => setProfileOpen(!profileOpen)}
-                      className="w-11 h-11 rounded-2xl bg-orange-500 hover:bg-orange-400 text-black font-black flex items-center justify-center transition-all duration-200 shadow-lg shadow-orange-500/10"
+                      className="w-11 h-11 rounded-2xl bg-[#55F3A5] hover:bg-[#7CFFC0] text-[#0F0D1F] font-black flex items-center justify-center transition-all duration-200 shadow-lg shadow-[#55F3A5]/20"
                     >
                       {getInitial()}
                     </button>
 
                     {profileOpen && (
-                      <div className="absolute right-0 mt-3 w-72 bg-[#15110e] border border-[#2a211b] rounded-3xl overflow-hidden shadow-2xl shadow-black/50">
-                        <div className="p-5 border-b border-[#2a211b]">
+                      <div className="absolute right-0 mt-3 w-72 bg-[#1B1938] border border-[#34305A] rounded-3xl overflow-hidden shadow-2xl shadow-black/50">
+                        <div className="p-5 border-b border-[#34305A]">
                           <p className="text-white font-semibold truncate">
                             {user.email}
                           </p>
 
-                          <p className="text-[#8f8379] text-sm mt-1">
+                          <p className="text-[#A8A3C2] text-sm mt-1">
                             {getAccountLabel()}
                           </p>
                         </div>
@@ -286,28 +286,28 @@ export default function Navbar() {
                         <div className="p-2">
                           <Link
                             to="/profile"
-                            className="block px-4 py-3 rounded-2xl text-[#b8ada4] hover:bg-[#211912] hover:text-orange-300 transition-all"
+                            className="block px-4 py-3 rounded-2xl text-[#DAD6F2] hover:bg-[#2B284F] hover:text-[#55F3A5] transition-all"
                           >
                             My Profile
                           </Link>
 
                           <Link
                             to="/marketplace"
-                            className="block px-4 py-3 rounded-2xl text-[#b8ada4] hover:bg-[#211912] hover:text-orange-300 transition-all"
+                            className="block px-4 py-3 rounded-2xl text-[#DAD6F2] hover:bg-[#2B284F] hover:text-[#55F3A5] transition-all"
                           >
                             Marketplace
                           </Link>
 
                           <Link
                             to="/orders"
-                            className="block px-4 py-3 rounded-2xl text-[#b8ada4] hover:bg-[#211912] hover:text-orange-300 transition-all"
+                            className="block px-4 py-3 rounded-2xl text-[#DAD6F2] hover:bg-[#2B284F] hover:text-[#55F3A5] transition-all"
                           >
                             Active Orders
                           </Link>
 
                           <Link
                             to="/order-history"
-                            className="block px-4 py-3 rounded-2xl text-[#b8ada4] hover:bg-[#211912] hover:text-orange-300 transition-all"
+                            className="block px-4 py-3 rounded-2xl text-[#DAD6F2] hover:bg-[#2B284F] hover:text-[#55F3A5] transition-all"
                           >
                             Order History
                           </Link>
@@ -315,7 +315,7 @@ export default function Navbar() {
                           {isAdmin && (
                             <Link
                               to="/owner-dashboard"
-                              className="block px-4 py-3 rounded-2xl text-orange-300 hover:bg-orange-500/10 transition-all"
+                              className="block px-4 py-3 rounded-2xl text-[#55F3A5] hover:bg-[#55F3A5]/10 transition-all"
                             >
                               Owner Dashboard
                             </Link>
@@ -324,7 +324,7 @@ export default function Navbar() {
                           {isSeller ? (
                             <Link
                               to="/seller-dashboard"
-                              className="block px-4 py-3 rounded-2xl text-[#b8ada4] hover:bg-[#211912] hover:text-orange-300 transition-all"
+                              className="block px-4 py-3 rounded-2xl text-[#DAD6F2] hover:bg-[#2B284F] hover:text-[#55F3A5] transition-all"
                             >
                               Seller Dashboard
                             </Link>
@@ -333,7 +333,7 @@ export default function Navbar() {
                               type="button"
                               onClick={handleSwitchToSeller}
                               disabled={switchingSeller}
-                              className="w-full text-left px-4 py-3 rounded-2xl text-orange-300 hover:bg-orange-500/10 transition-all disabled:opacity-50"
+                              className="w-full text-left px-4 py-3 rounded-2xl text-[#55F3A5] hover:bg-[#55F3A5]/10 transition-all disabled:opacity-50"
                             >
                               {switchingSeller
                                 ? "Switching..."
@@ -356,7 +356,7 @@ export default function Navbar() {
                   <button
                     type="button"
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    className="md:hidden w-11 h-11 rounded-2xl bg-orange-500 hover:bg-orange-400 text-black font-black flex items-center justify-center transition-all duration-200 shadow-lg shadow-orange-500/10"
+                    className="md:hidden w-11 h-11 rounded-2xl bg-[#55F3A5] hover:bg-[#7CFFC0] text-[#0F0D1F] font-black flex items-center justify-center transition-all duration-200 shadow-lg shadow-[#55F3A5]/20"
                   >
                     {getInitial()}
                   </button>
@@ -364,7 +364,7 @@ export default function Navbar() {
               ) : (
                 <Link
                   to="/customer-login"
-                  className="md:hidden w-11 h-11 rounded-2xl bg-orange-500 hover:bg-orange-400 text-black font-black flex items-center justify-center transition-all duration-200 shadow-lg shadow-orange-500/10"
+                  className="md:hidden w-11 h-11 rounded-2xl bg-[#55F3A5] hover:bg-[#7CFFC0] text-[#0F0D1F] font-black flex items-center justify-center transition-all duration-200 shadow-lg shadow-[#55F3A5]/20"
                 >
                   →
                 </Link>
@@ -375,14 +375,14 @@ export default function Navbar() {
       </header>
 
       {mobileMenuOpen && user && (
-        <div className="md:hidden fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm">
+        <div className="md:hidden fixed inset-0 z-[70] bg-black/55 backdrop-blur-sm">
           <div
             ref={mobileDropdownRef}
-            className="absolute top-[76px] right-4 left-4 bg-[#15110e] border border-[#2a211b] rounded-[2rem] shadow-2xl shadow-black/50 overflow-hidden"
+            className="absolute top-[76px] right-4 left-4 bg-[#1B1938] border border-[#34305A] rounded-[2rem] shadow-2xl shadow-black/50 overflow-hidden"
           >
-            <div className="p-5 border-b border-[#2a211b]">
+            <div className="p-5 border-b border-[#34305A]">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-orange-500 text-black font-black flex items-center justify-center shadow-lg shadow-orange-500/10">
+                <div className="w-12 h-12 rounded-2xl bg-[#55F3A5] text-[#0F0D1F] font-black flex items-center justify-center shadow-lg shadow-[#55F3A5]/20">
                   {getInitial()}
                 </div>
 
@@ -391,7 +391,7 @@ export default function Navbar() {
                     {user.email}
                   </p>
 
-                  <p className="text-[#8f8379] text-sm mt-1">
+                  <p className="text-[#A8A3C2] text-sm mt-1">
                     {getAccountLabel()}
                   </p>
                 </div>
@@ -404,8 +404,8 @@ export default function Navbar() {
                   to="/"
                   className={`px-4 py-3 rounded-2xl text-sm font-medium transition-all ${
                     location.pathname === "/"
-                      ? "bg-orange-500 text-black"
-                      : "text-[#b8ada4] hover:bg-[#211912] hover:text-orange-300"
+                      ? "bg-[#55F3A5] text-[#0F0D1F]"
+                      : "text-[#DAD6F2] hover:bg-[#2B284F] hover:text-[#55F3A5]"
                   }`}
                 >
                   Home
@@ -415,8 +415,8 @@ export default function Navbar() {
                   to="/marketplace"
                   className={`px-4 py-3 rounded-2xl text-sm font-medium transition-all ${
                     location.pathname === "/marketplace"
-                      ? "bg-orange-500 text-black"
-                      : "text-[#b8ada4] hover:bg-[#211912] hover:text-orange-300"
+                      ? "bg-[#55F3A5] text-[#0F0D1F]"
+                      : "text-[#DAD6F2] hover:bg-[#2B284F] hover:text-[#55F3A5]"
                   }`}
                 >
                   Marketplace
@@ -426,8 +426,8 @@ export default function Navbar() {
                   to="/profile"
                   className={`px-4 py-3 rounded-2xl text-sm font-medium transition-all ${
                     location.pathname === "/profile"
-                      ? "bg-orange-500 text-black"
-                      : "text-[#b8ada4] hover:bg-[#211912] hover:text-orange-300"
+                      ? "bg-[#55F3A5] text-[#0F0D1F]"
+                      : "text-[#DAD6F2] hover:bg-[#2B284F] hover:text-[#55F3A5]"
                   }`}
                 >
                   My Profile
@@ -438,26 +438,26 @@ export default function Navbar() {
                     to="/owner-dashboard"
                     className={`px-4 py-3 rounded-2xl text-sm font-medium transition-all ${
                       location.pathname === "/owner-dashboard"
-                        ? "bg-orange-500 text-black"
-                        : "text-orange-300 hover:bg-orange-500/10"
+                        ? "bg-[#55F3A5] text-[#0F0D1F]"
+                        : "text-[#55F3A5] hover:bg-[#55F3A5]/10"
                     }`}
                   >
                     Owner Dashboard
                   </Link>
                 )}
 
-                <div className="h-px bg-[#2a211b] my-2" />
+                <div className="h-px bg-[#34305A] my-2" />
 
                 <Link
                   to="/orders"
-                  className="px-4 py-3 rounded-2xl text-[#b8ada4] hover:bg-[#211912] hover:text-orange-300"
+                  className="px-4 py-3 rounded-2xl text-[#DAD6F2] hover:bg-[#2B284F] hover:text-[#55F3A5]"
                 >
                   Active Orders
                 </Link>
 
                 <Link
                   to="/order-history"
-                  className="px-4 py-3 rounded-2xl text-[#b8ada4] hover:bg-[#211912] hover:text-orange-300"
+                  className="px-4 py-3 rounded-2xl text-[#DAD6F2] hover:bg-[#2B284F] hover:text-[#55F3A5]"
                 >
                   Order History
                 </Link>
@@ -465,7 +465,7 @@ export default function Navbar() {
                 {isSeller ? (
                   <Link
                     to="/seller-dashboard"
-                    className="px-4 py-3 rounded-2xl text-[#b8ada4] hover:bg-[#211912] hover:text-orange-300"
+                    className="px-4 py-3 rounded-2xl text-[#DAD6F2] hover:bg-[#2B284F] hover:text-[#55F3A5]"
                   >
                     Seller Dashboard
                   </Link>
@@ -474,7 +474,7 @@ export default function Navbar() {
                     type="button"
                     onClick={handleSwitchToSeller}
                     disabled={switchingSeller}
-                    className="text-left px-4 py-3 rounded-2xl text-orange-300 hover:bg-orange-500/10 disabled:opacity-50"
+                    className="text-left px-4 py-3 rounded-2xl text-[#55F3A5] hover:bg-[#55F3A5]/10 disabled:opacity-50"
                   >
                     {switchingSeller
                       ? "Switching..."
