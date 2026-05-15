@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabaseClient";
 
 const PLATFORM_FEE = 10;
-const QUICKBITES_UPI_ID = "quickbites@upi";
+const QUICKBITES_UPI_ID = "cropg1agroresearch@sbi";
 const QUICKBITES_PAYEE_NAME = "QuickBites";
 
 export default function Checkout() {
