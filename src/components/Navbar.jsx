@@ -188,16 +188,6 @@ export default function Navbar() {
           <div className="h-16 sm:h-[72px] flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3 group min-w-0">
               <LogoMark />
-
-<div className="leading-none min-w-0">
-  <p className="text-white font-bold text-lg tracking-tight group-hover:text-[#55F3A5] transition-all truncate">
-    QuickBites
-  </p>
-
-  <p className="text-[10px] text-[#A8A3C2] mt-1 tracking-wide uppercase truncate">
-    neighbourhood food
-  </p>
-</div>
             </Link>
 
             <div className="hidden md:flex items-center gap-7">
