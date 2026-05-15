@@ -1,22 +1,20 @@
 {
   "name": "QuickBites",
   "short_name": "QuickBites",
-  "description": "Neighbourhood homemade food ordering app",
+  "description": "Homemade food from trusted neighbours",
   "start_url": "/",
-  "scope": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
-  "orientation": "portrait",
+  "background_color": "#0F0D1F",
+  "theme_color": "#0F0D1F",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "/images/quickbites-logo.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/images/quickbites-logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

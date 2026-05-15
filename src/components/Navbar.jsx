@@ -167,9 +167,13 @@ export default function Navbar() {
         <nav className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="h-16 sm:h-[72px] flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3 group min-w-0">
-              <div className="w-10 h-10 rounded-2xl bg-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20 shrink-0">
-                <span className="text-black font-black text-sm">Q</span>
-              </div>
+              <div className="w-11 h-11 rounded-2xl bg-white flex items-center justify-center overflow-hidden shadow-lg shrink-0">
+  <img
+    src="/images/quickbites-logo.png"
+    alt="QuickBites"
+    className="w-full h-full object-contain p-1"
+  />
+</div>
 
               <div className="leading-none min-w-0">
                 <p className="text-white font-bold text-lg tracking-tight group-hover:text-orange-300 transition-all truncate">
