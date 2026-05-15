@@ -20,7 +20,6 @@ export default function Marketplace() {
   const { cartCount } = useCart();
 
   const [foods, setFoods] = useState([]);
-  const [orderItems, setOrderItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState("All");
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -41,7 +40,7 @@ export default function Marketplace() {
           table: "foods",
         },
         () => {
-          fetchMarketplaceData();
+          fetchMarketplaceData(false);
         }
       )
       .subscribe();
@@ -56,7 +55,7 @@ export default function Marketplace() {
           table: "profiles",
         },
         () => {
-          fetchMarketplaceData();
+          fetchMarketplaceData(false);
         }
       )
       .subscribe();
@@ -98,7 +97,6 @@ export default function Marketplace() {
     if (foodError) {
       setErrorMessage(foodError.message);
       setFoods([]);
-      setOrderItems([]);
       setLoading(false);
       return;
     }
@@ -155,7 +153,6 @@ export default function Marketplace() {
     });
 
     setFoods(enrichedFoods);
-    setOrderItems(parsedOrderItems);
     setLoading(false);
   }
 
@@ -193,36 +190,36 @@ export default function Marketplace() {
   }
 
   function getDemandBadge(soldCount) {
-  if (soldCount >= 10) {
-    return {
-      label: "Highest Selling",
-      sublabel: "Loved by customers",
-    };
-  }
+    if (soldCount >= 10) {
+      return {
+        label: "Highest Selling",
+        sublabel: "Loved by customers",
+      };
+    }
 
-  if (soldCount >= 6) {
-    return {
-      label: "High Demand",
-      sublabel: "Popular in your area",
-    };
-  }
+    if (soldCount >= 6) {
+      return {
+        label: "High Demand",
+        sublabel: "Popular in your area",
+      };
+    }
 
-  if (soldCount >= 3) {
-    return {
-      label: "Trending",
-      sublabel: "Trending in your area",
-    };
-  }
+    if (soldCount >= 3) {
+      return {
+        label: "Trending",
+        sublabel: "Trending in your area",
+      };
+    }
 
-  if (soldCount >= 1) {
-    return {
-      label: "Popular Choice",
-      sublabel: "Customer favourite",
-    };
-  }
+    if (soldCount >= 1) {
+      return {
+        label: "Popular Choice",
+        sublabel: "Customer favourite",
+      };
+    }
 
-  return null;
-}
+    return null;
+  }
 
   const highestSellingFood = useMemo(() => {
     const soldFoods = foods
@@ -328,29 +325,45 @@ export default function Marketplace() {
       <Navbar />
 
       <main className="min-h-screen bg-black text-white overflow-hidden pb-28">
-        <section className="relative px-4 sm:px-6 pt-6 pb-6 sm:py-10 border-b border-[#1f1f1f]">
+        <section className="relative px-4 sm:px-6 pt-4 pb-4 sm:pt-8 sm:pb-6 border-b border-[#1f1f1f]">
           <div className="absolute top-0 right-0 w-72 h-72 bg-yellow-500/10 rounded-full blur-[90px]" />
 
           <div className="relative max-w-7xl mx-auto">
-            <p className="text-yellow-400 font-semibold tracking-wide text-sm uppercase">
-              Marketplace
-            </p>
+            <div className="sm:hidden">
+              <p className="text-yellow-400 font-semibold tracking-wide text-xs uppercase">
+                Marketplace
+              </p>
 
-            <h1 className="text-[2.15rem] sm:text-5xl md:text-6xl font-black text-white mt-3 leading-[1.03] tracking-tight">
-              Fresh homemade food
-              <span className="block text-yellow-400">
-                from your community.
-              </span>
-            </h1>
+              <h1 className="text-2xl font-black text-white mt-2 leading-tight">
+                Food around you
+              </h1>
 
-            <p className="text-gray-400 text-[15px] sm:text-lg mt-5 max-w-2xl leading-relaxed">
-              Discover meals, snacks, desserts, and special dishes prepared by
-              trusted home chefs inside your neighbourhood.
-            </p>
+              <p className="text-gray-500 text-sm mt-2">
+                Fresh homemade drops from your community.
+              </p>
+            </div>
 
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="hidden sm:block">
+              <p className="text-yellow-400 font-semibold tracking-wide text-sm uppercase">
+                Marketplace
+              </p>
+
+              <h1 className="text-5xl md:text-6xl font-black text-white mt-3 leading-[1.03] tracking-tight">
+                Fresh homemade food
+                <span className="block text-yellow-400">
+                  from your community.
+                </span>
+              </h1>
+
+              <p className="text-gray-400 text-lg mt-5 max-w-2xl leading-relaxed">
+                Discover meals, snacks, desserts, and special dishes prepared by
+                trusted home chefs inside your neighbourhood.
+              </p>
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-4">
-                <p className="text-gray-500 text-xs uppercase font-bold">
+                <p className="text-gray-500 text-[11px] uppercase font-bold">
                   Available Now
                 </p>
                 <p className="text-2xl font-black text-yellow-400 mt-1">
@@ -359,55 +372,113 @@ export default function Marketplace() {
               </div>
 
               <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-4">
-  <p className="text-gray-500 text-xs uppercase font-bold">
-    Highest Selling
-  </p>
+                <p className="text-gray-500 text-[11px] uppercase font-bold">
+                  Highest Selling
+                </p>
 
-  {highestSellingFood ? (
-    <Link
-      to={`/food/${highestSellingFood.id}`}
-      className="mt-2 flex items-center gap-3 group"
-    >
-      <img
-        src={highestSellingFood.image}
-        alt={highestSellingFood.name}
-        className="w-12 h-12 rounded-full object-cover border border-[#333]"
-      />
+                {highestSellingFood ? (
+                  <Link
+                    to={`/food/${highestSellingFood.id}`}
+                    className="mt-2 flex items-center gap-3 group"
+                  >
+                    <img
+                      src={highestSellingFood.image}
+                      alt={highestSellingFood.name}
+                      className="w-11 h-11 rounded-full object-cover border border-[#333]"
+                    />
 
-      <div className="min-w-0">
-        <p className="text-white group-hover:text-yellow-400 font-black truncate transition-all">
-          {highestSellingFood.name}
-        </p>
+                    <div className="min-w-0">
+                      <p className="text-white group-hover:text-yellow-400 font-black truncate transition-all text-sm sm:text-base">
+                        {highestSellingFood.name}
+                      </p>
 
-        <p className="text-green-400 text-sm font-bold">
-          Popular Dish
-        </p>
-      </div>
+                      <p className="text-green-400 text-xs sm:text-sm font-bold">
+                        Popular Dish
+                      </p>
+                    </div>
+                  </Link>
+                ) : (
+                  <p className="text-2xl font-black text-gray-500 mt-1">—</p>
+                )}
+              </div>
 
-      <span className="ml-auto text-green-400 bg-green-500/10 border border-green-500/20 w-9 h-9 rounded-full flex items-center justify-center">
-        ↗
-      </span>
-    </Link>
-  ) : (
-    <p className="text-2xl font-black text-gray-500 mt-1">—</p>
-  )}
-</div>
-              <button
-                type="button"
-                onClick={hasActiveFilters ? clearFilters : undefined}
-                className={`font-bold px-8 py-4 rounded-2xl transition-all duration-200 min-h-[56px] ${
-                  hasActiveFilters
-                    ? "border border-yellow-500 text-yellow-400 hover:bg-yellow-500 hover:text-black"
-                    : "bg-yellow-500 hover:bg-yellow-400 text-black"
-                }`}
-              >
-                {hasActiveFilters ? "Clear" : "Search"}
-              </button>
+              <div className="hidden sm:block bg-[#111111] border border-[#2a2a2a] rounded-2xl p-4">
+                <p className="text-gray-500 text-xs uppercase font-bold">
+                  Food Drops
+                </p>
+                <p className="text-2xl font-black text-white mt-1">
+                  {foods.length}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 sticky top-[76px] z-40 bg-black/95 backdrop-blur py-2 -mx-4 px-4 sm:static sm:bg-transparent sm:backdrop-blur-0 sm:mx-0 sm:px-0 sm:py-0">
+              <div className="grid grid-cols-1 gap-3 lg:flex lg:items-center lg:gap-4">
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Search dishes or sellers..."
+                  className="bg-[#111111] border border-[#2a2a2a] text-white rounded-2xl px-5 py-4 w-full lg:max-w-lg outline-none focus:border-yellow-500 transition-all duration-200 text-base"
+                />
+
+                <div className="grid grid-cols-[1fr_auto] gap-3 lg:flex lg:gap-4">
+                  <div className="relative w-full lg:w-60">
+                    <button
+                      type="button"
+                      onClick={() => setTypeDropdownOpen(!typeDropdownOpen)}
+                      className="w-full bg-[#111111] border border-[#2a2a2a] hover:border-yellow-500 text-white rounded-2xl px-5 py-4 flex items-center justify-between transition-all duration-200"
+                    >
+                      <span className="font-semibold">
+                        {getTypeLabel(selectedType)}
+                      </span>
+
+                      <span className="text-yellow-400 text-xs">
+                        {typeDropdownOpen ? "▲" : "▼"}
+                      </span>
+                    </button>
+
+                    {typeDropdownOpen && (
+                      <div className="absolute z-50 mt-3 w-full bg-[#111111] border border-[#2a2a2a] rounded-2xl shadow-2xl shadow-yellow-500/10 overflow-hidden">
+                        {["All", "Veg", "Non-Veg"].map((type) => (
+                          <button
+                            key={type}
+                            type="button"
+                            onClick={() => {
+                              setSelectedType(type);
+                              setTypeDropdownOpen(false);
+                            }}
+                            className={`w-full text-left px-5 py-4 font-semibold transition-all duration-200 ${
+                              selectedType === type
+                                ? "bg-yellow-500 text-black"
+                                : "text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400"
+                            }`}
+                          >
+                            {getTypeLabel(type)}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={hasActiveFilters ? clearFilters : undefined}
+                    className={`font-bold px-5 sm:px-8 py-4 rounded-2xl transition-all duration-200 min-h-[56px] ${
+                      hasActiveFilters
+                        ? "border border-yellow-500 text-yellow-400 hover:bg-yellow-500 hover:text-black"
+                        : "bg-yellow-500 hover:bg-yellow-400 text-black"
+                    }`}
+                  >
+                    {hasActiveFilters ? "Clear" : "Search"}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="px-4 sm:px-6 pt-5 pb-2 bg-black border-b border-[#151515] sticky top-0 z-30">
+        <section className="px-4 sm:px-6 pt-4 pb-2 bg-black border-b border-[#151515] sticky top-[76px] sm:top-0 z-30">
           <div className="max-w-7xl mx-auto">
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
               {FOOD_CATEGORIES.map((category) => {
@@ -419,18 +490,18 @@ export default function Marketplace() {
                     key={category.label}
                     type="button"
                     onClick={() => setSelectedCategory(category.label)}
-                    className={`shrink-0 min-w-[92px] sm:min-w-[110px] rounded-2xl border px-4 py-3 transition-all duration-200 ${
+                    className={`shrink-0 min-w-[86px] sm:min-w-[110px] rounded-2xl border px-3 sm:px-4 py-3 transition-all duration-200 ${
                       isActive
                         ? "bg-yellow-500 text-black border-yellow-400 shadow-lg shadow-yellow-500/20"
                         : "bg-[#111111] text-gray-300 border-[#2a2a2a] hover:border-yellow-500/50 hover:text-yellow-400"
                     }`}
                   >
-                    <div className="text-2xl">{category.emoji}</div>
-                    <div className="font-black text-sm mt-1">
+                    <div className="text-xl sm:text-2xl">{category.emoji}</div>
+                    <div className="font-black text-xs sm:text-sm mt-1">
                       {category.label}
                     </div>
                     <div
-                      className={`text-xs mt-0.5 ${
+                      className={`text-[11px] sm:text-xs mt-0.5 ${
                         isActive ? "text-black/70" : "text-gray-500"
                       }`}
                     >
@@ -443,9 +514,9 @@ export default function Marketplace() {
           </div>
         </section>
 
-        <section className="px-4 sm:px-6 py-7 sm:py-10">
+        <section className="px-4 sm:px-6 py-6 sm:py-10">
           <div className="max-w-7xl mx-auto">
-            <div className="flex items-end justify-between gap-4 mb-6 sm:mb-8">
+            <div className="flex items-end justify-between gap-4 mb-5 sm:mb-8">
               <div>
                 <h2 className="text-2xl sm:text-3xl font-black text-white">
                   {getCategoryHeading()}
