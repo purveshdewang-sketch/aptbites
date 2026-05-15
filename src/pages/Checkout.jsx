@@ -26,7 +26,7 @@ export default function Checkout() {
     "QuickBites food order"
   )}`;
 
-  const qrCodeUrl = `https://erp.cropg1.com/files/cg1-sbicc-qr.png=${encodeURIComponent(
+const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(
   upiPaymentLink
 )}`;
 
