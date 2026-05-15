@@ -10,6 +10,7 @@ export default function Navbar() {
 
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [logoFailed, setLogoFailed] = useState(false);
   const [isSeller, setIsSeller] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [switchingSeller, setSwitchingSeller] = useState(false);
@@ -153,6 +154,23 @@ export default function Navbar() {
     return "Customer account";
   }
 
+  function LogoMark() {
+    return (
+      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#55F3A5] to-[#A77BE8] flex items-center justify-center overflow-hidden shadow-lg shrink-0">
+        {!logoFailed ? (
+          <img
+            src="/quickbites-logo.png"
+            alt="QuickBites"
+            className="w-full h-full object-cover"
+            onError={() => setLogoFailed(true)}
+          />
+        ) : (
+          <span className="text-[#0F0D1F] font-black text-base">Q</span>
+        )}
+      </div>
+    );
+  }
+
   if (authLoading) {
     return (
       <header className="sticky top-0 z-50 bg-[#0d0b09] border-b border-[#241c16]">
@@ -167,13 +185,7 @@ export default function Navbar() {
         <nav className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="h-16 sm:h-[72px] flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3 group min-w-0">
-              <div className="w-11 h-11 rounded-2xl bg-white flex items-center justify-center overflow-hidden shadow-lg shrink-0">
-  <img
-    src="/images/quickbites-logo.png"
-    alt="QuickBites"
-    className="w-full h-full object-contain p-1"
-  />
-</div>
+              <LogoMark />
 
               <div className="leading-none min-w-0">
                 <p className="text-white font-bold text-lg tracking-tight group-hover:text-orange-300 transition-all truncate">
