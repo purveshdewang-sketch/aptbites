@@ -289,9 +289,9 @@ export default function Marketplace() {
   }
 
   function getCategoryHeading() {
-    if (selectedCategory === "All") return "Today’s Specials";
-    return `${selectedCategory} near you`;
-  }
+  if (selectedCategory === "All") return "Today’s Specials";
+  return selectedCategory;
+}
 
   function getCategorySubheading() {
     if (searchTerm || selectedType !== "All" || selectedCategory !== "All") {
