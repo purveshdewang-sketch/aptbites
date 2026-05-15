@@ -17,6 +17,7 @@ export default function Checkout() {
 
   const subtotalAmount = Number(cartTotal || 0);
   const totalAmount = subtotalAmount + PLATFORM_FEE;
+  const paymentMethod = "upi";
 
   const upiPaymentLink = `upi://pay?pa=${encodeURIComponent(
     QUICKBITES_UPI_ID
@@ -50,7 +51,6 @@ export default function Checkout() {
     useState(false);
   const [checkingSellerSchedule, setCheckingSellerSchedule] = useState(true);
 
-  const [paymentMethod, setPaymentMethod] = useState("upi");
   const [paymentReference, setPaymentReference] = useState("");
   const [paymentMessage, setPaymentMessage] = useState("");
   const [showQr, setShowQr] = useState(false);
@@ -77,7 +77,6 @@ export default function Checkout() {
           setOrderTiming(parsedDetails.orderTiming || "now");
           setScheduledDate(parsedDetails.scheduledDate || "");
           setScheduledTime(parsedDetails.scheduledTime || "");
-          setPaymentMethod(parsedDetails.paymentMethod || "upi");
           setPaymentReference(parsedDetails.paymentReference || "");
         } catch {
           localStorage.removeItem(getCheckoutStorageKey());
@@ -134,7 +133,6 @@ export default function Checkout() {
       orderTiming,
       scheduledDate,
       scheduledTime,
-      paymentMethod,
       paymentReference,
     };
 
@@ -146,7 +144,6 @@ export default function Checkout() {
     orderTiming,
     scheduledDate,
     scheduledTime,
-    paymentMethod,
     paymentReference,
     user,
   ]);
@@ -343,12 +340,11 @@ export default function Checkout() {
       return;
     }
 
-    if (paymentMethod === "upi" && !paymentReference.trim()) {
-      const confirmWithoutReference = window.confirm(
-        "You have selected UPI but have not entered payment reference. Continue as payment pending?"
+    if (!paymentReference.trim()) {
+      alert(
+        "Please complete UPI payment and enter the transaction reference before placing the order."
       );
-
-      if (!confirmWithoutReference) return;
+      return;
     }
 
     setLoading(true);
@@ -379,12 +375,9 @@ export default function Checkout() {
         items: cartItems,
         scheduled_order: orderTiming === "scheduled",
         scheduled_for: scheduledFor,
-        payment_method: paymentMethod,
-        payment_status:
-          paymentMethod === "upi" && paymentReference.trim()
-            ? "reference_submitted"
-            : "pending",
-        payment_reference: paymentReference.trim() || null,
+        payment_method: "upi",
+        payment_status: "reference_submitted",
+        payment_reference: paymentReference.trim(),
       };
 
       const { error: stockError } = await supabase.rpc("decrement_food_stock", {
@@ -410,7 +403,6 @@ export default function Checkout() {
           orderTiming,
           scheduledDate,
           scheduledTime,
-          paymentMethod,
           paymentReference,
         })
       );
@@ -516,19 +508,15 @@ export default function Checkout() {
           <div className="bg-black/40 border border-[#222] rounded-2xl p-4">
             <p className="text-gray-500 text-xs uppercase font-bold">Payment</p>
 
-            <p className="text-white font-black mt-1">
-              {paymentMethod === "upi" ? "UPI" : "Cash / Pay Later"}
-            </p>
+            <p className="text-white font-black mt-1">UPI Payment Only</p>
 
-            {paymentMethod === "upi" && paymentReference && (
+            {paymentReference ? (
               <p className="text-green-400 text-xs font-bold mt-2 truncate">
                 Ref: {paymentReference}
               </p>
-            )}
-
-            {paymentMethod === "upi" && !paymentReference && (
+            ) : (
               <p className="text-yellow-400 text-xs font-bold mt-2">
-                Payment reference pending
+                Payment reference required
               </p>
             )}
           </div>
@@ -593,7 +581,9 @@ export default function Checkout() {
             </div>
 
             <p className="text-yellow-400 font-semibold uppercase tracking-wide mt-6">
-              {orderTiming === "scheduled" ? "Order Scheduled" : "Order Confirmed"}
+              {orderTiming === "scheduled"
+                ? "Order Scheduled"
+                : "Order Confirmed"}
             </p>
 
             <h1 className="text-3xl sm:text-5xl font-black mt-4 leading-tight">
@@ -641,7 +631,7 @@ export default function Checkout() {
                 </h1>
 
                 <p className="text-gray-500 text-sm mt-2">
-                  Delivery, payment and confirmation.
+                  Delivery, UPI payment and confirmation.
                 </p>
               </div>
 
@@ -846,7 +836,7 @@ export default function Checkout() {
                       </p>
 
                       <h2 className="text-2xl sm:text-3xl font-black mt-1">
-                        Payment
+                        UPI Payment
                       </h2>
                     </div>
 
@@ -863,9 +853,9 @@ export default function Checkout() {
 
                   <div className="mt-5 bg-black/10 border border-black/10 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
                     <div>
-                      <p className="font-black">UPI recommended</p>
+                      <p className="font-black">UPI payment only</p>
                       <p className="text-black/70 text-xs mt-0.5">
-                        Pay and submit reference
+                        Pay and submit transaction reference
                       </p>
                     </div>
 
@@ -876,174 +866,148 @@ export default function Checkout() {
                 </div>
 
                 <div className="p-5 sm:p-6">
-                  <div className="grid grid-cols-2 gap-3 bg-black border border-[#222] rounded-2xl p-2">
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod("upi")}
-                      className={`py-3 rounded-xl font-black transition-all ${
-                        paymentMethod === "upi"
-                          ? "bg-yellow-500 text-black"
-                          : "text-gray-400"
-                      }`}
-                    >
-                      UPI
-                    </button>
+                  <div className="bg-black border border-yellow-500/20 rounded-2xl p-4">
+                    <p className="text-yellow-400 text-sm font-black uppercase tracking-wide">
+                      Payment Method
+                    </p>
 
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod("cash")}
-                      className={`py-3 rounded-xl font-black transition-all ${
-                        paymentMethod === "cash"
-                          ? "bg-yellow-500 text-black"
-                          : "text-gray-400"
-                      }`}
-                    >
-                      Cash / Later
-                    </button>
+                    <p className="text-white text-xl font-black mt-1">
+                      UPI Payment Only
+                    </p>
+
+                    <p className="text-gray-500 text-sm mt-2">
+                      Complete UPI payment and enter the transaction reference
+                      before placing the order.
+                    </p>
                   </div>
 
-                  {paymentMethod === "upi" ? (
-                    <div className="mt-5">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <a
-                          href={upiPaymentLink}
-                          className="block text-center w-full bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black font-black py-4 rounded-2xl transition-all shadow-lg shadow-yellow-500/20"
-                        >
-                          Pay via UPI App
-                        </a>
+                  <div className="mt-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <a
+                        href={upiPaymentLink}
+                        className="block text-center w-full bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black font-black py-4 rounded-2xl transition-all shadow-lg shadow-yellow-500/20"
+                      >
+                        Pay via UPI App
+                      </a>
 
-                        <button
-                          type="button"
-                          onClick={() => setShowQr((current) => !current)}
-                          className="block text-center w-full bg-black border border-yellow-500/40 hover:border-yellow-500 text-yellow-400 font-black py-4 rounded-2xl transition-all"
-                        >
-                          {showQr ? "Hide QR" : "Scan QR"}
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowQr((current) => !current)}
+                        className="block text-center w-full bg-black border border-yellow-500/40 hover:border-yellow-500 text-yellow-400 font-black py-4 rounded-2xl transition-all"
+                      >
+                        {showQr ? "Hide QR" : "Scan QR"}
+                      </button>
+                    </div>
 
-                      {showQr && (
-                        <div className="mt-5 bg-black border border-[#333] rounded-[2rem] p-5 text-center">
-                          <p className="text-yellow-400 text-sm font-black uppercase tracking-wide">
-                            Scan & Pay
-                          </p>
-
-                          <div className="mt-4 bg-white rounded-3xl p-4 w-fit mx-auto">
-                            <img
-                              src={qrCodeUrl}
-                              alt="QuickBites UPI QR Code"
-                              className="w-56 h-56 object-contain"
-                            />
-                          </div>
-
-                          <p className="text-white font-black mt-4">
-                            ₹{totalAmount}
-                          </p>
-
-                          <p className="text-gray-500 text-sm mt-1 break-all">
-                            {QUICKBITES_UPI_ID}
-                          </p>
-
-                          <p className="text-gray-500 text-xs mt-3 leading-relaxed">
-                            Scan this QR using any UPI app. After payment, enter
-                            the transaction reference below.
-                          </p>
-                        </div>
-                      )}
-
-                      <p className="text-gray-500 text-sm text-center mt-3">
-                        Opens your installed UPI app if supported by your phone.
-                      </p>
-
-                      <div className="grid grid-cols-2 gap-3 mt-5">
-                        <a
-                          href={upiPaymentLink}
-                          className="text-center bg-black border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
-                        >
-                          Google Pay
-                        </a>
-
-                        <a
-                          href={upiPaymentLink}
-                          className="text-center bg-black border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
-                        >
-                          PhonePe
-                        </a>
-
-                        <a
-                          href={upiPaymentLink}
-                          className="text-center bg-black border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
-                        >
-                          Paytm
-                        </a>
-
-                        <a
-                          href={upiPaymentLink}
-                          className="text-center bg-black border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
-                        >
-                          BHIM
-                        </a>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3 mt-5">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            copyToClipboard(QUICKBITES_UPI_ID, "UPI ID")
-                          }
-                          className="bg-[#111] border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
-                        >
-                          Copy UPI ID
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            copyToClipboard(totalAmount, "Amount")
-                          }
-                          className="bg-[#111] border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
-                        >
-                          Copy Amount
-                        </button>
-                      </div>
-
-                      {paymentMessage && (
-                        <p className="text-yellow-400 text-sm font-bold mt-3 text-center">
-                          {paymentMessage}
-                        </p>
-                      )}
-
-                      <div className="mt-5 border-t border-[#222] pt-5">
+                    {showQr && (
+                      <div className="mt-5 bg-black border border-[#333] rounded-[2rem] p-5 text-center">
                         <p className="text-yellow-400 text-sm font-black uppercase tracking-wide">
-                          I have paid
+                          Scan & Pay
                         </p>
 
-                        <input
-                          value={paymentReference}
-                          onChange={(event) =>
-                            setPaymentReference(event.target.value)
-                          }
-                          className="w-full mt-3 bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
-                          placeholder="Enter UPI reference / transaction ID"
-                        />
+                        <div className="mt-4 bg-white rounded-3xl p-4 w-fit mx-auto">
+                          <img
+                            src={qrCodeUrl}
+                            alt="QuickBites UPI QR Code"
+                            className="w-56 h-56 object-contain"
+                          />
+                        </div>
+
+                        <p className="text-white font-black mt-4">
+                          ₹{totalAmount}
+                        </p>
+
+                        <p className="text-gray-500 text-sm mt-1 break-all">
+                          {QUICKBITES_UPI_ID}
+                        </p>
 
                         <p className="text-gray-500 text-xs mt-3 leading-relaxed">
-                          Add the reference after payment. The seller can prepare
-                          the order while payment is marked for verification.
+                          Scan this QR using any UPI app. After payment, enter
+                          the transaction reference below.
                         </p>
                       </div>
+                    )}
+
+                    <p className="text-gray-500 text-sm text-center mt-3">
+                      Opens your installed UPI app if supported by your phone.
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-3 mt-5">
+                      <a
+                        href={upiPaymentLink}
+                        className="text-center bg-black border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
+                      >
+                        Google Pay
+                      </a>
+
+                      <a
+                        href={upiPaymentLink}
+                        className="text-center bg-black border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
+                      >
+                        PhonePe
+                      </a>
+
+                      <a
+                        href={upiPaymentLink}
+                        className="text-center bg-black border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
+                      >
+                        Paytm
+                      </a>
+
+                      <a
+                        href={upiPaymentLink}
+                        className="text-center bg-black border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
+                      >
+                        BHIM
+                      </a>
                     </div>
-                  ) : (
-                    <div className="mt-5 bg-black border border-[#222] rounded-2xl p-5">
-                      <p className="text-yellow-400 font-black">
-                        Cash / Pay Later selected
+
+                    <div className="grid grid-cols-2 gap-3 mt-5">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          copyToClipboard(QUICKBITES_UPI_ID, "UPI ID")
+                        }
+                        className="bg-[#111] border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
+                      >
+                        Copy UPI ID
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(totalAmount, "Amount")}
+                        className="bg-[#111] border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
+                      >
+                        Copy Amount
+                      </button>
+                    </div>
+
+                    {paymentMessage && (
+                      <p className="text-yellow-400 text-sm font-bold mt-3 text-center">
+                        {paymentMessage}
+                      </p>
+                    )}
+
+                    <div className="mt-5 border-t border-[#222] pt-5">
+                      <p className="text-yellow-400 text-sm font-black uppercase tracking-wide">
+                        I have paid
                       </p>
 
-                      <p className="text-gray-500 text-sm mt-2 leading-relaxed">
-                        Your payment will remain pending. Use this only if the
-                        seller allows offline payment.
+                      <input
+                        value={paymentReference}
+                        onChange={(event) =>
+                          setPaymentReference(event.target.value)
+                        }
+                        className="w-full mt-3 bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
+                        placeholder="Enter UPI reference / transaction ID"
+                      />
+
+                      <p className="text-gray-500 text-xs mt-3 leading-relaxed">
+                        This reference is required. Orders cannot be placed
+                        without UPI payment reference.
                       </p>
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </section>
