@@ -193,36 +193,36 @@ export default function Marketplace() {
   }
 
   function getDemandBadge(soldCount) {
-    if (soldCount >= 10) {
-      return {
-        label: "Highest Selling",
-        sublabel: `${soldCount} orders`,
-      };
-    }
-
-    if (soldCount >= 6) {
-      return {
-        label: "High Demand",
-        sublabel: `${soldCount} orders`,
-      };
-    }
-
-    if (soldCount >= 3) {
-      return {
-        label: "Trending",
-        sublabel: `${soldCount} orders`,
-      };
-    }
-
-    if (soldCount >= 1) {
-      return {
-        label: "Popular Choice",
-        sublabel: `${soldCount} order${soldCount === 1 ? "" : "s"}`,
-      };
-    }
-
-    return null;
+  if (soldCount >= 10) {
+    return {
+      label: "Highest Selling",
+      sublabel: "Loved by customers",
+    };
   }
+
+  if (soldCount >= 6) {
+    return {
+      label: "High Demand",
+      sublabel: "Popular in your area",
+    };
+  }
+
+  if (soldCount >= 3) {
+    return {
+      label: "Trending",
+      sublabel: "Trending in your area",
+    };
+  }
+
+  if (soldCount >= 1) {
+    return {
+      label: "Popular Choice",
+      sublabel: "Customer favourite",
+    };
+  }
+
+  return null;
+}
 
   const highestSellingFood = useMemo(() => {
     const soldFoods = foods
@@ -359,89 +359,39 @@ export default function Marketplace() {
               </div>
 
               <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-4">
-                <p className="text-gray-500 text-xs uppercase font-bold">
-                  Highest Selling
-                </p>
+  <p className="text-gray-500 text-xs uppercase font-bold">
+    Highest Selling
+  </p>
 
-                {highestSellingFood ? (
-                  <div className="mt-2 flex items-center gap-3">
-                    <img
-                      src={highestSellingFood.image}
-                      alt={highestSellingFood.name}
-                      className="w-12 h-12 rounded-full object-cover border border-[#333]"
-                    />
+  {highestSellingFood ? (
+    <Link
+      to={`/food/${highestSellingFood.id}`}
+      className="mt-2 flex items-center gap-3 group"
+    >
+      <img
+        src={highestSellingFood.image}
+        alt={highestSellingFood.name}
+        className="w-12 h-12 rounded-full object-cover border border-[#333]"
+      />
 
-                    <div className="min-w-0">
-                      <p className="text-white font-black truncate">
-                        {highestSellingFood.name}
-                      </p>
-                      <p className="text-green-400 text-sm font-bold">
-                        {highestSellingFood.sold_count} orders
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-2xl font-black text-gray-500 mt-1">—</p>
-                )}
-              </div>
+      <div className="min-w-0">
+        <p className="text-white group-hover:text-yellow-400 font-black truncate transition-all">
+          {highestSellingFood.name}
+        </p>
 
-              <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-4">
-                <p className="text-gray-500 text-xs uppercase font-bold">
-                  Food Drops
-                </p>
-                <p className="text-2xl font-black text-white mt-1">
-                  {foods.length}
-                </p>
-              </div>
-            </div>
+        <p className="text-green-400 text-sm font-bold">
+          Popular Dish
+        </p>
+      </div>
 
-            <div className="mt-7 grid grid-cols-1 gap-3 lg:flex lg:items-center lg:gap-4">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Search dishes, seller, category, or ready time..."
-                className="bg-[#111111] border border-[#2a2a2a] text-white rounded-2xl px-5 py-4 w-full lg:max-w-lg outline-none focus:border-yellow-500 transition-all duration-200 text-base"
-              />
-
-              <div className="relative w-full lg:w-60">
-                <button
-                  type="button"
-                  onClick={() => setTypeDropdownOpen(!typeDropdownOpen)}
-                  className="w-full bg-[#111111] border border-[#2a2a2a] hover:border-yellow-500 text-white rounded-2xl px-5 py-4 flex items-center justify-between transition-all duration-200"
-                >
-                  <span className="font-semibold">
-                    {getTypeLabel(selectedType)}
-                  </span>
-
-                  <span className="text-yellow-400 text-xs">
-                    {typeDropdownOpen ? "▲" : "▼"}
-                  </span>
-                </button>
-
-                {typeDropdownOpen && (
-                  <div className="absolute z-40 mt-3 w-full bg-[#111111] border border-[#2a2a2a] rounded-2xl shadow-2xl shadow-yellow-500/10 overflow-hidden">
-                    {["All", "Veg", "Non-Veg"].map((type) => (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => {
-                          setSelectedType(type);
-                          setTypeDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-5 py-4 font-semibold transition-all duration-200 ${
-                          selectedType === type
-                            ? "bg-yellow-500 text-black"
-                            : "text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400"
-                        }`}
-                      >
-                        {getTypeLabel(type)}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
+      <span className="ml-auto text-green-400 bg-green-500/10 border border-green-500/20 w-9 h-9 rounded-full flex items-center justify-center">
+        ↗
+      </span>
+    </Link>
+  ) : (
+    <p className="text-2xl font-black text-gray-500 mt-1">—</p>
+  )}
+</div>
               <button
                 type="button"
                 onClick={hasActiveFilters ? clearFilters : undefined}

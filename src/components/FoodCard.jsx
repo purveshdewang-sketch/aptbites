@@ -191,8 +191,8 @@ export default function FoodCard({ item }) {
           </div>
 
           {soldCount > 0 && (
-            <div className="mt-3 w-fit bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-black px-3 py-1.5 rounded-full">
-              {soldCount} order{soldCount === 1 ? "" : "s"} sold
+            <div className="text-white text-[11px] font-bold mt-0.5">
+                  Trending in your area
             </div>
           )}
 
