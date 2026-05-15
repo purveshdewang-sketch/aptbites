@@ -6,6 +6,8 @@ import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabaseClient";
 
 const PLATFORM_FEE = 10;
+const QUICKBITES_UPI_ID = "quickbites@upi";
+const QUICKBITES_PAYEE_NAME = "QuickBites";
 
 export default function Checkout() {
   const { cartItems, cartTotal, clearCart } = useCart();
@@ -15,6 +17,14 @@ export default function Checkout() {
 
   const subtotalAmount = Number(cartTotal || 0);
   const totalAmount = subtotalAmount + PLATFORM_FEE;
+
+  const upiPaymentLink = `upi://pay?pa=${encodeURIComponent(
+    QUICKBITES_UPI_ID
+  )}&pn=${encodeURIComponent(
+    QUICKBITES_PAYEE_NAME
+  )}&am=${totalAmount}&cu=INR&tn=${encodeURIComponent(
+    "QuickBites food order"
+  )}`;
 
   const getCheckoutStorageKey = () =>
     user
@@ -35,6 +45,10 @@ export default function Checkout() {
   const [sellerAcceptsScheduledOrders, setSellerAcceptsScheduledOrders] =
     useState(false);
   const [checkingSellerSchedule, setCheckingSellerSchedule] = useState(true);
+
+  const [paymentMethod, setPaymentMethod] = useState("upi");
+  const [paymentReference, setPaymentReference] = useState("");
+  const [paymentMessage, setPaymentMessage] = useState("");
 
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -57,6 +71,8 @@ export default function Checkout() {
           setOrderTiming(parsedDetails.orderTiming || "now");
           setScheduledDate(parsedDetails.scheduledDate || "");
           setScheduledTime(parsedDetails.scheduledTime || "");
+          setPaymentMethod(parsedDetails.paymentMethod || "upi");
+          setPaymentReference(parsedDetails.paymentReference || "");
         } catch {
           localStorage.removeItem(getCheckoutStorageKey());
         }
@@ -112,6 +128,8 @@ export default function Checkout() {
       orderTiming,
       scheduledDate,
       scheduledTime,
+      paymentMethod,
+      paymentReference,
     };
 
     localStorage.setItem(getCheckoutStorageKey(), JSON.stringify(detailsToSave));
@@ -122,6 +140,8 @@ export default function Checkout() {
     orderTiming,
     scheduledDate,
     scheduledTime,
+    paymentMethod,
+    paymentReference,
     user,
   ]);
 
@@ -234,6 +254,17 @@ export default function Checkout() {
     });
   }
 
+  async function copyToClipboard(value, label) {
+    try {
+      await navigator.clipboard.writeText(String(value));
+      setPaymentMessage(`${label} copied.`);
+      setTimeout(() => setPaymentMessage(""), 1800);
+    } catch {
+      setPaymentMessage(`Could not copy ${label.toLowerCase()}.`);
+      setTimeout(() => setPaymentMessage(""), 1800);
+    }
+  }
+
   async function validateLiveStockBeforeOrder() {
     const foodIds = cartItems.map((item) => item.id);
 
@@ -306,6 +337,14 @@ export default function Checkout() {
       return;
     }
 
+    if (paymentMethod === "upi" && !paymentReference.trim()) {
+      const confirmWithoutReference = window.confirm(
+        "You have selected UPI but have not entered payment reference. Continue as payment pending?"
+      );
+
+      if (!confirmWithoutReference) return;
+    }
+
     setLoading(true);
 
     try {
@@ -334,6 +373,12 @@ export default function Checkout() {
         items: cartItems,
         scheduled_order: orderTiming === "scheduled",
         scheduled_for: scheduledFor,
+        payment_method: paymentMethod,
+        payment_status:
+          paymentMethod === "upi" && paymentReference.trim()
+            ? "reference_submitted"
+            : "pending",
+        payment_reference: paymentReference.trim() || null,
       };
 
       const { error: stockError } = await supabase.rpc("decrement_food_stock", {
@@ -359,6 +404,8 @@ export default function Checkout() {
           orderTiming,
           scheduledDate,
           scheduledTime,
+          paymentMethod,
+          paymentReference,
         })
       );
 
@@ -425,159 +472,336 @@ export default function Checkout() {
 
       <main className="min-h-screen bg-black text-white px-4 sm:px-6 py-7 sm:py-10 pb-40">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-[1.1fr_0.9fr] gap-6 lg:gap-8">
-          <section className="bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-8">
-            <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
-              Checkout
-            </p>
+          <section className="space-y-6">
+            <div className="bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-8">
+              <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
+                Checkout
+              </p>
 
-            <h1 className="text-3xl sm:text-5xl font-black mt-3 tracking-tight">
-              Delivery details
-            </h1>
+              <h1 className="text-3xl sm:text-5xl font-black mt-3 tracking-tight">
+                Delivery details
+              </h1>
 
-            <p className="text-gray-500 mt-4 text-sm sm:text-base leading-relaxed">
-              Homemade food prepared inside your neighbourhood community.
-            </p>
+              <p className="text-gray-500 mt-4 text-sm sm:text-base leading-relaxed">
+                Homemade food prepared inside your neighbourhood community.
+              </p>
 
-            <div className="mt-8 space-y-4">
-              <input
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleChange}
-                className="w-full bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
-                placeholder="Full Name"
-              />
+              <div className="mt-8 space-y-4">
+                <input
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  className="w-full bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
+                  placeholder="Full Name"
+                />
 
-              <input
-                name="phone"
-                value={formData.phone}
-                disabled
-                readOnly
-                className="w-full bg-[#111] border border-[#333] rounded-2xl px-5 py-4 outline-none text-gray-400 cursor-not-allowed"
-                placeholder="Phone Number"
-              />
+                <input
+                  name="phone"
+                  value={formData.phone}
+                  disabled
+                  readOnly
+                  className="w-full bg-[#111] border border-[#333] rounded-2xl px-5 py-4 outline-none text-gray-400 cursor-not-allowed"
+                  placeholder="Phone Number"
+                />
 
-              <input
-                name="flat"
-                value={formData.flat}
-                onChange={handleChange}
-                className="w-full bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
-                placeholder="Tower B • Flat 1204"
-              />
+                <input
+                  name="flat"
+                  value={formData.flat}
+                  onChange={handleChange}
+                  className="w-full bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
+                  placeholder="Tower B • Flat 1204"
+                />
 
-              <div>
-                <p className="text-gray-400 text-sm font-bold mb-3">
-                  Delivery Option
-                </p>
+                <div>
+                  <p className="text-gray-400 text-sm font-bold mb-3">
+                    Delivery Option
+                  </p>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => selectDeliveryType("Doorstep delivery")}
-                    className={`py-4 rounded-2xl font-black border transition-all ${
-                      formData.deliveryType === "Doorstep delivery"
-                        ? "bg-yellow-500 text-black border-yellow-400"
-                        : "bg-black text-gray-400 border-[#333]"
-                    }`}
-                  >
-                    🚚 Delivery
-                  </button>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => selectDeliveryType("Doorstep delivery")}
+                      className={`py-4 rounded-2xl font-black border transition-all ${
+                        formData.deliveryType === "Doorstep delivery"
+                          ? "bg-yellow-500 text-black border-yellow-400"
+                          : "bg-black text-gray-400 border-[#333]"
+                      }`}
+                    >
+                      🚚 Delivery
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => selectDeliveryType("Self pickup")}
-                    className={`py-4 rounded-2xl font-black border transition-all ${
-                      formData.deliveryType === "Self pickup"
-                        ? "bg-yellow-500 text-black border-yellow-400"
-                        : "bg-black text-gray-400 border-[#333]"
-                    }`}
-                  >
-                    🛍️ Self Pickup
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => selectDeliveryType("Self pickup")}
+                      className={`py-4 rounded-2xl font-black border transition-all ${
+                        formData.deliveryType === "Self pickup"
+                          ? "bg-yellow-500 text-black border-yellow-400"
+                          : "bg-black text-gray-400 border-[#333]"
+                      }`}
+                    >
+                      🛍️ Self Pickup
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-gray-400 text-sm font-bold mb-3">
+                    Order Timing
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => selectOrderTiming("now")}
+                      className={`py-4 rounded-2xl font-black border transition-all ${
+                        orderTiming === "now"
+                          ? "bg-yellow-500 text-black border-yellow-400"
+                          : "bg-black text-gray-400 border-[#333]"
+                      }`}
+                    >
+                      ⚡ Order Now
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => selectOrderTiming("scheduled")}
+                      disabled={
+                        checkingSellerSchedule || !sellerAcceptsScheduledOrders
+                      }
+                      className={`py-4 rounded-2xl font-black border transition-all ${
+                        orderTiming === "scheduled"
+                          ? "bg-yellow-500 text-black border-yellow-400"
+                          : "bg-black text-gray-400 border-[#333]"
+                      } ${
+                        checkingSellerSchedule || !sellerAcceptsScheduledOrders
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
+                      }`}
+                    >
+                      🕒 Schedule
+                    </button>
+                  </div>
+
+                  {!checkingSellerSchedule && !sellerAcceptsScheduledOrders && (
+                    <p className="text-red-400 text-xs mt-3">
+                      This seller is not accepting scheduled orders right now.
+                    </p>
+                  )}
+
+                  {orderTiming === "scheduled" && (
+                    <div className="space-y-3 mt-4">
+                      <input
+                        type="date"
+                        value={scheduledDate}
+                        onChange={(event) =>
+                          setScheduledDate(event.target.value)
+                        }
+                        className="w-full bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
+                      />
+
+                      <input
+                        type="time"
+                        value={scheduledTime}
+                        onChange={(event) =>
+                          setScheduledTime(event.target.value)
+                        }
+                        className="w-full bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
+                      />
+
+                      {formattedSchedule && (
+                        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4">
+                          <p className="text-yellow-400 text-sm font-black">
+                            Selected schedule
+                          </p>
+                          <p className="text-white text-base font-bold mt-1">
+                            {formattedSchedule}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <textarea
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleChange}
+                  rows="4"
+                  className="w-full bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all resize-none"
+                  placeholder="Extra spicy, less oil, call before arrival..."
+                />
+              </div>
+            </div>
+
+            <div className="bg-[#111111] border border-[#222] rounded-[2rem] overflow-hidden">
+              <div className="bg-yellow-500 text-black p-5 sm:p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-black uppercase tracking-wide text-black/70">
+                      QuickBites Payment
+                    </p>
+
+                    <h2 className="text-2xl sm:text-3xl font-black mt-1">
+                      Pay for your order
+                    </h2>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="text-xs font-black uppercase text-black/70">
+                      Payable
+                    </p>
+
+                    <p className="text-3xl sm:text-4xl font-black">
+                      ₹{totalAmount}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5 bg-black/10 border border-black/10 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-black">UPI recommended</p>
+                    <p className="text-black/70 text-sm mt-0.5">
+                      Fastest way to confirm payment
+                    </p>
+                  </div>
+
+                  <p className="font-black text-sm break-all text-right">
+                    {QUICKBITES_UPI_ID}
+                  </p>
                 </div>
               </div>
 
-              <div>
-                <p className="text-gray-400 text-sm font-bold mb-3">
-                  Order Timing
-                </p>
-
-                <div className="grid grid-cols-2 gap-3">
+              <div className="p-5 sm:p-6">
+                <div className="grid grid-cols-2 gap-3 bg-black border border-[#222] rounded-2xl p-2">
                   <button
                     type="button"
-                    onClick={() => selectOrderTiming("now")}
-                    className={`py-4 rounded-2xl font-black border transition-all ${
-                      orderTiming === "now"
-                        ? "bg-yellow-500 text-black border-yellow-400"
-                        : "bg-black text-gray-400 border-[#333]"
+                    onClick={() => setPaymentMethod("upi")}
+                    className={`py-3 rounded-xl font-black transition-all ${
+                      paymentMethod === "upi"
+                        ? "bg-yellow-500 text-black"
+                        : "text-gray-400"
                     }`}
                   >
-                    ⚡ Order Now
+                    UPI
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => selectOrderTiming("scheduled")}
-                    disabled={
-                      checkingSellerSchedule || !sellerAcceptsScheduledOrders
-                    }
-                    className={`py-4 rounded-2xl font-black border transition-all ${
-                      orderTiming === "scheduled"
-                        ? "bg-yellow-500 text-black border-yellow-400"
-                        : "bg-black text-gray-400 border-[#333]"
-                    } ${
-                      checkingSellerSchedule || !sellerAcceptsScheduledOrders
-                        ? "opacity-50 cursor-not-allowed"
-                        : ""
+                    onClick={() => setPaymentMethod("cash")}
+                    className={`py-3 rounded-xl font-black transition-all ${
+                      paymentMethod === "cash"
+                        ? "bg-yellow-500 text-black"
+                        : "text-gray-400"
                     }`}
                   >
-                    🕒 Schedule
+                    Cash / Later
                   </button>
                 </div>
 
-                {!checkingSellerSchedule && !sellerAcceptsScheduledOrders && (
-                  <p className="text-red-400 text-xs mt-3">
-                    This seller is not accepting scheduled orders right now.
-                  </p>
-                )}
+                {paymentMethod === "upi" ? (
+                  <div className="mt-5">
+                    <a
+                      href={upiPaymentLink}
+                      className="block text-center w-full bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black font-black py-4 rounded-2xl transition-all shadow-lg shadow-yellow-500/20"
+                    >
+                      Pay via UPI App
+                    </a>
 
-                {orderTiming === "scheduled" && (
-                  <div className="space-y-3 mt-4">
-                    <input
-                      type="date"
-                      value={scheduledDate}
-                      onChange={(event) => setScheduledDate(event.target.value)}
-                      className="w-full bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
-                    />
+                    <p className="text-gray-500 text-sm text-center mt-3">
+                      Opens your installed UPI app if supported by your phone.
+                    </p>
 
-                    <input
-                      type="time"
-                      value={scheduledTime}
-                      onChange={(event) => setScheduledTime(event.target.value)}
-                      className="w-full bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
-                    />
+                    <div className="grid grid-cols-2 gap-3 mt-5">
+                      <a
+                        href={upiPaymentLink}
+                        className="text-center bg-black border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
+                      >
+                        Google Pay
+                      </a>
 
-                    {formattedSchedule && (
-                      <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4">
-                        <p className="text-yellow-400 text-sm font-black">
-                          Selected schedule
-                        </p>
-                        <p className="text-white text-base font-bold mt-1">
-                          {formattedSchedule}
-                        </p>
-                      </div>
+                      <a
+                        href={upiPaymentLink}
+                        className="text-center bg-black border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
+                      >
+                        PhonePe
+                      </a>
+
+                      <a
+                        href={upiPaymentLink}
+                        className="text-center bg-black border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
+                      >
+                        Paytm
+                      </a>
+
+                      <a
+                        href={upiPaymentLink}
+                        className="text-center bg-black border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
+                      >
+                        BHIM
+                      </a>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 mt-5">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          copyToClipboard(QUICKBITES_UPI_ID, "UPI ID")
+                        }
+                        className="bg-[#111] border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
+                      >
+                        Copy UPI ID
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          copyToClipboard(totalAmount, "Amount")
+                        }
+                        className="bg-[#111] border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
+                      >
+                        Copy Amount
+                      </button>
+                    </div>
+
+                    {paymentMessage && (
+                      <p className="text-yellow-400 text-sm font-bold mt-3 text-center">
+                        {paymentMessage}
+                      </p>
                     )}
+
+                    <div className="mt-5 border-t border-[#222] pt-5">
+                      <p className="text-yellow-400 text-sm font-black uppercase tracking-wide">
+                        I have paid
+                      </p>
+
+                      <input
+                        value={paymentReference}
+                        onChange={(event) =>
+                          setPaymentReference(event.target.value)
+                        }
+                        className="w-full mt-3 bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
+                        placeholder="Enter UPI reference / transaction ID"
+                      />
+
+                      <p className="text-gray-500 text-xs mt-3 leading-relaxed">
+                        Add the reference after payment. The seller can prepare
+                        the order while payment is marked for verification.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-5 bg-black border border-[#222] rounded-2xl p-5">
+                    <p className="text-yellow-400 font-black">
+                      Cash / Pay Later selected
+                    </p>
+
+                    <p className="text-gray-500 text-sm mt-2 leading-relaxed">
+                      Your payment will remain pending. Use this only if the
+                      seller allows offline payment.
+                    </p>
                   </div>
                 )}
               </div>
-
-              <textarea
-                name="notes"
-                value={formData.notes}
-                onChange={handleChange}
-                rows="4"
-                className="w-full bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all resize-none"
-                placeholder="Extra spicy, less oil, call before arrival..."
-              />
             </div>
           </section>
 
@@ -642,6 +866,28 @@ export default function Checkout() {
                   </p>
                 </div>
               )}
+
+              <div className="bg-black/40 border border-[#222] rounded-2xl p-4">
+                <p className="text-gray-500 text-xs uppercase font-bold">
+                  Payment
+                </p>
+
+                <p className="text-white font-black mt-1">
+                  {paymentMethod === "upi" ? "UPI" : "Cash / Pay Later"}
+                </p>
+
+                {paymentMethod === "upi" && paymentReference && (
+                  <p className="text-green-400 text-xs font-bold mt-2 truncate">
+                    Ref: {paymentReference}
+                  </p>
+                )}
+
+                {paymentMethod === "upi" && !paymentReference && (
+                  <p className="text-yellow-400 text-xs font-bold mt-2">
+                    Payment reference pending
+                  </p>
+                )}
+              </div>
 
               <div className="flex items-center justify-between text-sm">
                 <p className="text-gray-400">Subtotal</p>
