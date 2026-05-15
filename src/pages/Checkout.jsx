@@ -26,9 +26,9 @@ export default function Checkout() {
     "QuickBites food order"
   )}`;
 
-const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(
-  upiPaymentLink
-)}`;
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(
+    upiPaymentLink
+  )}`;
 
   const getCheckoutStorageKey = () =>
     user
@@ -51,9 +51,10 @@ const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data
   const [checkingSellerSchedule, setCheckingSellerSchedule] = useState(true);
 
   const [paymentMethod, setPaymentMethod] = useState("upi");
-const [paymentReference, setPaymentReference] = useState("");
-const [paymentMessage, setPaymentMessage] = useState("");
-const [showQr, setShowQr] = useState(false);
+  const [paymentReference, setPaymentReference] = useState("");
+  const [paymentMessage, setPaymentMessage] = useState("");
+  const [showQr, setShowQr] = useState(false);
+  const [showMobileSummary, setShowMobileSummary] = useState(false);
 
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -429,6 +430,157 @@ const [showQr, setShowQr] = useState(false);
     }
   }
 
+  function MobileSectionHeader({ number, title, subtitle }) {
+    return (
+      <div className="flex items-start gap-3">
+        <div className="w-8 h-8 rounded-xl bg-yellow-500 text-black font-black flex items-center justify-center shrink-0">
+          {number}
+        </div>
+
+        <div>
+          <h2 className="text-xl sm:text-2xl font-black">{title}</h2>
+          {subtitle && (
+            <p className="text-gray-500 text-sm mt-1 leading-relaxed">
+              {subtitle}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  function OrderSummaryCard({ compact = false }) {
+    return (
+      <section
+        className={`bg-[#111111] border border-[#222] rounded-[2rem] ${
+          compact ? "p-4" : "p-5 sm:p-8 h-fit lg:sticky lg:top-24"
+        }`}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-yellow-400 font-semibold uppercase tracking-wide text-xs sm:text-sm">
+              Order Summary
+            </p>
+
+            <h2 className="text-xl sm:text-3xl font-black mt-1 sm:mt-2">
+              Your Food
+            </h2>
+          </div>
+
+          <div className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs px-3 py-1.5 rounded-full font-semibold">
+            {cartItems.length} items
+          </div>
+        </div>
+
+        <div className="mt-5 space-y-3">
+          {cartItems.map((item) => (
+            <div
+              key={item.id}
+              className="flex gap-3 bg-black/40 border border-[#222] rounded-2xl p-3"
+            >
+              <img
+                src={item.image}
+                alt={item.name}
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover"
+              />
+
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-black truncate">{item.name}</p>
+
+                    <p className="text-gray-500 text-sm mt-1">
+                      Qty {item.quantity}
+                    </p>
+                  </div>
+
+                  <p className="font-black text-yellow-400 shrink-0">
+                    ₹{Number(item.price || 0) * Number(item.quantity || 1)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 border-t border-[#222] pt-5 space-y-4">
+          {orderTiming === "scheduled" && formattedSchedule && (
+            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4">
+              <p className="text-yellow-400 text-sm font-black">
+                Scheduled Order
+              </p>
+              <p className="text-gray-300 text-sm mt-1">{formattedSchedule}</p>
+            </div>
+          )}
+
+          <div className="bg-black/40 border border-[#222] rounded-2xl p-4">
+            <p className="text-gray-500 text-xs uppercase font-bold">Payment</p>
+
+            <p className="text-white font-black mt-1">
+              {paymentMethod === "upi" ? "UPI" : "Cash / Pay Later"}
+            </p>
+
+            {paymentMethod === "upi" && paymentReference && (
+              <p className="text-green-400 text-xs font-bold mt-2 truncate">
+                Ref: {paymentReference}
+              </p>
+            )}
+
+            {paymentMethod === "upi" && !paymentReference && (
+              <p className="text-yellow-400 text-xs font-bold mt-2">
+                Payment reference pending
+              </p>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between text-sm">
+            <p className="text-gray-400">Subtotal</p>
+            <p className="font-bold text-white">₹{subtotalAmount}</p>
+          </div>
+
+          <div className="flex items-center justify-between text-sm">
+            <p className="text-gray-400">Platform Fee</p>
+            <p className="font-bold text-yellow-400">₹{PLATFORM_FEE}</p>
+          </div>
+
+          <div className="border-t border-[#222] pt-5 flex items-center justify-between">
+            <div>
+              <p className="text-gray-400 text-sm">Total Amount</p>
+              <p className="text-gray-500 text-xs mt-1">Fresh homemade food</p>
+            </div>
+
+            <p className="text-3xl sm:text-4xl font-black text-yellow-400">
+              ₹{totalAmount}
+            </p>
+          </div>
+
+          {!compact && (
+            <>
+              <button
+                onClick={handlePlaceOrder}
+                disabled={loading}
+                className="w-full mt-3 bg-yellow-500 hover:bg-yellow-400 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-black font-black py-5 rounded-2xl text-lg transition-all duration-200 shadow-lg shadow-yellow-500/20"
+              >
+                {loading
+                  ? "Checking live stock..."
+                  : orderTiming === "scheduled"
+                  ? `Schedule Order • ₹${totalAmount}`
+                  : `Place Order • ₹${totalAmount}`}
+              </button>
+
+              <Link
+                to="/cart"
+                className="block text-center mt-3 border border-[#333] hover:border-yellow-500/50 text-gray-300 hover:text-yellow-400 font-bold py-3 rounded-2xl transition-all"
+              >
+                Back to Cart
+              </Link>
+            </>
+          )}
+        </div>
+      </section>
+    );
+  }
+
   if (orderPlaced) {
     return (
       <>
@@ -475,85 +627,142 @@ const [showQr, setShowQr] = useState(false);
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-black text-white px-4 sm:px-6 py-7 sm:py-10 pb-40">
-        <div className="max-w-6xl mx-auto grid lg:grid-cols-[1.1fr_0.9fr] gap-6 lg:gap-8">
-          <section className="space-y-6">
-            <div className="bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-8">
-              <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
-                Checkout
-              </p>
+      <main className="min-h-screen bg-black text-white px-4 sm:px-6 py-5 sm:py-10 pb-36 lg:pb-10">
+        <div className="max-w-6xl mx-auto">
+          <div className="lg:hidden mb-5">
+            <p className="text-yellow-400 font-semibold uppercase tracking-wide text-xs">
+              Checkout
+            </p>
 
-              <h1 className="text-3xl sm:text-5xl font-black mt-3 tracking-tight">
-                Delivery details
-              </h1>
+            <div className="flex items-end justify-between gap-4 mt-2">
+              <div>
+                <h1 className="text-3xl font-black tracking-tight">
+                  Complete order
+                </h1>
 
-              <p className="text-gray-500 mt-4 text-sm sm:text-base leading-relaxed">
-                Homemade food prepared inside your neighbourhood community.
-              </p>
+                <p className="text-gray-500 text-sm mt-2">
+                  Delivery, payment and confirmation.
+                </p>
+              </div>
 
-              <div className="mt-8 space-y-4">
-                <input
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  className="w-full bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
-                  placeholder="Full Name"
-                />
+              <button
+                type="button"
+                onClick={() => setShowMobileSummary(!showMobileSummary)}
+                className="shrink-0 bg-[#111] border border-[#333] text-yellow-400 font-black px-4 py-2 rounded-2xl"
+              >
+                ₹{totalAmount}
+              </button>
+            </div>
 
-                <input
-                  name="phone"
-                  value={formData.phone}
-                  disabled
-                  readOnly
-                  className="w-full bg-[#111] border border-[#333] rounded-2xl px-5 py-4 outline-none text-gray-400 cursor-not-allowed"
-                  placeholder="Phone Number"
-                />
+            {showMobileSummary && (
+              <div className="mt-4">
+                <OrderSummaryCard compact />
+              </div>
+            )}
+          </div>
 
-                <input
-                  name="flat"
-                  value={formData.flat}
-                  onChange={handleChange}
-                  className="w-full bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
-                  placeholder="Tower B • Flat 1204"
-                />
-
-                <div>
-                  <p className="text-gray-400 text-sm font-bold mb-3">
-                    Delivery Option
+          <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-6 lg:gap-8">
+            <section className="space-y-5 sm:space-y-6">
+              <div className="bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-8">
+                <div className="hidden lg:block">
+                  <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
+                    Checkout
                   </p>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => selectDeliveryType("Doorstep delivery")}
-                      className={`py-4 rounded-2xl font-black border transition-all ${
-                        formData.deliveryType === "Doorstep delivery"
-                          ? "bg-yellow-500 text-black border-yellow-400"
-                          : "bg-black text-gray-400 border-[#333]"
-                      }`}
-                    >
-                      🚚 Delivery
-                    </button>
+                  <h1 className="text-5xl font-black mt-3 tracking-tight">
+                    Delivery details
+                  </h1>
 
-                    <button
-                      type="button"
-                      onClick={() => selectDeliveryType("Self pickup")}
-                      className={`py-4 rounded-2xl font-black border transition-all ${
-                        formData.deliveryType === "Self pickup"
-                          ? "bg-yellow-500 text-black border-yellow-400"
-                          : "bg-black text-gray-400 border-[#333]"
-                      }`}
-                    >
-                      🛍️ Self Pickup
-                    </button>
-                  </div>
+                  <p className="text-gray-500 mt-4 leading-relaxed">
+                    Homemade food prepared inside your neighbourhood community.
+                  </p>
                 </div>
 
-                <div>
-                  <p className="text-gray-400 text-sm font-bold mb-3">
-                    Order Timing
-                  </p>
+                <div className="lg:hidden">
+                  <MobileSectionHeader
+                    number="1"
+                    title="Delivery details"
+                    subtitle="Confirm your name, flat and delivery option."
+                  />
+                </div>
 
+                <div className="mt-6 sm:mt-8 space-y-4">
+                  <input
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleChange}
+                    className="w-full bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
+                    placeholder="Full Name"
+                  />
+
+                  <input
+                    name="phone"
+                    value={formData.phone}
+                    disabled
+                    readOnly
+                    className="w-full bg-[#111] border border-[#333] rounded-2xl px-5 py-4 outline-none text-gray-400 cursor-not-allowed"
+                    placeholder="Phone Number"
+                  />
+
+                  <input
+                    name="flat"
+                    value={formData.flat}
+                    onChange={handleChange}
+                    className="w-full bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
+                    placeholder="Tower B • Flat 1204"
+                  />
+
+                  <div>
+                    <p className="text-gray-400 text-sm font-bold mb-3">
+                      Delivery Option
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => selectDeliveryType("Doorstep delivery")}
+                        className={`py-4 rounded-2xl font-black border transition-all ${
+                          formData.deliveryType === "Doorstep delivery"
+                            ? "bg-yellow-500 text-black border-yellow-400"
+                            : "bg-black text-gray-400 border-[#333]"
+                        }`}
+                      >
+                        🚚 Delivery
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => selectDeliveryType("Self pickup")}
+                        className={`py-4 rounded-2xl font-black border transition-all ${
+                          formData.deliveryType === "Self pickup"
+                            ? "bg-yellow-500 text-black border-yellow-400"
+                            : "bg-black text-gray-400 border-[#333]"
+                        }`}
+                      >
+                        🛍️ Pickup
+                      </button>
+                    </div>
+                  </div>
+
+                  <textarea
+                    name="notes"
+                    value={formData.notes}
+                    onChange={handleChange}
+                    rows="3"
+                    className="w-full bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all resize-none"
+                    placeholder="Extra spicy, less oil, call before arrival..."
+                  />
+                </div>
+              </div>
+
+              <div className="bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-8">
+                <MobileSectionHeader
+                  number="2"
+                  title="Order timing"
+                  subtitle="Order now or schedule for later if the seller allows it."
+                />
+
+                <div className="mt-6">
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
@@ -564,7 +773,7 @@ const [showQr, setShowQr] = useState(false);
                           : "bg-black text-gray-400 border-[#333]"
                       }`}
                     >
-                      ⚡ Order Now
+                      ⚡ Now
                     </button>
 
                     <button
@@ -626,350 +835,252 @@ const [showQr, setShowQr] = useState(false);
                     </div>
                   )}
                 </div>
-
-                <textarea
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleChange}
-                  rows="4"
-                  className="w-full bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all resize-none"
-                  placeholder="Extra spicy, less oil, call before arrival..."
-                />
               </div>
-            </div>
 
-            <div className="bg-[#111111] border border-[#222] rounded-[2rem] overflow-hidden">
-              <div className="bg-yellow-500 text-black p-5 sm:p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-black uppercase tracking-wide text-black/70">
-                      QuickBites Payment
-                    </p>
+              <div className="bg-[#111111] border border-[#222] rounded-[2rem] overflow-hidden">
+                <div className="bg-yellow-500 text-black p-5 sm:p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-black uppercase tracking-wide text-black/70">
+                        Step 3
+                      </p>
 
-                    <h2 className="text-2xl sm:text-3xl font-black mt-1">
-                      Pay for your order
-                    </h2>
+                      <h2 className="text-2xl sm:text-3xl font-black mt-1">
+                        Payment
+                      </h2>
+                    </div>
+
+                    <div className="text-right">
+                      <p className="text-xs font-black uppercase text-black/70">
+                        Payable
+                      </p>
+
+                      <p className="text-3xl sm:text-4xl font-black">
+                        ₹{totalAmount}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="text-right">
-                    <p className="text-xs font-black uppercase text-black/70">
-                      Payable
-                    </p>
+                  <div className="mt-5 bg-black/10 border border-black/10 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-black">UPI recommended</p>
+                      <p className="text-black/70 text-xs mt-0.5">
+                        Pay and submit reference
+                      </p>
+                    </div>
 
-                    <p className="text-3xl sm:text-4xl font-black">
-                      ₹{totalAmount}
+                    <p className="font-black text-xs sm:text-sm break-all text-right">
+                      {QUICKBITES_UPI_ID}
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-5 bg-black/10 border border-black/10 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
-                  <div>
-                    <p className="font-black">UPI recommended</p>
+                <div className="p-5 sm:p-6">
+                  <div className="grid grid-cols-2 gap-3 bg-black border border-[#222] rounded-2xl p-2">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("upi")}
+                      className={`py-3 rounded-xl font-black transition-all ${
+                        paymentMethod === "upi"
+                          ? "bg-yellow-500 text-black"
+                          : "text-gray-400"
+                      }`}
+                    >
+                      UPI
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("cash")}
+                      className={`py-3 rounded-xl font-black transition-all ${
+                        paymentMethod === "cash"
+                          ? "bg-yellow-500 text-black"
+                          : "text-gray-400"
+                      }`}
+                    >
+                      Cash / Later
+                    </button>
                   </div>
 
-                  <p className="font-black text-sm break-all text-right">
-                    {QUICKBITES_UPI_ID}
-                  </p>
-                </div>
-              </div>
+                  {paymentMethod === "upi" ? (
+                    <div className="mt-5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <a
+                          href={upiPaymentLink}
+                          className="block text-center w-full bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black font-black py-4 rounded-2xl transition-all shadow-lg shadow-yellow-500/20"
+                        >
+                          Pay via UPI App
+                        </a>
 
-              <div className="p-5 sm:p-6">
-                <div className="grid grid-cols-2 gap-3 bg-black border border-[#222] rounded-2xl p-2">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod("upi")}
-                    className={`py-3 rounded-xl font-black transition-all ${
-                      paymentMethod === "upi"
-                        ? "bg-yellow-500 text-black"
-                        : "text-gray-400"
-                    }`}
-                  >
-                    UPI
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod("cash")}
-                    className={`py-3 rounded-xl font-black transition-all ${
-                      paymentMethod === "cash"
-                        ? "bg-yellow-500 text-black"
-                        : "text-gray-400"
-                    }`}
-                  >
-                    Cash / Later
-                  </button>
-                </div>
-
-                {paymentMethod === "upi" ? (
-                  <div className="mt-5">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-  <a
-    href={upiPaymentLink}
-    className="block text-center w-full bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black font-black py-4 rounded-2xl transition-all shadow-lg shadow-yellow-500/20"
-  >
-    Pay via UPI App
-  </a>
-
-  <button
-    type="button"
-    onClick={() => setShowQr((current) => !current)}
-    className="block text-center w-full bg-black border border-yellow-500/40 hover:border-yellow-500 text-yellow-400 font-black py-4 rounded-2xl transition-all"
-  >
-    {showQr ? "Hide QR" : "Scan QR"}
-  </button>
-</div>
-
-{showQr && (
-  <div className="mt-5 bg-black border border-[#333] rounded-[2rem] p-5 text-center">
-    <p className="text-yellow-400 text-sm font-black uppercase tracking-wide">
-      Scan & Pay
-    </p>
-
-    <div className="mt-4 bg-white rounded-3xl p-4 w-fit mx-auto">
-      <img
-        src={qrCodeUrl}
-        alt="QuickBites UPI QR Code"
-        className="w-56 h-56 object-contain"
-      />
-    </div>
-
-    <p className="text-white font-black mt-4">₹{totalAmount}</p>
-
-    <p className="text-gray-500 text-sm mt-1 break-all">
-      {QUICKBITES_UPI_ID}
-    </p>
-
-    <p className="text-gray-500 text-xs mt-3 leading-relaxed">
-      Scan this QR using any UPI app. After payment, enter the transaction reference below.
-    </p>
-  </div>
-)}
-
-                    <p className="text-gray-500 text-sm text-center mt-3">
-                      Opens your installed UPI app if supported by your phone.
-                    </p>
-
-                    <div className="grid grid-cols-2 gap-3 mt-5">
-                      <a
-                        href={upiPaymentLink}
-                        className="text-center bg-black border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
-                      >
-                        Google Pay
-                      </a>
-
-                      <a
-                        href={upiPaymentLink}
-                        className="text-center bg-black border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
-                      >
-                        PhonePe
-                      </a>
-
-                      <a
-                        href={upiPaymentLink}
-                        className="text-center bg-black border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
-                      >
-                        Paytm
-                      </a>
-
-                      <a
-                        href={upiPaymentLink}
-                        className="text-center bg-black border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
-                      >
-                        BHIM
-                      </a>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 mt-5">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          copyToClipboard(QUICKBITES_UPI_ID, "UPI ID")
-                        }
-                        className="bg-[#111] border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
-                      >
-                        Copy UPI ID
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          copyToClipboard(totalAmount, "Amount")
-                        }
-                        className="bg-[#111] border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
-                      >
-                        Copy Amount
-                      </button>
-                    </div>
-
-                    {paymentMessage && (
-                      <p className="text-yellow-400 text-sm font-bold mt-3 text-center">
-                        {paymentMessage}
-                      </p>
-                    )}
-
-                    <div className="mt-5 border-t border-[#222] pt-5">
-                      <p className="text-yellow-400 text-sm font-black uppercase tracking-wide">
-                        I have paid
-                      </p>
-
-                      <input
-                        value={paymentReference}
-                        onChange={(event) =>
-                          setPaymentReference(event.target.value)
-                        }
-                        className="w-full mt-3 bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
-                        placeholder="Enter UPI reference / transaction ID"
-                      />
-
-                      <p className="text-gray-500 text-xs mt-3 leading-relaxed">
-                        Add the reference after payment. The seller can prepare
-                        the order while payment is marked for verification.
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mt-5 bg-black border border-[#222] rounded-2xl p-5">
-                    <p className="text-yellow-400 font-black">
-                      Cash / Pay Later selected
-                    </p>
-
-                    <p className="text-gray-500 text-sm mt-2 leading-relaxed">
-                      Your payment will remain pending. Use this only if the
-                      seller allows offline payment.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-
-          <section className="bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-8 h-fit lg:sticky lg:top-24">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
-                  Order Summary
-                </p>
-
-                <h2 className="text-2xl sm:text-3xl font-black mt-2">
-                  Your Food
-                </h2>
-              </div>
-
-              <div className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs px-3 py-1.5 rounded-full font-semibold">
-                {cartItems.length} items
-              </div>
-            </div>
-
-            <div className="mt-7 space-y-4">
-              {cartItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex gap-4 bg-black/40 border border-[#222] rounded-3xl p-4"
-                >
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-20 h-20 rounded-2xl object-cover"
-                  />
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between gap-3">
-                      <div>
-                        <p className="font-black truncate">{item.name}</p>
-
-                        <p className="text-gray-500 text-sm mt-1">
-                          Qty {item.quantity}
-                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setShowQr((current) => !current)}
+                          className="block text-center w-full bg-black border border-yellow-500/40 hover:border-yellow-500 text-yellow-400 font-black py-4 rounded-2xl transition-all"
+                        >
+                          {showQr ? "Hide QR" : "Scan QR"}
+                        </button>
                       </div>
 
-                      <p className="font-black text-yellow-400 shrink-0">
-                        ₹
-                        {Number(item.price || 0) *
-                          Number(item.quantity || 1)}
+                      {showQr && (
+                        <div className="mt-5 bg-black border border-[#333] rounded-[2rem] p-5 text-center">
+                          <p className="text-yellow-400 text-sm font-black uppercase tracking-wide">
+                            Scan & Pay
+                          </p>
+
+                          <div className="mt-4 bg-white rounded-3xl p-4 w-fit mx-auto">
+                            <img
+                              src={qrCodeUrl}
+                              alt="QuickBites UPI QR Code"
+                              className="w-56 h-56 object-contain"
+                            />
+                          </div>
+
+                          <p className="text-white font-black mt-4">
+                            ₹{totalAmount}
+                          </p>
+
+                          <p className="text-gray-500 text-sm mt-1 break-all">
+                            {QUICKBITES_UPI_ID}
+                          </p>
+
+                          <p className="text-gray-500 text-xs mt-3 leading-relaxed">
+                            Scan this QR using any UPI app. After payment, enter
+                            the transaction reference below.
+                          </p>
+                        </div>
+                      )}
+
+                      <p className="text-gray-500 text-sm text-center mt-3">
+                        Opens your installed UPI app if supported by your phone.
+                      </p>
+
+                      <div className="grid grid-cols-2 gap-3 mt-5">
+                        <a
+                          href={upiPaymentLink}
+                          className="text-center bg-black border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
+                        >
+                          Google Pay
+                        </a>
+
+                        <a
+                          href={upiPaymentLink}
+                          className="text-center bg-black border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
+                        >
+                          PhonePe
+                        </a>
+
+                        <a
+                          href={upiPaymentLink}
+                          className="text-center bg-black border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
+                        >
+                          Paytm
+                        </a>
+
+                        <a
+                          href={upiPaymentLink}
+                          className="text-center bg-black border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
+                        >
+                          BHIM
+                        </a>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 mt-5">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            copyToClipboard(QUICKBITES_UPI_ID, "UPI ID")
+                          }
+                          className="bg-[#111] border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
+                        >
+                          Copy UPI ID
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            copyToClipboard(totalAmount, "Amount")
+                          }
+                          className="bg-[#111] border border-[#333] hover:border-yellow-500/40 rounded-2xl py-4 font-black transition-all"
+                        >
+                          Copy Amount
+                        </button>
+                      </div>
+
+                      {paymentMessage && (
+                        <p className="text-yellow-400 text-sm font-bold mt-3 text-center">
+                          {paymentMessage}
+                        </p>
+                      )}
+
+                      <div className="mt-5 border-t border-[#222] pt-5">
+                        <p className="text-yellow-400 text-sm font-black uppercase tracking-wide">
+                          I have paid
+                        </p>
+
+                        <input
+                          value={paymentReference}
+                          onChange={(event) =>
+                            setPaymentReference(event.target.value)
+                          }
+                          className="w-full mt-3 bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500 transition-all"
+                          placeholder="Enter UPI reference / transaction ID"
+                        />
+
+                        <p className="text-gray-500 text-xs mt-3 leading-relaxed">
+                          Add the reference after payment. The seller can prepare
+                          the order while payment is marked for verification.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-5 bg-black border border-[#222] rounded-2xl p-5">
+                      <p className="text-yellow-400 font-black">
+                        Cash / Pay Later selected
+                      </p>
+
+                      <p className="text-gray-500 text-sm mt-2 leading-relaxed">
+                        Your payment will remain pending. Use this only if the
+                        seller allows offline payment.
                       </p>
                     </div>
-                  </div>
+                  )}
                 </div>
-              ))}
+              </div>
+            </section>
+
+            <div className="hidden lg:block">
+              <OrderSummaryCard />
             </div>
+          </div>
+        </div>
 
-            <div className="mt-8 border-t border-[#222] pt-6 space-y-4">
-              {orderTiming === "scheduled" && formattedSchedule && (
-                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4">
-                  <p className="text-yellow-400 text-sm font-black">
-                    Scheduled Order
-                  </p>
-                  <p className="text-gray-300 text-sm mt-1">
-                    {formattedSchedule}
-                  </p>
-                </div>
-              )}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-xl border-t border-[#222] px-4 py-3">
+          <div className="max-w-6xl mx-auto flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowMobileSummary(!showMobileSummary)}
+              className="shrink-0 bg-[#111] border border-[#333] rounded-2xl px-4 py-3 text-left"
+            >
+              <p className="text-gray-500 text-[11px] font-bold uppercase">
+                Total
+              </p>
+              <p className="text-yellow-400 text-xl font-black">
+                ₹{totalAmount}
+              </p>
+            </button>
 
-              <div className="bg-black/40 border border-[#222] rounded-2xl p-4">
-                <p className="text-gray-500 text-xs uppercase font-bold">
-                  Payment
-                </p>
-
-                <p className="text-white font-black mt-1">
-                  {paymentMethod === "upi" ? "UPI" : "Cash / Pay Later"}
-                </p>
-
-                {paymentMethod === "upi" && paymentReference && (
-                  <p className="text-green-400 text-xs font-bold mt-2 truncate">
-                    Ref: {paymentReference}
-                  </p>
-                )}
-
-                {paymentMethod === "upi" && !paymentReference && (
-                  <p className="text-yellow-400 text-xs font-bold mt-2">
-                    Payment reference pending
-                  </p>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between text-sm">
-                <p className="text-gray-400">Subtotal</p>
-                <p className="font-bold text-white">₹{subtotalAmount}</p>
-              </div>
-
-              <div className="flex items-center justify-between text-sm">
-                <p className="text-gray-400">Platform Fee</p>
-                <p className="font-bold text-yellow-400">₹{PLATFORM_FEE}</p>
-              </div>
-
-              <div className="border-t border-[#222] pt-5 flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-sm">Total Amount</p>
-                  <p className="text-gray-500 text-xs mt-1">
-                    Fresh homemade food
-                  </p>
-                </div>
-
-                <p className="text-4xl font-black text-yellow-400">
-                  ₹{totalAmount}
-                </p>
-              </div>
-
-              <button
-                onClick={handlePlaceOrder}
-                disabled={loading}
-                className="w-full mt-3 bg-yellow-500 hover:bg-yellow-400 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-black font-black py-5 rounded-2xl text-lg transition-all duration-200 shadow-lg shadow-yellow-500/20"
-              >
-                {loading
-                  ? "Checking live stock..."
-                  : orderTiming === "scheduled"
-                  ? `Schedule Order • ₹${totalAmount}`
-                  : `Place Order • ₹${totalAmount}`}
-              </button>
-
-              <Link
-                to="/cart"
-                className="block text-center mt-3 border border-[#333] hover:border-yellow-500/50 text-gray-300 hover:text-yellow-400 font-bold py-3 rounded-2xl transition-all"
-              >
-                Back to Cart
-              </Link>
-            </div>
-          </section>
+            <button
+              onClick={handlePlaceOrder}
+              disabled={loading}
+              className="flex-1 bg-yellow-500 hover:bg-yellow-400 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-black font-black py-4 rounded-2xl transition-all shadow-lg shadow-yellow-500/20"
+            >
+              {loading
+                ? "Checking..."
+                : orderTiming === "scheduled"
+                ? "Schedule Order"
+                : "Place Order"}
+            </button>
+          </div>
         </div>
       </main>
     </>
