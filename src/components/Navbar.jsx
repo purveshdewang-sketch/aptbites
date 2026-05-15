@@ -155,23 +155,21 @@ export default function Navbar() {
   }
 
   function LogoMark() {
-  return (
-    <div className="h-12 w-36 sm:w-40 rounded-2xl bg-white flex items-center justify-center overflow-hidden shadow-lg shrink-0">
-      {!logoFailed ? (
-        <img
-          src="/quickbites-logo.png"
-          alt="QuickBites"
-          className="w-full h-full object-contain p-1.5"
-          onError={() => setLogoFailed(true)}
-        />
-      ) : (
-        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#55F3A5] to-[#A77BE8] flex items-center justify-center">
+    return (
+      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#55F3A5] to-[#A77BE8] flex items-center justify-center overflow-hidden shadow-lg shadow-[#55F3A5]/10 shrink-0">
+        {!logoFailed ? (
+          <img
+            src="/quickbites-logo.png"
+            alt="QuickBites"
+            className="w-full h-full object-cover scale-[1.65]"
+            onError={() => setLogoFailed(true)}
+          />
+        ) : (
           <span className="text-[#0F0D1F] font-black text-base">Q</span>
-        </div>
-      )}
-    </div>
-  );
-}
+        )}
+      </div>
+    );
+  }
 
   if (authLoading) {
     return (
@@ -188,6 +186,16 @@ export default function Navbar() {
           <div className="h-16 sm:h-[72px] flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3 group min-w-0">
               <LogoMark />
+
+              <div className="leading-none min-w-0">
+                <p className="text-white font-bold text-lg tracking-tight group-hover:text-[#55F3A5] transition-all truncate">
+                  QuickBites
+                </p>
+
+                <p className="text-[10px] text-[#A8A3C2] mt-1 tracking-wide uppercase truncate">
+                  neighbourhood food
+                </p>
+              </div>
             </Link>
 
             <div className="hidden md:flex items-center gap-7">
