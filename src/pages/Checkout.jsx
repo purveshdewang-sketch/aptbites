@@ -445,7 +445,9 @@ export default function Checkout() {
     return (
       <section
         className={`bg-[#111111] border border-[#222] rounded-[2rem] ${
-          compact ? "p-4" : "p-5 sm:p-8 h-fit lg:sticky lg:top-24"
+          compact
+            ? "p-4"
+            : "p-5 sm:p-8 h-fit lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto"
         }`}
       >
         <div className="flex items-center justify-between">
@@ -617,8 +619,8 @@ export default function Checkout() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-black text-white px-4 sm:px-6 py-5 sm:py-10 pb-36 lg:pb-10">
-        <div className="max-w-6xl mx-auto">
+      <main className="min-h-screen bg-black text-white px-4 sm:px-6 xl:px-10 py-5 sm:py-10 pb-36 lg:pb-10">
+        <div className="max-w-[1320px] mx-auto">
           <div className="lg:hidden mb-5">
             <p className="text-yellow-400 font-semibold uppercase tracking-wide text-xs">
               Checkout
@@ -651,9 +653,9 @@ export default function Checkout() {
             )}
           </div>
 
-          <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-6 lg:gap-8">
+          <div className="grid lg:grid-cols-[minmax(0,760px)_420px] xl:grid-cols-[minmax(0,820px)_440px] justify-center gap-6 lg:gap-8 xl:gap-10">
             <section className="space-y-5 sm:space-y-6">
-              <div className="bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-8">
+              <div className="bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-8 lg:p-9 shadow-2xl shadow-black/20">
                 <div className="hidden lg:block">
                   <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
                     Checkout
@@ -745,7 +747,7 @@ export default function Checkout() {
                 </div>
               </div>
 
-              <div className="bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-8">
+              <div className="bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-8 lg:p-9 shadow-2xl shadow-black/20">
                 <MobileSectionHeader
                   number="2"
                   title="Order timing"
@@ -827,8 +829,8 @@ export default function Checkout() {
                 </div>
               </div>
 
-              <div className="bg-[#111111] border border-[#222] rounded-[2rem] overflow-hidden">
-                <div className="bg-yellow-500 text-black p-5 sm:p-6">
+              <div className="bg-[#111111] border border-[#222] rounded-[2rem] overflow-hidden shadow-2xl shadow-yellow-500/5">
+                <div className="bg-yellow-500 text-black p-5 sm:p-6 lg:p-8">
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <p className="text-sm font-black uppercase tracking-wide text-black/70">
@@ -865,7 +867,7 @@ export default function Checkout() {
                   </div>
                 </div>
 
-                <div className="p-5 sm:p-6">
+                <div className="p-5 sm:p-6 lg:p-8">
                   <div className="bg-black border border-yellow-500/20 rounded-2xl p-4">
                     <p className="text-yellow-400 text-sm font-black uppercase tracking-wide">
                       Payment Method
