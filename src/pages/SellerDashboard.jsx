@@ -20,6 +20,8 @@ export default function SellerDashboard() {
 
   const audioContextRef = useRef(null);
   const previousOrderIdsRef = useRef([]);
+  const uploadImageInputRef = useRef(null);
+  const cameraImageInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -401,6 +403,14 @@ function formatScheduledDateTime(value) {
     } catch (error) {
       setMessage("Could not process image.");
     }
+
+    function removeSelectedImage() {
+  setImageFile(null);
+  setImagePreview(editingFood?.image || "");
+  setMessage(editingFood ? "Image reverted to existing dish image." : "Image removed.");
+  
+}
+
   }
 
   function compressImage(file) {
@@ -863,6 +873,12 @@ function formatScheduledDateTime(value) {
     return new Date(order.created_at).toDateString() === todayDateString;
   });
 
+    const todayTotalOrders = sellerOrders.filter((order) => {
+      if (!order.created_at) return false;
+
+      return new Date(order.created_at).toDateString() === todayDateString;
+    });
+
   const grossEarnings = completedOrders.reduce((total, order) => {
     return total + Number(order.subtotal_amount || 0);
   }, 0);
@@ -1015,11 +1031,18 @@ function formatScheduledDateTime(value) {
           </div>
         )}
 
-        <section className="grid grid-cols-1 sm:grid-cols-4 gap-4 sm:gap-5 mt-8">
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 mt-8">
           <div className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-5">
             <p className="text-gray-400">Total Orders</p>
             <h2 className="text-4xl font-black text-yellow-400 mt-3">
               {totalOrdersCount}
+            </h2>
+          </div>
+
+          <div className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-5">
+            <p className="text-gray-400">Today’s Orders</p>
+            <h2 className="text-4xl font-black text-yellow-400 mt-3">
+              {todayTotalOrders.length}
             </h2>
           </div>
 
@@ -1454,37 +1477,89 @@ function formatScheduledDateTime(value) {
             />
 
             <div className="md:col-span-2">
-              <label className="block text-sm text-gray-400 mb-3">
-                Upload Dish Image
-              </label>
+  <label className="block text-sm text-gray-400 mb-3">
+    Dish Image
+  </label>
 
-              <label className="flex flex-col items-center justify-center border-2 border-dashed border-[#333] hover:border-yellow-500/50 bg-black rounded-3xl p-8 cursor-pointer transition-all">
-                <div className="text-5xl mb-3">📸</div>
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <button
+      type="button"
+      onClick={() => uploadImageInputRef.current?.click()}
+      className="flex flex-col items-center justify-center border-2 border-dashed border-[#333] hover:border-yellow-500/50 bg-black rounded-3xl p-6 cursor-pointer transition-all"
+    >
+      <div className="text-4xl mb-3">🖼️</div>
 
-                <p className="text-white font-semibold">Tap to upload image</p>
+      <p className="text-white font-black">Upload Image</p>
 
-                <p className="text-gray-500 text-sm mt-1">
-                  JPG, PNG, WEBP · Auto optimized for mobile
-                </p>
+      <p className="text-gray-500 text-sm mt-1 text-center">
+        Choose from gallery or files
+      </p>
+    </button>
 
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={handleImageChange}
-                />
-              </label>
+    <button
+      type="button"
+      onClick={() => cameraImageInputRef.current?.click()}
+      className="flex flex-col items-center justify-center border-2 border-dashed border-yellow-500/40 hover:border-yellow-500 bg-yellow-500/10 rounded-3xl p-6 cursor-pointer transition-all"
+    >
+      <div className="text-4xl mb-3">📸</div>
 
-              {imagePreview && (
-                <div className="mt-4">
-                  <img
-                    src={imagePreview}
-                    alt="Dish preview"
-                    className="w-full h-56 object-cover rounded-3xl border border-[#333]"
-                  />
-                </div>
-              )}
-            </div>
+      <p className="text-yellow-400 font-black">Take Picture</p>
+
+      <p className="text-gray-500 text-sm mt-1 text-center">
+        Open camera on phone
+      </p>
+    </button>
+  </div>
+
+  <input
+    ref={uploadImageInputRef}
+    type="file"
+    accept="image/jpeg,image/png,image/webp,image/*"
+    className="hidden"
+    onChange={handleImageChange}
+  />
+
+  <input
+    ref={cameraImageInputRef}
+    type="file"
+    accept="image/jpeg,image/png,image/webp,image/*"
+    capture="environment"
+    className="hidden"
+    onChange={handleImageChange}
+  />
+
+  <p className="text-gray-500 text-xs mt-3">
+    JPG, PNG, WEBP · Auto optimized before upload
+  </p>
+
+  {imagePreview && (
+    <div className="mt-4 bg-black border border-[#333] rounded-3xl p-3">
+      <img
+        src={imagePreview}
+        alt="Dish preview"
+        className="w-full h-56 object-cover rounded-2xl border border-[#222]"
+      />
+
+      <div className="grid grid-cols-2 gap-3 mt-3">
+        <button
+          type="button"
+          onClick={() => uploadImageInputRef.current?.click()}
+          className="border border-yellow-500/50 text-yellow-400 hover:bg-yellow-500 hover:text-black font-bold py-3 rounded-2xl transition-all"
+        >
+          Change Image
+        </button>
+
+        <button
+          type="button"
+          onClick={removeSelectedImage}
+          className="border border-red-500/50 text-red-400 hover:bg-red-500 hover:text-black font-bold py-3 rounded-2xl transition-all"
+        >
+          Remove
+        </button>
+      </div>
+    </div>
+  )}
+</div>
           </div>
 
           <textarea

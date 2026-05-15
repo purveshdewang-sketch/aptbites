@@ -12,6 +12,7 @@ import Orders from "./pages/Orders";
 import OrderHistory from "./pages/OrderHistory";
 import FoodDetails from "./pages/FoodDetails";
 import OwnerDashboard from "./pages/OwnerDashboard";
+import Profile from "./pages/Profile";
 
 import { useAuth } from "./context/AuthContext";
 import { supabase } from "./lib/supabaseClient";
@@ -178,6 +179,15 @@ function AdminOnlyRoute({ children }) {
 
   return children;
 }
+
+<Route
+  path="/profile"
+  element={
+    <ProtectedRoute>
+      <Profile />
+    </ProtectedRoute>
+  }
+/>
 
 export default function App() {
   return (

@@ -1,7 +1,64 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import { useAuth } from "../context/AuthContext";
+import { supabase } from "../lib/supabaseClient";
 
 export default function Home() {
+  const { user } = useAuth();
+
+  const [isSeller, setIsSeller] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    async function checkUserRole() {
+      if (!user) {
+        setIsSeller(false);
+        setIsAdmin(false);
+        return;
+      }
+
+      const metadataRole = String(user?.user_metadata?.role || "").toLowerCase();
+
+      if (metadataRole === "seller") {
+        setIsSeller(true);
+      }
+
+      if (metadataRole === "admin") {
+        setIsAdmin(true);
+        setIsSeller(true);
+      }
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role, is_seller")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        setIsSeller(metadataRole === "seller" || metadataRole === "admin");
+        setIsAdmin(metadataRole === "admin");
+        return;
+      }
+
+      const profileRole = String(data?.role || "").toLowerCase();
+
+      setIsAdmin(profileRole === "admin" || metadataRole === "admin");
+
+      setIsSeller(
+        profileRole === "seller" ||
+          profileRole === "admin" ||
+          data?.is_seller === true ||
+          metadataRole === "seller" ||
+          metadataRole === "admin"
+      );
+    }
+
+    checkUserRole();
+  }, [user]);
+
+  const shouldShowSellFood = !user || isSeller || isAdmin;
+
   return (
     <>
       <Navbar />
@@ -67,7 +124,11 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="mt-6 grid grid-cols-2 gap-3">
+              <div
+                className={`mt-6 grid gap-3 ${
+                  shouldShowSellFood ? "grid-cols-2" : "grid-cols-1"
+                }`}
+              >
                 <Link
                   to="/marketplace"
                   className="bg-[#55F3A5] hover:bg-[#7CFFC0] active:scale-95 text-[#0F0D1F] font-black px-5 py-4 rounded-2xl text-center transition-all shadow-xl shadow-[#55F3A5]/20"
@@ -75,12 +136,14 @@ export default function Home() {
                   Order Food
                 </Link>
 
-                <Link
-                  to="/seller-login"
-                  className="border border-[#A77BE8]/60 bg-[#1B1938] text-[#A77BE8] hover:bg-[#A77BE8] hover:text-white active:scale-95 font-black px-5 py-4 rounded-2xl text-center transition-all"
-                >
-                  Sell Food
-                </Link>
+                {shouldShowSellFood && (
+                  <Link
+                    to="/seller-login"
+                    className="border border-[#A77BE8]/60 bg-[#1B1938] text-[#A77BE8] hover:bg-[#A77BE8] hover:text-white active:scale-95 font-black px-5 py-4 rounded-2xl text-center transition-all"
+                  >
+                    Sell Food
+                  </Link>
+                )}
               </div>
 
               <div className="grid grid-cols-3 gap-3 mt-6">
@@ -122,7 +185,11 @@ export default function Home() {
                   prepared by trusted home chefs inside your apartment community.
                 </p>
 
-                <div className="grid grid-cols-2 gap-3 mt-8 max-w-xl">
+                <div
+                  className={`grid gap-3 mt-8 max-w-xl ${
+                    shouldShowSellFood ? "grid-cols-2" : "grid-cols-1"
+                  }`}
+                >
                   <Link
                     to="/marketplace"
                     className="bg-[#55F3A5] hover:bg-[#7CFFC0] active:scale-95 text-[#0F0D1F] font-bold px-5 py-4 rounded-2xl text-center transition-all duration-200 shadow-xl shadow-[#55F3A5]/20"
@@ -130,12 +197,14 @@ export default function Home() {
                     Order Food
                   </Link>
 
-                  <Link
-                    to="/seller-login"
-                    className="border border-[#A77BE8]/60 bg-[#1B1938] text-[#A77BE8] hover:bg-[#A77BE8] hover:text-white active:scale-95 font-bold px-5 py-4 rounded-2xl text-center transition-all duration-200"
-                  >
-                    Sell Food
-                  </Link>
+                  {shouldShowSellFood && (
+                    <Link
+                      to="/seller-login"
+                      className="border border-[#A77BE8]/60 bg-[#1B1938] text-[#A77BE8] hover:bg-[#A77BE8] hover:text-white active:scale-95 font-bold px-5 py-4 rounded-2xl text-center transition-all duration-200"
+                    >
+                      Sell Food
+                    </Link>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-3 gap-4 mt-9">

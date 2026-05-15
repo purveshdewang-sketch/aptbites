@@ -239,6 +239,8 @@ export default function Navbar() {
                         {user.email}
                       </p>
 
+                      
+
                       <p className="text-[#A8A3C2] text-sm mt-1">
                         {getAccountLabel()}
                       </p>
@@ -251,6 +253,13 @@ export default function Navbar() {
                       >
                         Marketplace
                       </Link>
+                      
+                      <Link
+  to="/profile"
+  className="block px-4 py-3 rounded-2xl text-gray-300 hover:bg-[#1a1a1a] hover:text-yellow-400 transition-all"
+>
+  My Profile
+</Link>
 
                       <Link
                         to="/orders"
