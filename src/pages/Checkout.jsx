@@ -239,7 +239,7 @@ export default function Checkout() {
 
     const { data, error } = await supabase
       .from("foods")
-      .select("id, name, stock, seller_id, user_id")
+      .select("id, name, stock, user_id")
       .in("id", foodIds);
 
     if (error) {

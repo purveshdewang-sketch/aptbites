@@ -688,24 +688,36 @@ function formatScheduledDateTime(value) {
   }
 
   async function completeOrder(orderId) {
-    const confirmComplete = window.confirm("Mark this order as completed?");
+  const confirmComplete = window.confirm("Mark this order as completed?");
 
-    if (!confirmComplete) return;
+  if (!confirmComplete) return;
 
-    const { error } = await supabase
-      .from("orders")
-      .update({ status: "completed" })
-      .eq("id", orderId)
-      .eq("seller_id", user.id);
+  const { data, error } = await supabase
+    .from("orders")
+    .update({ status: "completed" })
+    .eq("id", orderId)
+    .eq("seller_id", user.id)
+    .select("*");
 
-    if (error) {
-      setMessage(`Could not complete order: ${error.message}`);
-      return;
-    }
-
-    setMessage("Order completed.");
-    fetchSellerOrders();
+  if (error) {
+    setMessage(`Could not complete order: ${error.message}`);
+    return;
   }
+
+  if (!data || data.length === 0) {
+    setMessage("Order completion failed. Order was not updated.");
+    return;
+  }
+
+  setSellerOrders((currentOrders) =>
+    currentOrders.map((order) =>
+      order.id === orderId ? data[0] : order
+    )
+  );
+
+  setMessage("Order completed. Earnings updated.");
+  fetchSellerOrders(false);
+}
 
   async function markReadyForPickup(orderId) {
     const { error } = await supabase
