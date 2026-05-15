@@ -11,6 +11,7 @@ import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
 import OrderHistory from "./pages/OrderHistory";
 import FoodDetails from "./pages/FoodDetails";
+import OwnerDashboard from "./pages/OwnerDashboard";
 
 import { useAuth } from "./context/AuthContext";
 import { supabase } from "./lib/supabaseClient";
@@ -110,6 +111,74 @@ function SellerOnlyRoute({ children }) {
   return children;
 }
 
+function AdminOnlyRoute({ children }) {
+  const { user, authLoading } = useAuth();
+
+  const [checkingRole, setCheckingRole] = useState(true);
+  const [adminAllowed, setAdminAllowed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkAdminAccess() {
+      if (authLoading) return;
+
+      if (!user) {
+        if (!cancelled) {
+          setAdminAllowed(false);
+          setCheckingRole(false);
+        }
+        return;
+      }
+
+      setCheckingRole(true);
+
+      const metadataRole = String(user?.user_metadata?.role || "").toLowerCase();
+
+      if (metadataRole === "admin") {
+        if (!cancelled) {
+          setAdminAllowed(true);
+          setCheckingRole(false);
+        }
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (error) {
+        setAdminAllowed(false);
+        setCheckingRole(false);
+        return;
+      }
+
+      const profileRole = String(data?.role || "").toLowerCase();
+
+      setAdminAllowed(profileRole === "admin");
+      setCheckingRole(false);
+    }
+
+    checkAdminAccess();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, authLoading]);
+
+  if (authLoading || checkingRole) return <LoadingScreen />;
+
+  if (!user) return <Navigate to="/customer-login" replace />;
+
+  if (!adminAllowed) return <Navigate to="/" replace />;
+
+  return children;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -150,6 +219,15 @@ export default function App() {
             <SellerOnlyRoute>
               <SellerDashboard />
             </SellerOnlyRoute>
+          }
+        />
+
+        <Route
+          path="/owner-dashboard"
+          element={
+            <AdminOnlyRoute>
+              <OwnerDashboard />
+            </AdminOnlyRoute>
           }
         />
 
