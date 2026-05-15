@@ -86,7 +86,10 @@ function SellerOnlyRoute({ children }) {
 
       const profileRole = String(data?.role || "").toLowerCase();
 
-      const isSeller = profileRole === "seller" || data?.is_seller === true;
+      const isSeller =
+        profileRole === "seller" ||
+        profileRole === "admin" ||
+        data?.is_seller === true;
 
       if (isSeller) {
         localStorage.setItem(`quickbites_seller_access_${user.id}`, "yes");
@@ -180,15 +183,6 @@ function AdminOnlyRoute({ children }) {
   return children;
 }
 
-<Route
-  path="/profile"
-  element={
-    <ProtectedRoute>
-      <Profile />
-    </ProtectedRoute>
-  }
-/>
-
 export default function App() {
   return (
     <BrowserRouter>
@@ -219,6 +213,15 @@ export default function App() {
           element={
             <ProtectedRoute>
               <FoodDetails />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
             </ProtectedRoute>
           }
         />
