@@ -11,6 +11,7 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [isSeller, setIsSeller] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [switchingSeller, setSwitchingSeller] = useState(false);
 
   const dropdownRef = useRef(null);
@@ -24,17 +25,21 @@ export default function Navbar() {
   }, [location.pathname]);
 
   useEffect(() => {
-    async function checkSellerRole() {
+    async function checkUserRoles() {
       if (!user) {
         setIsSeller(false);
+        setIsAdmin(false);
         return;
       }
 
       const metadataRole = String(user?.user_metadata?.role || "").toLowerCase();
 
+      if (metadataRole === "admin") {
+        setIsAdmin(true);
+      }
+
       if (metadataRole === "seller") {
         setIsSeller(true);
-        return;
       }
 
       const { data, error } = await supabase
@@ -44,16 +49,23 @@ export default function Navbar() {
         .maybeSingle();
 
       if (error) {
-        setIsSeller(false);
+        setIsSeller(metadataRole === "seller");
+        setIsAdmin(metadataRole === "admin");
         return;
       }
 
       const profileRole = String(data?.role || "").toLowerCase();
 
-      setIsSeller(profileRole === "seller" || data?.is_seller === true);
+      setIsAdmin(profileRole === "admin" || metadataRole === "admin");
+      setIsSeller(
+        profileRole === "seller" ||
+          profileRole === "admin" ||
+          data?.is_seller === true ||
+          metadataRole === "seller"
+      );
     }
 
-    checkSellerRole();
+    checkUserRoles();
   }, [user, location.pathname]);
 
   useEffect(() => {
@@ -113,6 +125,7 @@ export default function Navbar() {
     setProfileOpen(false);
     setMenuOpen(false);
     setIsSeller(false);
+    setIsAdmin(false);
     navigate("/");
   }
 
@@ -130,6 +143,12 @@ export default function Navbar() {
   function getInitial() {
     if (!user?.email) return "Q";
     return user.email.charAt(0).toUpperCase();
+  }
+
+  function getAccountLabel() {
+    if (isAdmin) return "Admin account";
+    if (isSeller) return "Seller account";
+    return "Customer account";
   }
 
   if (authLoading) {
@@ -178,6 +197,19 @@ export default function Navbar() {
                 </Link>
               );
             })}
+
+            {isAdmin && (
+              <Link
+                to="/owner-dashboard"
+                className={`text-sm font-medium transition-all duration-200 ${
+                  location.pathname === "/owner-dashboard"
+                    ? "text-yellow-400"
+                    : "text-gray-400 hover:text-yellow-400"
+                }`}
+              >
+                Owner Dashboard
+              </Link>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -208,7 +240,7 @@ export default function Navbar() {
                       </p>
 
                       <p className="text-gray-500 text-sm mt-1">
-                        {isSeller ? "Seller account" : "Customer account"}
+                        {getAccountLabel()}
                       </p>
                     </div>
 
@@ -233,6 +265,15 @@ export default function Navbar() {
                       >
                         Order History
                       </Link>
+
+                      {isAdmin && (
+                        <Link
+                          to="/owner-dashboard"
+                          className="block px-4 py-3 rounded-2xl text-yellow-400 hover:bg-yellow-500/10 transition-all"
+                        >
+                          Owner Dashboard
+                        </Link>
+                      )}
 
                       {isSeller ? (
                         <Link
@@ -318,6 +359,19 @@ export default function Navbar() {
                   );
                 })}
 
+                {isAdmin && (
+                  <Link
+                    to="/owner-dashboard"
+                    className={`px-4 py-3 rounded-2xl text-sm font-medium transition-all duration-200 ${
+                      location.pathname === "/owner-dashboard"
+                        ? "bg-yellow-500 text-black"
+                        : "text-yellow-400 hover:bg-yellow-500/10"
+                    }`}
+                  >
+                    Owner Dashboard
+                  </Link>
+                )}
+
                 <div className="h-px bg-[#222] my-2" />
 
                 {!user ? (
@@ -335,7 +389,7 @@ export default function Navbar() {
                       </p>
 
                       <p className="text-gray-500 text-sm mt-1">
-                        {isSeller ? "Seller account" : "Customer account"}
+                        {getAccountLabel()}
                       </p>
                     </div>
 
@@ -352,6 +406,15 @@ export default function Navbar() {
                     >
                       Order History
                     </Link>
+
+                    {isAdmin && (
+                      <Link
+                        to="/owner-dashboard"
+                        className="px-4 py-3 rounded-2xl text-yellow-400 hover:bg-yellow-500/10"
+                      >
+                        Owner Dashboard
+                      </Link>
+                    )}
 
                     {isSeller ? (
                       <Link
