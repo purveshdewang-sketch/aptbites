@@ -26,6 +26,10 @@ export default function Checkout() {
     "QuickBites food order"
   )}`;
 
+  const qrCodeUrl = `https://erp.cropg1.com/files/cg1-sbicc-qr.png=${encodeURIComponent(
+  upiPaymentLink
+)}`;
+
   const getCheckoutStorageKey = () =>
     user
       ? `quickbites_checkout_details_${user.id}`
@@ -47,8 +51,9 @@ export default function Checkout() {
   const [checkingSellerSchedule, setCheckingSellerSchedule] = useState(true);
 
   const [paymentMethod, setPaymentMethod] = useState("upi");
-  const [paymentReference, setPaymentReference] = useState("");
-  const [paymentMessage, setPaymentMessage] = useState("");
+const [paymentReference, setPaymentReference] = useState("");
+const [paymentMessage, setPaymentMessage] = useState("");
+const [showQr, setShowQr] = useState(false);
 
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [loading, setLoading] = useState(false);
