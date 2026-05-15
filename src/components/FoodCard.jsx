@@ -35,12 +35,13 @@ export default function FoodCard({ item }) {
 
     setTimeout(() => {
       setShowToast(false);
-    }, 1800);
+    }, 1600);
   }
 
   function handleDecrease(event) {
     event.preventDefault();
     event.stopPropagation();
+
     decreaseQuantity(item.id);
   }
 
@@ -59,8 +60,9 @@ export default function FoodCard({ item }) {
   return (
     <>
       {showToast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[999] w-[92%] sm:w-[340px] bg-[#111111] border border-yellow-500/30 rounded-[1.75rem] p-4 shadow-2xl shadow-yellow-500/20">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[999] w-[92%] sm:w-[340px] bg-[#111111] border border-yellow-500/30 rounded-[1.5rem] p-4 shadow-2xl shadow-yellow-500/20">
           <p className="text-yellow-400 font-black">Added to cart</p>
+
           <p className="text-gray-400 text-sm mt-1">
             {item.name} added successfully.
           </p>
@@ -76,86 +78,34 @@ export default function FoodCard({ item }) {
 
       <Link
         to={`/food/${item.id}`}
-        className={`block group bg-[#111111] border rounded-[1.75rem] overflow-hidden transition-all duration-300 ${
+        className={`block bg-[#111111] border rounded-[1.5rem] overflow-hidden transition-all duration-300 ${
           sellerIsClosed
-            ? "border-red-500/60"
+            ? "border-red-500/50"
             : "border-[#222] hover:border-yellow-500/40"
         }`}
       >
-        <div className="relative h-[210px] sm:aspect-square sm:h-auto overflow-hidden bg-[#1a1a1a]">
-          <img
-            src={item.image}
-            alt={item.name}
-            className={`w-full h-full object-cover transition-all duration-500 ${
-              sellerIsClosed ? "grayscale opacity-45" : "group-hover:scale-105"
-            }`}
-          />
+        {/* Mobile layout */}
+        <div className="sm:hidden p-4">
+          <div className="flex gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap gap-2">
+                <span
+                  className={`w-fit text-[11px] font-black px-2.5 py-1 rounded-full ${
+                    item.type === "Non-Veg"
+                      ? "bg-red-500 text-white"
+                      : "bg-green-500 text-black"
+                  }`}
+                >
+                  {item.type}
+                </span>
 
-          <div className="absolute top-3 left-3 flex flex-col gap-2">
-            <span
-              className={`w-fit text-xs font-black px-3 py-1.5 rounded-full ${
-                item.type === "Non-Veg"
-                  ? "bg-red-500 text-white"
-                  : "bg-green-500 text-black"
-              }`}
-            >
-              {item.type}
-            </span>
-
-            <span className="w-fit text-xs font-black px-3 py-1.5 rounded-full bg-black/75 text-yellow-400 border border-yellow-500/20">
-              {category}
-            </span>
-          </div>
-
-          <div className="absolute top-3 right-3 z-20">
-            {sellerIsClosed ? (
-              <span className="text-xs font-black px-3 py-1.5 rounded-full bg-red-600 text-white">
-                CLOSED
-              </span>
-            ) : isSoldOut ? (
-              <span className="text-xs font-black px-3 py-1.5 rounded-full bg-gray-800 text-gray-400">
-                Sold Out
-              </span>
-            ) : isLowStock ? (
-              <span className="text-xs font-black px-3 py-1.5 rounded-full bg-red-500 text-white">
-                Only {stock} left
-              </span>
-            ) : (
-              <span className="text-xs font-black px-3 py-1.5 rounded-full bg-black/75 text-yellow-400 border border-yellow-500/20">
-                Available
-              </span>
-            )}
-          </div>
-
-          {demandBadge && !sellerIsClosed && !isSoldOut && (
-            <div className="absolute left-3 bottom-3 z-20 max-w-[82%] bg-black/85 backdrop-blur border border-green-500/20 rounded-2xl px-3 py-2 shadow-xl">
-              <p className="text-green-400 text-xs font-black leading-tight">
-                📈 {demandBadge.label}
-              </p>
-
-              <p className="text-white text-[11px] font-bold mt-0.5">
-                {demandBadge.sublabel}
-              </p>
-            </div>
-          )}
-
-          {sellerIsClosed && (
-            <div className="absolute inset-0 z-10 bg-black/70 flex items-center justify-center px-4 text-center">
-              <div className="bg-red-600 text-white font-black px-5 py-4 rounded-2xl">
-                <p className="text-lg leading-tight">🔴 Seller Closed</p>
-                <p className="text-xs mt-1 opacity-90">
-                  Ordering is temporarily unavailable
-                </p>
+                <span className="w-fit text-[11px] font-black px-2.5 py-1 rounded-full bg-black text-yellow-400 border border-yellow-500/20">
+                  {category}
+                </span>
               </div>
-            </div>
-          )}
-        </div>
 
-        <div className="p-5">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
               <h3
-                className={`text-xl font-black truncate ${
+                className={`text-lg font-black mt-3 leading-tight line-clamp-2 ${
                   sellerIsClosed ? "text-gray-400" : "text-white"
                 }`}
               >
@@ -165,93 +115,302 @@ export default function FoodCard({ item }) {
               <p className="text-gray-500 text-sm mt-1 truncate">
                 By {item.seller}
               </p>
+
+              <p
+                className={`font-black text-2xl mt-3 ${
+                  sellerIsClosed ? "text-gray-500" : "text-yellow-400"
+                }`}
+              >
+                ₹{item.price}
+              </p>
+
+              {demandBadge && !sellerIsClosed && !isSoldOut && (
+                <p className="text-green-400 text-xs font-black mt-2">
+                  📈 {demandBadge.label}
+                </p>
+              )}
+
+              <div className="flex items-center gap-2 mt-2">
+                <p className="text-gray-500 text-xs">
+                  Ready:{" "}
+                  <span className="text-gray-300 font-bold">{item.time}</span>
+                </p>
+
+                <span className="text-gray-700">•</span>
+
+                <p
+                  className={`text-xs font-bold ${
+                    sellerIsClosed
+                      ? "text-red-400"
+                      : isSoldOut
+                      ? "text-gray-600"
+                      : isLowStock
+                      ? "text-red-400"
+                      : "text-gray-400"
+                  }`}
+                >
+                  {sellerIsClosed
+                    ? "Closed"
+                    : isSoldOut
+                    ? "Sold Out"
+                    : `${stock} left`}
+                </p>
+              </div>
             </div>
 
-            <p
-              className={`font-black text-2xl shrink-0 ${
-                sellerIsClosed ? "text-gray-500" : "text-yellow-400"
-              }`}
-            >
-              ₹{item.price}
-            </p>
+            <div className="w-32 shrink-0">
+              <div className="relative w-32 h-32 rounded-3xl overflow-hidden bg-[#1a1a1a]">
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className={`w-full h-full object-cover ${
+                    sellerIsClosed ? "grayscale opacity-45" : ""
+                  }`}
+                />
+
+                {sellerIsClosed && (
+                  <div className="absolute inset-0 bg-black/65 flex items-center justify-center text-center px-2">
+                    <p className="text-white text-xs font-black">CLOSED</p>
+                  </div>
+                )}
+
+                {!sellerIsClosed && isSoldOut && (
+                  <div className="absolute inset-0 bg-black/65 flex items-center justify-center text-center px-2">
+                    <p className="text-gray-300 text-xs font-black">
+                      SOLD OUT
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="-mt-5 relative z-10 px-2">
+                {quantity === 0 || sellerIsClosed ? (
+                  <button
+                    type="button"
+                    onClick={handleAddToCart}
+                    disabled={isBlocked}
+                    className={`w-full font-black py-2.5 rounded-xl text-sm border transition-all ${
+                      isBlocked
+                        ? "bg-[#1a1a1a] text-gray-600 border-red-500/20 cursor-not-allowed"
+                        : "bg-yellow-500 text-black border-yellow-400 shadow-lg shadow-yellow-500/20"
+                    }`}
+                  >
+                    {sellerIsClosed || isSoldOut ? "ADD" : "ADD"}
+                  </button>
+                ) : (
+                  <div className="flex items-center justify-between overflow-hidden rounded-xl bg-yellow-500 text-black font-black shadow-lg shadow-yellow-500/20 border border-yellow-400">
+                    <button
+                      type="button"
+                      onClick={handleDecrease}
+                      className="w-9 py-2 text-lg active:bg-yellow-400"
+                    >
+                      −
+                    </button>
+
+                    <span className="min-w-8 text-center text-sm">
+                      {quantity}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={handleIncrease}
+                      disabled={quantity >= stock}
+                      className={`w-9 py-2 text-lg ${
+                        quantity >= stock
+                          ? "opacity-40 cursor-not-allowed"
+                          : "active:bg-yellow-400"
+                      }`}
+                    >
+                      +
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           {item.description && (
-            <p className="text-gray-500 text-sm mt-3 line-clamp-2">
+            <p className="text-gray-500 text-sm mt-4 line-clamp-2">
               {item.description}
             </p>
           )}
+        </div>
 
-          <div className="flex items-center justify-between gap-3 mt-4">
-            <p className="text-gray-500 text-sm">
-              Ready: <span className="text-gray-300">{item.time}</span>
-            </p>
-
-            <p
-              className={`text-sm font-bold ${
+        {/* Desktop / tablet layout */}
+        <div className="hidden sm:block">
+          <div className="relative aspect-square overflow-hidden bg-[#1a1a1a]">
+            <img
+              src={item.image}
+              alt={item.name}
+              className={`w-full h-full object-cover transition-all duration-500 ${
                 sellerIsClosed
-                  ? "text-red-400"
-                  : isSoldOut
-                  ? "text-gray-600"
-                  : isLowStock
-                  ? "text-red-400"
-                  : "text-gray-400"
+                  ? "grayscale opacity-45"
+                  : "group-hover:scale-105"
               }`}
-            >
-              {sellerIsClosed
-                ? "Seller Closed"
-                : isSoldOut
-                ? "Unavailable"
-                : `${stock} left`}
-            </p>
+            />
+
+            <div className="absolute top-3 left-3 flex flex-col gap-2">
+              <span
+                className={`w-fit text-xs font-black px-3 py-1.5 rounded-full ${
+                  item.type === "Non-Veg"
+                    ? "bg-red-500 text-white"
+                    : "bg-green-500 text-black"
+                }`}
+              >
+                {item.type}
+              </span>
+
+              <span className="w-fit text-xs font-black px-3 py-1.5 rounded-full bg-black/75 text-yellow-400 border border-yellow-500/20">
+                {category}
+              </span>
+            </div>
+
+            <div className="absolute top-3 right-3 z-20">
+              {sellerIsClosed ? (
+                <span className="text-xs font-black px-3 py-1.5 rounded-full bg-red-600 text-white">
+                  CLOSED
+                </span>
+              ) : isSoldOut ? (
+                <span className="text-xs font-black px-3 py-1.5 rounded-full bg-gray-800 text-gray-400">
+                  Sold Out
+                </span>
+              ) : isLowStock ? (
+                <span className="text-xs font-black px-3 py-1.5 rounded-full bg-red-500 text-white">
+                  Only {stock} left
+                </span>
+              ) : (
+                <span className="text-xs font-black px-3 py-1.5 rounded-full bg-black/75 text-yellow-400 border border-yellow-500/20">
+                  Available
+                </span>
+              )}
+            </div>
+
+            {demandBadge && !sellerIsClosed && !isSoldOut && (
+              <div className="absolute left-3 bottom-3 z-20 max-w-[82%] bg-black/85 backdrop-blur border border-green-500/20 rounded-2xl px-3 py-2 shadow-xl">
+                <p className="text-green-400 text-xs font-black leading-tight">
+                  📈 {demandBadge.label}
+                </p>
+
+                <p className="text-white text-[11px] font-bold mt-0.5">
+                  {demandBadge.sublabel}
+                </p>
+              </div>
+            )}
+
+            {sellerIsClosed && (
+              <div className="absolute inset-0 z-10 bg-black/70 flex items-center justify-center px-4 text-center">
+                <div className="bg-red-600 text-white font-black px-5 py-4 rounded-2xl">
+                  <p className="text-lg leading-tight">🔴 Seller Closed</p>
+                  <p className="text-xs mt-1 opacity-90">
+                    Ordering is temporarily unavailable
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="mt-5">
-            {quantity === 0 || sellerIsClosed ? (
-              <button
-                type="button"
-                onClick={handleAddToCart}
-                disabled={isBlocked}
-                className={`w-full font-black py-4 rounded-2xl transition-all duration-200 text-base ${
-                  isBlocked
-                    ? "bg-[#1a1a1a] text-gray-600 cursor-not-allowed border border-red-500/20"
-                    : "bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black shadow-lg shadow-yellow-500/20"
+          <div className="p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3
+                  className={`text-xl font-black truncate ${
+                    sellerIsClosed ? "text-gray-400" : "text-white"
+                  }`}
+                >
+                  {item.name}
+                </h3>
+
+                <p className="text-gray-500 text-sm mt-1 truncate">
+                  By {item.seller}
+                </p>
+              </div>
+
+              <p
+                className={`font-black text-2xl shrink-0 ${
+                  sellerIsClosed ? "text-gray-500" : "text-yellow-400"
+                }`}
+              >
+                ₹{item.price}
+              </p>
+            </div>
+
+            {item.description && (
+              <p className="text-gray-500 text-sm mt-3 line-clamp-2">
+                {item.description}
+              </p>
+            )}
+
+            <div className="flex items-center justify-between gap-3 mt-4">
+              <p className="text-gray-500 text-sm">
+                Ready: <span className="text-gray-300">{item.time}</span>
+              </p>
+
+              <p
+                className={`text-sm font-bold ${
+                  sellerIsClosed
+                    ? "text-red-400"
+                    : isSoldOut
+                    ? "text-gray-600"
+                    : isLowStock
+                    ? "text-red-400"
+                    : "text-gray-400"
                 }`}
               >
                 {sellerIsClosed
                   ? "Seller Closed"
                   : isSoldOut
                   ? "Unavailable"
-                  : "+ Add to Cart"}
-              </button>
-            ) : (
-              <div className="flex items-center justify-between overflow-hidden rounded-2xl bg-yellow-500 text-black font-black shadow-lg shadow-yellow-500/20">
+                  : `${stock} left`}
+              </p>
+            </div>
+
+            <div className="mt-5">
+              {quantity === 0 || sellerIsClosed ? (
                 <button
                   type="button"
-                  onClick={handleDecrease}
-                  className="flex-1 py-4 text-xl hover:bg-yellow-400"
-                >
-                  −
-                </button>
-
-                <span className="px-5 py-4 bg-yellow-400 text-lg min-w-[70px] text-center">
-                  {quantity}
-                </span>
-
-                <button
-                  type="button"
-                  onClick={handleIncrease}
-                  disabled={quantity >= stock}
-                  className={`flex-1 py-4 text-xl ${
-                    quantity >= stock
-                      ? "opacity-40 cursor-not-allowed"
-                      : "hover:bg-yellow-400"
+                  onClick={handleAddToCart}
+                  disabled={isBlocked}
+                  className={`w-full font-black py-4 rounded-2xl transition-all duration-200 text-base ${
+                    isBlocked
+                      ? "bg-[#1a1a1a] text-gray-600 cursor-not-allowed border border-red-500/20"
+                      : "bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black shadow-lg shadow-yellow-500/20"
                   }`}
                 >
-                  +
+                  {sellerIsClosed
+                    ? "Seller Closed"
+                    : isSoldOut
+                    ? "Unavailable"
+                    : "+ Add to Cart"}
                 </button>
-              </div>
-            )}
+              ) : (
+                <div className="flex items-center justify-between overflow-hidden rounded-2xl bg-yellow-500 text-black font-black shadow-lg shadow-yellow-500/20">
+                  <button
+                    type="button"
+                    onClick={handleDecrease}
+                    className="flex-1 py-4 text-xl hover:bg-yellow-400"
+                  >
+                    −
+                  </button>
+
+                  <span className="px-5 py-4 bg-yellow-400 text-lg min-w-[70px] text-center">
+                    {quantity}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={handleIncrease}
+                    disabled={quantity >= stock}
+                    className={`flex-1 py-4 text-xl ${
+                      quantity >= stock
+                        ? "opacity-40 cursor-not-allowed"
+                        : "hover:bg-yellow-400"
+                    }`}
+                  >
+                    +
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </Link>
