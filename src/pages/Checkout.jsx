@@ -665,9 +665,6 @@ const [showQr, setShowQr] = useState(false);
                 <div className="mt-5 bg-black/10 border border-black/10 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
                   <div>
                     <p className="font-black">UPI recommended</p>
-                    <p className="text-black/70 text-sm mt-0.5">
-                      Fastest way to confirm payment
-                    </p>
                   </div>
 
                   <p className="font-black text-sm break-all text-right">
