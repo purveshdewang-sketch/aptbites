@@ -153,27 +153,27 @@ export default function Navbar() {
 
   if (authLoading) {
     return (
-      <header className="sticky top-0 z-50 bg-[#0d0b09] border-b border-[#241c16]">
+      <header className="sticky top-0 z-50 bg-[#0F0D1F] border-b border-[#34305A]">
         <div className="h-16 sm:h-[72px]" />
       </header>
     );
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-[#0d0b09]/90 backdrop-blur-2xl border-b border-[#241c16]">
+    <header className="sticky top-0 z-50 bg-[#0F0D1F]/92 backdrop-blur-2xl border-b border-[#34305A]">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="h-16 sm:h-[72px] flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-9 h-9 rounded-2xl bg-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
-              <span className="text-black font-black text-sm">Q</span>
+            <div className="w-9 h-9 rounded-2xl bg-[#55F3A5] flex items-center justify-center shadow-lg shadow-[#55F3A5]/20">
+              <span className="text-[#0F0D1F] font-black text-sm">Q</span>
             </div>
 
             <div className="leading-none">
-              <p className="text-white font-bold text-lg tracking-tight group-hover:text-orange-300 transition-all">
+              <p className="text-white font-bold text-lg tracking-tight group-hover:text-[#A77BE8] transition-all">
                 QuickBites
               </p>
 
-              <p className="text-[10px] text-[#8f8379] mt-1 tracking-wide uppercase">
+              <p className="text-[10px] text-[#A8A3C2] mt-1 tracking-wide uppercase">
                 neighbourhood food
               </p>
             </div>
@@ -189,8 +189,8 @@ export default function Navbar() {
                   to={link.path}
                   className={`text-sm font-medium transition-all duration-200 ${
                     isActive
-                      ? "text-orange-300"
-                      : "text-[#9d9186] hover:text-orange-300"
+                      ? "text-[#55F3A5]"
+                      : "text-[#A8A3C2] hover:text-[#A77BE8]"
                   }`}
                 >
                   {link.name}
@@ -203,8 +203,8 @@ export default function Navbar() {
                 to="/owner-dashboard"
                 className={`text-sm font-medium transition-all duration-200 ${
                   location.pathname === "/owner-dashboard"
-                    ? "text-orange-300"
-                    : "text-[#9d9186] hover:text-orange-300"
+                    ? "text-[#55F3A5]"
+                    : "text-[#A8A3C2] hover:text-[#A77BE8]"
                 }`}
               >
                 Owner Dashboard
@@ -216,7 +216,7 @@ export default function Navbar() {
             {!user && (
               <Link
                 to="/customer-login"
-                className="hidden md:flex bg-orange-500 hover:bg-orange-400 active:scale-95 text-black text-sm font-bold px-5 py-2.5 rounded-2xl transition-all duration-200 shadow-lg shadow-orange-500/10"
+                className="hidden md:flex bg-[#55F3A5] hover:bg-[#7CFFC0] active:scale-95 text-[#0F0D1F] text-sm font-bold px-5 py-2.5 rounded-2xl transition-all duration-200 shadow-lg shadow-[#55F3A5]/10"
               >
                 Sign In
               </Link>
@@ -227,19 +227,19 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={() => setProfileOpen(!profileOpen)}
-                  className="w-11 h-11 rounded-2xl bg-orange-500 hover:bg-orange-400 text-black font-black flex items-center justify-center transition-all duration-200 shadow-lg shadow-orange-500/10"
+                  className="w-11 h-11 rounded-2xl bg-[#A77BE8] hover:bg-[#B891F0] text-white font-black flex items-center justify-center transition-all duration-200 shadow-lg shadow-[#A77BE8]/15"
                 >
                   {getInitial()}
                 </button>
 
                 {profileOpen && (
-                  <div className="absolute right-0 mt-3 w-72 bg-[#15110e] border border-[#2a211b] rounded-3xl overflow-hidden shadow-2xl shadow-black/50">
-                    <div className="p-5 border-b border-[#2a211b]">
+                  <div className="absolute right-0 mt-3 w-72 bg-[#1B1938] border border-[#34305A] rounded-3xl overflow-hidden shadow-2xl shadow-black/50">
+                    <div className="p-5 border-b border-[#34305A]">
                       <p className="text-white font-semibold truncate">
                         {user.email}
                       </p>
 
-                      <p className="text-[#8f8379] text-sm mt-1">
+                      <p className="text-[#A8A3C2] text-sm mt-1">
                         {getAccountLabel()}
                       </p>
                     </div>
@@ -247,21 +247,21 @@ export default function Navbar() {
                     <div className="p-2">
                       <Link
                         to="/marketplace"
-                        className="block px-4 py-3 rounded-2xl text-[#b8ada4] hover:bg-[#211912] hover:text-orange-300 transition-all"
+                        className="block px-4 py-3 rounded-2xl text-[#DAD6F2] hover:bg-[#2B284F] hover:text-[#55F3A5] transition-all"
                       >
                         Marketplace
                       </Link>
 
                       <Link
                         to="/orders"
-                        className="block px-4 py-3 rounded-2xl text-[#b8ada4] hover:bg-[#211912] hover:text-orange-300 transition-all"
+                        className="block px-4 py-3 rounded-2xl text-[#DAD6F2] hover:bg-[#2B284F] hover:text-[#55F3A5] transition-all"
                       >
                         Active Orders
                       </Link>
 
                       <Link
                         to="/order-history"
-                        className="block px-4 py-3 rounded-2xl text-[#b8ada4] hover:bg-[#211912] hover:text-orange-300 transition-all"
+                        className="block px-4 py-3 rounded-2xl text-[#DAD6F2] hover:bg-[#2B284F] hover:text-[#55F3A5] transition-all"
                       >
                         Order History
                       </Link>
@@ -269,7 +269,7 @@ export default function Navbar() {
                       {isAdmin && (
                         <Link
                           to="/owner-dashboard"
-                          className="block px-4 py-3 rounded-2xl text-orange-300 hover:bg-orange-500/10 transition-all"
+                          className="block px-4 py-3 rounded-2xl text-[#55F3A5] hover:bg-[#55F3A5]/10 transition-all"
                         >
                           Owner Dashboard
                         </Link>
@@ -278,7 +278,7 @@ export default function Navbar() {
                       {isSeller ? (
                         <Link
                           to="/seller-dashboard"
-                          className="block px-4 py-3 rounded-2xl text-[#b8ada4] hover:bg-[#211912] hover:text-orange-300 transition-all"
+                          className="block px-4 py-3 rounded-2xl text-[#DAD6F2] hover:bg-[#2B284F] hover:text-[#55F3A5] transition-all"
                         >
                           Seller Dashboard
                         </Link>
@@ -287,7 +287,7 @@ export default function Navbar() {
                           type="button"
                           onClick={handleSwitchToSeller}
                           disabled={switchingSeller}
-                          className="w-full text-left px-4 py-3 rounded-2xl text-orange-300 hover:bg-orange-500/10 transition-all disabled:opacity-50"
+                          className="w-full text-left px-4 py-3 rounded-2xl text-[#A77BE8] hover:bg-[#A77BE8]/10 transition-all disabled:opacity-50"
                         >
                           {switchingSeller
                             ? "Switching..."
@@ -310,7 +310,7 @@ export default function Navbar() {
 
             <Link
               to="/cart"
-              className="relative bg-[#171310] hover:bg-[#211912] border border-[#2a211b] hover:border-orange-500/40 active:scale-95 text-white px-3 sm:px-4 py-2 rounded-2xl transition-all duration-200 flex items-center gap-2"
+              className="relative bg-[#1B1938] hover:bg-[#2B284F] border border-[#34305A] hover:border-[#55F3A5]/50 active:scale-95 text-white px-3 sm:px-4 py-2 rounded-2xl transition-all duration-200 flex items-center gap-2"
             >
               <span className="text-lg">🛒</span>
 
@@ -319,8 +319,8 @@ export default function Navbar() {
               </span>
 
               {cartCount > 0 && (
-                <div className="absolute -top-2 -right-2 min-w-[22px] h-[22px] px-1 bg-orange-500 rounded-full flex items-center justify-center">
-                  <span className="text-black text-[11px] font-black">
+                <div className="absolute -top-2 -right-2 min-w-[22px] h-[22px] px-1 bg-[#55F3A5] rounded-full flex items-center justify-center">
+                  <span className="text-[#0F0D1F] text-[11px] font-black">
                     {cartCount}
                   </span>
                 </div>
@@ -330,7 +330,7 @@ export default function Navbar() {
             <button
               type="button"
               onClick={() => setMenuOpen(!menuOpen)}
-              className="md:hidden w-11 h-11 rounded-2xl bg-[#171310] border border-[#2a211b] hover:border-orange-500/40 flex items-center justify-center text-orange-300 transition-all duration-200"
+              className="md:hidden w-11 h-11 rounded-2xl bg-[#1B1938] border border-[#34305A] hover:border-[#55F3A5]/50 flex items-center justify-center text-[#55F3A5] transition-all duration-200"
             >
               {menuOpen ? "✕" : "☰"}
             </button>
@@ -339,7 +339,7 @@ export default function Navbar() {
 
         {menuOpen && (
           <div className="md:hidden pb-4">
-            <div className="bg-[#15110e] border border-[#2a211b] rounded-3xl p-3 shadow-2xl shadow-black/40">
+            <div className="bg-[#1B1938] border border-[#34305A] rounded-3xl p-3 shadow-2xl shadow-black/40">
               <div className="grid gap-1">
                 {navLinks.map((link) => {
                   const isActive = location.pathname === link.path;
@@ -350,8 +350,8 @@ export default function Navbar() {
                       to={link.path}
                       className={`px-4 py-3 rounded-2xl text-sm font-medium transition-all duration-200 ${
                         isActive
-                          ? "bg-orange-500 text-black"
-                          : "text-[#b8ada4] hover:bg-[#211912] hover:text-orange-300"
+                          ? "bg-[#55F3A5] text-[#0F0D1F]"
+                          : "text-[#DAD6F2] hover:bg-[#2B284F] hover:text-[#55F3A5]"
                       }`}
                     >
                       {link.name}
@@ -364,20 +364,20 @@ export default function Navbar() {
                     to="/owner-dashboard"
                     className={`px-4 py-3 rounded-2xl text-sm font-medium transition-all duration-200 ${
                       location.pathname === "/owner-dashboard"
-                        ? "bg-orange-500 text-black"
-                        : "text-orange-300 hover:bg-orange-500/10"
+                        ? "bg-[#55F3A5] text-[#0F0D1F]"
+                        : "text-[#55F3A5] hover:bg-[#55F3A5]/10"
                     }`}
                   >
                     Owner Dashboard
                   </Link>
                 )}
 
-                <div className="h-px bg-[#2a211b] my-2" />
+                <div className="h-px bg-[#34305A] my-2" />
 
                 {!user ? (
                   <Link
                     to="/customer-login"
-                    className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-4 py-3 rounded-2xl text-center"
+                    className="bg-[#55F3A5] hover:bg-[#7CFFC0] text-[#0F0D1F] font-bold px-4 py-3 rounded-2xl text-center"
                   >
                     Sign In
                   </Link>
@@ -388,21 +388,21 @@ export default function Navbar() {
                         {user.email}
                       </p>
 
-                      <p className="text-[#8f8379] text-sm mt-1">
+                      <p className="text-[#A8A3C2] text-sm mt-1">
                         {getAccountLabel()}
                       </p>
                     </div>
 
                     <Link
                       to="/orders"
-                      className="px-4 py-3 rounded-2xl text-[#b8ada4] hover:bg-[#211912] hover:text-orange-300"
+                      className="px-4 py-3 rounded-2xl text-[#DAD6F2] hover:bg-[#2B284F] hover:text-[#55F3A5]"
                     >
                       Active Orders
                     </Link>
 
                     <Link
                       to="/order-history"
-                      className="px-4 py-3 rounded-2xl text-[#b8ada4] hover:bg-[#211912] hover:text-orange-300"
+                      className="px-4 py-3 rounded-2xl text-[#DAD6F2] hover:bg-[#2B284F] hover:text-[#55F3A5]"
                     >
                       Order History
                     </Link>
@@ -410,7 +410,7 @@ export default function Navbar() {
                     {isAdmin && (
                       <Link
                         to="/owner-dashboard"
-                        className="px-4 py-3 rounded-2xl text-orange-300 hover:bg-orange-500/10"
+                        className="px-4 py-3 rounded-2xl text-[#55F3A5] hover:bg-[#55F3A5]/10"
                       >
                         Owner Dashboard
                       </Link>
@@ -419,7 +419,7 @@ export default function Navbar() {
                     {isSeller ? (
                       <Link
                         to="/seller-dashboard"
-                        className="px-4 py-3 rounded-2xl text-[#b8ada4] hover:bg-[#211912] hover:text-orange-300"
+                        className="px-4 py-3 rounded-2xl text-[#DAD6F2] hover:bg-[#2B284F] hover:text-[#55F3A5]"
                       >
                         Seller Dashboard
                       </Link>
@@ -428,7 +428,7 @@ export default function Navbar() {
                         type="button"
                         onClick={handleSwitchToSeller}
                         disabled={switchingSeller}
-                        className="text-left px-4 py-3 rounded-2xl text-orange-300 hover:bg-orange-500/10 disabled:opacity-50"
+                        className="text-left px-4 py-3 rounded-2xl text-[#A77BE8] hover:bg-[#A77BE8]/10 disabled:opacity-50"
                       >
                         {switchingSeller
                           ? "Switching..."
