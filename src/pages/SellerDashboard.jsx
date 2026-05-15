@@ -1191,47 +1191,55 @@ function formatScheduledDateTime(value) {
                           {order.delivery_type} • {order.flat}
                         </p>
 
-                        <div className="flex flex-wrap gap-2 mt-3">
+                       <div className="absolute top-5 right-5">
   <span
-    className={`text-xs font-bold px-3 py-1 rounded-full ${
+    className={`w-fit border text-xs font-bold px-3 py-1.5 rounded-full ${getStatusBadgeClass(
+      autoStatus
+    )}`}
+  >
+    {getStatusLabel(autoStatus)}
+  </span>
+</div>
+
+<div className="flex flex-wrap gap-2 mt-3">
+  <span
+    className={`text-xs font-bold px-3 py-1.5 rounded-full ${
       orderIsSelfPickup
-        ? "bg-emerald-900/40 text-emerald-300"
-        : "bg-blue-900/40 text-blue-300"
+        ? "bg-emerald-900/40 text-emerald-300 border border-emerald-500/20"
+        : "bg-blue-900/40 text-blue-300 border border-blue-500/20"
     }`}
   >
     {orderIsSelfPickup ? "🛍️ Self Pickup" : "🚚 Delivery"}
   </span>
 
   <span
-    className={`text-xs font-bold px-3 py-1 rounded-full ${
+    className={`text-xs font-bold px-3 py-1.5 rounded-full ${
       sellerResponse === "accepted"
-        ? "bg-green-900/40 text-green-300"
-        : "bg-purple-900/40 text-purple-300"
+        ? "bg-green-900/40 text-green-300 border border-green-500/20"
+        : "bg-purple-900/40 text-purple-300 border border-purple-500/20"
     }`}
   >
-{scheduled && (
-  <div className="mt-4 bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4">
-    <p className="text-yellow-300 text-sm font-black">
-      Scheduled for
-    </p>
-
-    <p className="text-white text-lg font-black mt-1">
-      {formatScheduledDateTime(order.scheduled_for)}
-    </p>
-  </div>
-)}
-
-    {sellerResponse === "accepted"
-      ? "Accepted"
-      : "Needs Response"}
+    {sellerResponse === "accepted" ? "Accepted" : "Needs Response"}
   </span>
 
-  {order.scheduled_order && (
-    <span className="text-xs font-bold px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-300 border border-yellow-500/20">
+  {scheduled && (
+    <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-yellow-500/10 text-yellow-300 border border-yellow-500/20">
       🕒 Scheduled
     </span>
   )}
 </div>
+
+{scheduled && (
+  <div className="mt-4 w-full max-w-md bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4">
+    <p className="text-yellow-300 text-xs font-black uppercase tracking-wide">
+      Scheduled for
+    </p>
+
+    <p className="text-white text-lg sm:text-xl font-black mt-1">
+      {formatScheduledDateTime(order.scheduled_for)}
+    </p>
+  </div>
+)}
                       </div>
 
                       <span
