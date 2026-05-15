@@ -3,18 +3,20 @@
   "short_name": "QuickBites",
   "description": "Homemade food from trusted neighbours",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0F0D1F",
   "theme_color": "#0F0D1F",
   "icons": [
     {
-      "src": "/images/quickbites-logo.png",
+      "src": "/quickbites-logo.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/images/quickbites-logo.png",
+      "src": "/quickbites-logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

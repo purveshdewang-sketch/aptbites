@@ -1,9 +1,9 @@
-const CACHE_NAME = "quickbites-cache-v1";
+const CACHE_NAME = "quickbites-cache-v2";
 
 const urlsToCache = [
   "/",
   "/manifest.json",
-  "/favicon.svg"
+  "/quickbites-logo.png"
 ];
 
 self.addEventListener("install", (event) => {
@@ -61,8 +61,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title || "QuickBites", {
       body: data.body || "You have a new update.",
-      icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
+      icon: "/quickbites-logo.png",
+      badge: "/quickbites-logo.png",
       vibrate: [200, 100, 200],
       data: {
         url: data.url || "/",
@@ -77,19 +77,24 @@ self.addEventListener("notificationclick", (event) => {
   const targetUrl = event.notification?.data?.url || "/";
 
   event.waitUntil(
-    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        if ("focus" in client) {
-          client.focus();
-          return;
+    clients
+      .matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      })
+      .then((clientList) => {
+        for (const client of clientList) {
+          if ("focus" in client) {
+            client.focus();
+            return;
+          }
         }
-      }
 
-      if (clients.openWindow) {
-        return clients.openWindow(targetUrl);
-      }
+        if (clients.openWindow) {
+          return clients.openWindow(targetUrl);
+        }
 
-      return null;
-    })
+        return null;
+      })
   );
 });
