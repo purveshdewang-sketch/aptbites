@@ -12,10 +12,11 @@ export default function FoodCard({ item }) {
 
   const stock = Number(item.stock || 0);
   const category = item.category || "Meals";
+  const soldCount = Number(item.sold_count || 0);
+  const demandBadge = item.demand_badge || null;
 
   const sellerIsClosed = item.seller_online === false;
   const isLowStock = stock > 0 && stock <= 2;
-  const isSellingFast = stock > 2 && stock <= 5;
   const isSoldOut = stock <= 0;
   const isBlocked = sellerIsClosed || isSoldOut;
 
@@ -133,16 +134,24 @@ export default function FoodCard({ item }) {
               <span className="text-xs font-black px-3 py-1.5 rounded-full bg-red-500 text-white">
                 Only {stock} left
               </span>
-            ) : isSellingFast ? (
-              <span className="text-xs font-black px-3 py-1.5 rounded-full bg-yellow-500 text-black">
-                Selling Fast
-              </span>
             ) : (
               <span className="text-xs font-black px-3 py-1.5 rounded-full bg-black/70 text-yellow-400 border border-yellow-500/20">
                 Available
               </span>
             )}
           </div>
+
+          {demandBadge && !sellerIsClosed && !isSoldOut && (
+            <div className="absolute left-3 bottom-3 z-20 max-w-[78%] bg-black/80 backdrop-blur border border-green-500/20 rounded-2xl px-3 py-2 shadow-xl">
+              <p className="text-green-400 text-xs font-black leading-tight">
+                📈 {demandBadge.label}
+              </p>
+
+              <p className="text-white text-[11px] font-bold mt-0.5">
+                {demandBadge.sublabel}
+              </p>
+            </div>
+          )}
 
           {sellerIsClosed && (
             <div className="absolute inset-0 z-10 bg-black/70 flex items-center justify-center px-4 text-center">
@@ -168,7 +177,7 @@ export default function FoodCard({ item }) {
               </h3>
 
               <p className="text-gray-500 text-sm mt-1 truncate">
-                {item.seller}
+                By {item.seller}
               </p>
             </div>
 
@@ -180,6 +189,12 @@ export default function FoodCard({ item }) {
               ₹{item.price}
             </p>
           </div>
+
+          {soldCount > 0 && (
+            <div className="mt-3 w-fit bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-black px-3 py-1.5 rounded-full">
+              {soldCount} order{soldCount === 1 ? "" : "s"} sold
+            </div>
+          )}
 
           {item.description && (
             <p className="text-gray-500 text-sm mt-3 line-clamp-2">
@@ -264,10 +279,6 @@ export default function FoodCard({ item }) {
               </div>
             )}
           </div>
-
-          <p className="text-gray-600 text-xs text-center mt-3">
-            Tap card to view seller’s other dishes
-          </p>
         </div>
       </Link>
     </>

@@ -6,44 +6,21 @@ import { supabase } from "../lib/supabaseClient";
 import { useCart } from "../context/CartContext";
 
 const FOOD_CATEGORIES = [
-  {
-    label: "All",
-    emoji: "🍽️",
-  },
-  {
-    label: "Meals",
-    emoji: "🍛",
-  },
-  {
-    label: "Breakfast",
-    emoji: "🥞",
-  },
-  {
-    label: "Snacks",
-    emoji: "🥪",
-  },
-  {
-    label: "Sweets",
-    emoji: "🍰",
-  },
-  {
-    label: "Drinks",
-    emoji: "🥤",
-  },
-  {
-    label: "Tiffin",
-    emoji: "🍱",
-  },
-  {
-    label: "Specials",
-    emoji: "⭐",
-  },
+  { label: "All", emoji: "🍽️" },
+  { label: "Meals", emoji: "🍛" },
+  { label: "Breakfast", emoji: "🥞" },
+  { label: "Snacks", emoji: "🥪" },
+  { label: "Sweets", emoji: "🍰" },
+  { label: "Drinks", emoji: "🥤" },
+  { label: "Tiffin", emoji: "🍱" },
+  { label: "Specials", emoji: "⭐" },
 ];
 
 export default function Marketplace() {
   const { cartCount } = useCart();
 
   const [foods, setFoods] = useState([]);
+  const [orderItems, setOrderItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState("All");
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -52,7 +29,7 @@ export default function Marketplace() {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    fetchFoods();
+    fetchMarketplaceData();
 
     const foodsChannel = supabase
       .channel("foods-realtime-channel")
@@ -64,7 +41,7 @@ export default function Marketplace() {
           table: "foods",
         },
         () => {
-          fetchFoods();
+          fetchMarketplaceData();
         }
       )
       .subscribe();
@@ -79,7 +56,22 @@ export default function Marketplace() {
           table: "profiles",
         },
         () => {
-          fetchFoods();
+          fetchMarketplaceData();
+        }
+      )
+      .subscribe();
+
+    const ordersChannel = supabase
+      .channel("orders-sales-realtime-channel")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+        },
+        () => {
+          fetchMarketplaceData(false);
         }
       )
       .subscribe();
@@ -87,11 +79,15 @@ export default function Marketplace() {
     return () => {
       supabase.removeChannel(foodsChannel);
       supabase.removeChannel(profilesChannel);
+      supabase.removeChannel(ordersChannel);
     };
   }, []);
 
-  async function fetchFoods() {
-    setLoading(true);
+  async function fetchMarketplaceData(showLoading = true) {
+    if (showLoading) {
+      setLoading(true);
+    }
+
     setErrorMessage("");
 
     const { data: foodData, error: foodError } = await supabase
@@ -102,9 +98,15 @@ export default function Marketplace() {
     if (foodError) {
       setErrorMessage(foodError.message);
       setFoods([]);
+      setOrderItems([]);
       setLoading(false);
       return;
     }
+
+    const { data: orderData } = await supabase
+      .from("orders")
+      .select("items, status")
+      .neq("status", "cancelled");
 
     const sellerIds = [
       ...new Set(
@@ -128,18 +130,107 @@ export default function Marketplace() {
       }, {});
     }
 
+    const parsedOrderItems = [];
+
+    (orderData || []).forEach((order) => {
+      const items = getOrderItems(order);
+
+      items.forEach((item) => {
+        parsedOrderItems.push(item);
+      });
+    });
+
+    const salesMap = buildSalesMap(parsedOrderItems);
+
     const enrichedFoods = (foodData || []).map((food) => {
       const sellerId = food.user_id || food.seller_id;
+      const soldCount = salesMap[String(food.id)] || 0;
 
       return {
         ...food,
         seller_online: sellerStatusMap[sellerId] !== false,
+        sold_count: soldCount,
+        demand_badge: getDemandBadge(soldCount),
       };
     });
 
     setFoods(enrichedFoods);
+    setOrderItems(parsedOrderItems);
     setLoading(false);
   }
+
+  function getOrderItems(order) {
+    if (Array.isArray(order.items)) return order.items;
+
+    if (typeof order.items === "string") {
+      try {
+        const parsedItems = JSON.parse(order.items);
+        return Array.isArray(parsedItems) ? parsedItems : [];
+      } catch {
+        return [];
+      }
+    }
+
+    return [];
+  }
+
+  function buildSalesMap(items) {
+    const map = {};
+
+    items.forEach((item) => {
+      const itemId = item.id;
+
+      if (!itemId) return;
+
+      if (!map[String(itemId)]) {
+        map[String(itemId)] = 0;
+      }
+
+      map[String(itemId)] += Number(item.quantity || 1);
+    });
+
+    return map;
+  }
+
+  function getDemandBadge(soldCount) {
+    if (soldCount >= 10) {
+      return {
+        label: "Highest Selling",
+        sublabel: `${soldCount} orders`,
+      };
+    }
+
+    if (soldCount >= 6) {
+      return {
+        label: "High Demand",
+        sublabel: `${soldCount} orders`,
+      };
+    }
+
+    if (soldCount >= 3) {
+      return {
+        label: "Trending",
+        sublabel: `${soldCount} orders`,
+      };
+    }
+
+    if (soldCount >= 1) {
+      return {
+        label: "Popular Choice",
+        sublabel: `${soldCount} order${soldCount === 1 ? "" : "s"}`,
+      };
+    }
+
+    return null;
+  }
+
+  const highestSellingFood = useMemo(() => {
+    const soldFoods = foods
+      .filter((food) => Number(food.sold_count || 0) > 0)
+      .sort((a, b) => Number(b.sold_count || 0) - Number(a.sold_count || 0));
+
+    return soldFoods[0] || null;
+  }, [foods]);
 
   const categoryCounts = useMemo(() => {
     const counts = {};
@@ -164,7 +255,6 @@ export default function Marketplace() {
   const filteredFoods = useMemo(() => {
     return foods.filter((item) => {
       const searchValue = searchTerm.trim().toLowerCase();
-
       const foodCategory = item.category || "Meals";
 
       const matchesSearch =
@@ -187,15 +277,6 @@ export default function Marketplace() {
     return foods.filter(
       (item) => Number(item.stock || 0) > 0 && item.seller_online !== false
     );
-  }, [foods]);
-
-  const lowStockCount = useMemo(() => {
-    return foods.filter(
-      (item) =>
-        item.seller_online !== false &&
-        Number(item.stock || 0) > 0 &&
-        Number(item.stock || 0) <= 2
-    ).length;
   }, [foods]);
 
   function clearFilters() {
@@ -267,7 +348,7 @@ export default function Marketplace() {
               trusted home chefs inside your neighbourhood.
             </p>
 
-            <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-4">
                 <p className="text-gray-500 text-xs uppercase font-bold">
                   Available Now
@@ -279,14 +360,32 @@ export default function Marketplace() {
 
               <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-4">
                 <p className="text-gray-500 text-xs uppercase font-bold">
-                  Selling Fast
+                  Highest Selling
                 </p>
-                <p className="text-2xl font-black text-red-400 mt-1">
-                  {lowStockCount}
-                </p>
+
+                {highestSellingFood ? (
+                  <div className="mt-2 flex items-center gap-3">
+                    <img
+                      src={highestSellingFood.image}
+                      alt={highestSellingFood.name}
+                      className="w-12 h-12 rounded-full object-cover border border-[#333]"
+                    />
+
+                    <div className="min-w-0">
+                      <p className="text-white font-black truncate">
+                        {highestSellingFood.name}
+                      </p>
+                      <p className="text-green-400 text-sm font-bold">
+                        {highestSellingFood.sold_count} orders
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-2xl font-black text-gray-500 mt-1">—</p>
+                )}
               </div>
 
-              <div className="hidden sm:block bg-[#111111] border border-[#2a2a2a] rounded-2xl p-4">
+              <div className="bg-[#111111] border border-[#2a2a2a] rounded-2xl p-4">
                 <p className="text-gray-500 text-xs uppercase font-bold">
                   Food Drops
                 </p>
