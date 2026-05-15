@@ -37,6 +37,16 @@ export default function Profile() {
     setLoading(true);
     setMessage("");
 
+    const defaultProfile = {
+      full_name: user?.user_metadata?.full_name || "",
+      phone: user?.phone || user?.user_metadata?.phone || "",
+      flat: user?.user_metadata?.flat || "",
+      seller_kitchen_name: "",
+      seller_specialty: "",
+      seller_about: "",
+      accept_scheduled_orders: true,
+    };
+
     const { data, error } = await supabase
       .from("profiles")
       .select(
@@ -47,23 +57,30 @@ export default function Profile() {
 
     if (error) {
       setMessage(`Could not load profile: ${error.message}`);
+      setFormData(defaultProfile);
       setLoading(false);
       return;
     }
 
-    const profileRole = String(data?.role || user?.user_metadata?.role || "customer").toLowerCase();
+    const profileRole = String(
+      data?.role || user?.user_metadata?.role || "customer"
+    ).toLowerCase();
+
     const sellerAllowed =
       profileRole === "seller" ||
       profileRole === "admin" ||
       data?.is_seller === true;
 
-    setRole(profileRole);
+    setRole(profileRole || "customer");
     setIsSeller(sellerAllowed);
 
     setFormData({
-      full_name: data?.full_name || user?.user_metadata?.full_name || "",
-      phone: data?.phone || user?.phone || user?.user_metadata?.phone || "",
-      flat: data?.flat || user?.user_metadata?.flat || "",
+      full_name:
+        data?.full_name || user?.user_metadata?.full_name || "",
+      phone:
+        data?.phone || user?.phone || user?.user_metadata?.phone || "",
+      flat:
+        data?.flat || user?.user_metadata?.flat || "",
       seller_kitchen_name: data?.seller_kitchen_name || "",
       seller_specialty: data?.seller_specialty || "",
       seller_about: data?.seller_about || "",
@@ -96,6 +113,8 @@ export default function Profile() {
       full_name: formData.full_name,
       phone: formData.phone,
       flat: formData.flat,
+      role,
+      is_seller: isSeller,
     };
 
     if (isSeller) {
@@ -119,6 +138,7 @@ export default function Profile() {
         full_name: formData.full_name,
         phone: formData.phone,
         flat: formData.flat,
+        role,
       },
     });
 
@@ -332,7 +352,8 @@ export default function Profile() {
 
                   {!isSeller && (
                     <p className="text-gray-500 text-sm mt-3">
-                      To sell food, use “Switch to Seller Account” from the profile menu.
+                      To sell food, use “Switch to Seller Account” from the
+                      profile menu.
                     </p>
                   )}
                 </div>
@@ -345,7 +366,8 @@ export default function Profile() {
                   <h2 className="text-2xl font-black mt-2">Reset password</h2>
 
                   <p className="text-gray-500 text-sm mt-3 leading-relaxed">
-                    We will send a secure password reset link to your registered email.
+                    We will send a secure password reset link to your registered
+                    email.
                   </p>
 
                   <button
