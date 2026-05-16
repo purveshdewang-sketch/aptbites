@@ -154,28 +154,46 @@ export default function Checkout() {
       if (!sellerId || sellerId === "MIXED_SELLERS") {
         setSellerAcceptsScheduledOrders(false);
         setCheckingSellerSchedule(false);
+
+        if (orderTiming === "scheduled") {
+          setOrderTiming("now");
+          setScheduledDate("");
+          setScheduledTime("");
+        }
+
         return;
       }
 
       setCheckingSellerSchedule(true);
 
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("accept_scheduled_orders")
-        .eq("id", sellerId)
-        .maybeSingle();
+      const allowed = await fetchSellerSchedulePermission(sellerId);
 
-      if (error) {
-        setSellerAcceptsScheduledOrders(false);
-      } else {
-        setSellerAcceptsScheduledOrders(data?.accept_scheduled_orders === true);
-      }
-
+      setSellerAcceptsScheduledOrders(allowed);
       setCheckingSellerSchedule(false);
+
+      if (!allowed && orderTiming === "scheduled") {
+        setOrderTiming("now");
+        setScheduledDate("");
+        setScheduledTime("");
+      }
     }
 
     checkSellerSchedulePermission();
-  }, [cartItems]);
+  }, [cartItems, orderTiming]);
+
+  async function fetchSellerSchedulePermission(sellerId) {
+    if (!sellerId || sellerId === "MIXED_SELLERS") return false;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("accept_scheduled_orders")
+      .eq("id", sellerId)
+      .maybeSingle();
+
+    if (error) return false;
+
+    return data?.accept_scheduled_orders === true;
+  }
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -196,12 +214,24 @@ export default function Checkout() {
   }
 
   function selectOrderTiming(nextTiming) {
-    if (nextTiming === "scheduled" && !sellerAcceptsScheduledOrders) {
-      alert("This seller is not accepting scheduled orders right now.");
-      return;
+    if (nextTiming === "scheduled") {
+      if (checkingSellerSchedule) {
+        alert("Checking seller schedule availability. Please try again.");
+        return;
+      }
+
+      if (!sellerAcceptsScheduledOrders) {
+        alert("This seller is not accepting scheduled orders right now.");
+        return;
+      }
     }
 
     setOrderTiming(nextTiming);
+
+    if (nextTiming === "now") {
+      setScheduledDate("");
+      setScheduledTime("");
+    }
   }
 
   function getSellerIdFromCart() {
@@ -272,7 +302,7 @@ export default function Checkout() {
 
     const { data, error } = await supabase
       .from("foods")
-      .select("id, name, stock, user_id")
+      .select("id, name, stock, user_id, seller_id")
       .in("id", foodIds);
 
     if (error) {
@@ -349,13 +379,24 @@ export default function Checkout() {
     setLoading(true);
 
     try {
-      const scheduledFor = getScheduledDateTime();
-
-      if (orderTiming === "scheduled" && !sellerAcceptsScheduledOrders) {
-        throw new Error(
-          "This seller is not accepting scheduled orders right now."
+      if (orderTiming === "scheduled") {
+        const latestScheduleAllowed = await fetchSellerSchedulePermission(
+          sellerId
         );
+
+        if (!latestScheduleAllowed) {
+          setSellerAcceptsScheduledOrders(false);
+          setOrderTiming("now");
+          setScheduledDate("");
+          setScheduledTime("");
+
+          throw new Error(
+            "This seller is not accepting scheduled orders right now."
+          );
+        }
       }
+
+      const scheduledFor = getScheduledDateTime();
 
       await validateLiveStockBeforeOrder();
 
