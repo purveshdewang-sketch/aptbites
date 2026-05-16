@@ -174,7 +174,7 @@ export default function Home() {
 
                 <h1 className="text-7xl font-black leading-[1.02] tracking-tight text-[#111827]">
                   Homemade food,
-                  <span className="block text-[#6B8E23">
+                  <span className="block text-[#D97757">
                     closer than ever.
                   </span>
                 </h1>
