@@ -156,7 +156,7 @@ export default function Navbar() {
 
   function LogoMark() {
     return (
-      <div className="w-11 h-11 rounded-2xl bg-[#FFFFF2] border border-[#D7F5EF] flex items-center justify-center overflow-hidden shadow-lg shadow-[#41D3BD]/10 shrink-0">
+      <div className="w-11 h-11 rounded-2xl bg-[#FFFFF2] border border-[#41D3BD]/40 flex items-center justify-center overflow-hidden shadow-lg shadow-black/20 shrink-0">
         {!logoFailed ? (
           <img
             src="/quickbites-logo.png"
@@ -165,7 +165,7 @@ export default function Navbar() {
             onError={() => setLogoFailed(true)}
           />
         ) : (
-          <span className="text-[#1A9F8D] font-black text-base">Q</span>
+          <span className="text-[#073B35] font-black text-base">Q</span>
         )}
       </div>
     );
@@ -173,7 +173,7 @@ export default function Navbar() {
 
   if (authLoading) {
     return (
-      <header className="sticky top-0 z-50 bg-[#FFFFF2]/95 border-b border-[#D7F5EF]">
+      <header className="sticky top-0 z-50 bg-[#073B35] border-b border-[#0B5A51]">
         <div className="h-16 sm:h-[72px]" />
       </header>
     );
@@ -181,18 +181,18 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-[#FFFFF2]/92 backdrop-blur-2xl border-b border-[#D7F5EF]">
+      <header className="sticky top-0 z-50 bg-[#073B35]/96 backdrop-blur-2xl border-b border-[#0B5A51] shadow-lg shadow-[#073B35]/20">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="h-16 sm:h-[72px] flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3 group min-w-0">
               <LogoMark />
 
               <div className="leading-none min-w-0">
-                <p className="text-[#111827] font-bold text-lg tracking-tight group-hover:text-[#1A9F8D] transition-all truncate">
+                <p className="text-[#FFFFF2] font-bold text-lg tracking-tight group-hover:text-[#41D3BD] transition-all truncate">
                   QuickBites
                 </p>
 
-                <p className="text-[10px] text-[#51615D] mt-1 tracking-wide uppercase truncate">
+                <p className="text-[10px] text-[#A9D9D2] mt-1 tracking-wide uppercase truncate">
                   neighbourhood food
                 </p>
               </div>
@@ -208,8 +208,8 @@ export default function Navbar() {
                     to={link.path}
                     className={`text-sm font-semibold transition-all duration-200 ${
                       isActive
-                        ? "text-[#1A9F8D]"
-                        : "text-[#51615D] hover:text-[#1A9F8D]"
+                        ? "text-[#41D3BD]"
+                        : "text-[#CFEDEA] hover:text-[#41D3BD]"
                     }`}
                   >
                     {link.name}
@@ -222,8 +222,8 @@ export default function Navbar() {
                   to="/owner-dashboard"
                   className={`text-sm font-semibold transition-all duration-200 ${
                     location.pathname === "/owner-dashboard"
-                      ? "text-[#1A9F8D]"
-                      : "text-[#51615D] hover:text-[#1A9F8D]"
+                      ? "text-[#41D3BD]"
+                      : "text-[#CFEDEA] hover:text-[#41D3BD]"
                   }`}
                 >
                   Owner Dashboard
@@ -235,7 +235,7 @@ export default function Navbar() {
               {!user && (
                 <Link
                   to="/customer-login"
-                  className="hidden md:flex bg-gradient-to-r from-[#41D3BD] to-[#1A9F8D] hover:from-[#35C2AD] hover:to-[#158B7C] active:scale-95 text-[#073B35] text-sm font-black px-5 py-2.5 rounded-2xl transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
+                  className="hidden md:flex bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-95 text-[#073B35] text-sm font-black px-5 py-2.5 rounded-2xl transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
                 >
                   Sign In
                 </Link>
@@ -243,7 +243,7 @@ export default function Navbar() {
 
               <Link
                 to="/cart"
-                className="relative bg-white/80 hover:bg-[#D7F5EF] border border-[#D7F5EF] hover:border-[#41D3BD]/60 active:scale-95 text-[#111827] w-11 h-11 sm:w-auto sm:h-auto sm:px-4 sm:py-2 rounded-2xl transition-all duration-200 flex items-center justify-center gap-2 shadow-sm"
+                className="relative bg-[#0B4A43] hover:bg-[#0D5E55] border border-[#14796D] hover:border-[#41D3BD] active:scale-95 text-[#FFFFF2] w-11 h-11 sm:w-auto sm:h-auto sm:px-4 sm:py-2 rounded-2xl transition-all duration-200 flex items-center justify-center gap-2 shadow-sm"
               >
                 <span className="text-lg">🛒</span>
 
@@ -266,13 +266,13 @@ export default function Navbar() {
                     <button
                       type="button"
                       onClick={() => setProfileOpen(!profileOpen)}
-                      className="w-11 h-11 rounded-2xl bg-gradient-to-r from-[#41D3BD] to-[#1A9F8D] hover:from-[#35C2AD] hover:to-[#158B7C] text-[#073B35] font-black flex items-center justify-center transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
+                      className="w-11 h-11 rounded-2xl bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black flex items-center justify-center transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
                     >
                       {getInitial()}
                     </button>
 
                     {profileOpen && (
-                      <div className="absolute right-0 mt-3 w-72 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl overflow-hidden shadow-2xl shadow-[#111827]/15">
+                      <div className="absolute right-0 mt-3 w-72 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl overflow-hidden shadow-2xl shadow-[#073B35]/25">
                         <div className="p-5 border-b border-[#D7F5EF]">
                           <p className="text-[#111827] font-semibold truncate">
                             {user.email}
@@ -356,7 +356,7 @@ export default function Navbar() {
                   <button
                     type="button"
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    className="md:hidden w-11 h-11 rounded-2xl bg-gradient-to-r from-[#41D3BD] to-[#1A9F8D] hover:from-[#35C2AD] hover:to-[#158B7C] text-[#073B35] font-black flex items-center justify-center transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
+                    className="md:hidden w-11 h-11 rounded-2xl bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black flex items-center justify-center transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
                   >
                     {getInitial()}
                   </button>
@@ -364,7 +364,7 @@ export default function Navbar() {
               ) : (
                 <Link
                   to="/customer-login"
-                  className="md:hidden w-11 h-11 rounded-2xl bg-gradient-to-r from-[#41D3BD] to-[#1A9F8D] hover:from-[#35C2AD] hover:to-[#158B7C] text-[#073B35] font-black flex items-center justify-center transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
+                  className="md:hidden w-11 h-11 rounded-2xl bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black flex items-center justify-center transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
                 >
                   →
                 </Link>
@@ -375,14 +375,14 @@ export default function Navbar() {
       </header>
 
       {mobileMenuOpen && user && (
-        <div className="md:hidden fixed inset-0 z-[70] bg-[#073B35]/35 backdrop-blur-sm">
+        <div className="md:hidden fixed inset-0 z-[70] bg-[#073B35]/45 backdrop-blur-sm">
           <div
             ref={mobileDropdownRef}
-            className="absolute top-[76px] right-4 left-4 bg-[#FFFFF2] border border-[#D7F5EF] rounded-[2rem] shadow-2xl shadow-[#111827]/20 overflow-hidden"
+            className="absolute top-[76px] right-4 left-4 bg-[#FFFFF2] border border-[#D7F5EF] rounded-[2rem] shadow-2xl shadow-[#073B35]/25 overflow-hidden"
           >
             <div className="p-5 border-b border-[#D7F5EF]">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-[#41D3BD] to-[#1A9F8D] text-[#073B35] font-black flex items-center justify-center shadow-lg shadow-[#41D3BD]/20">
+                <div className="w-12 h-12 rounded-2xl bg-[#41D3BD] text-[#073B35] font-black flex items-center justify-center shadow-lg shadow-[#41D3BD]/20">
                   {getInitial()}
                 </div>
 
