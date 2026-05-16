@@ -17,12 +17,18 @@ export default function Profile() {
     accept_scheduled_orders: true,
   });
 
+  const [originalFormData, setOriginalFormData] = useState(null);
+
   const [role, setRole] = useState("customer");
   const [isSeller, setIsSeller] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
   const [message, setMessage] = useState("");
+
+  const profileChanged =
+    originalFormData &&
+    JSON.stringify(formData) !== JSON.stringify(originalFormData);
 
   useEffect(() => {
     fetchProfile();
@@ -58,6 +64,7 @@ export default function Profile() {
     if (error) {
       setMessage(`Could not load profile: ${error.message}`);
       setFormData(defaultProfile);
+      setOriginalFormData(defaultProfile);
       setLoading(false);
       return;
     }
@@ -74,7 +81,7 @@ export default function Profile() {
     setRole(profileRole || "customer");
     setIsSeller(sellerAllowed);
 
-    setFormData({
+    const loadedProfile = {
       full_name: data?.full_name || user?.user_metadata?.full_name || "",
       phone: data?.phone || user?.phone || user?.user_metadata?.phone || "",
       flat: data?.flat || user?.user_metadata?.flat || "",
@@ -82,7 +89,10 @@ export default function Profile() {
       seller_specialty: data?.seller_specialty || "",
       seller_about: data?.seller_about || "",
       accept_scheduled_orders: data?.accept_scheduled_orders !== false,
-    });
+    };
+
+    setFormData(loadedProfile);
+    setOriginalFormData(loadedProfile);
 
     setLoading(false);
   }
@@ -100,6 +110,11 @@ export default function Profile() {
     event.preventDefault();
 
     if (!user) return;
+
+    if (!profileChanged) {
+      setMessage("No profile changes to save.");
+      return;
+    }
 
     setSaving(true);
     setMessage("");
@@ -138,6 +153,17 @@ export default function Profile() {
       },
     });
 
+    const savedProfile = {
+      full_name: formData.full_name,
+      phone: formData.phone,
+      flat: formData.flat,
+      seller_kitchen_name: formData.seller_kitchen_name,
+      seller_specialty: formData.seller_specialty,
+      seller_about: formData.seller_about,
+      accept_scheduled_orders: formData.accept_scheduled_orders,
+    };
+
+    setOriginalFormData(savedProfile);
     setMessage("Profile updated successfully.");
     setSaving(false);
   }
@@ -415,7 +441,8 @@ export default function Profile() {
                               Accept scheduled orders
                             </p>
                             <p className="text-[#51615D] text-sm mt-1">
-                              Customers can choose date and time for later orders.
+                              Customers can choose date and time for later
+                              orders.
                             </p>
                           </div>
                         </label>
@@ -425,10 +452,18 @@ export default function Profile() {
 
                   <button
                     type="submit"
-                    disabled={saving}
-                    className="hidden sm:block mt-7 w-full bg-[#41D3BD] hover:bg-[#55E4CF] disabled:opacity-50 text-[#073B35] font-black py-4 rounded-2xl shadow-lg shadow-[#41D3BD]/20"
+                    disabled={saving || !profileChanged}
+                    className={`hidden sm:block mt-7 w-full font-black py-4 rounded-2xl transition-all ${
+                      profileChanged
+                        ? "bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] shadow-lg shadow-[#41D3BD]/20"
+                        : "bg-[#D7F5EF] text-[#8AA5A0] cursor-not-allowed"
+                    } disabled:opacity-60`}
                   >
-                    {saving ? "Saving..." : "Save Profile"}
+                    {saving
+                      ? "Saving..."
+                      : profileChanged
+                      ? "Save Profile"
+                      : "No Changes"}
                   </button>
                 </form>
               </section>
@@ -504,10 +539,18 @@ export default function Profile() {
             <button
               type="submit"
               form="profile-form"
-              disabled={saving}
-              className="w-full bg-[#41D3BD] active:scale-[0.98] disabled:opacity-50 text-[#073B35] font-black py-4 rounded-2xl shadow-xl shadow-[#41D3BD]/20"
+              disabled={saving || !profileChanged}
+              className={`w-full active:scale-[0.98] disabled:opacity-60 font-black py-4 rounded-2xl transition-all ${
+                profileChanged
+                  ? "bg-[#41D3BD] text-[#073B35] shadow-xl shadow-[#41D3BD]/20"
+                  : "bg-[#D7F5EF] text-[#8AA5A0] cursor-not-allowed"
+              }`}
             >
-              {saving ? "Saving..." : "Save Profile"}
+              {saving
+                ? "Saving..."
+                : profileChanged
+                ? "Save Profile"
+                : "No Changes"}
             </button>
           </div>
         )}
