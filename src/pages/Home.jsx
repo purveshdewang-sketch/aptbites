@@ -77,12 +77,12 @@ export default function Home() {
                 </p>
               </div>
 
-              <h1 className="text-7xl font-black leading-[1.02] tracking-tight text-[#111827]">
-  Homemade food,
-  <span className="block text-[#B8E986]">
-    closer than ever.
-  </span>
-</h1>
+              <h1 className="text-[2.55rem] leading-[1.02] font-black tracking-tight text-[#111827]">
+                Hungry?
+                <span className="block text-[#B8E986]">
+                  Order homemade food.
+                </span>
+              </h1>
 
               <p className="text-[#4B5563] mt-4 text-[15px] leading-relaxed">
                 Fresh meals, snacks, sweets, and daily food drops from trusted
@@ -174,7 +174,7 @@ export default function Home() {
 
                 <h1 className="text-7xl font-black leading-[1.02] tracking-tight text-[#111827]">
                   Homemade food,
-                  <span className="block text-[#315245]">
+                  <span className="block text-[#B8E986]">
                     closer than ever.
                   </span>
                 </h1>
