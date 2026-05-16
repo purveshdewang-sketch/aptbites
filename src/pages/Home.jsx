@@ -63,11 +63,11 @@ export default function Home() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-white text-[#0F0D1F] overflow-hidden">
+      <main className="min-h-screen bg-[#EFDEC8] text-[#0F0D1F] overflow-hidden">
         <section className="relative px-4 sm:px-6 pt-5 pb-24 sm:pt-8 sm:pb-14">
           <div className="relative max-w-6xl mx-auto">
             <div className="lg:hidden">
-              <div className="inline-flex items-center gap-2 bg-[#F4F0FF] border border-[#E5DCFF] rounded-full px-4 py-2 mb-5">
+              <div className="inline-flex items-center gap-2 bg-white/55 border border-white/60 rounded-full px-4 py-2 mb-5 shadow-sm">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#55F3A5]" />
                 <p className="text-[#4F2BBF] font-black text-xs tracking-wide uppercase">
                   Homemade food nearby
@@ -86,23 +86,23 @@ export default function Home() {
                 home chefs inside your apartment community.
               </p>
 
-              <div className="mt-6 bg-[#F7F5FF] border border-[#E5DCFF] rounded-[1.75rem] p-4 shadow-xl shadow-[#2B284F]/10">
+              <div className="mt-6 bg-white/55 border border-white/60 rounded-[1.75rem] p-4 shadow-xl shadow-[#2B284F]/10 backdrop-blur">
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-white border border-[#E5DCFF] rounded-2xl p-3 text-center shadow-sm">
+                  <div className="bg-white/70 border border-white/70 rounded-2xl p-3 text-center shadow-sm">
                     <p className="text-2xl">🍲</p>
                     <p className="text-[#6E3FE8] text-xs font-black mt-2">
                       Meals
                     </p>
                   </div>
 
-                  <div className="bg-white border border-[#E5DCFF] rounded-2xl p-3 text-center shadow-sm">
+                  <div className="bg-white/70 border border-white/70 rounded-2xl p-3 text-center shadow-sm">
                     <p className="text-2xl">🥪</p>
                     <p className="text-[#6E3FE8] text-xs font-black mt-2">
                       Snacks
                     </p>
                   </div>
 
-                  <div className="bg-white border border-[#E5DCFF] rounded-2xl p-3 text-center shadow-sm">
+                  <div className="bg-white/70 border border-white/70 rounded-2xl p-3 text-center shadow-sm">
                     <p className="text-2xl">🍰</p>
                     <p className="text-[#6E3FE8] text-xs font-black mt-2">
                       Sweets
@@ -110,7 +110,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="mt-4 bg-[#55F3A5]/20 border border-[#55F3A5]/40 rounded-2xl p-4">
+                <div className="mt-4 bg-[#55F3A5]/25 border border-[#55F3A5]/40 rounded-2xl p-4">
                   <p className="text-[#0F7A50] font-black text-sm">
                     Fresh drops available daily
                   </p>
@@ -135,7 +135,7 @@ export default function Home() {
                 {shouldShowSellFood && (
                   <Link
                     to="/seller-login"
-                    className="border border-[#A77BE8]/60 bg-white text-[#6E3FE8] hover:bg-[#6E3FE8] hover:text-white active:scale-95 font-black px-5 py-4 rounded-2xl text-center transition-all shadow-sm"
+                    className="border border-[#A77BE8]/50 bg-white/55 text-[#6E3FE8] hover:bg-[#6E3FE8] hover:text-white active:scale-95 font-black px-5 py-4 rounded-2xl text-center transition-all shadow-sm"
                   >
                     Sell Food
                   </Link>
@@ -143,17 +143,17 @@ export default function Home() {
               </div>
 
               <div className="grid grid-cols-3 gap-3 mt-6">
-                <div className="bg-[#F7F5FF] border border-[#E5DCFF] rounded-2xl p-3">
+                <div className="bg-white/55 border border-white/60 rounded-2xl p-3 shadow-sm">
                   <p className="text-[#6E3FE8] font-black text-sm">Fresh</p>
                   <p className="text-[#625B78] text-xs mt-1">Daily drops</p>
                 </div>
 
-                <div className="bg-[#F7F5FF] border border-[#E5DCFF] rounded-2xl p-3">
+                <div className="bg-white/55 border border-white/60 rounded-2xl p-3 shadow-sm">
                   <p className="text-[#6E3FE8] font-black text-sm">Local</p>
                   <p className="text-[#625B78] text-xs mt-1">Nearby homes</p>
                 </div>
 
-                <div className="bg-[#F7F5FF] border border-[#E5DCFF] rounded-2xl p-3">
+                <div className="bg-white/55 border border-white/60 rounded-2xl p-3 shadow-sm">
                   <p className="text-[#6E3FE8] font-black text-sm">Trusted</p>
                   <p className="text-[#625B78] text-xs mt-1">Residents</p>
                 </div>
@@ -162,7 +162,7 @@ export default function Home() {
 
             <div className="hidden lg:block">
               <div className="max-w-4xl">
-                <div className="inline-flex items-center gap-2 bg-[#F4F0FF] border border-[#E5DCFF] rounded-full px-4 py-2 mb-6 shadow-sm">
+                <div className="inline-flex items-center gap-2 bg-white/55 border border-white/60 rounded-full px-4 py-2 mb-6 shadow-sm">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#55F3A5]" />
                   <p className="text-[#4F2BBF] font-semibold text-xs tracking-wide uppercase">
                     neighbourhood homemade food
@@ -196,7 +196,7 @@ export default function Home() {
                   {shouldShowSellFood && (
                     <Link
                       to="/seller-login"
-                      className="border border-[#A77BE8]/60 bg-white text-[#6E3FE8] hover:bg-[#6E3FE8] hover:text-white active:scale-95 font-bold px-5 py-4 rounded-2xl text-center transition-all duration-200 shadow-sm"
+                      className="border border-[#A77BE8]/50 bg-white/55 text-[#6E3FE8] hover:bg-[#6E3FE8] hover:text-white active:scale-95 font-bold px-5 py-4 rounded-2xl text-center transition-all duration-200 shadow-sm"
                     >
                       Sell Food
                     </Link>
@@ -204,8 +204,8 @@ export default function Home() {
                 </div>
 
                 <div className="grid grid-cols-3 gap-4 mt-9">
-                  <div className="bg-[#F7F5FF] border border-[#E5DCFF] rounded-[1.5rem] p-4 shadow-lg shadow-[#2B284F]/5">
-                    <div className="w-10 h-10 rounded-2xl bg-[#55F3A5]/20 flex items-center justify-center mb-3 text-xl">
+                  <div className="bg-white/55 border border-white/60 rounded-[1.5rem] p-4 shadow-lg shadow-[#2B284F]/5">
+                    <div className="w-10 h-10 rounded-2xl bg-[#55F3A5]/25 flex items-center justify-center mb-3 text-xl">
                       🍲
                     </div>
                     <p className="text-[#6E3FE8] font-bold text-lg">Fresh</p>
@@ -214,8 +214,8 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="bg-[#F7F5FF] border border-[#E5DCFF] rounded-[1.5rem] p-4 shadow-lg shadow-[#2B284F]/5">
-                    <div className="w-10 h-10 rounded-2xl bg-[#A77BE8]/15 flex items-center justify-center mb-3 text-xl">
+                  <div className="bg-white/55 border border-white/60 rounded-[1.5rem] p-4 shadow-lg shadow-[#2B284F]/5">
+                    <div className="w-10 h-10 rounded-2xl bg-[#A77BE8]/20 flex items-center justify-center mb-3 text-xl">
                       🏠
                     </div>
                     <p className="text-[#6E3FE8] font-bold text-lg">Local</p>
@@ -224,8 +224,8 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="bg-[#F7F5FF] border border-[#E5DCFF] rounded-[1.5rem] p-4 shadow-lg shadow-[#2B284F]/5">
-                    <div className="w-10 h-10 rounded-2xl bg-[#55F3A5]/20 flex items-center justify-center mb-3 text-xl">
+                  <div className="bg-white/55 border border-white/60 rounded-[1.5rem] p-4 shadow-lg shadow-[#2B284F]/5">
+                    <div className="w-10 h-10 rounded-2xl bg-[#55F3A5]/25 flex items-center justify-center mb-3 text-xl">
                       ⭐
                     </div>
                     <p className="text-[#6E3FE8] font-bold text-lg">
@@ -237,7 +237,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="mt-10 bg-[#F7F5FF] border border-[#E5DCFF] rounded-[1.75rem] p-6 max-w-3xl shadow-xl shadow-[#2B284F]/5">
+                <div className="mt-10 bg-white/55 border border-white/60 rounded-[1.75rem] p-6 max-w-3xl shadow-xl shadow-[#2B284F]/5">
                   <p className="text-[#0F7A50] text-sm font-semibold uppercase tracking-[0.18em]">
                     Why QuickBites?
                   </p>
@@ -257,7 +257,7 @@ export default function Home() {
           </div>
         </section>
 
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-[#E5DCFF] px-4 py-3">
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#EFDEC8]/95 backdrop-blur-xl border-t border-white/60 px-4 py-3">
           <Link
             to="/marketplace"
             className="block w-full bg-[#55F3A5] active:scale-[0.98] text-[#0F0D1F] text-center font-black py-4 rounded-2xl shadow-xl shadow-[#55F3A5]/25"
