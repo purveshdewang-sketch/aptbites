@@ -33,6 +33,19 @@ export default function SellerDashboard() {
     description: "",
   });
 
+  const [sellerSetupData, setSellerSetupData] = useState({
+    seller_kitchen_name: "",
+    flat: "",
+    phone: "",
+    seller_specialty: "",
+    seller_about: "",
+    accept_scheduled_orders: true,
+  });
+
+  const [sellerProfileComplete, setSellerProfileComplete] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileSaving, setProfileSaving] = useState(false);
+
   const [sellerFoods, setSellerFoods] = useState([]);
   const [sellerOrders, setSellerOrders] = useState([]);
   const [sellerOnline, setSellerOnline] = useState(true);
@@ -50,9 +63,7 @@ export default function SellerDashboard() {
   useEffect(() => {
     if (!user) return;
 
-    const savedSellerName = localStorage.getItem(
-      `Nefo_seller_name_${user.id}`
-    );
+    const savedSellerName = localStorage.getItem(`Nefo_seller_name_${user.id}`);
 
     if (savedSellerName) {
       setFormData((currentData) => ({
@@ -124,19 +135,157 @@ export default function SellerDashboard() {
     return user ? `Nefo_seller_name_${user.id}` : "Nefo_seller_name";
   }
 
+  function isSellerSetupComplete(profile) {
+    return Boolean(
+      profile?.seller_kitchen_name &&
+        profile?.flat &&
+        profile?.phone &&
+        profile?.seller_specialty &&
+        profile?.seller_about
+    );
+  }
+
   async function fetchSellerProfile() {
     if (!user) return;
 
+    setProfileLoading(true);
+
     const { data, error } = await supabase
       .from("profiles")
-      .select("seller_online, accept_scheduled_orders")
+      .select(
+        "role, is_seller, seller_online, accept_scheduled_orders, seller_kitchen_name, flat, phone, seller_specialty, seller_about"
+      )
       .eq("id", user.id)
       .maybeSingle();
 
-    if (!error && data) {
-      setSellerOnline(data.seller_online !== false);
-      setAcceptScheduledOrders(data.accept_scheduled_orders !== false);
+    if (error) {
+      setMessage(`Could not load seller profile: ${error.message}`);
+      setProfileLoading(false);
+      return;
     }
+
+    const profileRole = String(data?.role || "").toLowerCase();
+
+    const isApprovedSeller =
+      data?.is_seller === true ||
+      profileRole === "seller" ||
+      profileRole === "admin";
+
+    if (!isApprovedSeller) {
+      setSellerProfileComplete(false);
+      setMessage(
+        "This account is not approved as a seller. Please ask the app owner to enable seller access."
+      );
+      setProfileLoading(false);
+      return;
+    }
+
+    setSellerOnline(data?.seller_online !== false);
+    setAcceptScheduledOrders(data?.accept_scheduled_orders !== false);
+
+    const setupData = {
+      seller_kitchen_name: data?.seller_kitchen_name || "",
+      flat: data?.flat || "",
+      phone: data?.phone || "",
+      seller_specialty: data?.seller_specialty || "",
+      seller_about: data?.seller_about || "",
+      accept_scheduled_orders: data?.accept_scheduled_orders !== false,
+    };
+
+    setSellerSetupData(setupData);
+
+    const setupComplete = isSellerSetupComplete(setupData);
+    setSellerProfileComplete(setupComplete);
+
+    if (setupData.seller_kitchen_name) {
+      localStorage.setItem(
+        `Nefo_seller_name_${user.id}`,
+        setupData.seller_kitchen_name
+      );
+
+      setFormData((currentData) => ({
+        ...currentData,
+        seller: setupData.seller_kitchen_name,
+      }));
+    }
+
+    if (setupComplete) {
+      localStorage.removeItem(`Nefo_seller_profile_incomplete_${user.id}`);
+    } else {
+      localStorage.setItem(`Nefo_seller_profile_incomplete_${user.id}`, "yes");
+    }
+
+    setProfileLoading(false);
+  }
+
+  function handleSellerSetupChange(event) {
+    const { name, value, type, checked } = event.target;
+
+    setSellerSetupData((currentData) => ({
+      ...currentData,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  }
+
+  async function saveSellerSetup(event) {
+    event.preventDefault();
+
+    if (!user) return;
+
+    if (
+      !sellerSetupData.seller_kitchen_name.trim() ||
+      !sellerSetupData.flat.trim() ||
+      !sellerSetupData.phone.trim() ||
+      !sellerSetupData.seller_specialty.trim() ||
+      !sellerSetupData.seller_about.trim()
+    ) {
+      setMessage("Please complete all seller profile fields.");
+      return;
+    }
+
+    setProfileSaving(true);
+    setMessage("");
+
+    const payload = {
+      id: user.id,
+      email: user.email,
+      role: "seller",
+      is_seller: true,
+      seller_online: true,
+      accept_scheduled_orders: sellerSetupData.accept_scheduled_orders,
+      full_name: sellerSetupData.seller_kitchen_name.trim(),
+      flat: sellerSetupData.flat.trim(),
+      phone: sellerSetupData.phone.trim(),
+      seller_kitchen_name: sellerSetupData.seller_kitchen_name.trim(),
+      seller_specialty: sellerSetupData.seller_specialty.trim(),
+      seller_about: sellerSetupData.seller_about.trim(),
+    };
+
+    const { error } = await supabase.from("profiles").upsert(payload);
+
+    if (error) {
+      setMessage(`Seller profile could not be saved: ${error.message}`);
+      setProfileSaving(false);
+      return;
+    }
+
+    localStorage.setItem(`Nefo_seller_access_${user.id}`, "yes");
+    localStorage.setItem(
+      `Nefo_seller_name_${user.id}`,
+      sellerSetupData.seller_kitchen_name.trim()
+    );
+    localStorage.removeItem(`Nefo_seller_profile_incomplete_${user.id}`);
+
+    setFormData((currentData) => ({
+      ...currentData,
+      seller: sellerSetupData.seller_kitchen_name.trim(),
+    }));
+
+    setSellerOnline(true);
+    setAcceptScheduledOrders(sellerSetupData.accept_scheduled_orders);
+    setSellerProfileComplete(true);
+    setProfileSaving(false);
+    setMessage("Seller profile completed successfully.");
   }
 
   async function toggleSellerOnline() {
@@ -175,6 +324,11 @@ export default function SellerDashboard() {
       setMessage(`Could not update scheduled order status: ${error.message}`);
       return;
     }
+
+    setSellerSetupData((currentData) => ({
+      ...currentData,
+      accept_scheduled_orders: nextStatus,
+    }));
 
     setMessage(
       nextStatus
@@ -355,7 +509,7 @@ export default function SellerDashboard() {
           if ("Notification" in window && Notification.permission === "granted") {
             new Notification("🍔 New Nefo Order", {
               body: "You received a new food order.",
-              icon: "/favicon.ico",
+              icon: "/Nefo-logo.png",
             });
           }
 
@@ -561,6 +715,11 @@ export default function SellerDashboard() {
 
     if (!user) {
       setMessage("Please sign in before adding or editing dishes.");
+      return;
+    }
+
+    if (!sellerProfileComplete) {
+      setMessage("Please complete your seller profile before adding dishes.");
       return;
     }
 
@@ -946,10 +1105,10 @@ export default function SellerDashboard() {
             </p>
 
             <Link
-              to="/customer-login"
+              to="/seller-login"
               className="block mt-7 bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black py-4 rounded-2xl"
             >
-              Sign In
+              Seller Sign In
             </Link>
 
             <Link
@@ -958,6 +1117,130 @@ export default function SellerDashboard() {
             >
               Back to Home
             </Link>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  if (profileLoading) {
+    return (
+      <>
+        <Navbar />
+
+        <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-10 flex items-center justify-center">
+          <div className="max-w-md w-full bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-8 text-center shadow-xl shadow-[#073B35]/5">
+            <p className="text-[#51615D] font-bold">Loading seller profile...</p>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  if (!sellerProfileComplete) {
+    return (
+      <>
+        <Navbar />
+
+        <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-8 sm:py-10">
+          <div className="max-w-3xl mx-auto">
+            <div className="bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-6 sm:p-8 shadow-2xl shadow-[#073B35]/10">
+              <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
+                Seller Setup
+              </p>
+
+              <h1 className="text-3xl sm:text-5xl font-black mt-3 leading-tight">
+                Complete your kitchen profile
+              </h1>
+
+              <p className="text-[#51615D] mt-4 leading-relaxed">
+                These details are shown to customers and used while creating
+                dishes. Complete this once before managing your seller dashboard.
+              </p>
+
+              {message && (
+                <div className="mt-5 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 text-sm text-[#073B35]">
+                  {message}
+                </div>
+              )}
+
+              <form onSubmit={saveSellerSetup} className="mt-7 space-y-4">
+                <input
+                  name="seller_kitchen_name"
+                  value={sellerSetupData.seller_kitchen_name}
+                  onChange={handleSellerSetupChange}
+                  required
+                  className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+                  placeholder="Kitchen / Seller Name e.g. Asha's Kitchen"
+                />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <input
+                    name="flat"
+                    value={sellerSetupData.flat}
+                    onChange={handleSellerSetupChange}
+                    required
+                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+                    placeholder="Tower / Flat e.g. B-1204"
+                  />
+
+                  <input
+                    name="phone"
+                    value={sellerSetupData.phone}
+                    onChange={handleSellerSetupChange}
+                    required
+                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+                    placeholder="Phone Number"
+                  />
+                </div>
+
+                <input
+                  name="seller_specialty"
+                  value={sellerSetupData.seller_specialty}
+                  onChange={handleSellerSetupChange}
+                  required
+                  className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+                  placeholder="Food Specialty e.g. South Indian breakfast, sweets, tiffin"
+                />
+
+                <textarea
+                  name="seller_about"
+                  value={sellerSetupData.seller_about}
+                  onChange={handleSellerSetupChange}
+                  rows="5"
+                  required
+                  className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] resize-none"
+                  placeholder="Tell customers about yourself, your cooking style, hygiene, or food story..."
+                />
+
+                <label className="flex items-start gap-3 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="accept_scheduled_orders"
+                    checked={sellerSetupData.accept_scheduled_orders}
+                    onChange={handleSellerSetupChange}
+                    className="mt-1 accent-[#41D3BD]"
+                  />
+
+                  <div>
+                    <p className="text-[#111827] font-bold">
+                      Accept scheduled orders
+                    </p>
+                    <p className="text-[#51615D] text-sm mt-1">
+                      Customers can choose date and time for later orders.
+                    </p>
+                  </div>
+                </label>
+
+                <button
+                  type="submit"
+                  disabled={profileSaving}
+                  className="w-full bg-[#41D3BD] hover:bg-[#55E4CF] disabled:opacity-50 text-[#073B35] font-black py-4 rounded-2xl shadow-lg shadow-[#41D3BD]/20"
+                >
+                  {profileSaving ? "Saving..." : "Save and Continue"}
+                </button>
+              </form>
+            </div>
           </div>
         </main>
       </>
@@ -1104,47 +1387,6 @@ export default function SellerDashboard() {
                 </div>
               ))}
             </div>
-
-            <div className="grid grid-cols-1 gap-5 mt-5">
-              <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[#51615D] text-sm">
-                      Best Selling Dishes
-                    </p>
-                    <h3 className="text-xl font-black mt-1">Top 5 items</h3>
-                  </div>
-                </div>
-
-                {bestSellingItems.length === 0 ? (
-                  <p className="text-[#9AA7A3] text-sm mt-5">
-                    No completed order data yet.
-                  </p>
-                ) : (
-                  <div className="mt-5 space-y-3">
-                    {bestSellingItems.map((item, index) => (
-                      <div
-                        key={item.name}
-                        className="flex items-center justify-between gap-4 border border-[#D7F5EF] rounded-2xl p-3 bg-white/85"
-                      >
-                        <div className="min-w-0">
-                          <p className="font-bold truncate">
-                            #{index + 1} {item.name}
-                          </p>
-                          <p className="text-[#51615D] text-sm">
-                            {item.quantity} sold
-                          </p>
-                        </div>
-
-                        <p className="text-[#073B35] font-black shrink-0">
-                          ₹{item.revenue}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
           </section>
 
           <section className="mt-8 bg-white/85 border border-[#D7F5EF] rounded-3xl p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
@@ -1202,50 +1444,6 @@ export default function SellerDashboard() {
                           <p className="text-[#51615D] text-sm mt-1">
                             {order.delivery_type} • {order.flat}
                           </p>
-
-                          <div className="flex flex-wrap gap-2 mt-3">
-                            <span
-                              className={`text-xs font-bold px-3 py-1.5 rounded-full border ${
-                                orderIsSelfPickup
-                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                  : "bg-blue-50 text-blue-700 border-blue-200"
-                              }`}
-                            >
-                              {orderIsSelfPickup
-                                ? "🛍️ Self Pickup"
-                                : "🚚 Delivery"}
-                            </span>
-
-                            <span
-                              className={`text-xs font-bold px-3 py-1.5 rounded-full border ${
-                                sellerResponse === "accepted"
-                                  ? "bg-green-50 text-green-700 border-green-200"
-                                  : "bg-purple-50 text-purple-700 border-purple-200"
-                              }`}
-                            >
-                              {sellerResponse === "accepted"
-                                ? "Accepted"
-                                : "Needs Response"}
-                            </span>
-
-                            {scheduled && (
-                              <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-[#41D3BD]/12 text-[#073B35] border border-[#41D3BD]/25">
-                                🕒 Scheduled
-                              </span>
-                            )}
-                          </div>
-
-                          {scheduled && (
-                            <div className="mt-4 w-full max-w-md bg-[#41D3BD]/12 border border-[#41D3BD]/25 rounded-2xl p-4">
-                              <p className="text-[#073B35] text-xs font-black uppercase tracking-wide">
-                                Scheduled for
-                              </p>
-
-                              <p className="text-[#111827] text-lg sm:text-xl font-black mt-1">
-                                {formatScheduledDateTime(order.scheduled_for)}
-                              </p>
-                            </div>
-                          )}
                         </div>
 
                         <span
@@ -1255,17 +1453,6 @@ export default function SellerDashboard() {
                         >
                           {getStatusLabel(autoStatus)}
                         </span>
-                      </div>
-
-                      <div className="mt-3">
-                        <div className="w-full h-2 bg-[#D7F5EF] rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-[#41D3BD] transition-all duration-1000 ease-in-out"
-                            style={{
-                              width: `${getProgressPercentage(autoStatus)}%`,
-                            }}
-                          />
-                        </div>
                       </div>
 
                       <div className="mt-4 bg-white/85 border border-[#D7F5EF] rounded-2xl p-4 space-y-3">
@@ -1291,12 +1478,6 @@ export default function SellerDashboard() {
                           </div>
                         ))}
                       </div>
-
-                      {order.notes && (
-                        <p className="text-[#51615D] text-sm mt-4">
-                          Note: {order.notes}
-                        </p>
-                      )}
 
                       {sellerResponse === "pending" && (
                         <div className="grid grid-cols-2 gap-3 mt-5">
@@ -1330,12 +1511,6 @@ export default function SellerDashboard() {
                           </button>
                         )}
 
-                      {order.ready_for_pickup && orderIsSelfPickup && (
-                        <div className="mt-5 w-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-black py-3 rounded-2xl text-center">
-                          Ready for Pickup
-                        </div>
-                      )}
-
                       {sellerResponse === "accepted" && (
                         <button
                           type="button"
@@ -1345,27 +1520,6 @@ export default function SellerDashboard() {
                           Complete Order
                         </button>
                       )}
-
-                      <div className="grid grid-cols-2 gap-3 mt-5">
-                        <a
-                          href={`tel:${order.phone}`}
-                          className="bg-green-500 hover:bg-green-400 active:scale-95 text-white font-black py-3 rounded-2xl text-center transition-all"
-                        >
-                          📞 Call Customer
-                        </a>
-
-                        <a
-                          href={`https://wa.me/91${String(order.phone).replace(
-                            /\D/g,
-                            ""
-                          )}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="bg-[#25D366] hover:brightness-110 active:scale-95 text-black font-black py-3 rounded-2xl text-center transition-all"
-                        >
-                          💬 WhatsApp
-                        </a>
-                      </div>
                     </article>
                   );
                 })}
@@ -1456,7 +1610,7 @@ export default function SellerDashboard() {
                 value={formData.seller}
                 onChange={handleChange}
                 className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-xl px-4 py-3 outline-none focus:border-[#41D3BD] md:col-span-2"
-                placeholder="Seller flat / kitchen name e.g. A-1204"
+                placeholder="Seller / kitchen name"
               />
 
               <div className="md:col-span-2">
@@ -1471,9 +1625,7 @@ export default function SellerDashboard() {
                     className="flex flex-col items-center justify-center border-2 border-dashed border-[#D7F5EF] hover:border-[#41D3BD] bg-[#FFFFF2] rounded-3xl p-6 cursor-pointer transition-all"
                   >
                     <div className="text-4xl mb-3">🖼️</div>
-
                     <p className="text-[#111827] font-black">Upload Image</p>
-
                     <p className="text-[#51615D] text-sm mt-1 text-center">
                       Choose from gallery or files
                     </p>
@@ -1485,9 +1637,7 @@ export default function SellerDashboard() {
                     className="flex flex-col items-center justify-center border-2 border-dashed border-[#41D3BD]/50 hover:border-[#41D3BD] bg-[#41D3BD]/10 rounded-3xl p-6 cursor-pointer transition-all"
                   >
                     <div className="text-4xl mb-3">📸</div>
-
                     <p className="text-[#073B35] font-black">Take Picture</p>
-
                     <p className="text-[#51615D] text-sm mt-1 text-center">
                       Open camera on phone
                     </p>
@@ -1510,10 +1660,6 @@ export default function SellerDashboard() {
                   className="hidden"
                   onChange={handleImageChange}
                 />
-
-                <p className="text-[#51615D] text-xs mt-3">
-                  JPG, PNG, WEBP · Auto optimized before upload
-                </p>
 
                 {imagePreview && (
                   <div className="mt-4 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-3">
@@ -1626,30 +1772,6 @@ export default function SellerDashboard() {
                               : `${food.stock} left`}
                           </p>
                         </div>
-                      </div>
-
-                      <div className="flex items-center justify-between mt-5">
-                        <div className="flex gap-2">
-                          <span
-                            className={`text-xs px-3 py-1 rounded-full ${
-                              food.type === "Non-Veg"
-                                ? "bg-red-50 text-red-500"
-                                : "bg-green-50 text-green-700"
-                            }`}
-                          >
-                            {food.type}
-                          </span>
-                        </div>
-
-                        <span
-                          className={`text-xs px-3 py-1 rounded-full ${
-                            Number(food.stock) === 0
-                              ? "bg-red-50 text-red-500"
-                              : "bg-[#41D3BD]/12 text-[#073B35]"
-                          }`}
-                        >
-                          {Number(food.stock) === 0 ? "Sold Out" : food.time}
-                        </span>
                       </div>
 
                       <div className="grid grid-cols-3 gap-2 mt-5">
