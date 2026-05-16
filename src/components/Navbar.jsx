@@ -159,8 +159,8 @@ export default function Navbar() {
       <div className="w-11 h-11 rounded-2xl bg-[#FFFFF2] border border-[#41D3BD]/35 flex items-center justify-center overflow-hidden shadow-lg shadow-black/25 shrink-0">
         {!logoFailed ? (
           <img
-            src="/quickbites-logo.png"
-            alt="QuickBites"
+            src="/Nefo-logo.png"
+            alt="Nefo"
             className="w-full h-full object-cover scale-[1.65]"
             onError={() => setLogoFailed(true)}
           />
@@ -189,7 +189,7 @@ export default function Navbar() {
 
               <div className="leading-none min-w-0">
                 <p className="text-[#FFFFF2] font-bold text-lg tracking-tight group-hover:text-[#41D3BD] transition-all truncate">
-                  QuickBites
+                  Nefo
                 </p>
 
                 <p className="text-[10px] text-[#BFE8E1] mt-1 tracking-wide uppercase truncate">

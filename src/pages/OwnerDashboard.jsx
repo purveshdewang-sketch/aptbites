@@ -396,7 +396,7 @@ export default function OwnerDashboard() {
     const link = document.createElement("a");
 
     link.href = url;
-    link.download = `quickbites-owner-report-${dateFilter}.csv`;
+    link.download = `Nefo-owner-report-${dateFilter}.csv`;
     link.click();
 
     URL.revokeObjectURL(url);
@@ -419,7 +419,7 @@ export default function OwnerDashboard() {
               </h1>
 
               <p className="text-gray-500 mt-3 max-w-2xl">
-                Daily control center for QuickBites orders, payment references,
+                Daily control center for Nefo orders, payment references,
                 platform fees, and seller-wise performance.
               </p>
             </div>

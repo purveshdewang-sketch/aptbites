@@ -243,7 +243,7 @@ export default function Home() {
 
                 <div className="mt-10 bg-white/85 border border-[#D7F5EF] rounded-[1.75rem] p-6 max-w-3xl shadow-xl shadow-[#41D3BD]/5">
                   <p className="text-[#1A9F8D] text-sm font-semibold uppercase tracking-[0.18em]">
-                    Why QuickBites?
+                    Why Nefo?
                   </p>
 
                   <p className="text-[#111827] text-xl font-bold mt-3 leading-relaxed">

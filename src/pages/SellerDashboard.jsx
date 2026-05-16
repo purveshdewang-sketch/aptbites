@@ -52,7 +52,7 @@ export default function SellerDashboard() {
     if (!user) return;
 
     const savedSellerName = localStorage.getItem(
-      `Quickbites_seller_name_${user.id}`
+      `Nefo_seller_name_${user.id}`
     );
 
     if (savedSellerName) {
@@ -103,7 +103,7 @@ export default function SellerDashboard() {
     }
 
     const savedSoundSetting = localStorage.getItem(
-      `quickbites_seller_sound_${user.id}`
+      `Nefo_seller_sound_${user.id}`
     );
 
     if (savedSoundSetting === "on") {
@@ -122,7 +122,7 @@ export default function SellerDashboard() {
   }, [user]);
 
   function getSellerStorageKey() {
-    return user ? `Quickbites_seller_name_${user.id}` : "Quickbites_seller_name";
+    return user ? `Nefo_seller_name_${user.id}` : "Nefo_seller_name";
   }
 
   async function fetchSellerProfile() {
@@ -192,7 +192,7 @@ async function toggleAcceptScheduledOrders() {
     setAudioReady(nextValue);
 
     localStorage.setItem(
-      `quickbites_seller_sound_${user.id}`,
+      `Nefo_seller_sound_${user.id}`,
       nextValue ? "on" : "off"
     );
 
@@ -348,14 +348,14 @@ function formatScheduledDateTime(value) {
         if (newActiveOrderFound) {
           playTingSound();
 
-          document.title = "🔔 New Order - QuickBites";
+          document.title = "🔔 New Order - Nefo";
 
           setTimeout(() => {
-            document.title = "QuickBites Seller";
+            document.title = "Nefo Seller";
           }, 5000);
 
           if ("Notification" in window && Notification.permission === "granted") {
-            new Notification("🍔 New QuickBites Order", {
+            new Notification("🍔 New Nefo Order", {
               body: "You received a new food order.",
               icon: "/favicon.ico",
             });
@@ -454,7 +454,7 @@ function formatScheduledDateTime(value) {
 
             const compressedFile = new File(
               [blob],
-              `${Date.now()}-quickbites.jpg`,
+              `${Date.now()}-Nefo.jpg`,
               {
                 type: "image/jpeg",
               }

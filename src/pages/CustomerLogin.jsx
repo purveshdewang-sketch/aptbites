@@ -332,7 +332,7 @@ export default function CustomerLogin() {
         </button>
 
         <Link to="/" className="block text-gray-500 text-sm mt-6 text-center">
-          Continue to QuickBites
+          Continue to Nefo
         </Link>
       </div>
     </main>

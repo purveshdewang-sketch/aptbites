@@ -148,7 +148,7 @@ export default function OrderHistory() {
             </h1>
 
             <p className="text-gray-400 mt-4 max-w-2xl leading-relaxed">
-              View your delivered and cancelled QuickBites orders.
+              View your delivered and cancelled Nefo orders.
             </p>
           </div>
 

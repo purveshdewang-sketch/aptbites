@@ -58,7 +58,7 @@ function SellerOnlyRoute({ children }) {
       setCheckingRole(true);
 
       const localSellerAccess =
-        localStorage.getItem(`quickbites_seller_access_${user.id}`) === "yes";
+        localStorage.getItem(`Nefo_seller_access_${user.id}`) === "yes";
 
       const metadataRole = String(user?.user_metadata?.role || "").toLowerCase();
 
@@ -92,7 +92,7 @@ function SellerOnlyRoute({ children }) {
         data?.is_seller === true;
 
       if (isSeller) {
-        localStorage.setItem(`quickbites_seller_access_${user.id}`, "yes");
+        localStorage.setItem(`Nefo_seller_access_${user.id}`, "yes");
       }
 
       setSellerAllowed(isSeller);

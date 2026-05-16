@@ -6,8 +6,8 @@ export default function SellerGate({ children }) {
   const { user } = useAuth();
 
   const unlockKey = user
-    ? `quickbites_seller_unlocked_${user.id}`
-    : "quickbites_seller_unlocked";
+    ? `Nefo_seller_unlocked_${user.id}`
+    : "Nefo_seller_unlocked";
 
   const [unlocked, setUnlocked] = useState(
     sessionStorage.getItem(unlockKey) === "yes"

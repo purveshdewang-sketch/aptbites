@@ -260,7 +260,7 @@ export default function Profile() {
 
                     <div className="min-w-0">
                       <p className="text-white font-black text-xl truncate">
-                        {formData.full_name || "QuickBites User"}
+                        {formData.full_name || "Nefo User"}
                       </p>
 
                       <p className="text-gray-500 text-sm truncate mt-1">

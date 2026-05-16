@@ -324,14 +324,14 @@ export default function Marketplace() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-[#FFF7ED] text-[#111827] overflow-hidden pb-28">
-        <section className="relative px-4 sm:px-6 pt-4 pb-5 sm:pt-8 sm:pb-8 border-b border-[#EADCC8]">
-          <div className="absolute top-0 right-0 w-72 h-72 bg-[#315245]/10 rounded-full blur-[95px]" />
-          <div className="absolute top-24 left-0 w-72 h-72 bg-[#F59E0B]/10 rounded-full blur-[110px]" />
+      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] overflow-hidden pb-28">
+        <section className="relative px-4 sm:px-6 pt-4 pb-5 sm:pt-8 sm:pb-8 border-b border-[#D7F5EF]">
+          <div className="absolute top-0 right-0 w-72 h-72 bg-[#41D3BD]/18 rounded-full blur-[95px]" />
+          <div className="absolute top-24 left-0 w-72 h-72 bg-[#41D3BD]/10 rounded-full blur-[110px]" />
 
           <div className="relative max-w-7xl mx-auto">
             <div className="sm:hidden">
-              <p className="text-[#B45309] font-black tracking-wide text-xs uppercase">
+              <p className="text-[#1A9F8D] font-black tracking-wide text-xs uppercase">
                 Marketplace
               </p>
 
@@ -339,41 +339,41 @@ export default function Marketplace() {
                 Food around you
               </h1>
 
-              <p className="text-[#6B6258] text-sm mt-2">
+              <p className="text-[#51615D] text-sm mt-2">
                 Fresh homemade drops from your community.
               </p>
             </div>
 
             <div className="hidden sm:block">
-              <p className="text-[#B45309] font-semibold tracking-wide text-sm uppercase">
+              <p className="text-[#1A9F8D] font-semibold tracking-wide text-sm uppercase">
                 Marketplace
               </p>
 
               <h1 className="text-5xl md:text-6xl font-black text-[#111827] mt-3 leading-[1.03] tracking-tight">
                 Fresh homemade food
-                <span className="block text-[#315245]">
+                <span className="block text-[#073B35]">
                   from your community.
                 </span>
               </h1>
 
-              <p className="text-[#6B6258] text-lg mt-5 max-w-2xl leading-relaxed">
+              <p className="text-[#51615D] text-lg mt-5 max-w-2xl leading-relaxed">
                 Discover meals, snacks, desserts, and special dishes prepared by
                 trusted home chefs inside your neighbourhood.
               </p>
             </div>
 
             <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <div className="bg-white/80 border border-[#EADCC8] rounded-2xl p-4 shadow-lg shadow-[#111827]/5">
-                <p className="text-[#6B6258] text-[11px] uppercase font-bold">
+              <div className="bg-white/85 border border-[#D7F5EF] rounded-2xl p-4 shadow-lg shadow-[#073B35]/5">
+                <p className="text-[#51615D] text-[11px] uppercase font-bold">
                   Available Now
                 </p>
-                <p className="text-2xl font-black text-[#315245] mt-1">
+                <p className="text-2xl font-black text-[#073B35] mt-1">
                   {availableFoods.length}
                 </p>
               </div>
 
-              <div className="bg-white/80 border border-[#EADCC8] rounded-2xl p-4 shadow-lg shadow-[#111827]/5">
-                <p className="text-[#6B6258] text-[11px] uppercase font-bold">
+              <div className="bg-white/85 border border-[#D7F5EF] rounded-2xl p-4 shadow-lg shadow-[#073B35]/5">
+                <p className="text-[#51615D] text-[11px] uppercase font-bold">
                   Popular Today
                 </p>
 
@@ -385,26 +385,26 @@ export default function Marketplace() {
                     <img
                       src={highestSellingFood.image}
                       alt={highestSellingFood.name}
-                      className="w-11 h-11 rounded-full object-cover border border-[#EADCC8]"
+                      className="w-11 h-11 rounded-full object-cover border border-[#D7F5EF]"
                     />
 
                     <div className="min-w-0">
-                      <p className="text-[#111827] group-hover:text-[#315245] font-black truncate transition-all text-sm sm:text-base">
+                      <p className="text-[#111827] group-hover:text-[#1A9F8D] font-black truncate transition-all text-sm sm:text-base">
                         {highestSellingFood.name}
                       </p>
 
-                      <p className="text-[#B45309] text-xs sm:text-sm font-bold">
+                      <p className="text-[#1A9F8D] text-xs sm:text-sm font-bold">
                         Popular Dish
                       </p>
                     </div>
                   </Link>
                 ) : (
-                  <p className="text-2xl font-black text-[#9A8F83] mt-1">—</p>
+                  <p className="text-2xl font-black text-[#9AA7A3] mt-1">—</p>
                 )}
               </div>
 
-              <div className="hidden sm:block bg-white/80 border border-[#EADCC8] rounded-2xl p-4 shadow-lg shadow-[#111827]/5">
-                <p className="text-[#6B6258] text-xs uppercase font-bold">
+              <div className="hidden sm:block bg-white/85 border border-[#D7F5EF] rounded-2xl p-4 shadow-lg shadow-[#073B35]/5">
+                <p className="text-[#51615D] text-xs uppercase font-bold">
                   Food Drops
                 </p>
                 <p className="text-2xl font-black text-[#111827] mt-1">
@@ -413,14 +413,14 @@ export default function Marketplace() {
               </div>
             </div>
 
-            <div className="mt-4 sticky top-[76px] z-40 bg-[#FFF7ED]/95 backdrop-blur py-2 -mx-4 px-4 sm:static sm:bg-transparent sm:backdrop-blur-0 sm:mx-0 sm:px-0 sm:py-0">
+            <div className="mt-4 sticky top-[76px] z-40 bg-[#FFFFF2]/95 backdrop-blur py-2 -mx-4 px-4 sm:static sm:bg-transparent sm:backdrop-blur-0 sm:mx-0 sm:px-0 sm:py-0">
               <div className="grid grid-cols-1 gap-3 lg:flex lg:items-center lg:gap-4">
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.target.value)}
                   placeholder="Search dishes or sellers..."
-                  className="bg-white/80 border border-[#EADCC8] text-[#111827] placeholder:text-[#9A8F83] rounded-2xl px-5 py-4 w-full lg:max-w-lg outline-none focus:border-[#315245] transition-all duration-200 text-base shadow-sm"
+                  className="bg-white/85 border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-5 py-4 w-full lg:max-w-lg outline-none focus:border-[#41D3BD] transition-all duration-200 text-base shadow-sm"
                 />
 
                 <div className="grid grid-cols-[1fr_auto] gap-3 lg:flex lg:gap-4">
@@ -428,19 +428,19 @@ export default function Marketplace() {
                     <button
                       type="button"
                       onClick={() => setTypeDropdownOpen(!typeDropdownOpen)}
-                      className="w-full bg-white/80 border border-[#EADCC8] hover:border-[#315245] text-[#111827] rounded-2xl px-5 py-4 flex items-center justify-between transition-all duration-200 shadow-sm"
+                      className="w-full bg-white/85 border border-[#D7F5EF] hover:border-[#41D3BD] text-[#111827] rounded-2xl px-5 py-4 flex items-center justify-between transition-all duration-200 shadow-sm"
                     >
                       <span className="font-semibold">
                         {getTypeLabel(selectedType)}
                       </span>
 
-                      <span className="text-[#B45309] text-xs">
+                      <span className="text-[#1A9F8D] text-xs">
                         {typeDropdownOpen ? "▲" : "▼"}
                       </span>
                     </button>
 
                     {typeDropdownOpen && (
-                      <div className="absolute z-50 mt-3 w-full bg-white border border-[#EADCC8] rounded-2xl shadow-2xl shadow-[#111827]/10 overflow-hidden">
+                      <div className="absolute z-50 mt-3 w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl shadow-2xl shadow-[#073B35]/15 overflow-hidden">
                         {["All", "Veg", "Non-Veg"].map((type) => (
                           <button
                             key={type}
@@ -451,8 +451,8 @@ export default function Marketplace() {
                             }}
                             className={`w-full text-left px-5 py-4 font-semibold transition-all duration-200 ${
                               selectedType === type
-                                ? "bg-[#315245] text-white"
-                                : "text-[#6B6258] hover:bg-[#FFF7ED] hover:text-[#315245]"
+                                ? "bg-[#41D3BD] text-[#073B35]"
+                                : "text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D]"
                             }`}
                           >
                             {getTypeLabel(type)}
@@ -467,8 +467,8 @@ export default function Marketplace() {
                     onClick={hasActiveFilters ? clearFilters : undefined}
                     className={`font-bold px-5 sm:px-8 py-4 rounded-2xl transition-all duration-200 min-h-[56px] shadow-lg ${
                       hasActiveFilters
-                        ? "border border-[#315245] text-[#315245] hover:bg-[#315245] hover:text-white bg-white/70 shadow-[#315245]/10"
-                        : "bg-gradient-to-r from-[#315245] to-[#4D7A66] hover:from-[#29463B] hover:to-[#416B59] text-white shadow-[#315245]/25"
+                        ? "border border-[#41D3BD] text-[#1A9F8D] hover:bg-[#D7F5EF] hover:text-[#073B35] bg-white/85 shadow-[#41D3BD]/10"
+                        : "bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] shadow-[#41D3BD]/25"
                     }`}
                   >
                     {hasActiveFilters ? "Clear" : "Search"}
@@ -479,7 +479,7 @@ export default function Marketplace() {
           </div>
         </section>
 
-        <section className="px-4 sm:px-6 pt-4 pb-2 bg-[#FFF7ED] border-b border-[#EADCC8] sticky top-[76px] sm:top-0 z-30">
+        <section className="px-4 sm:px-6 pt-4 pb-2 bg-[#FFFFF2] border-b border-[#D7F5EF] sticky top-[76px] sm:top-0 z-30">
           <div className="max-w-7xl mx-auto">
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
               {FOOD_CATEGORIES.map((category) => {
@@ -493,8 +493,8 @@ export default function Marketplace() {
                     onClick={() => setSelectedCategory(category.label)}
                     className={`shrink-0 min-w-[86px] sm:min-w-[110px] rounded-2xl border px-3 sm:px-4 py-3 transition-all duration-200 ${
                       isActive
-                        ? "bg-[#315245] text-white border-[#315245] shadow-lg shadow-[#315245]/20"
-                        : "bg-white/80 text-[#6B6258] border-[#EADCC8] hover:border-[#315245]/50 hover:text-[#315245]"
+                        ? "bg-[#41D3BD] text-[#073B35] border-[#41D3BD] shadow-lg shadow-[#41D3BD]/20"
+                        : "bg-white/85 text-[#51615D] border-[#D7F5EF] hover:border-[#41D3BD]/70 hover:text-[#1A9F8D]"
                     }`}
                   >
                     <div className="text-xl sm:text-2xl">{category.emoji}</div>
@@ -503,7 +503,7 @@ export default function Marketplace() {
                     </div>
                     <div
                       className={`text-[11px] sm:text-xs mt-0.5 ${
-                        isActive ? "text-white/75" : "text-[#9A8F83]"
+                        isActive ? "text-[#073B35]/75" : "text-[#9AA7A3]"
                       }`}
                     >
                       {count} item{count === 1 ? "" : "s"}
@@ -523,7 +523,7 @@ export default function Marketplace() {
                   {getCategoryHeading()}
                 </h2>
 
-                <p className="text-[#6B6258] mt-2 text-sm sm:text-base">
+                <p className="text-[#51615D] mt-2 text-sm sm:text-base">
                   {getCategorySubheading()}
                 </p>
               </div>
@@ -532,7 +532,7 @@ export default function Marketplace() {
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="hidden sm:block border border-[#315245] text-[#315245] hover:bg-[#315245] hover:text-white bg-white/70 px-5 py-3 rounded-2xl font-semibold transition-all duration-200"
+                  className="hidden sm:block border border-[#41D3BD] text-[#1A9F8D] hover:bg-[#D7F5EF] hover:text-[#073B35] bg-white/85 px-5 py-3 rounded-2xl font-semibold transition-all duration-200"
                 >
                   View All
                 </button>
@@ -540,8 +540,8 @@ export default function Marketplace() {
             </div>
 
             {loading && (
-              <div className="bg-white/80 border border-[#EADCC8] rounded-3xl p-8 text-center shadow-lg shadow-[#111827]/5">
-                <p className="text-[#6B6258] font-bold">
+              <div className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-lg shadow-[#073B35]/5">
+                <p className="text-[#51615D] font-bold">
                   Loading food drops...
                 </p>
               </div>
@@ -557,12 +557,12 @@ export default function Marketplace() {
             )}
 
             {!loading && !errorMessage && filteredFoods.length === 0 && (
-              <div className="bg-white/80 border border-[#EADCC8] rounded-3xl p-8 text-center shadow-lg shadow-[#111827]/5">
+              <div className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-lg shadow-[#073B35]/5">
                 <div className="text-5xl">🍽️</div>
                 <p className="text-[#111827] font-black mt-4">
                   No dishes found.
                 </p>
-                <p className="text-[#6B6258] text-sm mt-2">
+                <p className="text-[#51615D] text-sm mt-2">
                   Try another category, food type, or search term.
                 </p>
 
@@ -570,7 +570,7 @@ export default function Marketplace() {
                   <button
                     type="button"
                     onClick={clearFilters}
-                    className="mt-5 bg-gradient-to-r from-[#315245] to-[#4D7A66] hover:from-[#29463B] hover:to-[#416B59] text-white font-black px-6 py-3 rounded-2xl"
+                    className="mt-5 bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black px-6 py-3 rounded-2xl"
                   >
                     View All Food
                   </button>
@@ -591,7 +591,7 @@ export default function Marketplace() {
         {cartCount > 0 && (
           <Link
             to="/cart"
-            className="fixed bottom-5 left-4 right-4 z-50 sm:left-auto sm:right-6 sm:w-auto bg-gradient-to-r from-[#315245] to-[#4D7A66] hover:from-[#29463B] hover:to-[#416B59] active:scale-[0.98] text-white font-black px-6 py-4 rounded-2xl shadow-2xl shadow-[#315245]/25 flex items-center justify-center gap-3 transition-all"
+            className="fixed bottom-5 left-4 right-4 z-50 sm:left-auto sm:right-6 sm:w-auto bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-[0.98] text-[#073B35] font-black px-6 py-4 rounded-2xl shadow-2xl shadow-[#41D3BD]/25 flex items-center justify-center gap-3 transition-all"
           >
             <span>🛒</span>
             <span>

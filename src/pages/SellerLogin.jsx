@@ -106,11 +106,11 @@ export default function SellerLogin() {
         return;
       }
 
-      localStorage.setItem(`quickbites_seller_access_${user.id}`, "yes");
+      localStorage.setItem(`Nefo_seller_access_${user.id}`, "yes");
 
       if (formData.kitchenName) {
         localStorage.setItem(
-          `Quickbites_seller_name_${user.id}`,
+          `Nefo_seller_name_${user.id}`,
           formData.kitchenName
         );
       }
@@ -128,7 +128,7 @@ export default function SellerLogin() {
       <div className="w-full max-w-5xl grid lg:grid-cols-[0.9fr_1.1fr] gap-6">
         <section className="bg-[#111111] border border-[#2a2a2a] rounded-[2rem] p-6 sm:p-8 shadow-2xl h-fit">
           <p className="text-yellow-400 font-semibold tracking-wide uppercase text-sm">
-            QuickBites Seller Portal
+            Nefo Seller Portal
           </p>
 
           <h1 className="text-4xl sm:text-5xl font-black mt-3 leading-tight">

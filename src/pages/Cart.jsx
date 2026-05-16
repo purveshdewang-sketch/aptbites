@@ -22,7 +22,7 @@ export default function Cart() {
 
   useEffect(() => {
     localStorage.setItem(
-      "quickbites_cart_order_timing",
+      "Nefo_cart_order_timing",
       JSON.stringify({
         orderTiming,
         scheduledDate,
@@ -35,19 +35,19 @@ export default function Cart() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-black text-white px-4 sm:px-6 py-7 sm:py-10 pb-24">
+      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-7 sm:py-10 pb-24">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
+              <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
                 Your Cart
               </p>
 
-              <h1 className="text-3xl sm:text-5xl font-black mt-2 tracking-tight">
+              <h1 className="text-3xl sm:text-5xl font-black mt-2 tracking-tight text-[#111827]">
                 Ready to order?
               </h1>
 
-              <p className="text-gray-500 mt-3 text-sm sm:text-base">
+              <p className="text-[#51615D] mt-3 text-sm sm:text-base">
                 Review your homemade food items before checkout.
               </p>
             </div>
@@ -55,7 +55,7 @@ export default function Cart() {
             {cartItems.length > 0 && (
               <button
                 onClick={clearCart}
-                className="shrink-0 border border-red-500/60 text-red-400 hover:bg-red-500 hover:text-black px-4 py-2.5 rounded-2xl text-sm font-bold transition-all duration-200"
+                className="shrink-0 border border-red-300 bg-red-50 text-red-500 hover:bg-red-500 hover:text-white px-4 py-2.5 rounded-2xl text-sm font-bold transition-all duration-200"
               >
                 Clear
               </button>
@@ -63,22 +63,22 @@ export default function Cart() {
           </div>
 
           {cartItems.length === 0 ? (
-            <div className="mt-10 bg-[#111111] border border-[#2a2a2a] rounded-[2rem] p-8 text-center">
-              <div className="w-20 h-20 mx-auto bg-yellow-500/10 rounded-full flex items-center justify-center text-4xl">
+            <div className="mt-10 bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-8 text-center shadow-xl shadow-[#073B35]/5">
+              <div className="w-20 h-20 mx-auto bg-[#41D3BD]/12 rounded-full flex items-center justify-center text-4xl">
                 🛒
               </div>
 
-              <h2 className="text-2xl sm:text-3xl font-bold mt-6">
+              <h2 className="text-2xl sm:text-3xl font-bold mt-6 text-[#111827]">
                 Your cart is empty
               </h2>
 
-              <p className="text-gray-500 mt-3">
+              <p className="text-[#51615D] mt-3">
                 Add some delicious homemade food to continue.
               </p>
 
               <Link
                 to="/marketplace"
-                className="inline-block mt-7 bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-6 py-3 rounded-2xl transition-all"
+                className="inline-block mt-7 bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-bold px-6 py-3 rounded-2xl transition-all shadow-lg shadow-[#41D3BD]/20"
               >
                 Explore Food
               </Link>
@@ -89,56 +89,56 @@ export default function Cart() {
                 {cartItems.map((item) => (
                   <div
                     key={item.id}
-                    className="bg-[#111111] border border-[#222] hover:border-yellow-500/20 rounded-[2rem] p-4 sm:p-5 transition-all duration-300"
+                    className="bg-white/85 border border-[#D7F5EF] hover:border-[#41D3BD]/70 rounded-[2rem] p-4 sm:p-5 transition-all duration-300 shadow-lg shadow-[#073B35]/5"
                   >
                     <div className="flex gap-4">
                       <div className="relative shrink-0">
                         <img
                           src={item.image}
                           alt={item.name}
-                          className="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-3xl"
+                          className="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-3xl bg-[#D7F5EF]"
                         />
                       </div>
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <h2 className="text-lg sm:text-2xl font-black leading-tight truncate">
+                            <h2 className="text-lg sm:text-2xl font-black leading-tight truncate text-[#111827]">
                               {item.name}
                             </h2>
 
-                            <p className="text-gray-500 text-sm mt-1 truncate">
+                            <p className="text-[#51615D] text-sm mt-1 truncate">
                               Homemade by {item.seller}
                             </p>
                           </div>
 
                           <div className="text-right shrink-0">
-                            <p className="text-yellow-400 text-xl sm:text-3xl font-black">
+                            <p className="text-[#073B35] text-xl sm:text-3xl font-black">
                               ₹{item.price * item.quantity}
                             </p>
 
-                            <p className="text-gray-500 text-xs mt-1">
+                            <p className="text-[#51615D] text-xs mt-1">
                               ₹{item.price} each
                             </p>
                           </div>
                         </div>
 
                         <div className="flex items-center justify-between gap-3 mt-5">
-                          <div className="flex items-center bg-black border border-[#333] rounded-2xl overflow-hidden shadow-lg">
+                          <div className="flex items-center bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl overflow-hidden shadow-sm">
                             <button
                               onClick={() => decreaseQuantity(item.id)}
-                              className="w-12 h-12 text-yellow-400 hover:bg-[#1a1a1a] font-black text-2xl transition-all"
+                              className="w-12 h-12 text-[#073B35] hover:bg-[#D7F5EF] font-black text-2xl transition-all"
                             >
                               −
                             </button>
 
-                            <span className="w-14 h-12 border-x border-[#333] flex items-center justify-center font-black text-lg">
+                            <span className="w-14 h-12 border-x border-[#D7F5EF] flex items-center justify-center font-black text-lg text-[#111827]">
                               {item.quantity}
                             </span>
 
                             <button
                               onClick={() => increaseQuantity(item.id)}
-                              className="w-12 h-12 text-yellow-400 hover:bg-[#1a1a1a] font-black text-2xl transition-all"
+                              className="w-12 h-12 text-[#073B35] hover:bg-[#D7F5EF] font-black text-2xl transition-all"
                             >
                               +
                             </button>
@@ -146,7 +146,7 @@ export default function Cart() {
 
                           <button
                             onClick={() => removeFromCart(item.id)}
-                            className="text-red-400 hover:text-red-300 text-sm font-bold"
+                            className="text-red-500 hover:text-red-600 text-sm font-bold"
                           >
                             Remove
                           </button>
@@ -157,12 +157,12 @@ export default function Cart() {
                 ))}
               </div>
 
-              <div className="mt-8 bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-6">
-                <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
+              <div className="mt-8 bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
+                <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
                   Order Timing
                 </p>
 
-                <h2 className="text-2xl font-black mt-2">
+                <h2 className="text-2xl font-black mt-2 text-[#111827]">
                   Order now or schedule for later
                 </h2>
 
@@ -172,12 +172,12 @@ export default function Cart() {
                     onClick={() => setOrderTiming("now")}
                     className={`text-left rounded-2xl p-4 border transition-all ${
                       orderTiming === "now"
-                        ? "bg-yellow-500 text-black border-yellow-400"
-                        : "bg-black text-gray-300 border-[#333]"
+                        ? "bg-[#41D3BD] text-[#073B35] border-[#41D3BD] shadow-lg shadow-[#41D3BD]/20"
+                        : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF] hover:border-[#41D3BD]/70"
                     }`}
                   >
                     <p className="font-black text-lg">⚡ Order Now</p>
-                    <p className="text-sm mt-1 opacity-70">
+                    <p className="text-sm mt-1 opacity-75">
                       Place the order immediately.
                     </p>
                   </button>
@@ -187,12 +187,12 @@ export default function Cart() {
                     onClick={() => setOrderTiming("scheduled")}
                     className={`text-left rounded-2xl p-4 border transition-all ${
                       orderTiming === "scheduled"
-                        ? "bg-yellow-500 text-black border-yellow-400"
-                        : "bg-black text-gray-300 border-[#333]"
+                        ? "bg-[#41D3BD] text-[#073B35] border-[#41D3BD] shadow-lg shadow-[#41D3BD]/20"
+                        : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF] hover:border-[#41D3BD]/70"
                     }`}
                   >
                     <p className="font-black text-lg">🕒 Schedule Later</p>
-                    <p className="text-sm mt-1 opacity-70">
+                    <p className="text-sm mt-1 opacity-75">
                       Choose date and time.
                     </p>
                   </button>
@@ -204,44 +204,46 @@ export default function Cart() {
                       type="date"
                       value={scheduledDate}
                       onChange={(event) => setScheduledDate(event.target.value)}
-                      className="bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500"
+                      className="bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD]"
                     />
 
                     <input
                       type="time"
                       value={scheduledTime}
                       onChange={(event) => setScheduledTime(event.target.value)}
-                      className="bg-black border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500"
+                      className="bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD]"
                     />
                   </div>
                 )}
               </div>
 
-              <div className="bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-6 shadow-2xl mt-8">
+              <div className="bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-2xl shadow-[#073B35]/5 mt-8">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-400">Item Total</span>
-                    <span className="font-bold">₹{cartTotal}</span>
+                    <span className="text-[#51615D]">Item Total</span>
+                    <span className="font-bold text-[#111827]">₹{cartTotal}</span>
                   </div>
 
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-400">Platform Fee</span>
-                    <span className="font-bold">₹{platformFee}</span>
+                    <span className="text-[#51615D]">Platform Fee</span>
+                    <span className="font-bold text-[#111827]">
+                      ₹{platformFee}
+                    </span>
                   </div>
 
-                  <div className="border-t border-[#222] pt-4 flex items-center justify-between">
+                  <div className="border-t border-[#D7F5EF] pt-4 flex items-center justify-between">
                     <div>
-                      <p className="text-gray-400 text-sm">Grand Total</p>
-                      <p className="text-yellow-400 text-3xl font-black mt-1">
+                      <p className="text-[#51615D] text-sm">Grand Total</p>
+                      <p className="text-[#073B35] text-3xl font-black mt-1">
                         ₹{finalTotal}
                       </p>
                     </div>
 
                     <div className="text-right">
-                      <p className="text-green-400 text-xs font-bold">
+                      <p className="text-[#1A9F8D] text-xs font-bold">
                         Fresh homemade food
                       </p>
-                      <p className="text-gray-500 text-xs mt-1">
+                      <p className="text-[#51615D] text-xs mt-1">
                         Prepared inside your apartment
                       </p>
                     </div>
@@ -250,14 +252,14 @@ export default function Cart() {
 
                 <Link
                   to="/checkout"
-                  className="block text-center w-full mt-6 bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black font-black py-4 rounded-2xl text-lg transition-all duration-200 shadow-lg shadow-yellow-500/20"
+                  className="block text-center w-full mt-6 bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-[0.98] text-[#073B35] font-black py-4 rounded-2xl text-lg transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
                 >
                   Proceed to Checkout
                 </Link>
 
                 <Link
                   to="/marketplace"
-                  className="block text-center w-full mt-3 border border-[#333] hover:border-yellow-500/50 text-gray-300 hover:text-yellow-400 font-bold py-3 rounded-2xl transition-all"
+                  className="block text-center w-full mt-3 border border-[#D7F5EF] bg-[#FFFFF2] hover:bg-[#D7F5EF] text-[#51615D] hover:text-[#073B35] font-bold py-3 rounded-2xl transition-all"
                 >
                   Add More Items
                 </Link>

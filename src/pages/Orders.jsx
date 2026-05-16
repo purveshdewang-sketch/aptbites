@@ -362,7 +362,7 @@ export default function Orders() {
             </h1>
 
             <p className="text-gray-400 mt-4 max-w-2xl leading-relaxed">
-              Track your QuickBites orders from kitchen confirmation to final
+              Track your Nefo orders from kitchen confirmation to final
               completion.
             </p>
           </div>
