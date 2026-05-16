@@ -60,16 +60,16 @@ export default function FoodCard({ item }) {
   return (
     <>
       {showToast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[999] w-[92%] sm:w-[340px] bg-white border border-[#EADCC8] rounded-[1.5rem] p-4 shadow-2xl shadow-[#315245]/20">
-          <p className="text-[#315245] font-black">Added to cart</p>
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[999] w-[92%] sm:w-[340px] bg-[#FFFFF2] border border-[#D7F5EF] rounded-[1.5rem] p-4 shadow-2xl shadow-[#073B35]/20">
+          <p className="text-[#073B35] font-black">Added to cart</p>
 
-          <p className="text-[#6B6258] text-sm mt-1">
+          <p className="text-[#51615D] text-sm mt-1">
             {item.name} added successfully.
           </p>
 
           <Link
             to="/cart"
-            className="block text-center mt-4 bg-gradient-to-r from-[#315245] to-[#4D7A66] hover:from-[#29463B] hover:to-[#416B59] text-white font-black py-3 rounded-2xl"
+            className="block text-center mt-4 bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black py-3 rounded-2xl"
           >
             View Cart
           </Link>
@@ -78,10 +78,10 @@ export default function FoodCard({ item }) {
 
       <Link
         to={`/food/${item.id}`}
-        className={`group block bg-white/85 border rounded-[1.5rem] overflow-hidden transition-all duration-300 shadow-lg shadow-[#111827]/5 ${
+        className={`group block bg-white border rounded-[1.5rem] overflow-hidden transition-all duration-300 shadow-lg shadow-[#073B35]/5 ${
           sellerIsClosed
             ? "border-red-300"
-            : "border-[#EADCC8] hover:border-[#315245]/50 hover:shadow-xl hover:shadow-[#315245]/10"
+            : "border-[#D7F5EF] hover:border-[#41D3BD]/70 hover:shadow-xl hover:shadow-[#41D3BD]/10"
         }`}
       >
         {/* Mobile layout */}
@@ -93,60 +93,60 @@ export default function FoodCard({ item }) {
                   className={`w-fit text-[11px] font-black px-2.5 py-1 rounded-full ${
                     item.type === "Non-Veg"
                       ? "bg-red-500 text-white"
-                      : "bg-[#315245] text-white"
+                      : "bg-[#41D3BD] text-[#073B35]"
                   }`}
                 >
                   {item.type}
                 </span>
 
-                <span className="w-fit text-[11px] font-black px-2.5 py-1 rounded-full bg-[#FFF7ED] text-[#B45309] border border-[#F59E0B]/25">
+                <span className="w-fit text-[11px] font-black px-2.5 py-1 rounded-full bg-[#FFFFF2] text-[#1A9F8D] border border-[#D7F5EF]">
                   {category}
                 </span>
               </div>
 
               <h3
                 className={`text-lg font-black mt-3 leading-tight line-clamp-2 ${
-                  sellerIsClosed ? "text-[#9A8F83]" : "text-[#111827]"
+                  sellerIsClosed ? "text-[#9AA7A3]" : "text-[#111827]"
                 }`}
               >
                 {item.name}
               </h3>
 
-              <p className="text-[#6B6258] text-sm mt-1 truncate">
+              <p className="text-[#51615D] text-sm mt-1 truncate">
                 By {item.seller}
               </p>
 
               <p
                 className={`font-black text-2xl mt-3 ${
-                  sellerIsClosed ? "text-[#9A8F83]" : "text-[#315245]"
+                  sellerIsClosed ? "text-[#9AA7A3]" : "text-[#073B35]"
                 }`}
               >
                 ₹{item.price}
               </p>
 
               {demandBadge && !sellerIsClosed && !isSoldOut && (
-                <p className="text-[#B45309] text-xs font-black mt-2">
+                <p className="text-[#1A9F8D] text-xs font-black mt-2">
                   📈 {demandBadge.label}
                 </p>
               )}
 
               <div className="flex items-center gap-2 mt-2">
-                <p className="text-[#6B6258] text-xs">
+                <p className="text-[#51615D] text-xs">
                   Ready:{" "}
                   <span className="text-[#111827] font-bold">{item.time}</span>
                 </p>
 
-                <span className="text-[#C8BBAA]">•</span>
+                <span className="text-[#B8D9D3]">•</span>
 
                 <p
                   className={`text-xs font-bold ${
                     sellerIsClosed
                       ? "text-red-500"
                       : isSoldOut
-                      ? "text-[#9A8F83]"
+                      ? "text-[#9AA7A3]"
                       : isLowStock
                       ? "text-red-500"
-                      : "text-[#4D7A66]"
+                      : "text-[#1A9F8D]"
                   }`}
                 >
                   {sellerIsClosed
@@ -159,7 +159,7 @@ export default function FoodCard({ item }) {
             </div>
 
             <div className="w-32 shrink-0">
-              <div className="relative w-32 h-32 rounded-3xl overflow-hidden bg-[#F3E7D8]">
+              <div className="relative w-32 h-32 rounded-3xl overflow-hidden bg-[#D7F5EF]">
                 <img
                   src={item.image}
                   alt={item.name}
@@ -189,23 +189,23 @@ export default function FoodCard({ item }) {
                     disabled={isBlocked}
                     className={`w-full font-black py-2.5 rounded-xl text-sm border transition-all ${
                       isBlocked
-                        ? "bg-[#F3E7D8] text-[#9A8F83] border-red-200 cursor-not-allowed"
-                        : "bg-gradient-to-r from-[#315245] to-[#4D7A66] text-white border-[#315245] shadow-lg shadow-[#315245]/20"
+                        ? "bg-[#EAF7F4] text-[#9AA7A3] border-red-200 cursor-not-allowed"
+                        : "bg-[#41D3BD] text-[#073B35] border-[#41D3BD] shadow-lg shadow-[#41D3BD]/20"
                     }`}
                   >
                     ADD
                   </button>
                 ) : (
-                  <div className="flex items-center justify-between overflow-hidden rounded-xl bg-[#315245] text-white font-black shadow-lg shadow-[#315245]/20 border border-[#315245]">
+                  <div className="flex items-center justify-between overflow-hidden rounded-xl bg-[#41D3BD] text-[#073B35] font-black shadow-lg shadow-[#41D3BD]/20 border border-[#41D3BD]">
                     <button
                       type="button"
                       onClick={handleDecrease}
-                      className="w-9 py-2 text-lg active:bg-[#4D7A66]"
+                      className="w-9 py-2 text-lg active:bg-[#55E4CF]"
                     >
                       −
                     </button>
 
-                    <span className="min-w-8 text-center text-sm bg-[#4D7A66] py-2">
+                    <span className="min-w-8 text-center text-sm bg-[#55E4CF] py-2">
                       {quantity}
                     </span>
 
@@ -216,7 +216,7 @@ export default function FoodCard({ item }) {
                       className={`w-9 py-2 text-lg ${
                         quantity >= stock
                           ? "opacity-40 cursor-not-allowed"
-                          : "active:bg-[#4D7A66]"
+                          : "active:bg-[#55E4CF]"
                       }`}
                     >
                       +
@@ -228,7 +228,7 @@ export default function FoodCard({ item }) {
           </div>
 
           {item.description && (
-            <p className="text-[#6B6258] text-sm mt-4 line-clamp-2">
+            <p className="text-[#51615D] text-sm mt-4 line-clamp-2">
               {item.description}
             </p>
           )}
@@ -236,7 +236,7 @@ export default function FoodCard({ item }) {
 
         {/* Desktop / tablet layout */}
         <div className="hidden sm:block">
-          <div className="relative aspect-square overflow-hidden bg-[#F3E7D8]">
+          <div className="relative aspect-square overflow-hidden bg-[#D7F5EF]">
             <img
               src={item.image}
               alt={item.name}
@@ -252,13 +252,13 @@ export default function FoodCard({ item }) {
                 className={`w-fit text-xs font-black px-3 py-1.5 rounded-full ${
                   item.type === "Non-Veg"
                     ? "bg-red-500 text-white"
-                    : "bg-[#315245] text-white"
+                    : "bg-[#41D3BD] text-[#073B35]"
                 }`}
               >
                 {item.type}
               </span>
 
-              <span className="w-fit text-xs font-black px-3 py-1.5 rounded-full bg-white/90 text-[#B45309] border border-[#F59E0B]/25">
+              <span className="w-fit text-xs font-black px-3 py-1.5 rounded-full bg-[#FFFFF2]/95 text-[#1A9F8D] border border-[#D7F5EF]">
                 {category}
               </span>
             </div>
@@ -277,15 +277,15 @@ export default function FoodCard({ item }) {
                   Only {stock} left
                 </span>
               ) : (
-                <span className="text-xs font-black px-3 py-1.5 rounded-full bg-white/90 text-[#315245] border border-[#315245]/25">
+                <span className="text-xs font-black px-3 py-1.5 rounded-full bg-[#FFFFF2]/95 text-[#073B35] border border-[#41D3BD]/35">
                   Available
                 </span>
               )}
             </div>
 
             {demandBadge && !sellerIsClosed && !isSoldOut && (
-              <div className="absolute left-3 bottom-3 z-20 max-w-[82%] bg-white/95 backdrop-blur border border-[#EADCC8] rounded-2xl px-3 py-2 shadow-xl">
-                <p className="text-[#B45309] text-xs font-black leading-tight">
+              <div className="absolute left-3 bottom-3 z-20 max-w-[82%] bg-[#FFFFF2]/95 backdrop-blur border border-[#D7F5EF] rounded-2xl px-3 py-2 shadow-xl">
+                <p className="text-[#1A9F8D] text-xs font-black leading-tight">
                   📈 {demandBadge.label}
                 </p>
 
@@ -312,20 +312,20 @@ export default function FoodCard({ item }) {
               <div className="min-w-0">
                 <h3
                   className={`text-xl font-black truncate ${
-                    sellerIsClosed ? "text-[#9A8F83]" : "text-[#111827]"
+                    sellerIsClosed ? "text-[#9AA7A3]" : "text-[#111827]"
                   }`}
                 >
                   {item.name}
                 </h3>
 
-                <p className="text-[#6B6258] text-sm mt-1 truncate">
+                <p className="text-[#51615D] text-sm mt-1 truncate">
                   By {item.seller}
                 </p>
               </div>
 
               <p
                 className={`font-black text-2xl shrink-0 ${
-                  sellerIsClosed ? "text-[#9A8F83]" : "text-[#315245]"
+                  sellerIsClosed ? "text-[#9AA7A3]" : "text-[#073B35]"
                 }`}
               >
                 ₹{item.price}
@@ -333,13 +333,13 @@ export default function FoodCard({ item }) {
             </div>
 
             {item.description && (
-              <p className="text-[#6B6258] text-sm mt-3 line-clamp-2">
+              <p className="text-[#51615D] text-sm mt-3 line-clamp-2">
                 {item.description}
               </p>
             )}
 
             <div className="flex items-center justify-between gap-3 mt-4">
-              <p className="text-[#6B6258] text-sm">
+              <p className="text-[#51615D] text-sm">
                 Ready: <span className="text-[#111827]">{item.time}</span>
               </p>
 
@@ -348,10 +348,10 @@ export default function FoodCard({ item }) {
                   sellerIsClosed
                     ? "text-red-500"
                     : isSoldOut
-                    ? "text-[#9A8F83]"
+                    ? "text-[#9AA7A3]"
                     : isLowStock
                     ? "text-red-500"
-                    : "text-[#4D7A66]"
+                    : "text-[#1A9F8D]"
                 }`}
               >
                 {sellerIsClosed
@@ -370,8 +370,8 @@ export default function FoodCard({ item }) {
                   disabled={isBlocked}
                   className={`w-full font-black py-4 rounded-2xl transition-all duration-200 text-base ${
                     isBlocked
-                      ? "bg-[#F3E7D8] text-[#9A8F83] cursor-not-allowed border border-red-200"
-                      : "bg-gradient-to-r from-[#315245] to-[#4D7A66] hover:from-[#29463B] hover:to-[#416B59] active:scale-[0.98] text-white shadow-lg shadow-[#315245]/20"
+                      ? "bg-[#EAF7F4] text-[#9AA7A3] cursor-not-allowed border border-red-200"
+                      : "bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-[0.98] text-[#073B35] shadow-lg shadow-[#41D3BD]/20"
                   }`}
                 >
                   {sellerIsClosed
@@ -381,16 +381,16 @@ export default function FoodCard({ item }) {
                     : "+ Add to Cart"}
                 </button>
               ) : (
-                <div className="flex items-center justify-between overflow-hidden rounded-2xl bg-[#315245] text-white font-black shadow-lg shadow-[#315245]/20">
+                <div className="flex items-center justify-between overflow-hidden rounded-2xl bg-[#41D3BD] text-[#073B35] font-black shadow-lg shadow-[#41D3BD]/20">
                   <button
                     type="button"
                     onClick={handleDecrease}
-                    className="flex-1 py-4 text-xl hover:bg-[#4D7A66]"
+                    className="flex-1 py-4 text-xl hover:bg-[#55E4CF]"
                   >
                     −
                   </button>
 
-                  <span className="px-5 py-4 bg-[#4D7A66] text-lg min-w-[70px] text-center">
+                  <span className="px-5 py-4 bg-[#55E4CF] text-lg min-w-[70px] text-center">
                     {quantity}
                   </span>
 
@@ -401,7 +401,7 @@ export default function FoodCard({ item }) {
                     className={`flex-1 py-4 text-xl ${
                       quantity >= stock
                         ? "opacity-40 cursor-not-allowed"
-                        : "hover:bg-[#4D7A66]"
+                        : "hover:bg-[#55E4CF]"
                     }`}
                   >
                     +

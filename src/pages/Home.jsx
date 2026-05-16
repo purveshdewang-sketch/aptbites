@@ -64,14 +64,14 @@ export default function Home() {
       <Navbar />
 
       <main className="min-h-screen bg-[#FFFFF2] text-[#111827] overflow-hidden">
-        <section className="relative px-4 sm:px-6 pt-5 pb-24 sm:pt-8 sm:pb-14">
+        <section className="relative px-4 sm:px-6 pt-5 pb-24 sm:pt-8 sm:pb-16">
           <div className="absolute top-0 right-0 w-72 h-72 bg-[#41D3BD]/20 blur-[95px] rounded-full" />
           <div className="absolute top-44 left-0 w-72 h-72 bg-[#41D3BD]/12 blur-[110px] rounded-full" />
           <div className="absolute bottom-0 right-20 w-80 h-80 bg-white/70 blur-[120px] rounded-full" />
 
           <div className="relative max-w-6xl mx-auto">
             <div className="lg:hidden">
-              <div className="inline-flex items-center gap-2 bg-white/80 border border-[#D7F5EF] rounded-full px-4 py-2 mb-5 shadow-sm">
+              <div className="inline-flex items-center gap-2 bg-white/85 border border-[#D7F5EF] rounded-full px-4 py-2 mb-5 shadow-sm">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#41D3BD]" />
                 <p className="text-[#1A9F8D] font-black text-xs tracking-wide uppercase">
                   Homemade food nearby
@@ -80,7 +80,7 @@ export default function Home() {
 
               <h1 className="text-[2.55rem] leading-[1.02] font-black tracking-tight text-[#111827]">
                 Hungry?
-                <span className="block text-[#1A9F8D]">
+                <span className="block text-[#073B35]">
                   Order homemade food.
                 </span>
               </h1>
@@ -90,7 +90,7 @@ export default function Home() {
                 home chefs inside your apartment community.
               </p>
 
-              <div className="mt-6 bg-white/80 border border-[#D7F5EF] rounded-[1.75rem] p-4 shadow-xl shadow-[#41D3BD]/10 backdrop-blur">
+              <div className="mt-6 bg-white/85 border border-[#D7F5EF] rounded-[1.75rem] p-4 shadow-xl shadow-[#41D3BD]/10 backdrop-blur">
                 <div className="grid grid-cols-3 gap-3">
                   <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3 text-center shadow-sm">
                     <p className="text-2xl">🍲</p>
@@ -115,7 +115,7 @@ export default function Home() {
                 </div>
 
                 <div className="mt-4 bg-[#41D3BD]/12 border border-[#41D3BD]/30 rounded-2xl p-4">
-                  <p className="text-[#1A9F8D] font-black text-sm">
+                  <p className="text-[#073B35] font-black text-sm">
                     Fresh drops available daily
                   </p>
                   <p className="text-[#51615D] text-xs mt-1">
@@ -131,7 +131,7 @@ export default function Home() {
               >
                 <Link
                   to="/marketplace"
-                  className="bg-gradient-to-r from-[#41D3BD] to-[#1A9F8D] active:scale-95 text-[#073B35] font-black px-5 py-4 rounded-2xl text-center transition-all shadow-xl shadow-[#41D3BD]/25"
+                  className="bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-95 text-[#073B35] font-black px-5 py-4 rounded-2xl text-center transition-all shadow-xl shadow-[#41D3BD]/25"
                 >
                   Order Food
                 </Link>
@@ -139,7 +139,7 @@ export default function Home() {
                 {shouldShowSellFood && (
                   <Link
                     to="/seller-login"
-                    className="border border-[#41D3BD]/40 bg-white/80 text-[#1A9F8D] hover:bg-[#41D3BD] hover:text-[#073B35] active:scale-95 font-black px-5 py-4 rounded-2xl text-center transition-all shadow-sm"
+                    className="border border-[#41D3BD]/45 bg-white/85 text-[#1A9F8D] hover:bg-[#D7F5EF] hover:text-[#073B35] active:scale-95 font-black px-5 py-4 rounded-2xl text-center transition-all shadow-sm"
                   >
                     Sell Food
                   </Link>
@@ -147,17 +147,17 @@ export default function Home() {
               </div>
 
               <div className="grid grid-cols-3 gap-3 mt-6">
-                <div className="bg-white/80 border border-[#D7F5EF] rounded-2xl p-3 shadow-sm">
+                <div className="bg-white/85 border border-[#D7F5EF] rounded-2xl p-3 shadow-sm">
                   <p className="text-[#1A9F8D] font-black text-sm">Fresh</p>
                   <p className="text-[#51615D] text-xs mt-1">Daily drops</p>
                 </div>
 
-                <div className="bg-white/80 border border-[#D7F5EF] rounded-2xl p-3 shadow-sm">
+                <div className="bg-white/85 border border-[#D7F5EF] rounded-2xl p-3 shadow-sm">
                   <p className="text-[#1A9F8D] font-black text-sm">Local</p>
                   <p className="text-[#51615D] text-xs mt-1">Nearby homes</p>
                 </div>
 
-                <div className="bg-white/80 border border-[#D7F5EF] rounded-2xl p-3 shadow-sm">
+                <div className="bg-white/85 border border-[#D7F5EF] rounded-2xl p-3 shadow-sm">
                   <p className="text-[#1A9F8D] font-black text-sm">Trusted</p>
                   <p className="text-[#51615D] text-xs mt-1">Residents</p>
                 </div>
@@ -166,7 +166,7 @@ export default function Home() {
 
             <div className="hidden lg:block">
               <div className="max-w-4xl">
-                <div className="inline-flex items-center gap-2 bg-white/80 border border-[#D7F5EF] rounded-full px-4 py-2 mb-6 shadow-sm">
+                <div className="inline-flex items-center gap-2 bg-white/85 border border-[#D7F5EF] rounded-full px-4 py-2 mb-6 shadow-sm">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#41D3BD]" />
                   <p className="text-[#1A9F8D] font-semibold text-xs tracking-wide uppercase">
                     neighbourhood homemade food
@@ -175,7 +175,7 @@ export default function Home() {
 
                 <h1 className="text-7xl font-black leading-[1.02] tracking-tight text-[#111827]">
                   Homemade food,
-                  <span className="block text-[#1A9F8D]">
+                  <span className="block text-[#073B35]">
                     closer than ever.
                   </span>
                 </h1>
@@ -192,7 +192,7 @@ export default function Home() {
                 >
                   <Link
                     to="/marketplace"
-                    className="bg-gradient-to-r from-[#41D3BD] to-[#1A9F8D] active:scale-95 text-[#073B35] font-bold px-5 py-4 rounded-2xl text-center transition-all duration-200 shadow-xl shadow-[#41D3BD]/25"
+                    className="bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-95 text-[#073B35] font-bold px-5 py-4 rounded-2xl text-center transition-all duration-200 shadow-xl shadow-[#41D3BD]/25"
                   >
                     Order Food
                   </Link>
@@ -200,7 +200,7 @@ export default function Home() {
                   {shouldShowSellFood && (
                     <Link
                       to="/seller-login"
-                      className="border border-[#41D3BD]/40 bg-white/80 text-[#1A9F8D] hover:bg-[#41D3BD] hover:text-[#073B35] active:scale-95 font-bold px-5 py-4 rounded-2xl text-center transition-all duration-200 shadow-sm"
+                      className="border border-[#41D3BD]/45 bg-white/85 text-[#1A9F8D] hover:bg-[#D7F5EF] hover:text-[#073B35] active:scale-95 font-bold px-5 py-4 rounded-2xl text-center transition-all duration-200 shadow-sm"
                     >
                       Sell Food
                     </Link>
@@ -208,7 +208,7 @@ export default function Home() {
                 </div>
 
                 <div className="grid grid-cols-3 gap-4 mt-9">
-                  <div className="bg-white/80 border border-[#D7F5EF] rounded-[1.5rem] p-4 shadow-lg shadow-[#41D3BD]/5">
+                  <div className="bg-white/85 border border-[#D7F5EF] rounded-[1.5rem] p-4 shadow-lg shadow-[#41D3BD]/5">
                     <div className="w-10 h-10 rounded-2xl bg-[#41D3BD]/12 flex items-center justify-center mb-3 text-xl">
                       🍲
                     </div>
@@ -218,7 +218,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="bg-white/80 border border-[#D7F5EF] rounded-[1.5rem] p-4 shadow-lg shadow-[#41D3BD]/5">
+                  <div className="bg-white/85 border border-[#D7F5EF] rounded-[1.5rem] p-4 shadow-lg shadow-[#41D3BD]/5">
                     <div className="w-10 h-10 rounded-2xl bg-[#41D3BD]/12 flex items-center justify-center mb-3 text-xl">
                       🏠
                     </div>
@@ -228,7 +228,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="bg-white/80 border border-[#D7F5EF] rounded-[1.5rem] p-4 shadow-lg shadow-[#41D3BD]/5">
+                  <div className="bg-white/85 border border-[#D7F5EF] rounded-[1.5rem] p-4 shadow-lg shadow-[#41D3BD]/5">
                     <div className="w-10 h-10 rounded-2xl bg-[#41D3BD]/12 flex items-center justify-center mb-3 text-xl">
                       ⭐
                     </div>
@@ -241,7 +241,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="mt-10 bg-white/80 border border-[#D7F5EF] rounded-[1.75rem] p-6 max-w-3xl shadow-xl shadow-[#41D3BD]/5">
+                <div className="mt-10 bg-white/85 border border-[#D7F5EF] rounded-[1.75rem] p-6 max-w-3xl shadow-xl shadow-[#41D3BD]/5">
                   <p className="text-[#1A9F8D] text-sm font-semibold uppercase tracking-[0.18em]">
                     Why QuickBites?
                   </p>
@@ -264,7 +264,7 @@ export default function Home() {
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#FFFFF2]/95 backdrop-blur-xl border-t border-[#D7F5EF] px-4 py-3">
           <Link
             to="/marketplace"
-            className="block w-full bg-gradient-to-r from-[#41D3BD] to-[#1A9F8D] active:scale-[0.98] text-[#073B35] text-center font-black py-4 rounded-2xl shadow-xl shadow-[#41D3BD]/25"
+            className="block w-full bg-[#41D3BD] active:scale-[0.98] text-[#073B35] text-center font-black py-4 rounded-2xl shadow-xl shadow-[#41D3BD]/25"
           >
             Start Ordering
           </Link>

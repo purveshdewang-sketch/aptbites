@@ -156,7 +156,7 @@ export default function Navbar() {
 
   function LogoMark() {
     return (
-      <div className="w-11 h-11 rounded-2xl bg-[#FFFFF2] border border-[#41D3BD]/40 flex items-center justify-center overflow-hidden shadow-lg shadow-black/20 shrink-0">
+      <div className="w-11 h-11 rounded-2xl bg-[#FFFFF2] border border-[#41D3BD]/35 flex items-center justify-center overflow-hidden shadow-lg shadow-black/25 shrink-0">
         {!logoFailed ? (
           <img
             src="/quickbites-logo.png"
@@ -173,7 +173,7 @@ export default function Navbar() {
 
   if (authLoading) {
     return (
-      <header className="sticky top-0 z-50 bg-[#073B35] border-b border-[#0B5A51]">
+      <header className="sticky top-0 z-50 bg-[#073B35] border-b border-[#0F5B51]">
         <div className="h-16 sm:h-[72px]" />
       </header>
     );
@@ -181,7 +181,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-[#073B35]/96 backdrop-blur-2xl border-b border-[#0B5A51] shadow-lg shadow-[#073B35]/20">
+      <header className="sticky top-0 z-50 bg-[#073B35]/96 backdrop-blur-2xl border-b border-[#0F5B51] shadow-lg shadow-[#073B35]/25">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="h-16 sm:h-[72px] flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3 group min-w-0">
@@ -192,7 +192,7 @@ export default function Navbar() {
                   QuickBites
                 </p>
 
-                <p className="text-[10px] text-[#A9D9D2] mt-1 tracking-wide uppercase truncate">
+                <p className="text-[10px] text-[#BFE8E1] mt-1 tracking-wide uppercase truncate">
                   neighbourhood food
                 </p>
               </div>
@@ -209,7 +209,7 @@ export default function Navbar() {
                     className={`text-sm font-semibold transition-all duration-200 ${
                       isActive
                         ? "text-[#41D3BD]"
-                        : "text-[#CFEDEA] hover:text-[#41D3BD]"
+                        : "text-[#D7F5EF] hover:text-[#41D3BD]"
                     }`}
                   >
                     {link.name}
@@ -223,7 +223,7 @@ export default function Navbar() {
                   className={`text-sm font-semibold transition-all duration-200 ${
                     location.pathname === "/owner-dashboard"
                       ? "text-[#41D3BD]"
-                      : "text-[#CFEDEA] hover:text-[#41D3BD]"
+                      : "text-[#D7F5EF] hover:text-[#41D3BD]"
                   }`}
                 >
                   Owner Dashboard
@@ -243,7 +243,7 @@ export default function Navbar() {
 
               <Link
                 to="/cart"
-                className="relative bg-[#0B4A43] hover:bg-[#0D5E55] border border-[#14796D] hover:border-[#41D3BD] active:scale-95 text-[#FFFFF2] w-11 h-11 sm:w-auto sm:h-auto sm:px-4 sm:py-2 rounded-2xl transition-all duration-200 flex items-center justify-center gap-2 shadow-sm"
+                className="relative bg-[#0B4A43] hover:bg-[#0F5B51] border border-[#14796D] hover:border-[#41D3BD] active:scale-95 text-[#FFFFF2] w-11 h-11 sm:w-auto sm:h-auto sm:px-4 sm:py-2 rounded-2xl transition-all duration-200 flex items-center justify-center gap-2 shadow-sm"
               >
                 <span className="text-lg">🛒</span>
 
