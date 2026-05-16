@@ -156,7 +156,7 @@ export default function Navbar() {
 
   function LogoMark() {
     return (
-      <div className="w-11 h-11 rounded-2xl bg-[#FFFFF2] border border-[#41D3BD]/35 flex items-center justify-center overflow-hidden shadow-lg shadow-black/25 shrink-0">
+      <div className="hidden sm:flex w-11 h-11 rounded-2xl bg-[#FFFFF2] border border-[#41D3BD]/35 items-center justify-center overflow-hidden shadow-lg shadow-black/25 shrink-0">
         {!logoFailed ? (
           <img
             src="/Nefo-logo.png"
