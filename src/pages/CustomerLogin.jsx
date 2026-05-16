@@ -168,14 +168,25 @@ export default function CustomerLogin() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white flex items-center justify-center px-4 sm:px-6 py-10 overflow-hidden">
-      <div className="absolute top-0 right-0 w-72 h-72 bg-yellow-500/10 blur-[100px] rounded-full" />
+    <main className="min-h-screen bg-[#FFFFF2] text-[#111827] flex items-center justify-center px-4 sm:px-6 py-10 overflow-hidden">
+      <div className="absolute top-0 right-0 w-72 h-72 bg-[#41D3BD]/20 blur-[100px] rounded-full" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 bg-[#41D3BD]/10 blur-[110px] rounded-full" />
 
-      <div className="relative w-full max-w-lg bg-[#111111] border border-[#2a2a2a] rounded-[2rem] p-6 sm:p-8 shadow-2xl shadow-black/50">
+      <div className="relative w-full max-w-lg bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-6 sm:p-8 shadow-2xl shadow-[#073B35]/10">
         <div className="flex items-center justify-center mb-6">
-          <div className="w-14 h-14 rounded-3xl bg-yellow-500 flex items-center justify-center shadow-lg shadow-yellow-500/20">
-            <span className="text-black text-2xl font-black">Q</span>
+          <div className="w-14 h-14 rounded-3xl bg-[#41D3BD] flex items-center justify-center shadow-lg shadow-[#41D3BD]/20">
+            <span className="text-[#073B35] text-2xl font-black">N</span>
           </div>
+        </div>
+
+        <div className="text-center mb-6">
+          <p className="text-[#1A9F8D] font-black text-sm uppercase tracking-wide">
+            Nefo
+          </p>
+
+          <p className="text-[#51615D] text-sm mt-1">
+            Homemade food from trusted neighbours
+          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-3 mb-6">
@@ -184,8 +195,8 @@ export default function CustomerLogin() {
             onClick={() => setSelectedRole("customer")}
             className={`py-3 rounded-2xl font-bold transition-all ${
               selectedRole === "customer"
-                ? "bg-yellow-500 text-black"
-                : "bg-black border border-[#333] text-gray-400"
+                ? "bg-[#41D3BD] text-[#073B35] shadow-lg shadow-[#41D3BD]/20"
+                : "bg-[#FFFFF2] border border-[#D7F5EF] text-[#51615D]"
             }`}
           >
             Customer
@@ -196,15 +207,15 @@ export default function CustomerLogin() {
             onClick={() => setSelectedRole("seller")}
             className={`py-3 rounded-2xl font-bold transition-all ${
               selectedRole === "seller"
-                ? "bg-yellow-500 text-black"
-                : "bg-black border border-[#333] text-gray-400"
+                ? "bg-[#41D3BD] text-[#073B35] shadow-lg shadow-[#41D3BD]/20"
+                : "bg-[#FFFFF2] border border-[#D7F5EF] text-[#51615D]"
             }`}
           >
             Seller
           </button>
         </div>
 
-        <h1 className="text-3xl font-black text-center">
+        <h1 className="text-3xl font-black text-center text-[#111827]">
           {isSignUp
             ? `Create ${
                 selectedRole === "seller" ? "Seller" : "Customer"
@@ -212,14 +223,14 @@ export default function CustomerLogin() {
             : "Welcome Back"}
         </h1>
 
-        <p className="text-gray-400 mt-3 text-center leading-relaxed">
+        <p className="text-[#51615D] mt-3 text-center leading-relaxed">
           {selectedRole === "seller"
             ? "Manage dishes, stock, and realtime neighbourhood food orders."
             : "Order homemade food from your apartment community."}
         </p>
 
         {message && (
-          <div className="mt-5 bg-black border border-[#333] rounded-2xl p-4 text-sm text-gray-300">
+          <div className="mt-5 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 text-sm text-[#073B35]">
             {message}
           </div>
         )}
@@ -233,7 +244,7 @@ export default function CustomerLogin() {
                 onChange={handleChange}
                 required
                 placeholder="Full name"
-                className="bg-black border border-[#333] rounded-2xl px-4 py-4 outline-none focus:border-yellow-500"
+                className="bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
               />
 
               <input
@@ -242,7 +253,7 @@ export default function CustomerLogin() {
                 onChange={handleChange}
                 required
                 placeholder="Phone number"
-                className="bg-black border border-[#333] rounded-2xl px-4 py-4 outline-none focus:border-yellow-500"
+                className="bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
               />
             </div>
           )}
@@ -254,7 +265,7 @@ export default function CustomerLogin() {
             onChange={handleChange}
             required
             placeholder="Email address"
-            className="w-full bg-black border border-[#333] rounded-2xl px-4 py-4 outline-none focus:border-yellow-500"
+            className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
           />
 
           <input
@@ -264,12 +275,12 @@ export default function CustomerLogin() {
             onChange={handleChange}
             required
             placeholder="Password"
-            className="w-full bg-black border border-[#333] rounded-2xl px-4 py-4 outline-none focus:border-yellow-500"
+            className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
           />
 
           {isSignUp && (
-            <div className="mt-6 bg-black/50 border border-[#2a2a2a] rounded-3xl p-5">
-              <p className="text-yellow-400 font-bold mb-4">
+            <div className="mt-6 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-5">
+              <p className="text-[#073B35] font-bold mb-4">
                 Apartment Address
               </p>
 
@@ -280,7 +291,7 @@ export default function CustomerLogin() {
                   onChange={handleChange}
                   required
                   placeholder="Apartment name"
-                  className="w-full bg-black border border-[#333] rounded-2xl px-4 py-4 outline-none focus:border-yellow-500"
+                  className="w-full bg-white border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
                 />
 
                 <div className="grid grid-cols-2 gap-4">
@@ -289,7 +300,7 @@ export default function CustomerLogin() {
                     value={formData.block}
                     onChange={handleChange}
                     placeholder="Block / Tower"
-                    className="bg-black border border-[#333] rounded-2xl px-4 py-4 outline-none focus:border-yellow-500"
+                    className="bg-white border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
                   />
 
                   <input
@@ -298,7 +309,7 @@ export default function CustomerLogin() {
                     onChange={handleChange}
                     required
                     placeholder="Flat No."
-                    className="bg-black border border-[#333] rounded-2xl px-4 py-4 outline-none focus:border-yellow-500"
+                    className="bg-white border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
                   />
                 </div>
               </div>
@@ -308,7 +319,7 @@ export default function CustomerLogin() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 bg-yellow-500 hover:bg-yellow-400 active:scale-[0.99] disabled:opacity-50 text-black font-black py-4 rounded-2xl"
+            className="w-full mt-2 bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-[0.99] disabled:opacity-50 text-[#073B35] font-black py-4 rounded-2xl shadow-lg shadow-[#41D3BD]/20"
           >
             {loading
               ? "Please wait..."
@@ -324,14 +335,17 @@ export default function CustomerLogin() {
             setIsSignUp(!isSignUp);
             setMessage("");
           }}
-          className="w-full mt-5 text-sm text-yellow-400 hover:text-yellow-300"
+          className="w-full mt-5 text-sm text-[#1A9F8D] hover:text-[#073B35] font-semibold"
         >
           {isSignUp
             ? "Already have an account? Sign In"
             : "New here? Create an account"}
         </button>
 
-        <Link to="/" className="block text-gray-500 text-sm mt-6 text-center">
+        <Link
+          to="/"
+          className="block text-[#51615D] hover:text-[#073B35] text-sm mt-6 text-center"
+        >
           Continue to Nefo
         </Link>
       </div>

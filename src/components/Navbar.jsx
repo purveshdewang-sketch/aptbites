@@ -144,7 +144,7 @@ export default function Navbar() {
   ];
 
   function getInitial() {
-    if (!user?.email) return "Q";
+    if (!user?.email) return "N";
     return user.email.charAt(0).toUpperCase();
   }
 
@@ -165,7 +165,7 @@ export default function Navbar() {
             onError={() => setLogoFailed(true)}
           />
         ) : (
-          <span className="text-[#073B35] font-black text-base">Q</span>
+          <span className="text-[#073B35] font-black text-base">N</span>
         )}
       </div>
     );

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import Navbar from "../components/Navbar";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../context/AuthContext";
 
@@ -12,8 +13,6 @@ const FOOD_CATEGORIES = [
   "Tiffin",
   "Specials",
 ];
-
-const PLATFORM_FEE = 10;
 
 export default function SellerDashboard() {
   const { user } = useAuth();
@@ -126,20 +125,19 @@ export default function SellerDashboard() {
   }
 
   async function fetchSellerProfile() {
-  if (!user) return;
+    if (!user) return;
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("seller_online, accept_scheduled_orders")
-    .eq("id", user.id)
-    .maybeSingle();
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("seller_online, accept_scheduled_orders")
+      .eq("id", user.id)
+      .maybeSingle();
 
-  if (!error && data) {
-    setSellerOnline(data.seller_online !== false);
-    setAcceptScheduledOrders(data.accept_scheduled_orders !== false);
+    if (!error && data) {
+      setSellerOnline(data.seller_online !== false);
+      setAcceptScheduledOrders(data.accept_scheduled_orders !== false);
+    }
   }
-}
-
 
   async function toggleSellerOnline() {
     if (!user) return;
@@ -161,29 +159,29 @@ export default function SellerDashboard() {
     setMessage(nextStatus ? "You are now online." : "You are now offline.");
   }
 
-async function toggleAcceptScheduledOrders() {
-  if (!user) return;
+  async function toggleAcceptScheduledOrders() {
+    if (!user) return;
 
-  const nextStatus = !acceptScheduledOrders;
-  setAcceptScheduledOrders(nextStatus);
+    const nextStatus = !acceptScheduledOrders;
+    setAcceptScheduledOrders(nextStatus);
 
-  const { error } = await supabase
-    .from("profiles")
-    .update({ accept_scheduled_orders: nextStatus })
-    .eq("id", user.id);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ accept_scheduled_orders: nextStatus })
+      .eq("id", user.id);
 
-  if (error) {
-    setAcceptScheduledOrders(!nextStatus);
-    setMessage(`Could not update scheduled order status: ${error.message}`);
-    return;
+    if (error) {
+      setAcceptScheduledOrders(!nextStatus);
+      setMessage(`Could not update scheduled order status: ${error.message}`);
+      return;
+    }
+
+    setMessage(
+      nextStatus
+        ? "Scheduled orders are now accepted."
+        : "Scheduled orders are now turned off."
+    );
   }
-
-  setMessage(
-    nextStatus
-      ? "Scheduled orders are now accepted."
-      : "Scheduled orders are now turned off."
-  );
-}
 
   function toggleNotificationSound() {
     if (!user) return;
@@ -277,47 +275,47 @@ async function toggleAcceptScheduledOrders() {
     return [];
   }
 
-function isScheduledOrder(order) {
-  return order.scheduled_order === true || Boolean(order.scheduled_for);
-}
-
-function formatScheduledDateTime(value) {
-  if (!value) return "Schedule time not available";
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Schedule time not available";
+  function isScheduledOrder(order) {
+    return order.scheduled_order === true || Boolean(order.scheduled_for);
   }
 
-  return date.toLocaleString([], {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
+  function formatScheduledDateTime(value) {
+    if (!value) return "Schedule time not available";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return "Schedule time not available";
+    }
+
+    return date.toLocaleString([], {
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
 
   async function fetchSellerFoods() {
-  if (!user) return;
+    if (!user) return;
 
-  setFoodsLoading(true);
+    setFoodsLoading(true);
 
-  const { data, error } = await supabase
-    .from("foods")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("id", { ascending: false });
+    const { data, error } = await supabase
+      .from("foods")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("id", { ascending: false });
 
-  if (!error) {
-    setSellerFoods(data || []);
-  } else {
-    setMessage(`Could not load dishes: ${error.message}`);
+    if (!error) {
+      setSellerFoods(data || []);
+    } else {
+      setMessage(`Could not load dishes: ${error.message}`);
+    }
+
+    setFoodsLoading(false);
   }
-
-  setFoodsLoading(false);
-}
 
   async function fetchSellerOrders(shouldCheckNewOrder = false) {
     if (!user) return;
@@ -400,17 +398,25 @@ function formatScheduledDateTime(value) {
       setMessage(
         `Image optimized (${(compressedFile.size / 1024 / 1024).toFixed(2)} MB)`
       );
-    } catch (error) {
+    } catch {
       setMessage("Could not process image.");
     }
+  }
 
-    function removeSelectedImage() {
-  setImageFile(null);
-  setImagePreview(editingFood?.image || "");
-  setMessage(editingFood ? "Image reverted to existing dish image." : "Image removed.");
-  
-}
+  function removeSelectedImage() {
+    setImageFile(null);
+    setImagePreview(editingFood?.image || "");
+    setMessage(
+      editingFood ? "Image reverted to existing dish image." : "Image removed."
+    );
 
+    if (uploadImageInputRef.current) {
+      uploadImageInputRef.current.value = "";
+    }
+
+    if (cameraImageInputRef.current) {
+      cameraImageInputRef.current.value = "";
+    }
   }
 
   function compressImage(file) {
@@ -452,13 +458,9 @@ function formatScheduledDateTime(value) {
               return;
             }
 
-            const compressedFile = new File(
-              [blob],
-              `${Date.now()}-Nefo.jpg`,
-              {
-                type: "image/jpeg",
-              }
-            );
+            const compressedFile = new File([blob], `${Date.now()}-Nefo.jpg`, {
+              type: "image/jpeg",
+            });
 
             resolve(compressedFile);
           },
@@ -517,6 +519,14 @@ function formatScheduledDateTime(value) {
     setEditingFood(null);
     setImageFile(null);
     setImagePreview("");
+
+    if (uploadImageInputRef.current) {
+      uploadImageInputRef.current.value = "";
+    }
+
+    if (cameraImageInputRef.current) {
+      cameraImageInputRef.current.value = "";
+    }
   }
 
   function startEdit(food) {
@@ -537,6 +547,7 @@ function formatScheduledDateTime(value) {
       localStorage.setItem(getSellerStorageKey(), food.seller);
     }
 
+    setImageFile(null);
     setImagePreview(food.image || "");
 
     window.scrollTo({
@@ -698,36 +709,34 @@ function formatScheduledDateTime(value) {
   }
 
   async function completeOrder(orderId) {
-  const confirmComplete = window.confirm("Mark this order as completed?");
+    const confirmComplete = window.confirm("Mark this order as completed?");
 
-  if (!confirmComplete) return;
+    if (!confirmComplete) return;
 
-  const { data, error } = await supabase
-    .from("orders")
-    .update({ status: "completed" })
-    .eq("id", orderId)
-    .eq("seller_id", user.id)
-    .select("*");
+    const { data, error } = await supabase
+      .from("orders")
+      .update({ status: "completed" })
+      .eq("id", orderId)
+      .eq("seller_id", user.id)
+      .select("*");
 
-  if (error) {
-    setMessage(`Could not complete order: ${error.message}`);
-    return;
+    if (error) {
+      setMessage(`Could not complete order: ${error.message}`);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      setMessage("Order completion failed. Order was not updated.");
+      return;
+    }
+
+    setSellerOrders((currentOrders) =>
+      currentOrders.map((order) => (order.id === orderId ? data[0] : order))
+    );
+
+    setMessage("Order completed. Earnings updated.");
+    fetchSellerOrders(false);
   }
-
-  if (!data || data.length === 0) {
-    setMessage("Order completion failed. Order was not updated.");
-    return;
-  }
-
-  setSellerOrders((currentOrders) =>
-    currentOrders.map((order) =>
-      order.id === orderId ? data[0] : order
-    )
-  );
-
-  setMessage("Order completed. Earnings updated.");
-  fetchSellerOrders(false);
-}
 
   async function markReadyForPickup(orderId) {
     const { error } = await supabase
@@ -804,30 +813,30 @@ function formatScheduledDateTime(value) {
     const currentStatus = normalizeStatus(status);
 
     if (currentStatus === "cancelled") {
-      return "bg-red-900/40 text-red-300 border-red-500/20";
+      return "bg-red-50 text-red-600 border-red-200";
     }
 
     if (currentStatus === "completed") {
-      return "bg-green-900/40 text-green-300 border-green-500/20";
+      return "bg-green-50 text-green-700 border-green-200";
     }
 
     if (currentStatus === "ready_for_pickup") {
-      return "bg-emerald-900/40 text-emerald-300 border-emerald-500/20";
+      return "bg-emerald-50 text-emerald-700 border-emerald-200";
     }
 
     if (currentStatus === "packing") {
-      return "bg-blue-900/40 text-blue-300 border-blue-500/20";
+      return "bg-blue-50 text-blue-700 border-blue-200";
     }
 
     if (currentStatus === "cooking") {
-      return "bg-orange-900/40 text-orange-300 border-orange-500/20";
+      return "bg-orange-50 text-orange-700 border-orange-200";
     }
 
     if (currentStatus === "accepted") {
-      return "bg-yellow-900/30 text-yellow-300 border-yellow-500/20";
+      return "bg-[#41D3BD]/12 text-[#073B35] border-[#41D3BD]/30";
     }
 
-    return "bg-purple-900/40 text-purple-300 border-purple-500/20";
+    return "bg-purple-50 text-purple-700 border-purple-200";
   }
 
   function getProgressPercentage(status) {
@@ -873,11 +882,11 @@ function formatScheduledDateTime(value) {
     return new Date(order.created_at).toDateString() === todayDateString;
   });
 
-    const todayTotalOrders = sellerOrders.filter((order) => {
-      if (!order.created_at) return false;
+  const todayTotalOrders = sellerOrders.filter((order) => {
+    if (!order.created_at) return false;
 
-      return new Date(order.created_at).toDateString() === todayDateString;
-    });
+    return new Date(order.created_at).toDateString() === todayDateString;
+  });
 
   const grossEarnings = completedOrders.reduce((total, order) => {
     return total + Number(order.subtotal_amount || 0);
@@ -887,7 +896,6 @@ function formatScheduledDateTime(value) {
     return total + Number(order.subtotal_amount || 0);
   }, 0);
 
-  
   const averageOrderValue =
     completedOrders.length > 0
       ? Math.round(grossEarnings / completedOrders.length)
@@ -926,781 +934,757 @@ function formatScheduledDateTime(value) {
 
   if (!user) {
     return (
-      <main className="min-h-screen bg-black text-white px-4 sm:px-6 py-10 flex items-center justify-center">
-        <div className="max-w-md w-full bg-[#111] border border-[#222] rounded-[2rem] p-8 text-center">
-          <h1 className="text-3xl font-black">Seller login required</h1>
+      <>
+        <Navbar />
 
-          <p className="text-gray-500 mt-4">
-            Please sign in before adding or managing food dishes.
-          </p>
+        <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-10 flex items-center justify-center">
+          <div className="max-w-md w-full bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-8 text-center shadow-xl shadow-[#073B35]/5">
+            <h1 className="text-3xl font-black">Seller login required</h1>
 
-          <Link
-            to="/customer-login"
-            className="block mt-7 bg-yellow-500 hover:bg-yellow-400 text-black font-black py-4 rounded-2xl"
-          >
-            Sign In
-          </Link>
+            <p className="text-[#51615D] mt-4">
+              Please sign in before adding or managing food dishes.
+            </p>
 
-          <Link
-            to="/"
-            className="block mt-3 border border-[#333] hover:border-yellow-500/50 text-gray-300 hover:text-yellow-400 font-bold py-3 rounded-2xl transition-all"
-          >
-            Back to Home
-          </Link>
-        </div>
-      </main>
+            <Link
+              to="/customer-login"
+              className="block mt-7 bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black py-4 rounded-2xl"
+            >
+              Sign In
+            </Link>
+
+            <Link
+              to="/"
+              className="block mt-3 border border-[#D7F5EF] bg-[#FFFFF2] hover:bg-[#D7F5EF] text-[#51615D] hover:text-[#073B35] font-bold py-3 rounded-2xl transition-all"
+            >
+              Back to Home
+            </Link>
+          </div>
+        </main>
+      </>
     );
   }
 
   return (
-    <main className="min-h-screen bg-black text-white px-4 sm:px-6 py-8 sm:py-10">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
-          <div>
-            <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
-              Seller Dashboard
-            </p>
+    <>
+      <Navbar />
 
-            <h1 className="text-3xl sm:text-5xl font-black mt-2 tracking-tight">
-              Manage your food drops
-            </h1>
-
-            <p className="text-gray-500 mt-3">
-              {sellerOnline
-                ? "You are online and accepting orders."
-                : "You are offline. Customers should not place new orders."}
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-3 lg:justify-end">
-            <Link
-              to="/"
-              className="border border-[#333] hover:border-yellow-500/50 text-gray-300 hover:text-yellow-400 active:scale-95 font-bold px-5 py-3 rounded-full min-w-[140px] text-center transition-all"
-            >
-              ← Home
-            </Link>
-
-            <button
-              type="button"
-              onClick={toggleSellerOnline}
-              className={`active:scale-95 font-bold px-5 py-3 rounded-2xl text-center transition-all ${
-                sellerOnline
-                  ? "bg-green-500 text-black"
-                  : "bg-red-500 text-black"
-              }`}
-            >
-              {sellerOnline ? "🟢 Online" : "🔴 Offline"}
-            </button>
-
-            <button
-  type="button"
-  onClick={toggleAcceptScheduledOrders}
-  className={`active:scale-95 font-bold px-5 py-3 rounded-2xl text-center transition-all ${
-    acceptScheduledOrders
-      ? "bg-yellow-500 text-black"
-      : "bg-[#111] text-gray-400 border border-[#333]"
-  }`}
->
-  {acceptScheduledOrders ? "🕒 Schedule ON" : "🕒 Schedule OFF"}
-</button>
-
-            <button
-              type="button"
-              onClick={toggleNotificationSound}
-              className={`${
-                audioReady
-                  ? "bg-green-500 text-black"
-                  : "bg-[#111] text-yellow-400 border border-yellow-500/40"
-              } active:scale-95 font-bold px-5 py-3 rounded-2xl text-center transition-all`}
-            >
-              {audioReady ? "🔕 Sound Off" : "🔔 Sound On"}
-            </button>
-
-            <Link
-              to="/marketplace"
-              className="bg-yellow-500 hover:bg-yellow-400 active:scale-95 text-black font-bold px-5 py-3 rounded-2xl text-center transition-all"
-            >
-              Marketplace
-            </Link>
-          </div>
-        </div>
-
-        {message && (
-          <div className="mt-5 bg-[#111] border border-[#333] rounded-2xl p-4 text-sm text-gray-300">
-            {message}
-          </div>
-        )}
-
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 mt-8">
-          <div className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-5">
-            <p className="text-gray-400">Total Orders</p>
-            <h2 className="text-4xl font-black text-yellow-400 mt-3">
-              {totalOrdersCount}
-            </h2>
-          </div>
-
-          <div className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-5">
-            <p className="text-gray-400">Today’s Orders</p>
-            <h2 className="text-4xl font-black text-yellow-400 mt-3">
-              {todayTotalOrders.length}
-            </h2>
-          </div>
-
-          <div className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-5">
-            <p className="text-gray-400">Active Orders</p>
-            <h2 className="text-4xl font-black text-yellow-400 mt-3">
-              {activeOrdersCount}
-            </h2>
-          </div>
-
-          <div className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-5">
-            <p className="text-gray-400">Sold Orders</p>
-            <h2 className="text-4xl font-black text-yellow-400 mt-3">
-              {soldOrdersCount}
-            </h2>
-          </div>
-
-          <div className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-5">
-            <p className="text-gray-400">Active Dishes</p>
-            <h2 className="text-4xl font-black text-yellow-400 mt-3">
-              {sellerFoods.filter((food) => Number(food.stock) > 0).length}
-            </h2>
-          </div>
-        </section>
-
-        <section className="mt-8 bg-[#111] border border-[#2a2a2a] rounded-3xl p-5 sm:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-8 sm:py-10">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
             <div>
-              <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
-                Earnings Analytics
+              <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
+                Seller Dashboard
               </p>
 
-              <h2 className="text-2xl sm:text-3xl font-bold mt-1">
-                Seller Earnings
-              </h2>
-            </div>
+              <h1 className="text-3xl sm:text-5xl font-black mt-2 tracking-tight">
+                Manage your food drops
+              </h1>
 
-            <p className="text-gray-500 text-sm">
-              Calculated from completed orders only.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-6">
-            <div className="bg-black/40 border border-[#222] rounded-3xl p-5">
-              <p className="text-gray-400 text-sm">Today’s Earnings</p>
-              <h3 className="text-3xl font-black text-yellow-400 mt-3">
-                ₹{todayEarnings}
-              </h3>
-            </div>
-
-            <div className="bg-black/40 border border-[#222] rounded-3xl p-5">
-              <p className="text-gray-400 text-sm">Gross Earnings</p>
-              <h3 className="text-3xl font-black text-yellow-400 mt-3">
-                ₹{grossEarnings}
-              </h3>
-            </div>
-
-            <div className="bg-black/40 border border-[#222] rounded-3xl p-5">
-              <p className="text-gray-400 text-sm">Completed Orders</p>
-              <h3 className="text-3xl font-black text-yellow-400 mt-3">
-                {completedOrders.length}
-              </h3>
-            </div>
-
-            <div className="bg-black/40 border border-[#222] rounded-3xl p-5">
-              <p className="text-gray-400 text-sm">Avg Order Value</p>
-              <h3 className="text-3xl font-black text-yellow-400 mt-3">
-                ₹{averageOrderValue}
-              </h3>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-5 mt-5">
-            
-
-            <div className="bg-black/40 border border-[#222] rounded-3xl p-5">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-gray-400 text-sm">Best Selling Dishes</p>
-                  <h3 className="text-xl font-black mt-1">Top 5 items</h3>
-                </div>
-              </div>
-
-              {bestSellingItems.length === 0 ? (
-                <p className="text-gray-600 text-sm mt-5">
-                  No completed order data yet.
-                </p>
-              ) : (
-                <div className="mt-5 space-y-3">
-                  {bestSellingItems.map((item, index) => (
-                    <div
-                      key={item.name}
-                      className="flex items-center justify-between gap-4 border border-[#222] rounded-2xl p-3"
-                    >
-                      <div className="min-w-0">
-                        <p className="font-bold truncate">
-                          #{index + 1} {item.name}
-                        </p>
-                        <p className="text-gray-500 text-sm">
-                          {item.quantity} sold
-                        </p>
-                      </div>
-
-                      <p className="text-yellow-400 font-black shrink-0">
-                        ₹{item.revenue}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
-
-        <section className="mt-8 bg-[#111] border border-[#2a2a2a] rounded-3xl p-5 sm:p-6">
-          <div>
-            <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
-              Incoming Orders
-            </p>
-
-            <h2 className="text-2xl sm:text-3xl font-bold mt-1">
-              Active Order Panel
-            </h2>
-          </div>
-
-          {ordersLoading ? (
-            <p className="text-gray-500 mt-6">Loading seller orders...</p>
-          ) : activeSellerOrders.length === 0 ? (
-            <div className="mt-6 bg-black/40 border border-[#222] rounded-3xl p-8 text-center">
-              <div className="text-5xl">🛎️</div>
-              <p className="text-gray-400 font-bold mt-4">
-                No active orders right now.
-              </p>
-              <p className="text-gray-600 text-sm mt-2">
-                New customer orders will appear here automatically.
+              <p className="text-[#51615D] mt-3">
+                {sellerOnline
+                  ? "You are online and accepting orders."
+                  : "You are offline. Customers should not place new orders."}
               </p>
             </div>
-          ) : (
-            <div className="mt-6 space-y-5">
-              {activeSellerOrders.map((order) => {
-                
-                const autoStatus = getAutoStatus(order);
-                const sellerResponse = normalizeSellerResponse(
-                  
-                  order.seller_response
-                );
-                
-                const orderIsSelfPickup = isSelfPickup(order);
-                const scheduled = isScheduledOrder(order);
 
-                return (
-                  <article
-                    key={order.id}
-                    className="bg-black/40 border border-[#222] rounded-3xl p-4 sm:p-5"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                      <div>
-                        <p className="text-gray-500 text-sm">Order #{order.id}</p>
+            <div className="flex flex-wrap gap-3 lg:justify-end">
+              <Link
+                to="/"
+                className="border border-[#D7F5EF] bg-white/85 hover:bg-[#D7F5EF] text-[#51615D] hover:text-[#073B35] active:scale-95 font-bold px-5 py-3 rounded-full min-w-[140px] text-center transition-all"
+              >
+                ← Home
+              </Link>
 
-                        <h3 className="text-2xl font-black mt-1">
-                          ₹{order.total_amount}
-                        </h3>
-
-                        <p className="text-gray-400 text-sm mt-2">
-                          {order.customer_name} • {order.phone}
-                        </p>
-
-                        <p className="text-gray-500 text-sm mt-1">
-                          {order.delivery_type} • {order.flat}
-                        </p>
-
-                       <div className="absolute top-5 right-5">
-  <span
-    className={`w-fit border text-xs font-bold px-3 py-1.5 rounded-full ${getStatusBadgeClass(
-      autoStatus
-    )}`}
-  >
-    {getStatusLabel(autoStatus)}
-  </span>
-</div>
-
-<div className="flex flex-wrap gap-2 mt-3">
-  <span
-    className={`text-xs font-bold px-3 py-1.5 rounded-full ${
-      orderIsSelfPickup
-        ? "bg-emerald-900/40 text-emerald-300 border border-emerald-500/20"
-        : "bg-blue-900/40 text-blue-300 border border-blue-500/20"
-    }`}
-  >
-    {orderIsSelfPickup ? "🛍️ Self Pickup" : "🚚 Delivery"}
-  </span>
-
-  <span
-    className={`text-xs font-bold px-3 py-1.5 rounded-full ${
-      sellerResponse === "accepted"
-        ? "bg-green-900/40 text-green-300 border border-green-500/20"
-        : "bg-purple-900/40 text-purple-300 border border-purple-500/20"
-    }`}
-  >
-    {sellerResponse === "accepted" ? "Accepted" : "Needs Response"}
-  </span>
-
-  {scheduled && (
-    <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-yellow-500/10 text-yellow-300 border border-yellow-500/20">
-      🕒 Scheduled
-    </span>
-  )}
-</div>
-
-{scheduled && (
-  <div className="mt-4 w-full max-w-md bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4">
-    <p className="text-yellow-300 text-xs font-black uppercase tracking-wide">
-      Scheduled for
-    </p>
-
-    <p className="text-white text-lg sm:text-xl font-black mt-1">
-      {formatScheduledDateTime(order.scheduled_for)}
-    </p>
-  </div>
-)}
-                      </div>
-
-                      <span
-                        className={`w-fit border text-xs font-bold px-3 py-1.5 rounded-full ${getStatusBadgeClass(
-                          autoStatus
-                        )}`}
-                      >
-                        {getStatusLabel(autoStatus)}
-
-                        <div className="mt-3">
-                          <div className="w-full h-2 bg-[#222] rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-yellow-400 transition-all duration-1000 ease-in-out"
-                              style={{
-                                width: `${getProgressPercentage(autoStatus)}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </span>
-                    </div>
-
-                    <div className="mt-4 bg-[#111] border border-[#222] rounded-2xl p-4 space-y-3">
-                      {getOrderItems(order).map((item) => (
-                        <div
-                          key={`${order.id}-${item.id}`}
-                          className="flex items-center justify-between gap-4"
-                        >
-                          <div className="min-w-0">
-                            <p className="font-semibold truncate">
-                              {item.name}
-                            </p>
-                            <p className="text-gray-500 text-sm">
-                              Qty {item.quantity} × ₹{item.price}
-                            </p>
-                          </div>
-
-                          <p className="text-yellow-400 font-bold shrink-0">
-                            ₹
-                            {Number(item.price || 0) *
-                              Number(item.quantity || 0)}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-
-                    {order.notes && (
-                      <p className="text-gray-500 text-sm mt-4">
-                        Note: {order.notes}
-                      </p>
-                    )}
-
-                    {sellerResponse === "pending" && (
-                      <div className="grid grid-cols-2 gap-3 mt-5">
-                        <button
-                          type="button"
-                          onClick={() => acceptOrder(order.id)}
-                          className="bg-green-500 hover:bg-green-400 active:scale-95 text-black font-black py-3 rounded-2xl transition-all"
-                        >
-                          Accept
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => rejectOrder(order.id)}
-                          className="bg-red-500 hover:bg-red-400 active:scale-95 text-black font-black py-3 rounded-2xl transition-all"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    )}
-
-                    {sellerResponse === "accepted" &&
-                      orderIsSelfPickup &&
-                      !order.ready_for_pickup && (
-                        <button
-                          type="button"
-                          onClick={() => markReadyForPickup(order.id)}
-                          className="mt-5 w-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-black font-black py-3 rounded-2xl transition-all"
-                        >
-                          Mark Ready for Pickup
-                        </button>
-                      )}
-
-                    {order.ready_for_pickup && orderIsSelfPickup && (
-                      <div className="mt-5 w-full bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 font-black py-3 rounded-2xl text-center">
-                        Ready for Pickup
-                      </div>
-                    )}
-
-                    {sellerResponse === "accepted" && (
-                      <button
-                        type="button"
-                        onClick={() => completeOrder(order.id)}
-                        className="mt-5 w-full bg-yellow-500 hover:bg-yellow-400 active:scale-95 text-black font-black py-3 rounded-2xl transition-all"
-                      >
-                        Complete Order
-                      </button>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-3 mt-5">
-                      <a
-                        href={`tel:${order.phone}`}
-                        className="bg-green-500 hover:bg-green-400 active:scale-95 text-black font-black py-3 rounded-2xl text-center transition-all"
-                      >
-                        📞 Call Customer
-                      </a>
-
-                      <a
-                        href={`https://wa.me/91${String(order.phone).replace(
-                          /\D/g,
-                          ""
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="bg-[#25D366] hover:brightness-110 active:scale-95 text-black font-black py-3 rounded-2xl text-center transition-all"
-                      >
-                        💬 WhatsApp
-                      </a>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-        </section>
-
-        <form
-          onSubmit={handleSubmit}
-          className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-5 sm:p-6 mt-8"
-        >
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="text-2xl font-bold text-yellow-400">
-              {editingFood ? "Edit Dish" : "Add New Dish"}
-            </h2>
-
-            {editingFood && (
               <button
                 type="button"
-                onClick={resetForm}
-                className="text-sm text-gray-400 hover:text-yellow-400"
+                onClick={toggleSellerOnline}
+                className={`active:scale-95 font-bold px-5 py-3 rounded-2xl text-center transition-all ${
+                  sellerOnline
+                    ? "bg-green-500 text-white"
+                    : "bg-red-500 text-white"
+                }`}
               >
-                Cancel Edit
+                {sellerOnline ? "🟢 Online" : "🔴 Offline"}
               </button>
-            )}
+
+              <button
+                type="button"
+                onClick={toggleAcceptScheduledOrders}
+                className={`active:scale-95 font-bold px-5 py-3 rounded-2xl text-center transition-all ${
+                  acceptScheduledOrders
+                    ? "bg-[#41D3BD] text-[#073B35]"
+                    : "bg-white/85 text-[#51615D] border border-[#D7F5EF]"
+                }`}
+              >
+                {acceptScheduledOrders ? "🕒 Schedule ON" : "🕒 Schedule OFF"}
+              </button>
+
+              <button
+                type="button"
+                onClick={toggleNotificationSound}
+                className={`active:scale-95 font-bold px-5 py-3 rounded-2xl text-center transition-all ${
+                  audioReady
+                    ? "bg-green-500 text-white"
+                    : "bg-white/85 text-[#073B35] border border-[#41D3BD]/40"
+                }`}
+              >
+                {audioReady ? "🔕 Sound Off" : "🔔 Sound On"}
+              </button>
+
+              <Link
+                to="/marketplace"
+                className="bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-95 text-[#073B35] font-bold px-5 py-3 rounded-2xl text-center transition-all"
+              >
+                Marketplace
+              </Link>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-            <input
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500"
-              placeholder="Dish name"
-            />
+          {message && (
+            <div className="mt-5 bg-white/85 border border-[#D7F5EF] rounded-2xl p-4 text-sm text-[#073B35] shadow-sm">
+              {message}
+            </div>
+          )}
 
-            <input
-              name="price"
-              value={formData.price}
-              onChange={handleChange}
-              type="number"
-              min="1"
-              className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500"
-              placeholder="Price ₹"
-            />
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 mt-8">
+            {[
+              ["Total Orders", totalOrdersCount],
+              ["Today’s Orders", todayTotalOrders.length],
+              ["Active Orders", activeOrdersCount],
+              ["Sold Orders", soldOrdersCount],
+              [
+                "Active Dishes",
+                sellerFoods.filter((food) => Number(food.stock) > 0).length,
+              ],
+            ].map(([label, value]) => (
+              <div
+                key={label}
+                className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-5 shadow-lg shadow-[#073B35]/5"
+              >
+                <p className="text-[#51615D]">{label}</p>
+                <h2 className="text-4xl font-black text-[#073B35] mt-3">
+                  {value}
+                </h2>
+              </div>
+            ))}
+          </section>
 
-            <input
-              name="stock"
-              value={formData.stock}
-              onChange={handleChange}
-              type="number"
-              min="0"
-              className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500"
-              placeholder="Available quantity"
-            />
+          <section className="mt-8 bg-white/85 border border-[#D7F5EF] rounded-3xl p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+              <div>
+                <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
+                  Earnings Analytics
+                </p>
 
-            <input
-              name="time"
-              value={formData.time}
-              onChange={handleChange}
-              className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500"
-              placeholder="Ready time e.g. 7:30 PM"
-            />
+                <h2 className="text-2xl sm:text-3xl font-bold mt-1">
+                  Seller Earnings
+                </h2>
+              </div>
 
-            <select
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500"
-            >
-              {FOOD_CATEGORIES.map((category) => (
-                <option key={category}>{category}</option>
+              <p className="text-[#51615D] text-sm">
+                Calculated from completed orders only.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-6">
+              {[
+                ["Today’s Earnings", `₹${todayEarnings}`],
+                ["Gross Earnings", `₹${grossEarnings}`],
+                ["Completed Orders", completedOrders.length],
+                ["Avg Order Value", `₹${averageOrderValue}`],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-5"
+                >
+                  <p className="text-[#51615D] text-sm">{label}</p>
+                  <h3 className="text-3xl font-black text-[#073B35] mt-3">
+                    {value}
+                  </h3>
+                </div>
               ))}
-            </select>
+            </div>
 
-            <select
-              name="type"
-              value={formData.type}
-              onChange={handleChange}
-              className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500"
-            >
-              <option>Veg</option>
-              <option>Non-Veg</option>
-            </select>
+            <div className="grid grid-cols-1 gap-5 mt-5">
+              <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[#51615D] text-sm">
+                      Best Selling Dishes
+                    </p>
+                    <h3 className="text-xl font-black mt-1">Top 5 items</h3>
+                  </div>
+                </div>
 
-            <input
-              name="seller"
-              value={formData.seller}
-              onChange={handleChange}
-              className="bg-black border border-[#333] rounded-xl px-4 py-3 outline-none focus:border-yellow-500 md:col-span-2"
-              placeholder="Seller flat / kitchen name e.g. A-1204"
-            />
+                {bestSellingItems.length === 0 ? (
+                  <p className="text-[#9AA7A3] text-sm mt-5">
+                    No completed order data yet.
+                  </p>
+                ) : (
+                  <div className="mt-5 space-y-3">
+                    {bestSellingItems.map((item, index) => (
+                      <div
+                        key={item.name}
+                        className="flex items-center justify-between gap-4 border border-[#D7F5EF] rounded-2xl p-3 bg-white/85"
+                      >
+                        <div className="min-w-0">
+                          <p className="font-bold truncate">
+                            #{index + 1} {item.name}
+                          </p>
+                          <p className="text-[#51615D] text-sm">
+                            {item.quantity} sold
+                          </p>
+                        </div>
 
-            <div className="md:col-span-2">
-  <label className="block text-sm text-gray-400 mb-3">
-    Dish Image
-  </label>
+                        <p className="text-[#073B35] font-black shrink-0">
+                          ₹{item.revenue}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
 
-  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-    <button
-      type="button"
-      onClick={() => uploadImageInputRef.current?.click()}
-      className="flex flex-col items-center justify-center border-2 border-dashed border-[#333] hover:border-yellow-500/50 bg-black rounded-3xl p-6 cursor-pointer transition-all"
-    >
-      <div className="text-4xl mb-3">🖼️</div>
-
-      <p className="text-white font-black">Upload Image</p>
-
-      <p className="text-gray-500 text-sm mt-1 text-center">
-        Choose from gallery or files
-      </p>
-    </button>
-
-    <button
-      type="button"
-      onClick={() => cameraImageInputRef.current?.click()}
-      className="flex flex-col items-center justify-center border-2 border-dashed border-yellow-500/40 hover:border-yellow-500 bg-yellow-500/10 rounded-3xl p-6 cursor-pointer transition-all"
-    >
-      <div className="text-4xl mb-3">📸</div>
-
-      <p className="text-yellow-400 font-black">Take Picture</p>
-
-      <p className="text-gray-500 text-sm mt-1 text-center">
-        Open camera on phone
-      </p>
-    </button>
-  </div>
-
-  <input
-    ref={uploadImageInputRef}
-    type="file"
-    accept="image/jpeg,image/png,image/webp,image/*"
-    className="hidden"
-    onChange={handleImageChange}
-  />
-
-  <input
-    ref={cameraImageInputRef}
-    type="file"
-    accept="image/jpeg,image/png,image/webp,image/*"
-    capture="environment"
-    className="hidden"
-    onChange={handleImageChange}
-  />
-
-  <p className="text-gray-500 text-xs mt-3">
-    JPG, PNG, WEBP · Auto optimized before upload
-  </p>
-
-  {imagePreview && (
-    <div className="mt-4 bg-black border border-[#333] rounded-3xl p-3">
-      <img
-        src={imagePreview}
-        alt="Dish preview"
-        className="w-full h-56 object-cover rounded-2xl border border-[#222]"
-      />
-
-      <div className="grid grid-cols-2 gap-3 mt-3">
-        <button
-          type="button"
-          onClick={() => uploadImageInputRef.current?.click()}
-          className="border border-yellow-500/50 text-yellow-400 hover:bg-yellow-500 hover:text-black font-bold py-3 rounded-2xl transition-all"
-        >
-          Change Image
-        </button>
-
-        <button
-          type="button"
-          onClick={removeSelectedImage}
-          className="border border-red-500/50 text-red-400 hover:bg-red-500 hover:text-black font-bold py-3 rounded-2xl transition-all"
-        >
-          Remove
-        </button>
-      </div>
-    </div>
-  )}
-</div>
-          </div>
-
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            className="w-full bg-black border border-[#333] rounded-xl px-4 py-3 mt-4 outline-none focus:border-yellow-500"
-            placeholder="Short description / ingredients / hygiene note"
-          />
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-5 w-full sm:w-auto bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 text-black font-bold px-6 py-3 rounded-2xl"
-          >
-            {loading ? "Saving..." : editingFood ? "Update Dish" : "Add Dish"}
-          </button>
-        </form>
-
-        <section className="mt-8">
-          <div className="flex items-center justify-between mb-5">
+          <section className="mt-8 bg-white/85 border border-[#D7F5EF] rounded-3xl p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
             <div>
-              <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
-                Your Live Dishes
+              <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
+                Incoming Orders
               </p>
 
               <h2 className="text-2xl sm:text-3xl font-bold mt-1">
-                Seller Menu
+                Active Order Panel
               </h2>
             </div>
 
-            <div className="bg-[#111] border border-[#2a2a2a] px-4 py-2 rounded-2xl text-sm text-gray-400">
-              {sellerFoods.length} dishes
-            </div>
-          </div>
+            {ordersLoading ? (
+              <p className="text-[#51615D] mt-6">Loading seller orders...</p>
+            ) : activeSellerOrders.length === 0 ? (
+              <div className="mt-6 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-8 text-center">
+                <div className="text-5xl">🛎️</div>
+                <p className="text-[#51615D] font-bold mt-4">
+                  No active orders right now.
+                </p>
+                <p className="text-[#9AA7A3] text-sm mt-2">
+                  New customer orders will appear here automatically.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-6 space-y-5">
+                {activeSellerOrders.map((order) => {
+                  const autoStatus = getAutoStatus(order);
+                  const sellerResponse = normalizeSellerResponse(
+                    order.seller_response
+                  );
+                  const orderIsSelfPickup = isSelfPickup(order);
+                  const scheduled = isScheduledOrder(order);
 
-          {foodsLoading ? (
-            <p className="text-gray-500">Loading your dishes...</p>
-          ) : sellerFoods.length === 0 ? (
-            <div className="bg-[#111] border border-[#2a2a2a] rounded-3xl p-8 text-center">
-              <p className="text-gray-500">No dishes added yet.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-              {sellerFoods.map((food) => (
-                <div
-                  key={food.id}
-                  className="bg-[#111] border border-[#2a2a2a] rounded-3xl overflow-hidden hover:border-yellow-500/30 transition-all"
-                >
-                  <img
-                    src={food.image}
-                    alt={food.name}
-                    className="w-full aspect-square object-cover"
-                  />
+                  return (
+                    <article
+                      key={order.id}
+                      className="relative bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4 sm:p-5"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                        <div>
+                          <p className="text-[#51615D] text-sm">
+                            Order #{order.id}
+                          </p>
 
-                  <div className="p-5">
-                    <div className="flex justify-between gap-3">
-                      <div>
-                        <h3 className="text-xl font-bold">{food.name}</h3>
-                        <p className="text-gray-500 text-sm mt-1">
-                          {food.seller}
-                        </p>
-                      </div>
+                          <h3 className="text-2xl font-black mt-1 text-[#073B35]">
+                            ₹{order.total_amount}
+                          </h3>
 
-                      <div className="text-right">
-                        <p className="text-yellow-400 font-bold text-2xl">
-                          ₹{food.price}
-                        </p>
+                          <p className="text-[#51615D] text-sm mt-2">
+                            {order.customer_name} • {order.phone}
+                          </p>
 
-                        <p
-                          className={`text-sm font-semibold ${
-                            Number(food.stock) <= 2
-                              ? "text-red-400"
-                              : Number(food.stock) <= 5
-                              ? "text-yellow-400"
-                              : "text-gray-500"
-                          }`}
-                        >
-                          {Number(food.stock) <= 2
-                            ? `🔥 Only ${food.stock} left`
-                            : `${food.stock} left`}
-                        </p>
-                      </div>
-                    </div>
+                          <p className="text-[#51615D] text-sm mt-1">
+                            {order.delivery_type} • {order.flat}
+                          </p>
 
-                    <div className="flex items-center justify-between mt-5">
-                      <div className="flex gap-2">
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            <span
+                              className={`text-xs font-bold px-3 py-1.5 rounded-full border ${
+                                orderIsSelfPickup
+                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                  : "bg-blue-50 text-blue-700 border-blue-200"
+                              }`}
+                            >
+                              {orderIsSelfPickup
+                                ? "🛍️ Self Pickup"
+                                : "🚚 Delivery"}
+                            </span>
+
+                            <span
+                              className={`text-xs font-bold px-3 py-1.5 rounded-full border ${
+                                sellerResponse === "accepted"
+                                  ? "bg-green-50 text-green-700 border-green-200"
+                                  : "bg-purple-50 text-purple-700 border-purple-200"
+                              }`}
+                            >
+                              {sellerResponse === "accepted"
+                                ? "Accepted"
+                                : "Needs Response"}
+                            </span>
+
+                            {scheduled && (
+                              <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-[#41D3BD]/12 text-[#073B35] border border-[#41D3BD]/25">
+                                🕒 Scheduled
+                              </span>
+                            )}
+                          </div>
+
+                          {scheduled && (
+                            <div className="mt-4 w-full max-w-md bg-[#41D3BD]/12 border border-[#41D3BD]/25 rounded-2xl p-4">
+                              <p className="text-[#073B35] text-xs font-black uppercase tracking-wide">
+                                Scheduled for
+                              </p>
+
+                              <p className="text-[#111827] text-lg sm:text-xl font-black mt-1">
+                                {formatScheduledDateTime(order.scheduled_for)}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
                         <span
-                          className={`text-xs px-3 py-1 rounded-full ${
-                            food.type === "Non-Veg"
-                              ? "bg-red-900/40 text-red-400"
-                              : "bg-green-900/40 text-green-400"
-                          }`}
+                          className={`w-fit border text-xs font-bold px-3 py-1.5 rounded-full ${getStatusBadgeClass(
+                            autoStatus
+                          )}`}
                         >
-                          {food.type}
+                          {getStatusLabel(autoStatus)}
                         </span>
                       </div>
 
-                      <span
-                        className={`text-xs px-3 py-1 rounded-full ${
-                          Number(food.stock) === 0
-                            ? "bg-red-900/40 text-red-400"
-                            : "bg-yellow-900/30 text-yellow-300"
-                        }`}
-                      >
-                        {Number(food.stock) === 0 ? "Sold Out" : food.time}
-                      </span>
-                    </div>
+                      <div className="mt-3">
+                        <div className="w-full h-2 bg-[#D7F5EF] rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-[#41D3BD] transition-all duration-1000 ease-in-out"
+                            style={{
+                              width: `${getProgressPercentage(autoStatus)}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
 
-                    <div className="grid grid-cols-3 gap-2 mt-5">
+                      <div className="mt-4 bg-white/85 border border-[#D7F5EF] rounded-2xl p-4 space-y-3">
+                        {getOrderItems(order).map((item) => (
+                          <div
+                            key={`${order.id}-${item.id}`}
+                            className="flex items-center justify-between gap-4"
+                          >
+                            <div className="min-w-0">
+                              <p className="font-semibold truncate">
+                                {item.name}
+                              </p>
+                              <p className="text-[#51615D] text-sm">
+                                Qty {item.quantity} × ₹{item.price}
+                              </p>
+                            </div>
+
+                            <p className="text-[#073B35] font-bold shrink-0">
+                              ₹
+                              {Number(item.price || 0) *
+                                Number(item.quantity || 0)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {order.notes && (
+                        <p className="text-[#51615D] text-sm mt-4">
+                          Note: {order.notes}
+                        </p>
+                      )}
+
+                      {sellerResponse === "pending" && (
+                        <div className="grid grid-cols-2 gap-3 mt-5">
+                          <button
+                            type="button"
+                            onClick={() => acceptOrder(order.id)}
+                            className="bg-green-500 hover:bg-green-400 active:scale-95 text-white font-black py-3 rounded-2xl transition-all"
+                          >
+                            Accept
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => rejectOrder(order.id)}
+                            className="bg-red-500 hover:bg-red-400 active:scale-95 text-white font-black py-3 rounded-2xl transition-all"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      )}
+
+                      {sellerResponse === "accepted" &&
+                        orderIsSelfPickup &&
+                        !order.ready_for_pickup && (
+                          <button
+                            type="button"
+                            onClick={() => markReadyForPickup(order.id)}
+                            className="mt-5 w-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white font-black py-3 rounded-2xl transition-all"
+                          >
+                            Mark Ready for Pickup
+                          </button>
+                        )}
+
+                      {order.ready_for_pickup && orderIsSelfPickup && (
+                        <div className="mt-5 w-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-black py-3 rounded-2xl text-center">
+                          Ready for Pickup
+                        </div>
+                      )}
+
+                      {sellerResponse === "accepted" && (
+                        <button
+                          type="button"
+                          onClick={() => completeOrder(order.id)}
+                          className="mt-5 w-full bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-95 text-[#073B35] font-black py-3 rounded-2xl transition-all"
+                        >
+                          Complete Order
+                        </button>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-3 mt-5">
+                        <a
+                          href={`tel:${order.phone}`}
+                          className="bg-green-500 hover:bg-green-400 active:scale-95 text-white font-black py-3 rounded-2xl text-center transition-all"
+                        >
+                          📞 Call Customer
+                        </a>
+
+                        <a
+                          href={`https://wa.me/91${String(order.phone).replace(
+                            /\D/g,
+                            ""
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-[#25D366] hover:brightness-110 active:scale-95 text-black font-black py-3 rounded-2xl text-center transition-all"
+                        >
+                          💬 WhatsApp
+                        </a>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          <form
+            onSubmit={handleSubmit}
+            className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-5 sm:p-6 mt-8 shadow-xl shadow-[#073B35]/5"
+          >
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-2xl font-bold text-[#073B35]">
+                {editingFood ? "Edit Dish" : "Add New Dish"}
+              </h2>
+
+              {editingFood && (
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="text-sm text-[#51615D] hover:text-[#1A9F8D]"
+                >
+                  Cancel Edit
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+              <input
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-xl px-4 py-3 outline-none focus:border-[#41D3BD]"
+                placeholder="Dish name"
+              />
+
+              <input
+                name="price"
+                value={formData.price}
+                onChange={handleChange}
+                type="number"
+                min="1"
+                className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-xl px-4 py-3 outline-none focus:border-[#41D3BD]"
+                placeholder="Price ₹"
+              />
+
+              <input
+                name="stock"
+                value={formData.stock}
+                onChange={handleChange}
+                type="number"
+                min="0"
+                className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-xl px-4 py-3 outline-none focus:border-[#41D3BD]"
+                placeholder="Available quantity"
+              />
+
+              <input
+                name="time"
+                value={formData.time}
+                onChange={handleChange}
+                className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-xl px-4 py-3 outline-none focus:border-[#41D3BD]"
+                placeholder="Ready time e.g. 7:30 PM"
+              />
+
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-xl px-4 py-3 outline-none focus:border-[#41D3BD]"
+              >
+                {FOOD_CATEGORIES.map((category) => (
+                  <option key={category}>{category}</option>
+                ))}
+              </select>
+
+              <select
+                name="type"
+                value={formData.type}
+                onChange={handleChange}
+                className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-xl px-4 py-3 outline-none focus:border-[#41D3BD]"
+              >
+                <option>Veg</option>
+                <option>Non-Veg</option>
+              </select>
+
+              <input
+                name="seller"
+                value={formData.seller}
+                onChange={handleChange}
+                className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-xl px-4 py-3 outline-none focus:border-[#41D3BD] md:col-span-2"
+                placeholder="Seller flat / kitchen name e.g. A-1204"
+              />
+
+              <div className="md:col-span-2">
+                <label className="block text-sm text-[#51615D] mb-3">
+                  Dish Image
+                </label>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => uploadImageInputRef.current?.click()}
+                    className="flex flex-col items-center justify-center border-2 border-dashed border-[#D7F5EF] hover:border-[#41D3BD] bg-[#FFFFF2] rounded-3xl p-6 cursor-pointer transition-all"
+                  >
+                    <div className="text-4xl mb-3">🖼️</div>
+
+                    <p className="text-[#111827] font-black">Upload Image</p>
+
+                    <p className="text-[#51615D] text-sm mt-1 text-center">
+                      Choose from gallery or files
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => cameraImageInputRef.current?.click()}
+                    className="flex flex-col items-center justify-center border-2 border-dashed border-[#41D3BD]/50 hover:border-[#41D3BD] bg-[#41D3BD]/10 rounded-3xl p-6 cursor-pointer transition-all"
+                  >
+                    <div className="text-4xl mb-3">📸</div>
+
+                    <p className="text-[#073B35] font-black">Take Picture</p>
+
+                    <p className="text-[#51615D] text-sm mt-1 text-center">
+                      Open camera on phone
+                    </p>
+                  </button>
+                </div>
+
+                <input
+                  ref={uploadImageInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/*"
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
+
+                <input
+                  ref={cameraImageInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
+
+                <p className="text-[#51615D] text-xs mt-3">
+                  JPG, PNG, WEBP · Auto optimized before upload
+                </p>
+
+                {imagePreview && (
+                  <div className="mt-4 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-3">
+                    <img
+                      src={imagePreview}
+                      alt="Dish preview"
+                      className="w-full h-56 object-cover rounded-2xl border border-[#D7F5EF]"
+                    />
+
+                    <div className="grid grid-cols-2 gap-3 mt-3">
                       <button
                         type="button"
-                        onClick={() => startEdit(food)}
-                        className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-2 rounded-xl"
+                        onClick={() => uploadImageInputRef.current?.click()}
+                        className="border border-[#41D3BD]/60 text-[#073B35] hover:bg-[#41D3BD] font-bold py-3 rounded-2xl transition-all"
                       >
-                        Edit
+                        Change Image
                       </button>
 
                       <button
                         type="button"
-                        onClick={() => toggleStock(food)}
-                        className="border border-yellow-500/50 text-yellow-400 hover:bg-yellow-500 hover:text-black font-bold py-2 rounded-xl"
+                        onClick={removeSelectedImage}
+                        className="border border-red-300 text-red-500 hover:bg-red-500 hover:text-white font-bold py-3 rounded-2xl transition-all"
                       >
-                        {Number(food.stock) === 0 ? "In Stock" : "Sold Out"}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => deleteDish(food.id)}
-                        className="border border-red-500/50 text-red-400 hover:bg-red-500 hover:text-black font-bold py-2 rounded-xl"
-                      >
-                        Delete
+                        Remove
                       </button>
                     </div>
                   </div>
-                </div>
-              ))}
+                )}
+              </div>
             </div>
-          )}
-        </section>
-      </div>
-    </main>
+
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-xl px-4 py-3 mt-4 outline-none focus:border-[#41D3BD]"
+              placeholder="Short description / ingredients / hygiene note"
+            />
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-5 w-full sm:w-auto bg-[#41D3BD] hover:bg-[#55E4CF] disabled:opacity-50 text-[#073B35] font-bold px-6 py-3 rounded-2xl"
+            >
+              {loading ? "Saving..." : editingFood ? "Update Dish" : "Add Dish"}
+            </button>
+          </form>
+
+          <section className="mt-8">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
+                  Your Live Dishes
+                </p>
+
+                <h2 className="text-2xl sm:text-3xl font-bold mt-1">
+                  Seller Menu
+                </h2>
+              </div>
+
+              <div className="bg-white/85 border border-[#D7F5EF] px-4 py-2 rounded-2xl text-sm text-[#51615D]">
+                {sellerFoods.length} dishes
+              </div>
+            </div>
+
+            {foodsLoading ? (
+              <p className="text-[#51615D]">Loading your dishes...</p>
+            ) : sellerFoods.length === 0 ? (
+              <div className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-8 text-center">
+                <p className="text-[#51615D]">No dishes added yet.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                {sellerFoods.map((food) => (
+                  <div
+                    key={food.id}
+                    className="bg-white/85 border border-[#D7F5EF] rounded-3xl overflow-hidden hover:border-[#41D3BD]/70 transition-all shadow-lg shadow-[#073B35]/5"
+                  >
+                    <img
+                      src={food.image}
+                      alt={food.name}
+                      className="w-full aspect-square object-cover"
+                    />
+
+                    <div className="p-5">
+                      <div className="flex justify-between gap-3">
+                        <div>
+                          <h3 className="text-xl font-bold">{food.name}</h3>
+                          <p className="text-[#51615D] text-sm mt-1">
+                            {food.seller}
+                          </p>
+                        </div>
+
+                        <div className="text-right">
+                          <p className="text-[#073B35] font-bold text-2xl">
+                            ₹{food.price}
+                          </p>
+
+                          <p
+                            className={`text-sm font-semibold ${
+                              Number(food.stock) <= 2
+                                ? "text-red-500"
+                                : Number(food.stock) <= 5
+                                ? "text-orange-500"
+                                : "text-[#51615D]"
+                            }`}
+                          >
+                            {Number(food.stock) <= 2
+                              ? `🔥 Only ${food.stock} left`
+                              : `${food.stock} left`}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between mt-5">
+                        <div className="flex gap-2">
+                          <span
+                            className={`text-xs px-3 py-1 rounded-full ${
+                              food.type === "Non-Veg"
+                                ? "bg-red-50 text-red-500"
+                                : "bg-green-50 text-green-700"
+                            }`}
+                          >
+                            {food.type}
+                          </span>
+                        </div>
+
+                        <span
+                          className={`text-xs px-3 py-1 rounded-full ${
+                            Number(food.stock) === 0
+                              ? "bg-red-50 text-red-500"
+                              : "bg-[#41D3BD]/12 text-[#073B35]"
+                          }`}
+                        >
+                          {Number(food.stock) === 0 ? "Sold Out" : food.time}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 mt-5">
+                        <button
+                          type="button"
+                          onClick={() => startEdit(food)}
+                          className="bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-bold py-2 rounded-xl"
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => toggleStock(food)}
+                          className="border border-[#41D3BD]/60 text-[#073B35] hover:bg-[#41D3BD] font-bold py-2 rounded-xl"
+                        >
+                          {Number(food.stock) === 0 ? "In Stock" : "Sold Out"}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => deleteDish(food.id)}
+                          className="border border-red-300 text-red-500 hover:bg-red-500 hover:text-white font-bold py-2 rounded-xl"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+      </main>
+    </>
   );
 }

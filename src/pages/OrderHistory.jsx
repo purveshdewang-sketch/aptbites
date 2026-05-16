@@ -81,10 +81,10 @@ export default function OrderHistory() {
     const currentStatus = normalizeStatus(status);
 
     if (currentStatus === "cancelled") {
-      return "bg-red-900/40 text-red-300 border-red-500/20";
+      return "bg-red-50 text-red-600 border-red-200";
     }
 
-    return "bg-green-900/40 text-green-300 border-green-500/20";
+    return "bg-green-50 text-green-700 border-green-200";
   }
 
   function getOrderItems(order) {
@@ -136,29 +136,31 @@ export default function OrderHistory() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-black text-white px-4 sm:px-6 py-8 sm:py-10">
+      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-8 sm:py-10">
         <div className="max-w-5xl mx-auto">
           <div>
-            <p className="text-yellow-400 font-semibold tracking-wide uppercase text-sm">
+            <p className="text-[#1A9F8D] font-semibold tracking-wide uppercase text-sm">
               Order History
             </p>
 
-            <h1 className="text-4xl sm:text-5xl font-black mt-3 tracking-tight">
+            <h1 className="text-4xl sm:text-5xl font-black mt-3 tracking-tight text-[#111827]">
               Past Orders
             </h1>
 
-            <p className="text-gray-400 mt-4 max-w-2xl leading-relaxed">
+            <p className="text-[#51615D] mt-4 max-w-2xl leading-relaxed">
               View your delivered and cancelled Nefo orders.
             </p>
           </div>
 
           {!user && (
-            <div className="mt-10 bg-[#111111] border border-[#222] rounded-[2rem] p-8 text-center">
-              <h2 className="text-2xl font-bold">Sign in to view history</h2>
+            <div className="mt-10 bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-8 text-center shadow-xl shadow-[#073B35]/5">
+              <h2 className="text-2xl font-bold text-[#111827]">
+                Sign in to view history
+              </h2>
 
               <Link
                 to="/customer-login"
-                className="inline-block mt-7 bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-6 py-3 rounded-2xl"
+                className="inline-block mt-7 bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-bold px-6 py-3 rounded-2xl shadow-lg shadow-[#41D3BD]/20"
               >
                 Sign In
               </Link>
@@ -170,39 +172,39 @@ export default function OrderHistory() {
               {[1, 2].map((item) => (
                 <div
                   key={item}
-                  className="bg-[#111111] border border-[#222] rounded-3xl p-6 animate-pulse"
+                  className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-6 animate-pulse shadow-lg shadow-[#073B35]/5"
                 >
-                  <div className="h-5 bg-[#1a1a1a] rounded-full w-1/3" />
-                  <div className="h-4 bg-[#1a1a1a] rounded-full w-2/3 mt-4" />
+                  <div className="h-5 bg-[#D7F5EF] rounded-full w-1/3" />
+                  <div className="h-4 bg-[#D7F5EF] rounded-full w-2/3 mt-4" />
                 </div>
               ))}
             </div>
           )}
 
           {user && errorMessage && (
-            <div className="mt-10 bg-red-950/40 border border-red-500/50 text-red-300 rounded-3xl p-5">
+            <div className="mt-10 bg-red-50 border border-red-200 text-red-600 rounded-3xl p-5">
               <p className="font-bold">Failed to load order history</p>
               <p className="text-sm mt-1">{errorMessage}</p>
             </div>
           )}
 
           {user && !loading && !errorMessage && orders.length === 0 && (
-            <div className="mt-10 bg-[#111111] border border-[#222] rounded-[2rem] p-8 sm:p-10 text-center">
-              <div className="w-20 h-20 mx-auto rounded-full bg-yellow-500/10 flex items-center justify-center text-4xl">
+            <div className="mt-10 bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-8 sm:p-10 text-center shadow-xl shadow-[#073B35]/5">
+              <div className="w-20 h-20 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-4xl">
                 📜
               </div>
 
-              <h2 className="text-2xl sm:text-3xl font-bold mt-6">
+              <h2 className="text-2xl sm:text-3xl font-bold mt-6 text-[#111827]">
                 No order history yet
               </h2>
 
-              <p className="text-gray-500 mt-3 max-w-md mx-auto">
+              <p className="text-[#51615D] mt-3 max-w-md mx-auto">
                 Delivered and cancelled orders will appear here.
               </p>
 
               <Link
                 to="/orders"
-                className="inline-block mt-7 bg-yellow-500 hover:bg-yellow-400 active:scale-95 text-black font-bold px-6 py-3 rounded-2xl transition-all duration-200"
+                className="inline-block mt-7 bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-95 text-[#073B35] font-bold px-6 py-3 rounded-2xl transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
               >
                 View Active Orders
               </Link>
@@ -218,19 +220,19 @@ export default function OrderHistory() {
                 return (
                   <article
                     key={order.id}
-                    className="bg-[#111111] border border-[#222] rounded-[2rem] p-5 sm:p-6"
+                    className="bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                       <div>
-                        <p className="text-gray-500 text-sm">
+                        <p className="text-[#51615D] text-sm">
                           Order #{order.id}
                         </p>
 
-                        <h2 className="text-2xl font-black mt-1">
+                        <h2 className="text-2xl font-black mt-1 text-[#073B35]">
                           ₹{order.total_amount}
                         </h2>
 
-                        <p className="text-gray-400 text-sm mt-2">
+                        <p className="text-[#51615D] text-sm mt-2">
                           {order.delivery_type} • {order.flat}
                         </p>
                       </div>
@@ -244,23 +246,23 @@ export default function OrderHistory() {
                       </span>
                     </div>
 
-                    <div className="mt-5 bg-black/40 border border-[#222] rounded-3xl p-4 space-y-3">
+                    <div className="mt-5 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4 space-y-3">
                       {orderItems.map((item) => (
                         <div
                           key={`${order.id}-${item.id}`}
                           className="flex items-center justify-between gap-4"
                         >
                           <div className="min-w-0">
-                            <p className="font-semibold truncate">
+                            <p className="font-semibold truncate text-[#111827]">
                               {item.name}
                             </p>
 
-                            <p className="text-gray-500 text-sm">
+                            <p className="text-[#51615D] text-sm">
                               Qty {item.quantity} × ₹{item.price}
                             </p>
                           </div>
 
-                          <p className="text-yellow-400 font-bold shrink-0">
+                          <p className="text-[#073B35] font-bold shrink-0">
                             ₹
                             {Number(item.price || 0) *
                               Number(item.quantity || 0)}
@@ -269,37 +271,37 @@ export default function OrderHistory() {
                       ))}
                     </div>
 
-                    <div className="mt-4 bg-black/30 border border-[#222] rounded-2xl p-4 space-y-2 text-sm">
-                      <div className="flex justify-between text-gray-400">
+                    <div className="mt-4 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 space-y-2 text-sm">
+                      <div className="flex justify-between text-[#51615D]">
                         <span>Subtotal</span>
                         <span>₹{order.subtotal_amount || 0}</span>
                       </div>
 
-                      <div className="flex justify-between text-gray-400">
+                      <div className="flex justify-between text-[#51615D]">
                         <span>Platform Fee</span>
                         <span>₹{order.platform_fee || 10}</span>
                       </div>
 
-                      <div className="flex justify-between text-yellow-400 font-black border-t border-[#222] pt-2">
+                      <div className="flex justify-between text-[#073B35] font-black border-t border-[#D7F5EF] pt-2">
                         <span>Total</span>
                         <span>₹{order.total_amount || 0}</span>
                       </div>
                     </div>
 
                     {order.notes && (
-                      <p className="text-gray-500 text-sm mt-4">
+                      <p className="text-[#51615D] text-sm mt-4">
                         Note: {order.notes}
                       </p>
                     )}
 
                     {orderStatus === "cancelled" ? (
-                      <div className="mt-5 w-full border border-red-500/30 text-red-300 bg-red-950/20 font-black py-3 rounded-2xl text-center">
+                      <div className="mt-5 w-full border border-red-200 text-red-600 bg-red-50 font-black py-3 rounded-2xl text-center">
                         Cancelled
                       </div>
                     ) : (
                       <button
                         onClick={() => handleReorder(order)}
-                        className="mt-5 w-full bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black font-black py-3 rounded-2xl transition-all duration-200"
+                        className="mt-5 w-full bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-[0.98] text-[#073B35] font-black py-3 rounded-2xl transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
                       >
                         Re-order
                       </button>

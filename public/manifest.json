@@ -1,22 +1,22 @@
 {
-  "name": "QuickBites",
-  "short_name": "QuickBites",
+  "name": "Nefo",
+  "short_name": "Nefo",
   "description": "Homemade food from trusted neighbours",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0F0D1F",
-  "theme_color": "#0F0D1F",
+  "background_color": "#FFFFF2",
+  "theme_color": "#073B35",
   "icons": [
     {
-      "src": "/quickbites-logo.png",
+      "src": "/Nefo-logo.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/quickbites-logo.png",
+      "src": "/Nefo-logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

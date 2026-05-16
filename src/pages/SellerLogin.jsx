@@ -36,7 +36,7 @@ export default function SellerLogin() {
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: formData.email,
+        email: formData.email.trim(),
         password: formData.password,
       });
 
@@ -88,12 +88,12 @@ export default function SellerLogin() {
         is_seller: true,
         seller_online: true,
         accept_scheduled_orders: formData.acceptScheduledOrders,
-        full_name: formData.kitchenName,
-        flat: formData.flat,
-        phone: formData.phone,
-        seller_kitchen_name: formData.kitchenName,
-        seller_specialty: formData.specialty,
-        seller_about: formData.about,
+        full_name: formData.kitchenName.trim(),
+        flat: formData.flat.trim(),
+        phone: formData.phone.trim(),
+        seller_kitchen_name: formData.kitchenName.trim(),
+        seller_specialty: formData.specialty.trim(),
+        seller_about: formData.about.trim(),
       };
 
       const { error: updateError } = await supabase
@@ -108,10 +108,10 @@ export default function SellerLogin() {
 
       localStorage.setItem(`Nefo_seller_access_${user.id}`, "yes");
 
-      if (formData.kitchenName) {
+      if (formData.kitchenName.trim()) {
         localStorage.setItem(
           `Nefo_seller_name_${user.id}`,
-          formData.kitchenName
+          formData.kitchenName.trim()
         );
       }
 
@@ -124,44 +124,51 @@ export default function SellerLogin() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white flex items-center justify-center px-4 sm:px-6 py-10">
-      <div className="w-full max-w-5xl grid lg:grid-cols-[0.9fr_1.1fr] gap-6">
-        <section className="bg-[#111111] border border-[#2a2a2a] rounded-[2rem] p-6 sm:p-8 shadow-2xl h-fit">
-          <p className="text-yellow-400 font-semibold tracking-wide uppercase text-sm">
+    <main className="min-h-screen bg-[#FFFFF2] text-[#111827] flex items-center justify-center px-4 sm:px-6 py-10 overflow-hidden">
+      <div className="absolute top-0 right-0 w-72 h-72 bg-[#41D3BD]/20 blur-[100px] rounded-full" />
+      <div className="absolute bottom-0 left-0 w-72 h-72 bg-[#41D3BD]/10 blur-[110px] rounded-full" />
+
+      <div className="relative w-full max-w-5xl grid lg:grid-cols-[0.9fr_1.1fr] gap-6">
+        <section className="bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-6 sm:p-8 shadow-2xl shadow-[#073B35]/10 h-fit">
+          <div className="w-14 h-14 rounded-3xl bg-[#41D3BD] flex items-center justify-center shadow-lg shadow-[#41D3BD]/20">
+            <span className="text-[#073B35] text-2xl font-black">N</span>
+          </div>
+
+          <p className="text-[#1A9F8D] font-semibold tracking-wide uppercase text-sm mt-6">
             Nefo Seller Portal
           </p>
 
-          <h1 className="text-4xl sm:text-5xl font-black mt-3 leading-tight">
+          <h1 className="text-4xl sm:text-5xl font-black mt-3 leading-tight text-[#111827]">
             Sell homemade food in your community.
           </h1>
 
-          <p className="text-gray-400 mt-4 text-sm sm:text-base leading-relaxed">
+          <p className="text-[#51615D] mt-4 text-sm sm:text-base leading-relaxed">
             Sign in as an approved seller and tell customers what makes your
             kitchen special.
           </p>
 
           <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
-            <div className="bg-black border border-[#2a2a2a] rounded-2xl p-4">
-              <p className="text-yellow-400 text-sm font-bold">Live Orders</p>
-              <p className="text-gray-500 text-xs mt-2 leading-relaxed">
+            <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4">
+              <p className="text-[#073B35] text-sm font-black">Live Orders</p>
+              <p className="text-[#51615D] text-xs mt-2 leading-relaxed">
                 Receive and manage customer orders in real time.
               </p>
             </div>
 
-            <div className="bg-black border border-[#2a2a2a] rounded-2xl p-4">
-              <p className="text-yellow-400 text-sm font-bold">
+            <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4">
+              <p className="text-[#073B35] text-sm font-black">
                 Kitchen Control
               </p>
-              <p className="text-gray-500 text-xs mt-2 leading-relaxed">
+              <p className="text-[#51615D] text-xs mt-2 leading-relaxed">
                 Update dishes, stock, pickup readiness, and order completion.
               </p>
             </div>
 
-            <div className="bg-black border border-[#2a2a2a] rounded-2xl p-4">
-              <p className="text-yellow-400 text-sm font-bold">
+            <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4">
+              <p className="text-[#073B35] text-sm font-black">
                 Seller Profile
               </p>
-              <p className="text-gray-500 text-xs mt-2 leading-relaxed">
+              <p className="text-[#51615D] text-xs mt-2 leading-relaxed">
                 Share your kitchen name, flat, speciality, and short intro.
               </p>
             </div>
@@ -169,29 +176,29 @@ export default function SellerLogin() {
 
           <Link
             to="/"
-            className="block text-gray-500 hover:text-gray-300 text-sm mt-7 transition-all"
+            className="block text-[#51615D] hover:text-[#073B35] text-sm mt-7 transition-all font-semibold"
           >
             ← Back to home
           </Link>
         </section>
 
-        <section className="bg-[#111111] border border-[#2a2a2a] rounded-[2rem] p-6 sm:p-8 shadow-2xl">
+        <section className="bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-6 sm:p-8 shadow-2xl shadow-[#073B35]/10">
           <div>
-            <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
+            <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
               Seller Sign In
             </p>
 
-            <h2 className="text-3xl sm:text-4xl font-black mt-2">
+            <h2 className="text-3xl sm:text-4xl font-black mt-2 text-[#111827]">
               Tell us about yourself
             </h2>
 
-            <p className="text-gray-500 mt-3 text-sm leading-relaxed">
+            <p className="text-[#51615D] mt-3 text-sm leading-relaxed">
               These details will help customers identify your home kitchen.
             </p>
           </div>
 
           {message && (
-            <div className="mt-6 bg-black border border-[#333] rounded-2xl p-4 text-sm text-gray-300">
+            <div className="mt-6 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 text-sm text-[#073B35]">
               {message}
             </div>
           )}
@@ -204,7 +211,7 @@ export default function SellerLogin() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full bg-black border border-[#333] rounded-2xl px-4 py-4 outline-none focus:border-yellow-500 transition-all"
+                className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all"
                 placeholder="Seller Email"
               />
 
@@ -214,12 +221,12 @@ export default function SellerLogin() {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="w-full bg-black border border-[#333] rounded-2xl px-4 py-4 outline-none focus:border-yellow-500 transition-all"
+                className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all"
                 placeholder="Password"
               />
             </div>
 
-            <div className="h-px bg-[#2a2a2a] my-2" />
+            <div className="h-px bg-[#D7F5EF] my-2" />
 
             <input
               type="text"
@@ -227,7 +234,7 @@ export default function SellerLogin() {
               value={formData.kitchenName}
               onChange={handleChange}
               required
-              className="w-full bg-black border border-[#333] rounded-2xl px-4 py-4 outline-none focus:border-yellow-500 transition-all"
+              className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all"
               placeholder="Kitchen / Seller Name e.g. Asha's Kitchen"
             />
 
@@ -238,7 +245,7 @@ export default function SellerLogin() {
                 value={formData.flat}
                 onChange={handleChange}
                 required
-                className="w-full bg-black border border-[#333] rounded-2xl px-4 py-4 outline-none focus:border-yellow-500 transition-all"
+                className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all"
                 placeholder="Tower / Flat e.g. B-1204"
               />
 
@@ -248,7 +255,7 @@ export default function SellerLogin() {
                 value={formData.phone}
                 onChange={handleChange}
                 required
-                className="w-full bg-black border border-[#333] rounded-2xl px-4 py-4 outline-none focus:border-yellow-500 transition-all"
+                className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all"
                 placeholder="Phone Number"
               />
             </div>
@@ -259,7 +266,7 @@ export default function SellerLogin() {
               value={formData.specialty}
               onChange={handleChange}
               required
-              className="w-full bg-black border border-[#333] rounded-2xl px-4 py-4 outline-none focus:border-yellow-500 transition-all"
+              className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all"
               placeholder="Food Specialty e.g. South Indian breakfast, sweets, tiffin"
             />
 
@@ -269,24 +276,24 @@ export default function SellerLogin() {
               onChange={handleChange}
               rows="4"
               required
-              className="w-full bg-black border border-[#333] rounded-2xl px-4 py-4 outline-none focus:border-yellow-500 transition-all resize-none"
+              className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all resize-none"
               placeholder="Tell customers about yourself, your cooking style, hygiene, or food story..."
             />
 
-            <label className="flex items-start gap-3 bg-black border border-[#333] rounded-2xl p-4 cursor-pointer">
+            <label className="flex items-start gap-3 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 cursor-pointer">
               <input
                 type="checkbox"
                 name="acceptScheduledOrders"
                 checked={formData.acceptScheduledOrders}
                 onChange={handleChange}
-                className="mt-1 accent-yellow-500"
+                className="mt-1 accent-[#41D3BD]"
               />
 
               <div>
-                <p className="text-white font-bold">
+                <p className="text-[#111827] font-bold">
                   Accept scheduled orders
                 </p>
-                <p className="text-gray-500 text-sm mt-1">
+                <p className="text-[#51615D] text-sm mt-1">
                   Customers can choose date and time for later orders.
                 </p>
               </div>
@@ -295,13 +302,13 @@ export default function SellerLogin() {
             <button
               type="submit"
               disabled={loading}
-              className="block w-full mt-2 bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 text-black font-black py-4 rounded-2xl text-center transition-all duration-200"
+              className="block w-full mt-2 bg-[#41D3BD] hover:bg-[#55E4CF] disabled:opacity-50 text-[#073B35] font-black py-4 rounded-2xl text-center transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
             >
               {loading ? "Signing In..." : "Continue to Seller Dashboard"}
             </button>
           </form>
 
-          <p className="text-gray-600 text-xs mt-5 leading-relaxed">
+          <p className="text-[#51615D] text-xs mt-5 leading-relaxed">
             Seller dashboard access is available only for accounts approved by
             the app owner.
           </p>
