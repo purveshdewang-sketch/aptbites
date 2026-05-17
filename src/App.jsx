@@ -13,6 +13,7 @@ import OrderHistory from "./pages/OrderHistory";
 import FoodDetails from "./pages/FoodDetails";
 import OwnerDashboard from "./pages/OwnerDashboard";
 import Profile from "./pages/Profile";
+import ResetPassword from "./pages/ResetPassword";
 
 import { useAuth } from "./context/AuthContext";
 import { supabase } from "./lib/supabaseClient";
@@ -189,6 +190,7 @@ export default function App() {
       <Routes>
         <Route path="/customer-login" element={<CustomerLogin />} />
         <Route path="/seller-login" element={<SellerLogin />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         <Route
           path="/"

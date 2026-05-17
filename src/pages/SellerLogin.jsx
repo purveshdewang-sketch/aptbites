@@ -272,7 +272,7 @@ export default function SellerLogin() {
     setResettingPassword(true);
     setMessage("");
 
-    const redirectTo = `${window.location.origin}/seller-login`;
+    const redirectTo = `${window.location.origin}/reset-password`;
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,
