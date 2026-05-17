@@ -58,6 +58,8 @@ export default function Home() {
   }, [user]);
 
   const shouldShowSellFood = !user || isSeller || isAdmin;
+  const sellFoodPath =
+    user && (isSeller || isAdmin) ? "/seller-dashboard" : "/seller-login";
 
   return (
     <>
@@ -138,7 +140,7 @@ export default function Home() {
 
                 {shouldShowSellFood && (
                   <Link
-                    to="/seller-login"
+                    to={sellFoodPath}
                     className="border border-[#41D3BD]/45 bg-white/85 text-[#1A9F8D] hover:bg-[#D7F5EF] hover:text-[#073B35] active:scale-95 font-black px-5 py-4 rounded-2xl text-center transition-all shadow-sm"
                   >
                     Sell Food
@@ -199,7 +201,7 @@ export default function Home() {
 
                   {shouldShowSellFood && (
                     <Link
-                      to="/seller-login"
+                      to={sellFoodPath}
                       className="border border-[#41D3BD]/45 bg-white/85 text-[#1A9F8D] hover:bg-[#D7F5EF] hover:text-[#073B35] active:scale-95 font-bold px-5 py-4 rounded-2xl text-center transition-all duration-200 shadow-sm"
                     >
                       Sell Food
