@@ -19,6 +19,7 @@ export default function CustomerLogin() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
   const [message, setMessage] = useState("");
 
   function handleChange(event) {
@@ -42,6 +43,33 @@ export default function CustomerLogin() {
     ]
       .filter(Boolean)
       .join(" ");
+  }
+
+  async function handleForgotPassword() {
+    const email = formData.email.trim();
+
+    if (!email) {
+      setMessage("Please enter your email first, then click Forgot Password.");
+      return;
+    }
+
+    setResettingPassword(true);
+    setMessage("");
+
+    const redirectTo = `${window.location.origin}/customer-login`;
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo,
+    });
+
+    if (error) {
+      setMessage(`Password reset failed: ${error.message}`);
+      setResettingPassword(false);
+      return;
+    }
+
+    setMessage("Password reset link sent to your email.");
+    setResettingPassword(false);
   }
 
   async function handleAuth(event) {
@@ -150,11 +178,18 @@ export default function CustomerLogin() {
 
         const { data: profile } = await supabase
           .from("profiles")
-          .select("role")
+          .select("role, is_seller")
           .eq("id", user.id)
-          .single();
+          .maybeSingle();
 
-        if (profile?.role === "seller") {
+        const profileRole = String(profile?.role || "").toLowerCase();
+
+        const isSeller =
+          profileRole === "seller" ||
+          profileRole === "admin" ||
+          profile?.is_seller === true;
+
+        if (isSeller || selectedRole === "seller") {
           navigate("/seller-dashboard");
         } else {
           navigate("/marketplace");
@@ -179,20 +214,13 @@ export default function CustomerLogin() {
           </div>
         </div>
 
-        <div className="text-center mb-6">
-          <p className="text-[#1A9F8D] font-black text-sm uppercase tracking-wide">
-            Nefo
-          </p>
-
-          <p className="text-[#51615D] text-sm mt-1">
-            Homemade food from trusted neighbours
-          </p>
-        </div>
-
         <div className="grid grid-cols-2 gap-3 mb-6">
           <button
             type="button"
-            onClick={() => setSelectedRole("customer")}
+            onClick={() => {
+              setSelectedRole("customer");
+              setMessage("");
+            }}
             className={`py-3 rounded-2xl font-bold transition-all ${
               selectedRole === "customer"
                 ? "bg-[#41D3BD] text-[#073B35] shadow-lg shadow-[#41D3BD]/20"
@@ -204,7 +232,10 @@ export default function CustomerLogin() {
 
           <button
             type="button"
-            onClick={() => setSelectedRole("seller")}
+            onClick={() => {
+              setSelectedRole("seller");
+              setMessage("");
+            }}
             className={`py-3 rounded-2xl font-bold transition-all ${
               selectedRole === "seller"
                 ? "bg-[#41D3BD] text-[#073B35] shadow-lg shadow-[#41D3BD]/20"
@@ -244,7 +275,7 @@ export default function CustomerLogin() {
                 onChange={handleChange}
                 required
                 placeholder="Full name"
-                className="bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+                className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
               />
 
               <input
@@ -253,7 +284,7 @@ export default function CustomerLogin() {
                 onChange={handleChange}
                 required
                 placeholder="Phone number"
-                className="bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+                className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
               />
             </div>
           )}
@@ -265,7 +296,7 @@ export default function CustomerLogin() {
             onChange={handleChange}
             required
             placeholder="Email address"
-            className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+            className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
           />
 
           <input
@@ -275,8 +306,23 @@ export default function CustomerLogin() {
             onChange={handleChange}
             required
             placeholder="Password"
-            className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+            className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
           />
+
+          {!isSignUp && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={resettingPassword}
+                className="text-[#1A9F8D] hover:text-[#073B35] text-sm font-bold transition-all disabled:opacity-50"
+              >
+                {resettingPassword
+                  ? "Sending reset link..."
+                  : "Forgot Password?"}
+              </button>
+            </div>
+          )}
 
           {isSignUp && (
             <div className="mt-6 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-5">
@@ -291,7 +337,7 @@ export default function CustomerLogin() {
                   onChange={handleChange}
                   required
                   placeholder="Apartment name"
-                  className="w-full bg-white border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+                  className="w-full bg-white/80 border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
                 />
 
                 <div className="grid grid-cols-2 gap-4">
@@ -300,7 +346,7 @@ export default function CustomerLogin() {
                     value={formData.block}
                     onChange={handleChange}
                     placeholder="Block / Tower"
-                    className="bg-white border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+                    className="bg-white/80 border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
                   />
 
                   <input
@@ -309,7 +355,7 @@ export default function CustomerLogin() {
                     onChange={handleChange}
                     required
                     placeholder="Flat No."
-                    className="bg-white border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+                    className="bg-white/80 border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
                   />
                 </div>
               </div>
@@ -342,10 +388,7 @@ export default function CustomerLogin() {
             : "New here? Create an account"}
         </button>
 
-        <Link
-          to="/"
-          className="block text-[#51615D] hover:text-[#073B35] text-sm mt-6 text-center"
-        >
+        <Link to="/" className="block text-[#51615D] text-sm mt-6 text-center">
           Continue to Nefo
         </Link>
       </div>
