@@ -424,12 +424,21 @@ export default function Orders() {
                 Your running or scheduled orders will appear here after checkout.
               </p>
 
-              <Link
-                to="/marketplace"
-                className="inline-block mt-7 bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-95 text-[#073B35] font-bold px-6 py-3 rounded-2xl transition-all duration-200"
-              >
-                Explore Marketplace
-              </Link>
+              <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Link
+                  to="/marketplace"
+                  className="w-full sm:w-auto bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-95 text-[#073B35] font-bold px-6 py-3 rounded-2xl transition-all duration-200 text-center"
+                >
+                  Explore Marketplace
+                </Link>
+
+                <Link
+                  to="/customer-care"
+                  className="w-full sm:w-auto border border-[#41D3BD]/45 bg-[#FFFFF2] text-[#073B35] hover:bg-[#D7F5EF] active:scale-95 font-bold px-6 py-3 rounded-2xl transition-all duration-200 text-center"
+                >
+                  Need Help?
+                </Link>
+              </div>
             </div>
           )}
 
@@ -490,13 +499,22 @@ export default function Orders() {
 
                     <OrderStatusBar order={order} />
 
-                    <button
-                      type="button"
-                      onClick={() => cancelOrder(order.id)}
-                      className="mt-5 w-full border border-red-300 text-red-500 hover:bg-red-500 hover:text-white font-black py-3 rounded-2xl active:scale-95 transition-all"
-                    >
-                      Cancel Order
-                    </button>
+                    <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => cancelOrder(order.id)}
+                        className="w-full border border-red-300 text-red-500 hover:bg-red-500 hover:text-white font-black py-3 rounded-2xl active:scale-95 transition-all"
+                      >
+                        Cancel Order
+                      </button>
+
+                      <Link
+                        to={`/customer-care?order_id=${order.id}`}
+                        className="w-full border border-[#41D3BD]/45 bg-[#FFFFF2] text-[#073B35] hover:bg-[#D7F5EF] font-black py-3 rounded-2xl active:scale-95 transition-all text-center"
+                      >
+                        Need Help?
+                      </Link>
+                    </div>
 
                     <div className="mt-5 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4 space-y-3">
                       {getOrderItems(order).map((item) => (

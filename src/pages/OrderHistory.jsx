@@ -202,12 +202,21 @@ export default function OrderHistory() {
                 Delivered and cancelled orders will appear here.
               </p>
 
-              <Link
-                to="/orders"
-                className="inline-block mt-7 bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-95 text-[#073B35] font-bold px-6 py-3 rounded-2xl transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
-              >
-                View Active Orders
-              </Link>
+              <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Link
+                  to="/orders"
+                  className="w-full sm:w-auto bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-95 text-[#073B35] font-bold px-6 py-3 rounded-2xl transition-all duration-200 shadow-lg shadow-[#41D3BD]/20 text-center"
+                >
+                  View Active Orders
+                </Link>
+
+                <Link
+                  to="/customer-care"
+                  className="w-full sm:w-auto border border-[#41D3BD]/45 bg-[#FFFFF2] text-[#073B35] hover:bg-[#D7F5EF] active:scale-95 font-bold px-6 py-3 rounded-2xl transition-all duration-200 text-center"
+                >
+                  Need Help?
+                </Link>
+              </div>
             </div>
           )}
 
@@ -294,18 +303,27 @@ export default function OrderHistory() {
                       </p>
                     )}
 
-                    {orderStatus === "cancelled" ? (
-                      <div className="mt-5 w-full border border-red-200 text-red-600 bg-red-50 font-black py-3 rounded-2xl text-center">
-                        Cancelled
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => handleReorder(order)}
-                        className="mt-5 w-full bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-[0.98] text-[#073B35] font-black py-3 rounded-2xl transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
+                    <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {orderStatus === "cancelled" ? (
+                        <div className="w-full border border-red-200 text-red-600 bg-red-50 font-black py-3 rounded-2xl text-center">
+                          Cancelled
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleReorder(order)}
+                          className="w-full bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-[0.98] text-[#073B35] font-black py-3 rounded-2xl transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
+                        >
+                          Re-order
+                        </button>
+                      )}
+
+                      <Link
+                        to={`/customer-care?order_id=${order.id}`}
+                        className="w-full border border-[#41D3BD]/45 bg-[#FFFFF2] text-[#073B35] hover:bg-[#D7F5EF] active:scale-[0.98] font-black py-3 rounded-2xl transition-all duration-200 text-center"
                       >
-                        Re-order
-                      </button>
-                    )}
+                        Need Help?
+                      </Link>
+                    </div>
                   </article>
                 );
               })}
