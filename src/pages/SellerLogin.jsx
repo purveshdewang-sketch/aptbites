@@ -17,7 +17,7 @@ export default function SellerLogin() {
   });
 
   const [currentUser, setCurrentUser] = useState(null);
-  const [needsSellerSetup, setNeedsSellerSetup] = useState(false);
+  const [sellerVerified, setSellerVerified] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [loading, setLoading] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
@@ -29,6 +29,7 @@ export default function SellerLogin() {
 
   async function checkExistingSession() {
     setCheckingSession(true);
+    setMessage("");
 
     const { data } = await supabase.auth.getUser();
     const loggedInUser = data?.user || null;
@@ -38,8 +39,6 @@ export default function SellerLogin() {
       return;
     }
 
-    setCurrentUser(loggedInUser);
-
     const profileResult = await getSellerProfile(loggedInUser.id);
 
     if (!profileResult.ok) {
@@ -48,35 +47,19 @@ export default function SellerLogin() {
       return;
     }
 
-    const profile = profileResult.profile;
-
     if (!profileResult.isApprovedSeller) {
       setMessage(
-        "This account is not approved as a seller. Please ask the app owner to enable seller access."
+        "You are already signed in, but this account is not approved as a seller."
       );
       setCheckingSession(false);
       return;
     }
 
-    if (sellerProfileIsComplete(profile)) {
-      await markSellerOnline(loggedInUser, profile);
-      navigate("/seller-dashboard");
-      return;
-    }
+    setCurrentUser(loggedInUser);
+    setSellerVerified(true);
+    fillSellerForm(loggedInUser, profileResult.profile);
 
-    setNeedsSellerSetup(true);
-
-    setFormData((current) => ({
-      ...current,
-      email: loggedInUser.email || "",
-      kitchenName: profile?.seller_kitchen_name || profile?.full_name || "",
-      flat: profile?.flat || "",
-      phone: profile?.phone || "",
-      specialty: profile?.seller_specialty || "",
-      about: profile?.seller_about || "",
-      acceptScheduledOrders: profile?.accept_scheduled_orders !== false,
-    }));
-
+    setMessage("Review your seller details and continue to dashboard.");
     setCheckingSession(false);
   }
 
@@ -113,33 +96,18 @@ export default function SellerLogin() {
     };
   }
 
-  function sellerProfileIsComplete(profile) {
-    return Boolean(
-      profile?.seller_kitchen_name &&
-        profile?.flat &&
-        profile?.phone &&
-        profile?.seller_specialty
-    );
-  }
-
-  async function markSellerOnline(user, profile) {
-    await supabase.from("profiles").upsert({
-      id: user.id,
-      email: user.email,
-      role: profile?.role || "seller",
-      is_seller: true,
-      seller_online: true,
-      accept_scheduled_orders: profile?.accept_scheduled_orders !== false,
-    });
-
-    localStorage.setItem(`Nefo_seller_access_${user.id}`, "yes");
-
-    if (profile?.seller_kitchen_name) {
-      localStorage.setItem(
-        `Nefo_seller_name_${user.id}`,
-        profile.seller_kitchen_name
-      );
-    }
+  function fillSellerForm(user, profile) {
+    setFormData((current) => ({
+      ...current,
+      email: user?.email || current.email || "",
+      password: "",
+      kitchenName: profile?.seller_kitchen_name || profile?.full_name || "",
+      flat: profile?.flat || "",
+      phone: profile?.phone || "",
+      specialty: profile?.seller_specialty || "",
+      about: profile?.seller_about || "",
+      acceptScheduledOrders: profile?.accept_scheduled_orders !== false,
+    }));
   }
 
   function handleChange(event) {
@@ -167,10 +135,13 @@ export default function SellerLogin() {
       );
     }
 
+    const existingRole = String(existingProfile?.role || "").toLowerCase();
+    const finalRole = existingRole === "admin" ? "admin" : "seller";
+
     const sellerProfilePayload = {
       id: user.id,
       email: user.email,
-      role: existingProfile?.role || "seller",
+      role: finalRole,
       is_seller: true,
       seller_online: true,
       accept_scheduled_orders: formData.acceptScheduledOrders,
@@ -191,7 +162,10 @@ export default function SellerLogin() {
     }
 
     localStorage.setItem(`Nefo_seller_access_${user.id}`, "yes");
-    localStorage.setItem(`Nefo_seller_name_${user.id}`, formData.kitchenName);
+    localStorage.setItem(
+      `Nefo_seller_name_${user.id}`,
+      formData.kitchenName.trim()
+    );
 
     return true;
   }
@@ -203,9 +177,7 @@ export default function SellerLogin() {
     setMessage("");
 
     try {
-      let user = currentUser;
-
-      if (!user) {
+      if (!currentUser) {
         const { data, error } = await supabase.auth.signInWithPassword({
           email: formData.email.trim(),
           password: formData.password,
@@ -217,26 +189,52 @@ export default function SellerLogin() {
           return;
         }
 
-        user = data?.user;
+        const signedInUser = data?.user;
 
-        if (!user) {
+        if (!signedInUser) {
           setMessage("Seller login failed.");
           setLoading(false);
           return;
         }
 
-        setCurrentUser(user);
+        const profileResult = await getSellerProfile(signedInUser.id);
+
+        if (!profileResult.ok) {
+          setMessage(profileResult.message);
+          setLoading(false);
+          return;
+        }
+
+        if (!profileResult.isApprovedSeller) {
+          setMessage(
+            "This account is not approved as a seller. Please ask the app owner to enable seller access."
+          );
+          setLoading(false);
+          return;
+        }
+
+        setCurrentUser(signedInUser);
+        setSellerVerified(true);
+        fillSellerForm(signedInUser, profileResult.profile);
+
+        setMessage("Seller login successful. Review your details and continue.");
+        setLoading(false);
+        return;
       }
 
-      const profileResult = await getSellerProfile(user.id);
+      if (!sellerVerified) {
+        setMessage("Seller account is not verified.");
+        setLoading(false);
+        return;
+      }
+
+      const profileResult = await getSellerProfile(currentUser.id);
 
       if (!profileResult.ok) {
         setMessage(profileResult.message);
         setLoading(false);
         return;
       }
-
-      const profile = profileResult.profile;
 
       if (!profileResult.isApprovedSeller) {
         setMessage(
@@ -246,19 +244,12 @@ export default function SellerLogin() {
         return;
       }
 
-      if (sellerProfileIsComplete(profile) && !needsSellerSetup) {
-        await markSellerOnline(user, profile);
-        navigate("/seller-dashboard");
-        return;
-      }
-
-      await saveSellerDetails(user, profile);
+      await saveSellerDetails(currentUser, profileResult.profile);
       navigate("/seller-dashboard");
     } catch (error) {
       setMessage(error.message);
+      setLoading(false);
     }
-
-    setLoading(false);
   }
 
   async function handleForgotPassword() {
@@ -288,6 +279,25 @@ export default function SellerLogin() {
     setResettingPassword(false);
   }
 
+  async function handleUseAnotherAccount() {
+    await supabase.auth.signOut();
+
+    setCurrentUser(null);
+    setSellerVerified(false);
+    setMessage("");
+
+    setFormData({
+      email: "",
+      password: "",
+      kitchenName: "",
+      flat: "",
+      phone: "",
+      specialty: "",
+      about: "",
+      acceptScheduledOrders: true,
+    });
+  }
+
   if (checkingSession) {
     return (
       <main className="min-h-screen bg-[#FFFFF2] text-[#111827] flex items-center justify-center px-4">
@@ -315,8 +325,8 @@ export default function SellerLogin() {
           </h1>
 
           <p className="text-[#51615D] mt-4 text-sm sm:text-base leading-relaxed">
-            Sign in as an approved seller. If your seller details are already
-            saved, Nefo will take you directly to your dashboard.
+            Sign in as an approved seller, review your kitchen details, and then
+            continue to your seller dashboard.
           </p>
 
           <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
@@ -361,12 +371,12 @@ export default function SellerLogin() {
             </p>
 
             <h2 className="text-3xl sm:text-4xl font-black mt-2 text-[#111827]">
-              {needsSellerSetup ? "Complete seller setup" : "Welcome back"}
+              {currentUser ? "Review seller details" : "Welcome back"}
             </h2>
 
             <p className="text-[#51615D] mt-3 text-sm leading-relaxed">
-              {needsSellerSetup
-                ? "Your account is approved. Complete these seller details once."
+              {currentUser
+                ? "Confirm or update your seller details before opening the dashboard."
                 : "Sign in with your approved seller account."}
             </p>
           </div>
@@ -408,14 +418,33 @@ export default function SellerLogin() {
                   disabled={resettingPassword}
                   className="text-[#1A9F8D] hover:text-[#073B35] text-sm font-bold transition-all disabled:opacity-50"
                 >
-                  {resettingPassword ? "Sending reset link..." : "Forgot Password?"}
+                  {resettingPassword
+                    ? "Sending reset link..."
+                    : "Forgot Password?"}
                 </button>
               </>
             )}
 
-            {needsSellerSetup && (
+            {currentUser && sellerVerified && (
               <>
                 <div className="h-px bg-[#D7F5EF] my-2" />
+
+                <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4">
+                  <p className="text-[#073B35] font-black text-sm">
+                    Signed in as seller
+                  </p>
+                  <p className="text-[#51615D] text-sm mt-1 truncate">
+                    {currentUser.email}
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={handleUseAnotherAccount}
+                    className="mt-3 text-[#1A9F8D] hover:text-[#073B35] text-sm font-bold"
+                  >
+                    Use another account
+                  </button>
+                </div>
 
                 <input
                   type="text"
@@ -496,9 +525,9 @@ export default function SellerLogin() {
             >
               {loading
                 ? "Please wait..."
-                : needsSellerSetup
-                ? "Save and Continue"
-                : "Continue to Seller Dashboard"}
+                : currentUser
+                ? "Save and Continue to Dashboard"
+                : "Sign In"}
             </button>
           </form>
 

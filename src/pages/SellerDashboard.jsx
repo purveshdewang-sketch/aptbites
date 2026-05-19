@@ -1332,7 +1332,7 @@ export default function SellerDashboard() {
           <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 mt-8">
             {[
               ["Total Orders", totalOrdersCount],
-              ["Today’s Orders", todayTotalOrders.length],
+              ["Today’s sales", todayTotalOrders.length],
               ["Active Orders", activeOrdersCount],
               ["Sold Orders", soldOrdersCount],
               [
