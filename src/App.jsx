@@ -14,13 +14,14 @@ import FoodDetails from "./pages/FoodDetails";
 import OwnerDashboard from "./pages/OwnerDashboard";
 import Profile from "./pages/Profile";
 import ResetPassword from "./pages/ResetPassword";
+import CustomerCare from "./pages/CustomerCare";
 
 import { useAuth } from "./context/AuthContext";
 import { supabase } from "./lib/supabaseClient";
 
 function LoadingScreen() {
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center text-white">
+    <div className="min-h-screen bg-[#FFFFF2] flex items-center justify-center text-[#073B35] font-black">
       Loading...
     </div>
   );
@@ -63,7 +64,11 @@ function SellerOnlyRoute({ children }) {
 
       const metadataRole = String(user?.user_metadata?.role || "").toLowerCase();
 
-      if (localSellerAccess || metadataRole === "seller") {
+      if (
+        localSellerAccess ||
+        metadataRole === "seller" ||
+        metadataRole === "admin"
+      ) {
         if (!cancelled) {
           setSellerAllowed(true);
           setCheckingRole(false);
@@ -224,6 +229,15 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/customer-care"
+          element={
+            <ProtectedRoute>
+              <CustomerCare />
             </ProtectedRoute>
           }
         />
