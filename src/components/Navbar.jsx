@@ -141,7 +141,6 @@ export default function Navbar() {
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Marketplace", path: "/marketplace" },
-    { name: "Customer Care", path: "/customer-care" },
   ];
 
   function getInitial() {
@@ -162,7 +161,7 @@ export default function Navbar() {
           <img
             src="/Nefo-logo.png"
             alt="Nefo"
-            className="w-full h-full object-contain p-1"
+            className="w-full h-full object-cover scale-[1.65]"
             onError={() => setLogoFailed(true)}
           />
         ) : (
@@ -170,24 +169,6 @@ export default function Navbar() {
         )}
       </div>
     );
-  }
-
-  function navLinkClass(path) {
-    const isActive = location.pathname === path;
-
-    return `text-sm font-semibold transition-all duration-200 ${
-      isActive ? "text-[#41D3BD]" : "text-[#D7F5EF] hover:text-[#41D3BD]"
-    }`;
-  }
-
-  function mobileLinkClass(path) {
-    const isActive = location.pathname === path;
-
-    return `px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
-      isActive
-        ? "bg-[#41D3BD] text-[#073B35]"
-        : "text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D]"
-    }`;
   }
 
   if (authLoading) {
@@ -218,20 +199,32 @@ export default function Navbar() {
             </Link>
 
             <div className="hidden md:flex items-center gap-7">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  to={link.path}
-                  className={navLinkClass(link.path)}
-                >
-                  {link.name}
-                </Link>
-              ))}
+              {navLinks.map((link) => {
+                const isActive = location.pathname === link.path;
+
+                return (
+                  <Link
+                    key={link.name}
+                    to={link.path}
+                    className={`text-sm font-semibold transition-all duration-200 ${
+                      isActive
+                        ? "text-[#41D3BD]"
+                        : "text-[#D7F5EF] hover:text-[#41D3BD]"
+                    }`}
+                  >
+                    {link.name}
+                  </Link>
+                );
+              })}
 
               {isAdmin && (
                 <Link
                   to="/owner-dashboard"
-                  className={navLinkClass("/owner-dashboard")}
+                  className={`text-sm font-semibold transition-all duration-200 ${
+                    location.pathname === "/owner-dashboard"
+                      ? "text-[#41D3BD]"
+                      : "text-[#D7F5EF] hover:text-[#41D3BD]"
+                  }`}
                 >
                   Owner Dashboard
                 </Link>
@@ -317,13 +310,6 @@ export default function Navbar() {
                             className="block px-4 py-3 rounded-2xl text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D] transition-all"
                           >
                             Order History
-                          </Link>
-
-                          <Link
-                            to="/customer-care"
-                            className="block px-4 py-3 rounded-2xl text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D] transition-all"
-                          >
-                            Customer Care
                           </Link>
 
                           {isAdmin && (
@@ -414,32 +400,47 @@ export default function Navbar() {
 
             <div className="p-3 max-h-[75vh] overflow-y-auto">
               <div className="grid gap-1">
-                <Link to="/" className={mobileLinkClass("/")}>
+                <Link
+                  to="/"
+                  className={`px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
+                    location.pathname === "/"
+                      ? "bg-[#41D3BD] text-[#073B35]"
+                      : "text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D]"
+                  }`}
+                >
                   Home
                 </Link>
 
                 <Link
                   to="/marketplace"
-                  className={mobileLinkClass("/marketplace")}
+                  className={`px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
+                    location.pathname === "/marketplace"
+                      ? "bg-[#41D3BD] text-[#073B35]"
+                      : "text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D]"
+                  }`}
                 >
                   Marketplace
                 </Link>
 
-                <Link to="/profile" className={mobileLinkClass("/profile")}>
-                  My Profile
-                </Link>
-
                 <Link
-                  to="/customer-care"
-                  className={mobileLinkClass("/customer-care")}
+                  to="/profile"
+                  className={`px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
+                    location.pathname === "/profile"
+                      ? "bg-[#41D3BD] text-[#073B35]"
+                      : "text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D]"
+                  }`}
                 >
-                  Customer Care
+                  My Profile
                 </Link>
 
                 {isAdmin && (
                   <Link
                     to="/owner-dashboard"
-                    className={mobileLinkClass("/owner-dashboard")}
+                    className={`px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
+                      location.pathname === "/owner-dashboard"
+                        ? "bg-[#41D3BD] text-[#073B35]"
+                        : "text-[#1A9F8D] hover:bg-[#D7F5EF]"
+                    }`}
                   >
                     Owner Dashboard
                   </Link>
