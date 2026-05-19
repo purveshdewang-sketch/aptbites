@@ -15,6 +15,9 @@ import OwnerDashboard from "./pages/OwnerDashboard";
 import Profile from "./pages/Profile";
 import ResetPassword from "./pages/ResetPassword";
 import CustomerCare from "./pages/CustomerCare";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Terms from "./pages/Terms";
+import RefundPolicy from "./pages/RefundPolicy";
 
 import { useAuth } from "./context/AuthContext";
 import { supabase } from "./lib/supabaseClient";
@@ -196,6 +199,33 @@ export default function App() {
         <Route path="/customer-login" element={<CustomerLogin />} />
         <Route path="/seller-login" element={<SellerLogin />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+
+        <Route
+          path="/privacy-policy"
+          element={
+            <ProtectedRoute>
+              <PrivacyPolicy />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/terms"
+          element={
+            <ProtectedRoute>
+              <Terms />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/refund-policy"
+          element={
+            <ProtectedRoute>
+              <RefundPolicy />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/"
