@@ -518,6 +518,51 @@ export default function Profile() {
 
                 <div className="bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
                   <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
+                    Legal & Support
+                  </p>
+
+                  <h2 className="text-2xl font-black mt-2 text-[#111827]">
+                    Help and policies
+                  </h2>
+
+                  <p className="text-[#51615D] text-sm mt-3 leading-relaxed">
+                    Access Nefo support, refund rules, privacy details, and user
+                    terms.
+                  </p>
+
+                  <div className="grid gap-3 mt-5">
+                    <Link
+                      to="/customer-care"
+                      className="bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black text-center py-3 rounded-2xl transition-all"
+                    >
+                      Customer Care
+                    </Link>
+
+                    <Link
+                      to="/refund-policy"
+                      className="bg-[#FFFFF2] border border-[#D7F5EF] hover:bg-[#D7F5EF] text-[#073B35] font-black text-center py-3 rounded-2xl transition-all"
+                    >
+                      Refund Policy
+                    </Link>
+
+                    <Link
+                      to="/privacy-policy"
+                      className="bg-[#FFFFF2] border border-[#D7F5EF] hover:bg-[#D7F5EF] text-[#073B35] font-black text-center py-3 rounded-2xl transition-all"
+                    >
+                      Privacy Policy
+                    </Link>
+
+                    <Link
+                      to="/terms"
+                      className="bg-[#FFFFF2] border border-[#D7F5EF] hover:bg-[#D7F5EF] text-[#073B35] font-black text-center py-3 rounded-2xl transition-all"
+                    >
+                      Terms & Conditions
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
+                  <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
                     Session
                   </p>
 
