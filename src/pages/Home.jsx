@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { useAuth } from "../context/AuthContext";
@@ -9,6 +9,8 @@ export default function Home() {
 
   const [isSeller, setIsSeller] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [homeFoods, setHomeFoods] = useState([]);
+  const [heroIndex, setHeroIndex] = useState(0);
 
   useEffect(() => {
     async function checkUserRole() {
@@ -57,209 +59,325 @@ export default function Home() {
     checkUserRole();
   }, [user]);
 
+  useEffect(() => {
+    fetchHomeFoods();
+
+    const foodsChannel = supabase
+      .channel("home-foods-realtime-channel")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "foods",
+        },
+        () => {
+          fetchHomeFoods();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(foodsChannel);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (homeFoods.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setHeroIndex((currentIndex) => (currentIndex + 1) % homeFoods.length);
+    }, 4200);
+
+    return () => clearInterval(interval);
+  }, [homeFoods.length]);
+
+  async function fetchHomeFoods() {
+    const { data, error } = await supabase
+      .from("foods")
+      .select("id, name, seller, price, image, category, type, stock")
+      .order("id", { ascending: false })
+      .limit(8);
+
+    if (error) {
+      setHomeFoods([]);
+      return;
+    }
+
+    const foodsWithImages = (data || []).filter((food) => food.image);
+
+    setHomeFoods(foodsWithImages);
+    setHeroIndex(0);
+  }
+
   const shouldShowSellFood = !user || isSeller || isAdmin;
   const sellFoodPath =
     user && (isSeller || isAdmin) ? "/seller-dashboard" : "/seller-login";
+
+  const heroFood = homeFoods[heroIndex] || null;
+
+  const trendingFoods = useMemo(() => {
+    return homeFoods.slice(0, 4);
+  }, [homeFoods]);
+
+  const heroBackgroundStyle = heroFood?.image
+    ? {
+        backgroundImage: `linear-gradient(90deg, rgba(7,59,53,0.92) 0%, rgba(7,59,53,0.78) 34%, rgba(7,59,53,0.34) 68%, rgba(7,59,53,0.12) 100%), url("${heroFood.image}")`,
+      }
+    : {
+        backgroundImage:
+          "linear-gradient(135deg, #073B35 0%, #0B5B51 45%, #41D3BD 100%)",
+      };
 
   return (
     <>
       <Navbar />
 
       <main className="min-h-screen bg-[#FFFFF2] text-[#111827] overflow-hidden">
-        <section className="relative px-4 sm:px-6 pt-5 pb-24 sm:pt-8 sm:pb-16">
-          <div className="absolute top-0 right-0 w-72 h-72 bg-[#41D3BD]/20 blur-[95px] rounded-full" />
-          <div className="absolute top-44 left-0 w-72 h-72 bg-[#41D3BD]/12 blur-[110px] rounded-full" />
-          <div className="absolute bottom-0 right-20 w-80 h-80 bg-white/70 blur-[120px] rounded-full" />
+        <section className="px-4 sm:px-6 pt-5 pb-24 sm:pt-7 sm:pb-14">
+          <div className="max-w-7xl mx-auto">
+            <div
+              className="relative min-h-[520px] sm:min-h-[480px] lg:min-h-[520px] rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-cover bg-center shadow-2xl shadow-[#073B35]/20 border border-[#D7F5EF]"
+              style={heroBackgroundStyle}
+            >
+              <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/35" />
 
-          <div className="relative max-w-6xl mx-auto">
-            <div className="lg:hidden">
-              <div className="inline-flex items-center gap-2 bg-white/85 border border-[#D7F5EF] rounded-full px-4 py-2 mb-5 shadow-sm">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#41D3BD]" />
-                <p className="text-[#1A9F8D] font-black text-xs tracking-wide uppercase">
-                  Homemade food nearby
-                </p>
-              </div>
+              <div className="relative z-10 h-full min-h-[520px] sm:min-h-[480px] lg:min-h-[520px] flex items-center">
+                <div className="w-full px-5 sm:px-10 lg:px-14 py-10">
+                  <div className="max-w-3xl">
+                    <div className="inline-flex items-center gap-2 bg-[#FFFFF2]/95 border border-white/40 rounded-full px-4 py-2 mb-6 shadow-lg shadow-black/10 backdrop-blur">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#41D3BD]" />
+                      <p className="text-[#073B35] font-black text-xs tracking-wide uppercase">
+                        Neighbourhood homemade food
+                      </p>
+                    </div>
 
-              <h1 className="text-[2.55rem] leading-[1.02] font-black tracking-tight text-[#111827]">
-                Hungry?
-                <span className="block text-[#073B35]">
-                  Order homemade food.
-                </span>
-              </h1>
+                    <h1 className="text-white text-[2.7rem] sm:text-6xl lg:text-7xl font-black leading-[1.02] tracking-tight drop-shadow-xl">
+                      Authentic food,
+                      <span className="block text-[#41D3BD]">
+                        made closer to you.
+                      </span>
+                    </h1>
 
-              <p className="text-[#51615D] mt-4 text-[15px] leading-relaxed">
-                Fresh meals, snacks, sweets, and daily food drops from trusted
-                home chefs inside your apartment community.
-              </p>
-
-              <div className="mt-6 bg-white/85 border border-[#D7F5EF] rounded-[1.75rem] p-4 shadow-xl shadow-[#41D3BD]/10 backdrop-blur">
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3 text-center shadow-sm">
-                    <p className="text-2xl">🍲</p>
-                    <p className="text-[#1A9F8D] text-xs font-black mt-2">
-                      Meals
+                    <p className="text-white/90 mt-5 text-base sm:text-xl leading-relaxed max-w-2xl drop-shadow">
+                      Discover fresh meals, snacks, sweets, tiffins, and daily
+                      food drops prepared by trusted home chefs inside your
+                      community.
                     </p>
-                  </div>
 
-                  <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3 text-center shadow-sm">
-                    <p className="text-2xl">🥪</p>
-                    <p className="text-[#1A9F8D] text-xs font-black mt-2">
-                      Snacks
-                    </p>
-                  </div>
+                    <div
+                      className={`mt-8 grid gap-3 max-w-xl ${
+                        shouldShowSellFood
+                          ? "grid-cols-1 sm:grid-cols-2"
+                          : "grid-cols-1"
+                      }`}
+                    >
+                      <Link
+                        to="/marketplace"
+                        className="bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-95 text-[#073B35] font-black px-6 py-4 rounded-2xl text-center transition-all shadow-xl shadow-[#41D3BD]/25"
+                      >
+                        Order Food
+                      </Link>
 
-                  <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3 text-center shadow-sm">
-                    <p className="text-2xl">🍰</p>
-                    <p className="text-[#1A9F8D] text-xs font-black mt-2">
-                      Sweets
-                    </p>
+                      {shouldShowSellFood && (
+                        <Link
+                          to={sellFoodPath}
+                          className="bg-[#FFFFF2]/95 hover:bg-white border border-white/50 active:scale-95 text-[#073B35] font-black px-6 py-4 rounded-2xl text-center transition-all shadow-xl shadow-black/10 backdrop-blur"
+                        >
+                          Sell Food
+                        </Link>
+                      )}
+                    </div>
+
+                    {heroFood && (
+                      <Link
+                        to={`/food/${heroFood.id}`}
+                        className="mt-8 inline-flex max-w-full items-center gap-3 bg-black/25 hover:bg-black/35 border border-white/15 rounded-2xl px-4 py-3 backdrop-blur transition-all"
+                      >
+                        <div className="w-11 h-11 rounded-2xl bg-[#41D3BD] flex items-center justify-center text-[#073B35] font-black shrink-0">
+                          🍽️
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="text-white font-black truncate">
+                            Now showing: {heroFood.name}
+                          </p>
+                          <p className="text-white/70 text-sm truncate">
+                            By {heroFood.seller || "local home chef"}
+                          </p>
+                        </div>
+                      </Link>
+                    )}
                   </div>
                 </div>
-
-                <div className="mt-4 bg-[#41D3BD]/12 border border-[#41D3BD]/30 rounded-2xl p-4">
-                  <p className="text-[#073B35] font-black text-sm">
-                    Fresh drops available daily
-                  </p>
-                  <p className="text-[#51615D] text-xs mt-1">
-                    Order before items sell out.
-                  </p>
-                </div>
               </div>
 
-              <div
-                className={`mt-6 grid gap-3 ${
-                  shouldShowSellFood ? "grid-cols-2" : "grid-cols-1"
-                }`}
-              >
+              {homeFoods.length > 1 && (
+                <div className="absolute bottom-5 left-5 sm:left-10 z-20 flex gap-2">
+                  {homeFoods.slice(0, 5).map((food, index) => (
+                    <button
+                      key={food.id}
+                      type="button"
+                      onClick={() => setHeroIndex(index)}
+                      className={`h-2.5 rounded-full transition-all ${
+                        index === heroIndex
+                          ? "w-8 bg-[#41D3BD]"
+                          : "w-2.5 bg-white/60 hover:bg-white"
+                      }`}
+                      aria-label={`Show ${food.name}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <section className="mt-10 sm:mt-12">
+              <div className="flex items-end justify-between gap-4 mb-5 sm:mb-7">
+                <div>
+                  <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
+                    Fresh around you
+                  </p>
+
+                  <h2 className="text-3xl sm:text-4xl font-black text-[#111827] mt-2">
+                    Trending Now
+                  </h2>
+                </div>
+
                 <Link
                   to="/marketplace"
-                  className="bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-95 text-[#073B35] font-black px-5 py-4 rounded-2xl text-center transition-all shadow-xl shadow-[#41D3BD]/25"
+                  className="hidden sm:block text-[#1A9F8D] hover:text-[#073B35] font-black"
                 >
-                  Order Food
+                  View all →
                 </Link>
-
-                {shouldShowSellFood && (
-                  <Link
-                    to={sellFoodPath}
-                    className="border border-[#41D3BD]/45 bg-white/85 text-[#1A9F8D] hover:bg-[#D7F5EF] hover:text-[#073B35] active:scale-95 font-black px-5 py-4 rounded-2xl text-center transition-all shadow-sm"
-                  >
-                    Sell Food
-                  </Link>
-                )}
               </div>
 
-              <div className="grid grid-cols-3 gap-3 mt-6">
-                <div className="bg-white/85 border border-[#D7F5EF] rounded-2xl p-3 shadow-sm">
-                  <p className="text-[#1A9F8D] font-black text-sm">Fresh</p>
-                  <p className="text-[#51615D] text-xs mt-1">Daily drops</p>
-                </div>
+              {trendingFoods.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                  {trendingFoods.map((food) => (
+                    <Link
+                      key={food.id}
+                      to={`/food/${food.id}`}
+                      className="group bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] overflow-hidden shadow-lg shadow-[#073B35]/5 hover:shadow-xl hover:shadow-[#073B35]/10 transition-all"
+                    >
+                      <div className="relative h-48 overflow-hidden bg-[#D7F5EF]">
+                        <img
+                          src={food.image}
+                          alt={food.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+                        />
 
-                <div className="bg-white/85 border border-[#D7F5EF] rounded-2xl p-3 shadow-sm">
-                  <p className="text-[#1A9F8D] font-black text-sm">Local</p>
-                  <p className="text-[#51615D] text-xs mt-1">Nearby homes</p>
-                </div>
+                        <div className="absolute top-3 left-3 flex gap-2">
+                          <span className="bg-[#FFFFF2]/95 text-[#073B35] text-xs font-black px-3 py-1.5 rounded-full">
+                            {food.category || "Homemade"}
+                          </span>
+                        </div>
+                      </div>
 
-                <div className="bg-white/85 border border-[#D7F5EF] rounded-2xl p-3 shadow-sm">
-                  <p className="text-[#1A9F8D] font-black text-sm">Trusted</p>
-                  <p className="text-[#51615D] text-xs mt-1">Residents</p>
-                </div>
-              </div>
-            </div>
+                      <div className="p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <h3 className="text-[#111827] font-black text-lg truncate">
+                              {food.name}
+                            </h3>
 
-            <div className="hidden lg:block">
-              <div className="max-w-4xl">
-                <div className="inline-flex items-center gap-2 bg-white/85 border border-[#D7F5EF] rounded-full px-4 py-2 mb-6 shadow-sm">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#41D3BD]" />
-                  <p className="text-[#1A9F8D] font-semibold text-xs tracking-wide uppercase">
-                    neighbourhood homemade food
+                            <p className="text-[#51615D] text-sm mt-1 truncate">
+                              By {food.seller || "local home chef"}
+                            </p>
+                          </div>
+
+                          <p className="text-[#073B35] font-black shrink-0">
+                            ₹{food.price}
+                          </p>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-8 text-center shadow-lg shadow-[#073B35]/5">
+                  <div className="text-5xl">🍲</div>
+
+                  <h3 className="text-2xl font-black text-[#111827] mt-4">
+                    Fresh dishes coming soon
+                  </h3>
+
+                  <p className="text-[#51615D] mt-2">
+                    Once sellers upload dishes, they will appear here
+                    automatically.
                   </p>
-                </div>
 
-                <h1 className="text-7xl font-black leading-[1.02] tracking-tight text-[#111827]">
-                  Homemade food,
-                  <span className="block text-[#073B35]">
-                    closer than ever.
-                  </span>
-                </h1>
-
-                <p className="text-[#51615D] mt-5 text-xl leading-relaxed max-w-2xl">
-                  Discover fresh meals, snacks, sweets, and limited food drops
-                  prepared by trusted home chefs inside your apartment community.
-                </p>
-
-                <div
-                  className={`grid gap-3 mt-8 max-w-xl ${
-                    shouldShowSellFood ? "grid-cols-2" : "grid-cols-1"
-                  }`}
-                >
                   <Link
                     to="/marketplace"
-                    className="bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-95 text-[#073B35] font-bold px-5 py-4 rounded-2xl text-center transition-all duration-200 shadow-xl shadow-[#41D3BD]/25"
+                    className="inline-block mt-6 bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black px-6 py-3 rounded-2xl"
                   >
-                    Order Food
+                    Explore Marketplace
                   </Link>
+                </div>
+              )}
+            </section>
 
-                  {shouldShowSellFood && (
-                    <Link
-                      to={sellFoodPath}
-                      className="border border-[#41D3BD]/45 bg-white/85 text-[#1A9F8D] hover:bg-[#D7F5EF] hover:text-[#073B35] active:scale-95 font-bold px-5 py-4 rounded-2xl text-center transition-all duration-200 shadow-sm"
-                    >
-                      Sell Food
-                    </Link>
-                  )}
+            <section className="mt-10 sm:mt-12 grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div className="bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] p-6 shadow-lg shadow-[#073B35]/5">
+                <div className="w-12 h-12 rounded-2xl bg-[#41D3BD]/15 flex items-center justify-center text-2xl">
+                  🍲
                 </div>
 
-                <div className="grid grid-cols-3 gap-4 mt-9">
-                  <div className="bg-white/85 border border-[#D7F5EF] rounded-[1.5rem] p-4 shadow-lg shadow-[#41D3BD]/5">
-                    <div className="w-10 h-10 rounded-2xl bg-[#41D3BD]/12 flex items-center justify-center mb-3 text-xl">
-                      🍲
-                    </div>
-                    <p className="text-[#1A9F8D] font-bold text-lg">Fresh</p>
-                    <p className="text-[#51615D] text-sm mt-1">
-                      Daily homemade food drops
-                    </p>
-                  </div>
+                <h3 className="text-[#1A9F8D] font-black text-xl mt-5">
+                  Fresh
+                </h3>
 
-                  <div className="bg-white/85 border border-[#D7F5EF] rounded-[1.5rem] p-4 shadow-lg shadow-[#41D3BD]/5">
-                    <div className="w-10 h-10 rounded-2xl bg-[#41D3BD]/12 flex items-center justify-center mb-3 text-xl">
-                      🏠
-                    </div>
-                    <p className="text-[#1A9F8D] font-bold text-lg">Local</p>
-                    <p className="text-[#51615D] text-sm mt-1">
-                      Food from your apartment community
-                    </p>
-                  </div>
-
-                  <div className="bg-white/85 border border-[#D7F5EF] rounded-[1.5rem] p-4 shadow-lg shadow-[#41D3BD]/5">
-                    <div className="w-10 h-10 rounded-2xl bg-[#41D3BD]/12 flex items-center justify-center mb-3 text-xl">
-                      ⭐
-                    </div>
-                    <p className="text-[#1A9F8D] font-bold text-lg">
-                      Trusted
-                    </p>
-                    <p className="text-[#51615D] text-sm mt-1">
-                      Prepared by verified residents
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-10 bg-white/85 border border-[#D7F5EF] rounded-[1.75rem] p-6 max-w-3xl shadow-xl shadow-[#41D3BD]/5">
-                  <p className="text-[#1A9F8D] text-sm font-semibold uppercase tracking-[0.18em]">
-                    Why Nefo?
-                  </p>
-
-                  <p className="text-[#111827] text-xl font-bold mt-3 leading-relaxed">
-                    Faster than delivery apps, more personal than restaurants,
-                    and made right inside your neighbourhood.
-                  </p>
-
-                  <p className="text-[#51615D] text-base mt-3 leading-relaxed">
-                    No long-distance delivery, no generic menus — just real
-                    food, made by people around you.
-                  </p>
-                </div>
+                <p className="text-[#51615D] mt-2 leading-relaxed">
+                  Daily homemade food drops from nearby kitchens.
+                </p>
               </div>
-            </div>
+
+              <div className="bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] p-6 shadow-lg shadow-[#073B35]/5">
+                <div className="w-12 h-12 rounded-2xl bg-[#41D3BD]/15 flex items-center justify-center text-2xl">
+                  🏠
+                </div>
+
+                <h3 className="text-[#1A9F8D] font-black text-xl mt-5">
+                  Local
+                </h3>
+
+                <p className="text-[#51615D] mt-2 leading-relaxed">
+                  Food made inside your apartment or neighbourhood community.
+                </p>
+              </div>
+
+              <div className="bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] p-6 shadow-lg shadow-[#073B35]/5">
+                <div className="w-12 h-12 rounded-2xl bg-[#41D3BD]/15 flex items-center justify-center text-2xl">
+                  ⭐
+                </div>
+
+                <h3 className="text-[#1A9F8D] font-black text-xl mt-5">
+                  Trusted
+                </h3>
+
+                <p className="text-[#51615D] mt-2 leading-relaxed">
+                  Prepared by residents and home chefs near you.
+                </p>
+              </div>
+            </section>
+
+            <section className="mt-10 sm:mt-12 mb-4 bg-[#073B35] rounded-[2rem] p-6 sm:p-8 shadow-2xl shadow-[#073B35]/15 overflow-hidden relative">
+              <div className="absolute right-0 top-0 w-64 h-64 bg-[#41D3BD]/20 blur-[90px] rounded-full" />
+
+              <div className="relative max-w-3xl">
+                <p className="text-[#41D3BD] text-sm font-black uppercase tracking-[0.18em]">
+                  Why Nefo?
+                </p>
+
+                <h2 className="text-white text-2xl sm:text-4xl font-black mt-3 leading-tight">
+                  Faster than delivery apps, more personal than restaurants.
+                </h2>
+
+                <p className="text-[#D7F5EF] text-base sm:text-lg mt-4 leading-relaxed">
+                  No long-distance delivery, no generic menus — just real food,
+                  made by people around you.
+                </p>
+              </div>
+            </section>
           </div>
         </section>
 
