@@ -6,20 +6,21 @@ export default function SellerLogin() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    phone: "",
-    otp: "",
+    email: "",
+    password: "",
     kitchenName: "",
     flat: "",
+    phone: "",
     specialty: "",
     about: "",
     acceptScheduledOrders: true,
   });
 
-  const [otpSent, setOtpSent] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [sellerVerified, setSellerVerified] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -57,6 +58,7 @@ export default function SellerLogin() {
     setCurrentUser(loggedInUser);
     setSellerVerified(true);
     fillSellerForm(loggedInUser, profileResult.profile);
+
     setMessage("Review your seller details and continue to dashboard.");
     setCheckingSession(false);
   }
@@ -94,39 +96,14 @@ export default function SellerLogin() {
     };
   }
 
-  function cleanPhone(phone) {
-    return phone.replace(/\D/g, "");
-  }
-
-  function formatPhoneForSupabase(phone) {
-    const cleanedPhone = cleanPhone(phone);
-
-    if (cleanedPhone.length === 10) {
-      return `+91${cleanedPhone}`;
-    }
-
-    if (cleanedPhone.length === 12 && cleanedPhone.startsWith("91")) {
-      return `+${cleanedPhone}`;
-    }
-
-    if (phone.trim().startsWith("+")) {
-      return phone.trim();
-    }
-
-    return `+${cleanedPhone}`;
-  }
-
   function fillSellerForm(user, profile) {
     setFormData((current) => ({
       ...current,
-      phone:
-        profile?.phone ||
-        user?.phone?.replace("+91", "") ||
-        current.phone ||
-        "",
-      otp: "",
+      email: user?.email || current.email || "",
+      password: "",
       kitchenName: profile?.seller_kitchen_name || profile?.full_name || "",
       flat: profile?.flat || "",
+      phone: profile?.phone || "",
       specialty: profile?.seller_specialty || "",
       about: profile?.seller_about || "",
       acceptScheduledOrders: profile?.accept_scheduled_orders !== false,
@@ -151,105 +128,6 @@ export default function SellerLogin() {
     );
   }
 
-  async function sendOtp(event) {
-    event.preventDefault();
-
-    setLoading(true);
-    setMessage("");
-
-    try {
-      const cleanedPhone = cleanPhone(formData.phone);
-
-      if (cleanedPhone.length < 10) {
-        setMessage("Please enter a valid phone number.");
-        setLoading(false);
-        return;
-      }
-
-      const phone = formatPhoneForSupabase(formData.phone);
-
-      const { error } = await supabase.auth.signInWithOtp({
-        phone,
-      });
-
-      if (error) {
-        setMessage(error.message);
-        setLoading(false);
-        return;
-      }
-
-      setOtpSent(true);
-      setMessage(`OTP sent to ${phone}.`);
-    } catch (error) {
-      setMessage(error.message);
-    }
-
-    setLoading(false);
-  }
-
-  async function verifyOtp(event) {
-    event.preventDefault();
-
-    setLoading(true);
-    setMessage("");
-
-    try {
-      const phone = formatPhoneForSupabase(formData.phone);
-
-      if (!formData.otp.trim()) {
-        setMessage("Please enter the OTP.");
-        setLoading(false);
-        return;
-      }
-
-      const { data, error } = await supabase.auth.verifyOtp({
-        phone,
-        token: formData.otp.trim(),
-        type: "sms",
-      });
-
-      if (error) {
-        setMessage(error.message);
-        setLoading(false);
-        return;
-      }
-
-      const signedInUser = data?.user;
-
-      if (!signedInUser) {
-        setMessage("Seller OTP verification failed.");
-        setLoading(false);
-        return;
-      }
-
-      const profileResult = await getSellerProfile(signedInUser.id);
-
-      if (!profileResult.ok) {
-        setMessage(profileResult.message);
-        setLoading(false);
-        return;
-      }
-
-      if (!profileResult.isApprovedSeller) {
-        setMessage(
-          "This phone number is not approved as a seller. Please ask the app owner to enable seller access."
-        );
-        setLoading(false);
-        return;
-      }
-
-      setCurrentUser(signedInUser);
-      setSellerVerified(true);
-      fillSellerForm(signedInUser, profileResult.profile);
-      setOtpSent(false);
-      setMessage("Seller verified. Review your details and continue.");
-    } catch (error) {
-      setMessage(error.message);
-    }
-
-    setLoading(false);
-  }
-
   async function saveSellerDetails(user, existingProfile = null) {
     if (!sellerSetupFieldsAreValid()) {
       throw new Error(
@@ -262,13 +140,14 @@ export default function SellerLogin() {
 
     const sellerProfilePayload = {
       id: user.id,
-      phone: cleanPhone(formData.phone),
+      email: user.email,
       role: finalRole,
       is_seller: true,
       seller_online: true,
       accept_scheduled_orders: formData.acceptScheduledOrders,
       full_name: formData.kitchenName.trim(),
       flat: formData.flat.trim(),
+      phone: formData.phone.trim(),
       seller_kitchen_name: formData.kitchenName.trim(),
       seller_specialty: formData.specialty.trim(),
       seller_about: formData.about.trim(),
@@ -291,18 +170,64 @@ export default function SellerLogin() {
     return true;
   }
 
-  async function handleSellerContinue(event) {
+  async function handleSellerLogin(event) {
     event.preventDefault();
-
-    if (!currentUser || !sellerVerified) {
-      setMessage("Please verify your seller phone number first.");
-      return;
-    }
 
     setLoading(true);
     setMessage("");
 
     try {
+      if (!currentUser) {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: formData.email.trim(),
+          password: formData.password,
+        });
+
+        if (error) {
+          setMessage(error.message);
+          setLoading(false);
+          return;
+        }
+
+        const signedInUser = data?.user;
+
+        if (!signedInUser) {
+          setMessage("Seller login failed.");
+          setLoading(false);
+          return;
+        }
+
+        const profileResult = await getSellerProfile(signedInUser.id);
+
+        if (!profileResult.ok) {
+          setMessage(profileResult.message);
+          setLoading(false);
+          return;
+        }
+
+        if (!profileResult.isApprovedSeller) {
+          setMessage(
+            "This account is not approved as a seller. Please ask the app owner to enable seller access."
+          );
+          setLoading(false);
+          return;
+        }
+
+        setCurrentUser(signedInUser);
+        setSellerVerified(true);
+        fillSellerForm(signedInUser, profileResult.profile);
+
+        setMessage("Seller login successful. Review your details and continue.");
+        setLoading(false);
+        return;
+      }
+
+      if (!sellerVerified) {
+        setMessage("Seller account is not verified.");
+        setLoading(false);
+        return;
+      }
+
       const profileResult = await getSellerProfile(currentUser.id);
 
       if (!profileResult.ok) {
@@ -327,32 +252,50 @@ export default function SellerLogin() {
     }
   }
 
+  async function handleForgotPassword() {
+    const email = formData.email.trim();
+
+    if (!email) {
+      setMessage("Please enter your email first, then click Forgot Password.");
+      return;
+    }
+
+    setResettingPassword(true);
+    setMessage("");
+
+    const redirectTo = `${window.location.origin}/reset-password`;
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo,
+    });
+
+    if (error) {
+      setMessage(`Password reset failed: ${error.message}`);
+      setResettingPassword(false);
+      return;
+    }
+
+    setMessage("Password reset link sent to your email.");
+    setResettingPassword(false);
+  }
+
   async function handleUseAnotherAccount() {
     await supabase.auth.signOut();
 
     setCurrentUser(null);
     setSellerVerified(false);
-    setOtpSent(false);
     setMessage("");
 
     setFormData({
-      phone: "",
-      otp: "",
+      email: "",
+      password: "",
       kitchenName: "",
       flat: "",
+      phone: "",
       specialty: "",
       about: "",
       acceptScheduledOrders: true,
     });
-  }
-
-  function resetOtpState() {
-    setOtpSent(false);
-    setMessage("");
-    setFormData((current) => ({
-      ...current,
-      otp: "",
-    }));
   }
 
   if (checkingSession) {
@@ -382,8 +325,8 @@ export default function SellerLogin() {
           </h1>
 
           <p className="text-[#51615D] mt-4 text-sm sm:text-base leading-relaxed">
-            Sign in with phone OTP as an approved seller, review your kitchen
-            details, and continue to your dashboard.
+            Sign in as an approved seller, review your kitchen details, and then
+            continue to your seller dashboard.
           </p>
 
           <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
@@ -428,19 +371,13 @@ export default function SellerLogin() {
             </p>
 
             <h2 className="text-3xl sm:text-4xl font-black mt-2 text-[#111827]">
-              {currentUser
-                ? "Review seller details"
-                : otpSent
-                ? "Enter OTP"
-                : "Welcome back"}
+              {currentUser ? "Review seller details" : "Welcome back"}
             </h2>
 
             <p className="text-[#51615D] mt-3 text-sm leading-relaxed">
               {currentUser
                 ? "Confirm or update your seller details before opening the dashboard."
-                : otpSent
-                ? "Enter the OTP sent to your registered seller phone number."
-                : "Sign in with your approved seller phone number."}
+                : "Sign in with your approved seller account."}
             </p>
           </div>
 
@@ -450,170 +387,153 @@ export default function SellerLogin() {
             </div>
           )}
 
-          {!currentUser && !otpSent && (
-            <form onSubmit={sendOtp} className="mt-7 space-y-4">
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                required
-                className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all text-[#111827]"
-                placeholder="Seller phone number e.g. 9876543210"
-              />
+          <form onSubmit={handleSellerLogin} className="mt-7 space-y-4">
+            {!currentUser && (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all text-[#111827]"
+                    placeholder="Seller Email"
+                  />
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="block w-full mt-2 bg-[#41D3BD] hover:bg-[#55E4CF] disabled:opacity-50 text-[#073B35] font-black py-4 rounded-2xl text-center transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
-              >
-                {loading ? "Sending OTP..." : "Send OTP"}
-              </button>
-            </form>
-          )}
-
-          {!currentUser && otpSent && (
-            <form onSubmit={verifyOtp} className="mt-7 space-y-4">
-              <input
-                type="text"
-                name="otp"
-                value={formData.otp}
-                onChange={handleChange}
-                required
-                inputMode="numeric"
-                className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all text-[#111827] text-center text-xl font-black tracking-[0.35em]"
-                placeholder="Enter OTP"
-              />
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="block w-full mt-2 bg-[#41D3BD] hover:bg-[#55E4CF] disabled:opacity-50 text-[#073B35] font-black py-4 rounded-2xl text-center transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
-              >
-                {loading ? "Verifying..." : "Verify OTP"}
-              </button>
-
-              <button
-                type="button"
-                onClick={sendOtp}
-                disabled={loading}
-                className="w-full border border-[#41D3BD]/45 bg-[#FFFFF2] hover:bg-[#D7F5EF] text-[#073B35] font-black py-4 rounded-2xl transition-all"
-              >
-                Resend OTP
-              </button>
-
-              <button
-                type="button"
-                onClick={resetOtpState}
-                className="w-full text-[#1A9F8D] hover:text-[#073B35] text-sm font-bold"
-              >
-                Change phone number
-              </button>
-            </form>
-          )}
-
-          {currentUser && sellerVerified && (
-            <form onSubmit={handleSellerContinue} className="mt-7 space-y-4">
-              <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4">
-                <p className="text-[#073B35] font-black text-sm">
-                  Signed in as seller
-                </p>
-                <p className="text-[#51615D] text-sm mt-1 truncate">
-                  {currentUser.phone || formatPhoneForSupabase(formData.phone)}
-                </p>
+                  <input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all text-[#111827]"
+                    placeholder="Password"
+                  />
+                </div>
 
                 <button
                   type="button"
-                  onClick={handleUseAnotherAccount}
-                  className="mt-3 text-[#1A9F8D] hover:text-[#073B35] text-sm font-bold"
+                  onClick={handleForgotPassword}
+                  disabled={resettingPassword}
+                  className="text-[#1A9F8D] hover:text-[#073B35] text-sm font-bold transition-all disabled:opacity-50"
                 >
-                  Use another account
+                  {resettingPassword
+                    ? "Sending reset link..."
+                    : "Forgot Password?"}
                 </button>
-              </div>
+              </>
+            )}
 
-              <input
-                type="text"
-                name="kitchenName"
-                value={formData.kitchenName}
-                onChange={handleChange}
-                required
-                className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all text-[#111827]"
-                placeholder="Kitchen / Seller Name e.g. Asha's Kitchen"
-              />
+            {currentUser && sellerVerified && (
+              <>
+                <div className="h-px bg-[#D7F5EF] my-2" />
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4">
+                  <p className="text-[#073B35] font-black text-sm">
+                    Signed in as seller
+                  </p>
+                  <p className="text-[#51615D] text-sm mt-1 truncate">
+                    {currentUser.email}
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={handleUseAnotherAccount}
+                    className="mt-3 text-[#1A9F8D] hover:text-[#073B35] text-sm font-bold"
+                  >
+                    Use another account
+                  </button>
+                </div>
+
                 <input
                   type="text"
-                  name="flat"
-                  value={formData.flat}
+                  name="kitchenName"
+                  value={formData.kitchenName}
                   onChange={handleChange}
                   required
                   className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all text-[#111827]"
-                  placeholder="Tower / Flat e.g. B-1204"
+                  placeholder="Kitchen / Seller Name e.g. Asha's Kitchen"
                 />
 
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  required
-                  className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all text-[#111827]"
-                  placeholder="Phone Number"
-                />
-              </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <input
+                    type="text"
+                    name="flat"
+                    value={formData.flat}
+                    onChange={handleChange}
+                    required
+                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all text-[#111827]"
+                    placeholder="Tower / Flat e.g. B-1204"
+                  />
 
-              <input
-                type="text"
-                name="specialty"
-                value={formData.specialty}
-                onChange={handleChange}
-                required
-                className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all text-[#111827]"
-                placeholder="Food Specialty e.g. South Indian breakfast, sweets, tiffin"
-              />
-
-              <textarea
-                name="about"
-                value={formData.about}
-                onChange={handleChange}
-                rows="4"
-                className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all resize-none text-[#111827]"
-                placeholder="Tell customers about yourself, your cooking style, hygiene, or food story..."
-              />
-
-              <label className="flex items-start gap-3 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="acceptScheduledOrders"
-                  checked={formData.acceptScheduledOrders}
-                  onChange={handleChange}
-                  className="mt-1 accent-[#41D3BD]"
-                />
-
-                <div>
-                  <p className="text-[#111827] font-bold">
-                    Accept scheduled orders
-                  </p>
-                  <p className="text-[#51615D] text-sm mt-1">
-                    Customers can choose date and time for later orders.
-                  </p>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    required
+                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all text-[#111827]"
+                    placeholder="Phone Number"
+                  />
                 </div>
-              </label>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="block w-full mt-2 bg-[#41D3BD] hover:bg-[#55E4CF] disabled:opacity-50 text-[#073B35] font-black py-4 rounded-2xl text-center transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
-              >
-                {loading ? "Please wait..." : "Save and Continue to Dashboard"}
-              </button>
-            </form>
-          )}
+                <input
+                  type="text"
+                  name="specialty"
+                  value={formData.specialty}
+                  onChange={handleChange}
+                  required
+                  className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all text-[#111827]"
+                  placeholder="Food Specialty e.g. South Indian breakfast, sweets, tiffin"
+                />
+
+                <textarea
+                  name="about"
+                  value={formData.about}
+                  onChange={handleChange}
+                  rows="4"
+                  className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all resize-none text-[#111827]"
+                  placeholder="Tell customers about yourself, your cooking style, hygiene, or food story..."
+                />
+
+                <label className="flex items-start gap-3 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="acceptScheduledOrders"
+                    checked={formData.acceptScheduledOrders}
+                    onChange={handleChange}
+                    className="mt-1 accent-[#41D3BD]"
+                  />
+
+                  <div>
+                    <p className="text-[#111827] font-bold">
+                      Accept scheduled orders
+                    </p>
+                    <p className="text-[#51615D] text-sm mt-1">
+                      Customers can choose date and time for later orders.
+                    </p>
+                  </div>
+                </label>
+              </>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="block w-full mt-2 bg-[#41D3BD] hover:bg-[#55E4CF] disabled:opacity-50 text-[#073B35] font-black py-4 rounded-2xl text-center transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
+            >
+              {loading
+                ? "Please wait..."
+                : currentUser
+                ? "Save and Continue to Dashboard"
+                : "Sign In"}
+            </button>
+          </form>
 
           <p className="text-[#8AA5A0] text-xs mt-5 leading-relaxed">
-            Seller dashboard access is available only for phone numbers approved
-            by the app owner.
+            Seller dashboard access is available only for accounts approved by
+            the app owner.
           </p>
         </section>
       </div>
