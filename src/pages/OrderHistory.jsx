@@ -70,11 +70,15 @@ export default function OrderHistory() {
     return String(status || "completed").toLowerCase();
   }
 
-  function getStatusLabel(status) {
-    const currentStatus = normalizeStatus(status);
+  function isSelfPickup(order) {
+    return String(order.delivery_type || "").toLowerCase().includes("pickup");
+  }
+
+  function getStatusLabel(order) {
+    const currentStatus = normalizeStatus(order.status);
 
     if (currentStatus === "cancelled") return "Cancelled";
-    return "Delivered";
+    return isSelfPickup(order) ? "Picked Up" : "Delivered";
   }
 
   function getStatusStyle(status) {
@@ -148,7 +152,7 @@ export default function OrderHistory() {
             </h1>
 
             <p className="text-[#51615D] mt-4 max-w-2xl leading-relaxed">
-              View your delivered and cancelled Nefo orders.
+              View your completed, picked-up, and cancelled Nefo orders.
             </p>
           </div>
 
@@ -199,7 +203,7 @@ export default function OrderHistory() {
               </h2>
 
               <p className="text-[#51615D] mt-3 max-w-md mx-auto">
-                Delivered and cancelled orders will appear here.
+                Completed and cancelled orders will appear here.
               </p>
 
               <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -242,7 +246,8 @@ export default function OrderHistory() {
                         </h2>
 
                         <p className="text-[#51615D] text-sm mt-2">
-                          {order.delivery_type} • {order.flat}
+                          {order.delivery_type || "Delivery"} • Your address:{" "}
+                          {order.flat || "Not available"}
                         </p>
                       </div>
 
@@ -251,7 +256,7 @@ export default function OrderHistory() {
                           order.status
                         )}`}
                       >
-                        {getStatusLabel(order.status)}
+                        {getStatusLabel(order)}
                       </span>
                     </div>
 

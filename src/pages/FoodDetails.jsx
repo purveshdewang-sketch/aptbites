@@ -37,6 +37,7 @@ export default function FoodDetails() {
 
   const stock = Number(food?.stock || 0);
   const category = food?.category || "Meals";
+  const kitchenName = food?.seller || "Kitchen";
 
   const sellerIsClosed = sellerOnline === false || food?.seller_online === false;
   const isSoldOut = stock <= 0;
@@ -190,7 +191,7 @@ export default function FoodDetails() {
     if (!food) return;
 
     if (sellerIsClosed) {
-      alert("Seller is closed right now.");
+      alert("This kitchen is closed right now.");
       return;
     }
 
@@ -326,7 +327,7 @@ export default function FoodDetails() {
 
               <div className="bg-white/85 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-5 sm:p-8 h-fit shadow-xl shadow-[#073B35]/5">
                 <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
-                  {food.seller}
+                  {kitchenName}
                 </p>
 
                 <h1 className="text-3xl sm:text-6xl font-black mt-3 leading-tight text-[#111827]">
@@ -349,7 +350,7 @@ export default function FoodDetails() {
                         : "border-[#41D3BD]/30 bg-[#41D3BD]/12 text-[#073B35]"
                     }`}
                   >
-                    {sellerIsClosed ? "Seller Closed" : "Seller Open"}
+                    {sellerIsClosed ? "Kitchen Closed" : "Kitchen Open"}
                   </span>
                 </div>
 
@@ -399,7 +400,7 @@ export default function FoodDetails() {
                       }`}
                     >
                       {sellerIsClosed
-                        ? "Seller Closed"
+                        ? "Kitchen Closed"
                         : isSoldOut
                         ? "Unavailable"
                         : "+ Add to Cart"}
@@ -450,11 +451,11 @@ export default function FoodDetails() {
             <div className="flex items-end justify-between gap-4 mb-5">
               <div>
                 <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
-                  More from seller
+                  More from kitchen
                 </p>
 
                 <h2 className="text-2xl sm:text-3xl font-black mt-1 text-[#111827]">
-                  {food.seller} menu
+                  {kitchenName} menu
                 </h2>
               </div>
 
@@ -502,7 +503,7 @@ export default function FoodDetails() {
             {sellerFoods.length === 0 ? (
               <div className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-lg shadow-[#073B35]/5">
                 <p className="text-[#51615D]">
-                  No other dishes from this seller right now.
+                  No other dishes from this kitchen right now.
                 </p>
               </div>
             ) : visibleSellerFoods.length === 0 ? (
@@ -516,7 +517,7 @@ export default function FoodDetails() {
                 {availableSellerFoods.length > 0 && (
                   <div className="mb-5">
                     <p className="text-[#51615D] text-sm">
-                      {availableSellerFoods.length} available from this seller.
+                      {availableSellerFoods.length} available from this kitchen.
                     </p>
                   </div>
                 )}

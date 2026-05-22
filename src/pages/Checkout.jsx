@@ -43,9 +43,9 @@ export default function Checkout() {
   const [orderTiming, setOrderTiming] = useState("now");
   const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
-  const [sellerAcceptsScheduledOrders, setSellerAcceptsScheduledOrders] =
+  const [kitchenAcceptsScheduledOrders, setKitchenAcceptsScheduledOrders] =
     useState(false);
-  const [checkingSellerSchedule, setCheckingSellerSchedule] = useState(true);
+  const [checkingKitchenSchedule, setCheckingKitchenSchedule] = useState(true);
 
   const [paymentReference, setPaymentReference] = useState("");
   const [paymentMessage, setPaymentMessage] = useState("");
@@ -148,12 +148,12 @@ export default function Checkout() {
   ]);
 
   useEffect(() => {
-    async function checkSellerSchedulePermission() {
-      const sellerId = getSellerIdFromCart();
+    async function checkKitchenSchedulePermission() {
+      const kitchenId = getKitchenIdFromCart();
 
-      if (!sellerId || sellerId === "MIXED_SELLERS") {
-        setSellerAcceptsScheduledOrders(false);
-        setCheckingSellerSchedule(false);
+      if (!kitchenId || kitchenId === "MIXED_KITCHENS") {
+        setKitchenAcceptsScheduledOrders(false);
+        setCheckingKitchenSchedule(false);
 
         if (orderTiming === "scheduled") {
           setOrderTiming("now");
@@ -164,12 +164,12 @@ export default function Checkout() {
         return;
       }
 
-      setCheckingSellerSchedule(true);
+      setCheckingKitchenSchedule(true);
 
-      const allowed = await fetchSellerSchedulePermission(sellerId);
+      const allowed = await fetchKitchenSchedulePermission(kitchenId);
 
-      setSellerAcceptsScheduledOrders(allowed);
-      setCheckingSellerSchedule(false);
+      setKitchenAcceptsScheduledOrders(allowed);
+      setCheckingKitchenSchedule(false);
 
       if (!allowed && orderTiming === "scheduled") {
         setOrderTiming("now");
@@ -178,16 +178,16 @@ export default function Checkout() {
       }
     }
 
-    checkSellerSchedulePermission();
+    checkKitchenSchedulePermission();
   }, [cartItems, orderTiming]);
 
-  async function fetchSellerSchedulePermission(sellerId) {
-    if (!sellerId || sellerId === "MIXED_SELLERS") return false;
+  async function fetchKitchenSchedulePermission(kitchenId) {
+    if (!kitchenId || kitchenId === "MIXED_KITCHENS") return false;
 
     const { data, error } = await supabase
       .from("profiles")
       .select("accept_scheduled_orders")
-      .eq("id", sellerId)
+      .eq("id", kitchenId)
       .maybeSingle();
 
     if (error) return false;
@@ -215,13 +215,13 @@ export default function Checkout() {
 
   function selectOrderTiming(nextTiming) {
     if (nextTiming === "scheduled") {
-      if (checkingSellerSchedule) {
-        alert("Checking seller schedule availability. Please try again.");
+      if (checkingKitchenSchedule) {
+        alert("Checking kitchen schedule availability. Please try again.");
         return;
       }
 
-      if (!sellerAcceptsScheduledOrders) {
-        alert("This seller is not accepting scheduled orders right now.");
+      if (!kitchenAcceptsScheduledOrders) {
+        alert("This kitchen is not accepting scheduled orders right now.");
         return;
       }
     }
@@ -234,19 +234,19 @@ export default function Checkout() {
     }
   }
 
-  function getSellerIdFromCart() {
+  function getKitchenIdFromCart() {
     if (!cartItems || cartItems.length === 0) return null;
 
-    const sellerIds = cartItems
+    const kitchenIds = cartItems
       .map((item) => item.user_id || item.seller_id)
       .filter(Boolean);
 
-    const uniqueSellerIds = [...new Set(sellerIds)];
+    const uniqueKitchenIds = [...new Set(kitchenIds)];
 
-    if (uniqueSellerIds.length === 0) return null;
-    if (uniqueSellerIds.length > 1) return "MIXED_SELLERS";
+    if (uniqueKitchenIds.length === 0) return null;
+    if (uniqueKitchenIds.length > 1) return "MIXED_KITCHENS";
 
-    return uniqueSellerIds[0];
+    return uniqueKitchenIds[0];
   }
 
   function getScheduledDateTime() {
@@ -357,15 +357,15 @@ export default function Checkout() {
       return;
     }
 
-    const sellerId = getSellerIdFromCart();
+    const kitchenId = getKitchenIdFromCart();
 
-    if (sellerId === "MIXED_SELLERS") {
-      alert("Please order from one seller at a time.");
+    if (kitchenId === "MIXED_KITCHENS") {
+      alert("Please order from one kitchen at a time.");
       return;
     }
 
-    if (!sellerId) {
-      alert("Seller details missing. Please add dishes again.");
+    if (!kitchenId) {
+      alert("Kitchen details missing. Please add dishes again.");
       return;
     }
 
@@ -380,18 +380,18 @@ export default function Checkout() {
 
     try {
       if (orderTiming === "scheduled") {
-        const latestScheduleAllowed = await fetchSellerSchedulePermission(
-          sellerId
+        const latestScheduleAllowed = await fetchKitchenSchedulePermission(
+          kitchenId
         );
 
         if (!latestScheduleAllowed) {
-          setSellerAcceptsScheduledOrders(false);
+          setKitchenAcceptsScheduledOrders(false);
           setOrderTiming("now");
           setScheduledDate("");
           setScheduledTime("");
 
           throw new Error(
-            "This seller is not accepting scheduled orders right now."
+            "This kitchen is not accepting scheduled orders right now."
           );
         }
       }
@@ -402,7 +402,7 @@ export default function Checkout() {
 
       const orderPayload = {
         user_id: user.id,
-        seller_id: sellerId,
+        seller_id: kitchenId,
         customer_name: formData.fullName,
         phone: formData.phone,
         flat: formData.flat,
@@ -744,7 +744,7 @@ export default function Checkout() {
                     value={formData.flat}
                     onChange={handleChange}
                     className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] transition-all"
-                    placeholder="Tower B • Flat 1204"
+                    placeholder="Your tower / flat number"
                   />
 
                   <div>
@@ -777,6 +777,14 @@ export default function Checkout() {
                         🛍️ Pickup
                       </button>
                     </div>
+
+                    {formData.deliveryType === "Self pickup" && (
+                      <p className="text-[#51615D] text-xs mt-3 leading-relaxed">
+                        Pickup coordination will happen after the kitchen
+                        accepts your order. Exact kitchen door details are not
+                        shown publicly.
+                      </p>
+                    )}
                   </div>
 
                   <textarea
@@ -794,7 +802,7 @@ export default function Checkout() {
                 <MobileSectionHeader
                   number="2"
                   title="Order timing"
-                  subtitle="Order now or schedule for later if the seller allows it."
+                  subtitle="Order now or schedule for later if the kitchen allows it."
                 />
 
                 <div className="mt-6">
@@ -815,14 +823,16 @@ export default function Checkout() {
                       type="button"
                       onClick={() => selectOrderTiming("scheduled")}
                       disabled={
-                        checkingSellerSchedule || !sellerAcceptsScheduledOrders
+                        checkingKitchenSchedule ||
+                        !kitchenAcceptsScheduledOrders
                       }
                       className={`py-4 rounded-2xl font-black border transition-all ${
                         orderTiming === "scheduled"
                           ? "bg-[#41D3BD] text-[#073B35] border-[#41D3BD]"
                           : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
                       } ${
-                        checkingSellerSchedule || !sellerAcceptsScheduledOrders
+                        checkingKitchenSchedule ||
+                        !kitchenAcceptsScheduledOrders
                           ? "opacity-50 cursor-not-allowed"
                           : ""
                       }`}
@@ -831,11 +841,13 @@ export default function Checkout() {
                     </button>
                   </div>
 
-                  {!checkingSellerSchedule && !sellerAcceptsScheduledOrders && (
-                    <p className="text-red-500 text-xs mt-3">
-                      This seller is not accepting scheduled orders right now.
-                    </p>
-                  )}
+                  {!checkingKitchenSchedule &&
+                    !kitchenAcceptsScheduledOrders && (
+                      <p className="text-red-500 text-xs mt-3">
+                        This kitchen is not accepting scheduled orders right
+                        now.
+                      </p>
+                    )}
 
                   {orderTiming === "scheduled" && (
                     <div className="space-y-3 mt-4">

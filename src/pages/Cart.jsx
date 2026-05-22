@@ -31,6 +31,10 @@ export default function Cart() {
     );
   }, [orderTiming, scheduledDate, scheduledTime]);
 
+  function getKitchenName(item) {
+    return item.seller || item.seller_kitchen_name || "Home Kitchen";
+  }
+
   return (
     <>
       <Navbar />
@@ -86,75 +90,79 @@ export default function Cart() {
           ) : (
             <>
               <div className="mt-8 space-y-4">
-                {cartItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="bg-white/85 border border-[#D7F5EF] hover:border-[#41D3BD]/70 rounded-[2rem] p-4 sm:p-5 transition-all duration-300 shadow-lg shadow-[#073B35]/5"
-                  >
-                    <div className="flex gap-4">
-                      <div className="relative shrink-0">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-3xl bg-[#D7F5EF]"
-                        />
-                      </div>
+                {cartItems.map((item) => {
+                  const kitchenName = getKitchenName(item);
 
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <h2 className="text-lg sm:text-2xl font-black leading-tight truncate text-[#111827]">
-                              {item.name}
-                            </h2>
-
-                            <p className="text-[#51615D] text-sm mt-1 truncate">
-                              Homemade by {item.seller}
-                            </p>
-                          </div>
-
-                          <div className="text-right shrink-0">
-                            <p className="text-[#073B35] text-xl sm:text-3xl font-black">
-                              ₹{item.price * item.quantity}
-                            </p>
-
-                            <p className="text-[#51615D] text-xs mt-1">
-                              ₹{item.price} each
-                            </p>
-                          </div>
+                  return (
+                    <div
+                      key={item.id}
+                      className="bg-white/85 border border-[#D7F5EF] hover:border-[#41D3BD]/70 rounded-[2rem] p-4 sm:p-5 transition-all duration-300 shadow-lg shadow-[#073B35]/5"
+                    >
+                      <div className="flex gap-4">
+                        <div className="relative shrink-0">
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-3xl bg-[#D7F5EF]"
+                          />
                         </div>
 
-                        <div className="flex items-center justify-between gap-3 mt-5">
-                          <div className="flex items-center bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl overflow-hidden shadow-sm">
-                            <button
-                              onClick={() => decreaseQuantity(item.id)}
-                              className="w-12 h-12 text-[#073B35] hover:bg-[#D7F5EF] font-black text-2xl transition-all"
-                            >
-                              −
-                            </button>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <h2 className="text-lg sm:text-2xl font-black leading-tight truncate text-[#111827]">
+                                {item.name}
+                              </h2>
 
-                            <span className="w-14 h-12 border-x border-[#D7F5EF] flex items-center justify-center font-black text-lg text-[#111827]">
-                              {item.quantity}
-                            </span>
+                              <p className="text-[#51615D] text-sm mt-1 truncate">
+                                Kitchen: {kitchenName}
+                              </p>
+                            </div>
 
-                            <button
-                              onClick={() => increaseQuantity(item.id)}
-                              className="w-12 h-12 text-[#073B35] hover:bg-[#D7F5EF] font-black text-2xl transition-all"
-                            >
-                              +
-                            </button>
+                            <div className="text-right shrink-0">
+                              <p className="text-[#073B35] text-xl sm:text-3xl font-black">
+                                ₹{item.price * item.quantity}
+                              </p>
+
+                              <p className="text-[#51615D] text-xs mt-1">
+                                ₹{item.price} each
+                              </p>
+                            </div>
                           </div>
 
-                          <button
-                            onClick={() => removeFromCart(item.id)}
-                            className="text-red-500 hover:text-red-600 text-sm font-bold"
-                          >
-                            Remove
-                          </button>
+                          <div className="flex items-center justify-between gap-3 mt-5">
+                            <div className="flex items-center bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl overflow-hidden shadow-sm">
+                              <button
+                                onClick={() => decreaseQuantity(item.id)}
+                                className="w-12 h-12 text-[#073B35] hover:bg-[#D7F5EF] font-black text-2xl transition-all"
+                              >
+                                −
+                              </button>
+
+                              <span className="w-14 h-12 border-x border-[#D7F5EF] flex items-center justify-center font-black text-lg text-[#111827]">
+                                {item.quantity}
+                              </span>
+
+                              <button
+                                onClick={() => increaseQuantity(item.id)}
+                                className="w-12 h-12 text-[#073B35] hover:bg-[#D7F5EF] font-black text-2xl transition-all"
+                              >
+                                +
+                              </button>
+                            </div>
+
+                            <button
+                              onClick={() => removeFromCart(item.id)}
+                              className="text-red-500 hover:text-red-600 text-sm font-bold"
+                            >
+                              Remove
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="mt-8 bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
@@ -165,6 +173,11 @@ export default function Cart() {
                 <h2 className="text-2xl font-black mt-2 text-[#111827]">
                   Order now or schedule for later
                 </h2>
+
+                <p className="text-[#51615D] text-sm mt-2">
+                  Scheduled orders are confirmed at checkout only if the kitchen
+                  accepts scheduling.
+                </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
                   <button
@@ -221,7 +234,9 @@ export default function Cart() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-[#51615D]">Item Total</span>
-                    <span className="font-bold text-[#111827]">₹{cartTotal}</span>
+                    <span className="font-bold text-[#111827]">
+                      ₹{cartTotal}
+                    </span>
                   </div>
 
                   <div className="flex items-center justify-between text-sm">
@@ -244,7 +259,7 @@ export default function Cart() {
                         Fresh homemade food
                       </p>
                       <p className="text-[#51615D] text-xs mt-1">
-                        Prepared inside your apartment
+                        From your community
                       </p>
                     </div>
                   </div>

@@ -96,7 +96,7 @@ export default function Orders() {
     return value;
   }
 
-  function normalizeSellerResponse(response) {
+  function normalizeKitchenResponse(response) {
     return String(response || "pending").toLowerCase();
   }
 
@@ -130,9 +130,9 @@ export default function Orders() {
     timerTick;
 
     const dbStatus = normalizeStatus(order.status);
-    const sellerResponse = normalizeSellerResponse(order.seller_response);
+    const kitchenResponse = normalizeKitchenResponse(order.seller_response);
 
-    if (dbStatus === "cancelled" || sellerResponse === "rejected") {
+    if (dbStatus === "cancelled" || kitchenResponse === "rejected") {
       return "cancelled";
     }
 
@@ -321,14 +321,15 @@ export default function Orders() {
 
         {status === "packing" && (
           <p className="text-[#51615D] text-xs mt-3">
-            Your order is almost ready. It will finish only when the seller marks
-            it complete.
+            Your order is almost ready. It will finish only when the kitchen
+            marks it complete.
           </p>
         )}
 
         {status === "ready_for_pickup" && (
           <div className="mt-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl p-4 font-bold">
-            🛍️ Your order is ready. Please pick it up from the seller.
+            🛍️ Your order is ready for pickup. Pickup coordination will happen
+            through Nefo without showing the kitchen door publicly.
           </div>
         )}
       </div>
@@ -337,11 +338,11 @@ export default function Orders() {
 
   const visibleOrders = orders.filter((order) => {
     const dbStatus = normalizeStatus(order.status);
-    const sellerResponse = normalizeSellerResponse(order.seller_response);
+    const kitchenResponse = normalizeKitchenResponse(order.seller_response);
 
     if (dbStatus === "cancelled") return false;
     if (dbStatus === "completed") return false;
-    if (sellerResponse === "rejected") return false;
+    if (kitchenResponse === "rejected") return false;
 
     return true;
   });
@@ -464,7 +465,8 @@ export default function Orders() {
                         </h2>
 
                         <p className="text-[#51615D] text-sm mt-2">
-                          {order.delivery_type || "Delivery"} • {order.flat}
+                          {order.delivery_type || "Delivery"} • Your address:{" "}
+                          {order.flat}
                         </p>
 
                         <div className="flex flex-wrap gap-2 mt-3">

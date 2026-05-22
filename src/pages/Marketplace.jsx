@@ -46,7 +46,7 @@ export default function Marketplace() {
       .subscribe();
 
     const profilesChannel = supabase
-      .channel("seller-status-realtime-channel")
+      .channel("kitchen-status-realtime-channel")
       .on(
         "postgres_changes",
         {
@@ -106,7 +106,7 @@ export default function Marketplace() {
       .select("items, status")
       .neq("status", "cancelled");
 
-    const sellerIds = [
+    const kitchenIds = [
       ...new Set(
         (foodData || [])
           .map((food) => food.user_id || food.seller_id)
@@ -114,15 +114,15 @@ export default function Marketplace() {
       ),
     ];
 
-    let sellerStatusMap = {};
+    let kitchenStatusMap = {};
 
-    if (sellerIds.length > 0) {
+    if (kitchenIds.length > 0) {
       const { data: profileData } = await supabase
         .from("profiles")
         .select("id, seller_online")
-        .in("id", sellerIds);
+        .in("id", kitchenIds);
 
-      sellerStatusMap = (profileData || []).reduce((map, profile) => {
+      kitchenStatusMap = (profileData || []).reduce((map, profile) => {
         map[profile.id] = profile.seller_online !== false;
         return map;
       }, {});
@@ -141,12 +141,12 @@ export default function Marketplace() {
     const salesMap = buildSalesMap(parsedOrderItems);
 
     const enrichedFoods = (foodData || []).map((food) => {
-      const sellerId = food.user_id || food.seller_id;
+      const kitchenId = food.user_id || food.seller_id;
       const soldCount = salesMap[String(food.id)] || 0;
 
       return {
         ...food,
-        seller_online: sellerStatusMap[sellerId] !== false,
+        seller_online: kitchenStatusMap[kitchenId] !== false,
         sold_count: soldCount,
         demand_badge: getDemandBadge(soldCount),
       };
@@ -253,11 +253,13 @@ export default function Marketplace() {
     return foods.filter((item) => {
       const searchValue = searchTerm.trim().toLowerCase();
       const foodCategory = item.category || "Meals";
+      const kitchenName =
+        item.seller || item.seller_kitchen_name || "Home Kitchen";
 
       const matchesSearch =
         searchValue === "" ||
         item.name?.toLowerCase().includes(searchValue) ||
-        item.seller?.toLowerCase().includes(searchValue) ||
+        kitchenName.toLowerCase().includes(searchValue) ||
         item.time?.toLowerCase().includes(searchValue) ||
         foodCategory.toLowerCase().includes(searchValue);
 
@@ -358,7 +360,7 @@ export default function Marketplace() {
 
               <p className="text-[#51615D] text-lg mt-5 max-w-2xl leading-relaxed">
                 Discover meals, snacks, desserts, and special dishes prepared by
-                trusted home chefs inside your neighbourhood.
+                trusted home kitchens inside your neighbourhood.
               </p>
             </div>
 
@@ -419,7 +421,7 @@ export default function Marketplace() {
                   type="text"
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder="Search dishes or sellers..."
+                  placeholder="Search dishes or kitchens..."
                   className="bg-white/85 border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-5 py-4 w-full lg:max-w-lg outline-none focus:border-[#41D3BD] transition-all duration-200 text-base shadow-sm"
                 />
 

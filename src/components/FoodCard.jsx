@@ -11,20 +11,21 @@ export default function FoodCard({ item }) {
   const quantity = cartItem ? cartItem.quantity : 0;
 
   const stock = Number(item.stock || 0);
-  const category = item.category || "Meals";
   const demandBadge = item.demand_badge || null;
 
-  const sellerIsClosed = item.seller_online === false;
+  const kitchenName = item.seller || item.seller_kitchen_name || "Home Kitchen";
+
+  const kitchenIsClosed = item.seller_online === false;
   const isLowStock = stock > 0 && stock <= 2;
   const isSoldOut = stock <= 0;
-  const isBlocked = sellerIsClosed || isSoldOut;
+  const isBlocked = kitchenIsClosed || isSoldOut;
 
   function handleAddToCart(event) {
     event.preventDefault();
     event.stopPropagation();
 
-    if (sellerIsClosed) {
-      alert("Seller is closed right now.");
+    if (kitchenIsClosed) {
+      alert("This kitchen is closed right now.");
       return;
     }
 
@@ -79,7 +80,7 @@ export default function FoodCard({ item }) {
       <Link
         to={`/food/${item.id}`}
         className={`group block bg-white border rounded-[1.5rem] overflow-hidden transition-all duration-300 shadow-lg shadow-[#073B35]/5 ${
-          sellerIsClosed
+          kitchenIsClosed
             ? "border-red-300"
             : "border-[#D7F5EF] hover:border-[#41D3BD]/70 hover:shadow-xl hover:shadow-[#41D3BD]/10"
         }`}
@@ -96,35 +97,31 @@ export default function FoodCard({ item }) {
                       : "bg-[#41D3BD] text-[#073B35]"
                   }`}
                 >
-                  {item.type}
-                </span>
-
-                <span className="w-fit text-[11px] font-black px-2.5 py-1 rounded-full bg-[#FFFFF2] text-[#1A9F8D] border border-[#D7F5EF]">
-                  {category}
+                  {item.type || "Veg"}
                 </span>
               </div>
 
               <h3
                 className={`text-lg font-black mt-3 leading-tight line-clamp-2 ${
-                  sellerIsClosed ? "text-[#9AA7A3]" : "text-[#111827]"
+                  kitchenIsClosed ? "text-[#9AA7A3]" : "text-[#111827]"
                 }`}
               >
                 {item.name}
               </h3>
 
               <p className="text-[#51615D] text-sm mt-1 truncate">
-                By {item.seller}
+                Kitchen: {kitchenName}
               </p>
 
               <p
                 className={`font-black text-2xl mt-3 ${
-                  sellerIsClosed ? "text-[#9AA7A3]" : "text-[#073B35]"
+                  kitchenIsClosed ? "text-[#9AA7A3]" : "text-[#073B35]"
                 }`}
               >
                 ₹{item.price}
               </p>
 
-              {demandBadge && !sellerIsClosed && !isSoldOut && (
+              {demandBadge && !kitchenIsClosed && !isSoldOut && (
                 <p className="text-[#1A9F8D] text-xs font-black mt-2">
                   📈 {demandBadge.label}
                 </p>
@@ -133,14 +130,16 @@ export default function FoodCard({ item }) {
               <div className="flex items-center gap-2 mt-2">
                 <p className="text-[#51615D] text-xs">
                   Ready:{" "}
-                  <span className="text-[#111827] font-bold">{item.time}</span>
+                  <span className="text-[#111827] font-bold">
+                    {item.time}
+                  </span>
                 </p>
 
                 <span className="text-[#B8D9D3]">•</span>
 
                 <p
                   className={`text-xs font-bold ${
-                    sellerIsClosed
+                    kitchenIsClosed
                       ? "text-red-500"
                       : isSoldOut
                       ? "text-[#9AA7A3]"
@@ -149,7 +148,7 @@ export default function FoodCard({ item }) {
                       : "text-[#1A9F8D]"
                   }`}
                 >
-                  {sellerIsClosed
+                  {kitchenIsClosed
                     ? "Closed"
                     : isSoldOut
                     ? "Sold Out"
@@ -164,17 +163,17 @@ export default function FoodCard({ item }) {
                   src={item.image}
                   alt={item.name}
                   className={`w-full h-full object-cover ${
-                    sellerIsClosed ? "grayscale opacity-45" : ""
+                    kitchenIsClosed ? "grayscale opacity-45" : ""
                   }`}
                 />
 
-                {sellerIsClosed && (
+                {kitchenIsClosed && (
                   <div className="absolute inset-0 bg-black/65 flex items-center justify-center text-center px-2">
                     <p className="text-white text-xs font-black">CLOSED</p>
                   </div>
                 )}
 
-                {!sellerIsClosed && isSoldOut && (
+                {!kitchenIsClosed && isSoldOut && (
                   <div className="absolute inset-0 bg-black/65 flex items-center justify-center text-center px-2">
                     <p className="text-white text-xs font-black">SOLD OUT</p>
                   </div>
@@ -182,7 +181,7 @@ export default function FoodCard({ item }) {
               </div>
 
               <div className="-mt-5 relative z-10 px-2">
-                {quantity === 0 || sellerIsClosed ? (
+                {quantity === 0 || kitchenIsClosed ? (
                   <button
                     type="button"
                     onClick={handleAddToCart}
@@ -241,7 +240,7 @@ export default function FoodCard({ item }) {
               src={item.image}
               alt={item.name}
               className={`w-full h-full object-cover transition-all duration-500 ${
-                sellerIsClosed
+                kitchenIsClosed
                   ? "grayscale opacity-45"
                   : "group-hover:scale-105"
               }`}
@@ -255,16 +254,12 @@ export default function FoodCard({ item }) {
                     : "bg-[#41D3BD] text-[#073B35]"
                 }`}
               >
-                {item.type}
-              </span>
-
-              <span className="w-fit text-xs font-black px-3 py-1.5 rounded-full bg-[#FFFFF2]/95 text-[#1A9F8D] border border-[#D7F5EF]">
-                {category}
+                {item.type || "Veg"}
               </span>
             </div>
 
             <div className="absolute top-3 right-3 z-20">
-              {sellerIsClosed ? (
+              {kitchenIsClosed ? (
                 <span className="text-xs font-black px-3 py-1.5 rounded-full bg-red-600 text-white">
                   CLOSED
                 </span>
@@ -283,7 +278,7 @@ export default function FoodCard({ item }) {
               )}
             </div>
 
-            {demandBadge && !sellerIsClosed && !isSoldOut && (
+            {demandBadge && !kitchenIsClosed && !isSoldOut && (
               <div className="absolute left-3 bottom-3 z-20 max-w-[82%] bg-[#FFFFF2]/95 backdrop-blur border border-[#D7F5EF] rounded-2xl px-3 py-2 shadow-xl">
                 <p className="text-[#1A9F8D] text-xs font-black leading-tight">
                   📈 {demandBadge.label}
@@ -295,10 +290,10 @@ export default function FoodCard({ item }) {
               </div>
             )}
 
-            {sellerIsClosed && (
+            {kitchenIsClosed && (
               <div className="absolute inset-0 z-10 bg-black/70 flex items-center justify-center px-4 text-center">
                 <div className="bg-red-600 text-white font-black px-5 py-4 rounded-2xl">
-                  <p className="text-lg leading-tight">🔴 Seller Closed</p>
+                  <p className="text-lg leading-tight">🔴 Kitchen Closed</p>
                   <p className="text-xs mt-1 opacity-90">
                     Ordering is temporarily unavailable
                   </p>
@@ -312,20 +307,20 @@ export default function FoodCard({ item }) {
               <div className="min-w-0">
                 <h3
                   className={`text-xl font-black truncate ${
-                    sellerIsClosed ? "text-[#9AA7A3]" : "text-[#111827]"
+                    kitchenIsClosed ? "text-[#9AA7A3]" : "text-[#111827]"
                   }`}
                 >
                   {item.name}
                 </h3>
 
                 <p className="text-[#51615D] text-sm mt-1 truncate">
-                  By {item.seller}
+                  Kitchen: {kitchenName}
                 </p>
               </div>
 
               <p
                 className={`font-black text-2xl shrink-0 ${
-                  sellerIsClosed ? "text-[#9AA7A3]" : "text-[#073B35]"
+                  kitchenIsClosed ? "text-[#9AA7A3]" : "text-[#073B35]"
                 }`}
               >
                 ₹{item.price}
@@ -345,7 +340,7 @@ export default function FoodCard({ item }) {
 
               <p
                 className={`text-sm font-bold ${
-                  sellerIsClosed
+                  kitchenIsClosed
                     ? "text-red-500"
                     : isSoldOut
                     ? "text-[#9AA7A3]"
@@ -354,8 +349,8 @@ export default function FoodCard({ item }) {
                     : "text-[#1A9F8D]"
                 }`}
               >
-                {sellerIsClosed
-                  ? "Seller Closed"
+                {kitchenIsClosed
+                  ? "Kitchen Closed"
                   : isSoldOut
                   ? "Unavailable"
                   : `${stock} left`}
@@ -363,7 +358,7 @@ export default function FoodCard({ item }) {
             </div>
 
             <div className="mt-5">
-              {quantity === 0 || sellerIsClosed ? (
+              {quantity === 0 || kitchenIsClosed ? (
                 <button
                   type="button"
                   onClick={handleAddToCart}
@@ -374,8 +369,8 @@ export default function FoodCard({ item }) {
                       : "bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-[0.98] text-[#073B35] shadow-lg shadow-[#41D3BD]/20"
                   }`}
                 >
-                  {sellerIsClosed
-                    ? "Seller Closed"
+                  {kitchenIsClosed
+                    ? "Kitchen Closed"
                     : isSoldOut
                     ? "Unavailable"
                     : "+ Add to Cart"}
