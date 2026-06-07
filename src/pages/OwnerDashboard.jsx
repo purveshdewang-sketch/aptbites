@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import * as XLSX from "xlsx";
 import Navbar from "../components/Navbar";
 import { supabase } from "../lib/supabaseClient";
 
@@ -187,10 +188,40 @@ export default function OwnerDashboard() {
     });
   }
 
+  function formatDateOnly(value) {
+    if (!value) return "";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return "";
+
+    return date.toLocaleDateString([], {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  }
+
+  function getMonthLabel(value) {
+    if (!value) return "";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return "";
+
+    return date.toLocaleString([], {
+      month: "short",
+      year: "numeric",
+    });
+  }
+
   function getSellerName(order) {
     const sellerProfile = sellerMap[order.seller_id];
 
-    if (sellerProfile?.seller_kitchen_name) return sellerProfile.seller_kitchen_name;
+    if (sellerProfile?.seller_kitchen_name) {
+      return sellerProfile.seller_kitchen_name;
+    }
+
     if (sellerProfile?.full_name) return sellerProfile.full_name;
 
     const firstItem = getOrderItems(order)[0];
@@ -199,6 +230,16 @@ export default function OwnerDashboard() {
     if (firstItem?.seller_kitchen_name) return firstItem.seller_kitchen_name;
 
     return "Unknown Kitchen";
+  }
+
+  function getSellerEmail(order) {
+    const sellerProfile = sellerMap[order.seller_id];
+    return sellerProfile?.email || "";
+  }
+
+  function getSellerPhone(order) {
+    const sellerProfile = sellerMap[order.seller_id];
+    return sellerProfile?.phone || "";
   }
 
   function getPaymentLabel(order) {
@@ -240,6 +281,67 @@ export default function OwnerDashboard() {
     return "bg-[#41D3BD]/12 text-[#073B35] border-[#41D3BD]/30";
   }
 
+  function getOrderSubtotal(order) {
+    const subtotal = Number(order.subtotal_amount || 0);
+
+    if (subtotal > 0) return subtotal;
+
+    const total = Number(order.total_amount || 0);
+    const platformFee = getOrderPlatformFee(order);
+
+    return Math.max(total - platformFee, 0);
+  }
+
+  function getOrderPlatformFee(order) {
+    return Number(order.platform_fee || PLATFORM_FEE || 0);
+  }
+
+  function getSellerPayable(order) {
+    const status = normalizeStatus(order.status);
+
+    if (status === "cancelled") return 0;
+
+    return getOrderSubtotal(order);
+  }
+
+  function getPlatformRevenue(order) {
+    const status = normalizeStatus(order.status);
+
+    if (status === "cancelled") return 0;
+
+    return getOrderPlatformFee(order);
+  }
+
+  function getItemsText(order) {
+    const items = getOrderItems(order);
+
+    if (items.length === 0) return "";
+
+    return items
+      .map((item) => {
+        const name = item.name || "Item";
+        const quantity = Number(item.quantity || 1);
+        const price = Number(item.price || 0);
+
+        return `${name} x ${quantity} @ ₹${price}`;
+      })
+      .join("; ");
+  }
+
+  function getAccountingStatus(order) {
+    const orderStatus = normalizeStatus(order.status);
+    const paymentStatus = normalizePaymentStatus(order.payment_status);
+
+    if (orderStatus === "cancelled") return "Cancelled";
+    if (orderStatus === "completed" && paymentStatus === "reference_submitted") {
+      return "Completed - Payment Ref Submitted";
+    }
+    if (orderStatus === "completed") return "Completed - Payment Pending Check";
+    if (paymentStatus === "pending") return "Active - Payment Pending";
+
+    return "Active";
+  }
+
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
       return matchesDateFilter(order) && matchesPaymentFilter(order);
@@ -267,11 +369,15 @@ export default function OwnerDashboard() {
     }, 0);
 
     const subtotalSales = filteredOrders.reduce((total, order) => {
-      return total + Number(order.subtotal_amount || 0);
+      return total + getOrderSubtotal(order);
     }, 0);
 
     const platformFeeEarned = filteredOrders.reduce((total, order) => {
-      return total + Number(order.platform_fee || PLATFORM_FEE || 0);
+      return total + getPlatformRevenue(order);
+    }, 0);
+
+    const sellerPayable = filteredOrders.reduce((total, order) => {
+      return total + getSellerPayable(order);
     }, 0);
 
     const upiReferenceSubmitted = filteredOrders.filter((order) => {
@@ -297,6 +403,7 @@ export default function OwnerDashboard() {
       totalSales,
       subtotalSales,
       platformFeeEarned,
+      sellerPayable,
       upiReferenceSubmitted,
       paymentPending,
       cashOrders,
@@ -314,20 +421,24 @@ export default function OwnerDashboard() {
         report[sellerId] = {
           sellerId,
           sellerName,
+          sellerEmail: getSellerEmail(order),
+          sellerPhone: getSellerPhone(order),
           orders: 0,
           completed: 0,
           cancelled: 0,
           grossSales: 0,
+          subtotalSales: 0,
           platformFee: 0,
+          sellerPayable: 0,
           pendingPayments: 0,
         };
       }
 
       report[sellerId].orders += 1;
       report[sellerId].grossSales += Number(order.total_amount || 0);
-      report[sellerId].platformFee += Number(
-        order.platform_fee || PLATFORM_FEE || 0
-      );
+      report[sellerId].subtotalSales += getOrderSubtotal(order);
+      report[sellerId].platformFee += getPlatformRevenue(order);
+      report[sellerId].sellerPayable += getSellerPayable(order);
 
       if (normalizeStatus(order.status) === "completed") {
         report[sellerId].completed += 1;
@@ -360,6 +471,7 @@ export default function OwnerDashboard() {
       "Payment Reference",
       "Subtotal",
       "Platform Fee",
+      "Seller Payable",
       "Total",
       "Scheduled",
       "Scheduled For",
@@ -377,8 +489,9 @@ export default function OwnerDashboard() {
       order.payment_method || "",
       order.payment_status || "",
       order.payment_reference || "",
-      order.subtotal_amount || 0,
-      order.platform_fee || 0,
+      getOrderSubtotal(order),
+      getOrderPlatformFee(order),
+      getSellerPayable(order),
       order.total_amount || 0,
       order.scheduled_order ? "Yes" : "No",
       order.scheduled_for || "",
@@ -409,6 +522,218 @@ export default function OwnerDashboard() {
     URL.revokeObjectURL(url);
   }
 
+  function applySheetWidth(sheet, widths) {
+    sheet["!cols"] = widths.map((width) => ({ wch: width }));
+  }
+
+  function appendSheet(workbook, sheetName, rows, widths = []) {
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+
+    if (widths.length > 0) {
+      applySheetWidth(worksheet, widths);
+    }
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+  }
+
+  function appendArraySheet(workbook, sheetName, rows, widths = []) {
+    const worksheet = XLSX.utils.aoa_to_sheet(rows);
+
+    if (widths.length > 0) {
+      applySheetWidth(worksheet, widths);
+    }
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+  }
+
+  function downloadSmartAccountingExcel() {
+    const workbook = XLSX.utils.book_new();
+
+    const orderRows = filteredOrders.map((order) => {
+      const subtotal = getOrderSubtotal(order);
+      const platformFee = getOrderPlatformFee(order);
+      const sellerPayable = getSellerPayable(order);
+      const platformRevenue = getPlatformRevenue(order);
+
+      return {
+        "Order ID": order.id,
+        Date: formatDateOnly(order.created_at),
+        Time: formatDateTime(order.created_at),
+        Month: getMonthLabel(order.created_at),
+        Customer: order.customer_name || "",
+        "Customer Phone": order.phone || "",
+        "Kitchen / Seller": getSellerName(order),
+        "Seller Email": getSellerEmail(order),
+        "Seller Phone": getSellerPhone(order),
+        Items: getItemsText(order),
+        "Delivery Type": order.delivery_type || "",
+        "Customer Flat": order.flat || "",
+        "Order Status": order.status || "confirmed",
+        "Payment Method": order.payment_method || "upi",
+        "Payment Status": order.payment_status || "pending",
+        "Payment Reference": order.payment_reference || "",
+        Subtotal: subtotal,
+        "Platform Fee": platformFee,
+        "Platform Revenue": platformRevenue,
+        "Seller Payable": sellerPayable,
+        "Grand Total": Number(order.total_amount || 0),
+        "Scheduled Order": order.scheduled_order ? "Yes" : "No",
+        "Scheduled For": order.scheduled_for
+          ? formatDateTime(order.scheduled_for)
+          : "",
+        "Accounting Status": getAccountingStatus(order),
+      };
+    });
+
+    appendSheet(workbook, "Orders", orderRows, [
+      12, 14, 18, 12, 22, 16, 24, 28, 16, 42, 16, 18, 18, 16, 20, 24, 12, 14,
+      16, 16, 14, 16, 18, 28,
+    ]);
+
+    const sellerLedgerRows = sellerWiseReport.map((seller) => ({
+      "Seller ID": seller.sellerId,
+      "Kitchen / Seller": seller.sellerName,
+      Email: seller.sellerEmail,
+      Phone: seller.sellerPhone,
+      "Total Orders": seller.orders,
+      Completed: seller.completed,
+      Cancelled: seller.cancelled,
+      "Gross Sales": seller.grossSales,
+      "Subtotal Sales": seller.subtotalSales,
+      "Platform Fee / Commission": seller.platformFee,
+      "Seller Payable": seller.sellerPayable,
+      "Pending Payment Orders": seller.pendingPayments,
+      "Settlement Status":
+        seller.pendingPayments > 0 ? "Payment Check Needed" : "Ready",
+      Notes: "",
+    }));
+
+    appendSheet(workbook, "Seller Ledger", sellerLedgerRows, [
+      18, 24, 28, 16, 14, 12, 12, 14, 16, 22, 16, 22, 22, 30,
+    ]);
+
+    const collectionsRows = sellerWiseReport.map((seller) => ({
+      Date: "",
+      "Seller ID": seller.sellerId,
+      "Kitchen / Seller": seller.sellerName,
+      "Commission / Platform Fee Due": seller.platformFee,
+      "Amount Collected": "",
+      "Collection Mode": "",
+      "Reference No.": "",
+      "Balance Due": seller.platformFee,
+      Notes: "",
+    }));
+
+    appendSheet(workbook, "Collections", collectionsRows, [
+      14, 18, 24, 28, 18, 18, 22, 16, 30,
+    ]);
+
+    const dashboardRows = [
+      ["Metric", "Value"],
+      ["Date Filter", dateFilter],
+      ["Payment Filter", paymentFilter],
+      ["Total Orders", analytics.totalOrders],
+      ["Active Orders", analytics.activeOrders],
+      ["Completed Orders", analytics.completedOrders],
+      ["Cancelled Orders", analytics.cancelledOrders],
+      ["Total Sales", analytics.totalSales],
+      ["Subtotal Sales", analytics.subtotalSales],
+      ["Platform Fee / Revenue", analytics.platformFeeEarned],
+      ["Seller Payable", analytics.sellerPayable],
+      ["UPI Reference Submitted", analytics.upiReferenceSubmitted],
+      ["Payment Pending", analytics.paymentPending],
+      ["Cash / Pay Later Orders", analytics.cashOrders],
+      ["Exported At", new Date().toLocaleString()],
+    ];
+
+    appendArraySheet(workbook, "Dashboard", dashboardRows, [30, 24]);
+
+    const moneyFlowRows = [
+      ["Money Flow Item", "Amount / Count", "Meaning"],
+      [
+        "Gross Sales",
+        analytics.totalSales,
+        "Total customer order value including platform fee",
+      ],
+      [
+        "Subtotal Sales",
+        analytics.subtotalSales,
+        "Food value before platform fee",
+      ],
+      [
+        "Platform Revenue",
+        analytics.platformFeeEarned,
+        "Platform fee earned by Nefo",
+      ],
+      [
+        "Seller Payable",
+        analytics.sellerPayable,
+        "Amount payable to kitchens/sellers",
+      ],
+      [
+        "Payment Pending Orders",
+        analytics.paymentPending,
+        "Orders where payment status is still pending",
+      ],
+      [
+        "UPI Reference Submitted",
+        analytics.upiReferenceSubmitted,
+        "Orders where customer submitted UPI reference",
+      ],
+      [
+        "Cash / Pay Later Orders",
+        analytics.cashOrders,
+        "Orders marked as cash or pay later",
+      ],
+    ];
+
+    appendArraySheet(workbook, "Money Flow", moneyFlowRows, [28, 20, 55]);
+
+    const settingsRows = [
+      ["Setting", "Value"],
+      ["Default Platform Fee", PLATFORM_FEE],
+      ["Export Source", "Nefo Owner Dashboard"],
+      ["Export Scope", "Current dashboard filters"],
+      ["Date Filter", dateFilter],
+      ["Payment Filter", paymentFilter],
+      ["Note", "Supabase remains the source of truth. Excel is an export."],
+    ];
+
+    appendArraySheet(workbook, "Settings", settingsRows, [28, 45]);
+
+    const howToRows = [
+      ["Step", "Instruction"],
+      [
+        "1",
+        "Use Orders sheet for order-level accounting and payment reference review.",
+      ],
+      [
+        "2",
+        "Use Seller Ledger to see seller-wise gross sales, platform fee, and seller payable.",
+      ],
+      [
+        "3",
+        "Use Collections sheet to manually record platform fee/commission collected from sellers if needed.",
+      ],
+      [
+        "4",
+        "Use Dashboard and Money Flow for summary-level review.",
+      ],
+      [
+        "5",
+        "This workbook is generated from the live Owner Dashboard filters.",
+      ],
+    ];
+
+    appendArraySheet(workbook, "How To Use", howToRows, [12, 90]);
+
+    const fileName = `Nefo-smart-accounting-${dateFilter}-${new Date()
+      .toISOString()
+      .slice(0, 10)}.xlsx`;
+
+    XLSX.writeFile(workbook, fileName);
+  }
+
   return (
     <>
       <Navbar />
@@ -433,7 +758,8 @@ export default function OwnerDashboard() {
 
                 <p className="text-[#51615D] mt-4 text-sm sm:text-lg max-w-2xl leading-relaxed">
                   Daily control center for Nefo orders, UPI references, platform
-                  fees, seller-wise performance, and operational records.
+                  fees, seller-wise performance, accounting exports, and
+                  operational records.
                 </p>
               </div>
 
@@ -448,9 +774,17 @@ export default function OwnerDashboard() {
                 <button
                   type="button"
                   onClick={downloadCSV}
-                  className="bg-[#073B35] hover:bg-[#0B5149] text-white font-black px-5 py-3 rounded-2xl shadow-lg shadow-[#073B35]/15 transition-all"
+                  className="bg-[#FFFFF2] border border-[#41D3BD]/45 hover:bg-[#D7F5EF] text-[#073B35] font-black px-5 py-3 rounded-2xl transition-all"
                 >
                   Download CSV
+                </button>
+
+                <button
+                  type="button"
+                  onClick={downloadSmartAccountingExcel}
+                  className="bg-[#073B35] hover:bg-[#0B5149] text-white font-black px-5 py-3 rounded-2xl shadow-lg shadow-[#073B35]/15 transition-all"
+                >
+                  Download Accounting Excel
                 </button>
               </div>
             </div>
@@ -526,8 +860,8 @@ export default function OwnerDashboard() {
                   value={`₹${analytics.platformFeeEarned}`}
                 />
                 <StatCard
-                  title="UPI Ref Submitted"
-                  value={analytics.upiReferenceSubmitted}
+                  title="Seller Payable"
+                  value={`₹${analytics.sellerPayable}`}
                 />
               </section>
 
@@ -552,7 +886,7 @@ export default function OwnerDashboard() {
                   <p className="text-[#51615D] mt-6">No seller data found.</p>
                 ) : (
                   <div className="mt-6 overflow-x-auto">
-                    <table className="w-full text-left min-w-[760px]">
+                    <table className="w-full text-left min-w-[900px]">
                       <thead>
                         <tr className="border-b border-[#D7F5EF] text-[#51615D] text-sm">
                           <th className="py-3 pr-4">Kitchen</th>
@@ -561,6 +895,7 @@ export default function OwnerDashboard() {
                           <th className="py-3 pr-4">Cancelled</th>
                           <th className="py-3 pr-4">Gross Sales</th>
                           <th className="py-3 pr-4">Platform Fee</th>
+                          <th className="py-3 pr-4">Seller Payable</th>
                           <th className="py-3 pr-4">Pending Payments</th>
                         </tr>
                       </thead>
@@ -588,6 +923,9 @@ export default function OwnerDashboard() {
                             </td>
                             <td className="py-4 pr-4 text-[#51615D]">
                               ₹{seller.platformFee}
+                            </td>
+                            <td className="py-4 pr-4 text-[#073B35] font-black">
+                              ₹{seller.sellerPayable}
                             </td>
                             <td className="py-4 pr-4 text-yellow-700 font-bold">
                               {seller.pendingPayments}
@@ -652,6 +990,20 @@ export default function OwnerDashboard() {
                             <p className="text-[#51615D] text-sm mt-1">
                               {order.delivery_type} • {order.flat}
                             </p>
+
+                            <div className="flex flex-wrap gap-2 mt-3">
+                              <span className="bg-white border border-[#D7F5EF] text-[#073B35] text-xs font-black px-3 py-1.5 rounded-full">
+                                Subtotal ₹{getOrderSubtotal(order)}
+                              </span>
+
+                              <span className="bg-white border border-[#D7F5EF] text-[#073B35] text-xs font-black px-3 py-1.5 rounded-full">
+                                Platform ₹{getOrderPlatformFee(order)}
+                              </span>
+
+                              <span className="bg-white border border-[#D7F5EF] text-[#073B35] text-xs font-black px-3 py-1.5 rounded-full">
+                                Seller Payable ₹{getSellerPayable(order)}
+                              </span>
+                            </div>
                           </div>
 
                           <div className="flex flex-wrap sm:justify-end gap-2">
