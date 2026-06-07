@@ -4,11 +4,12 @@ import Navbar from "../components/Navbar";
 import { supabase } from "../lib/supabaseClient";
 
 const PLATFORM_FEE = 10;
+const SELLER_COMMISSION_RATE = 0.1;
 
 export default function OwnerAccounting() {
   const [orders, setOrders] = useState([]);
   const [sellerMap, setSellerMap] = useState({});
-  const [dateFilter, setDateFilter] = useState("today");
+  const [dateFilter, setDateFilter] = useState("week");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [loading, setLoading] = useState(true);
@@ -249,12 +250,29 @@ export default function OwnerAccounting() {
     return getOrderPlatformFee(order);
   }
 
-  function getSellerPayable(order) {
+  function getSellerGrossEarning(order) {
     const status = normalizeStatus(order.status);
 
     if (status === "cancelled") return 0;
 
     return getOrderSubtotal(order);
+  }
+
+  function getSellerCommission(order) {
+    const sellerGross = getSellerGrossEarning(order);
+
+    return Math.round(sellerGross * SELLER_COMMISSION_RATE);
+  }
+
+  function getSellerNetPayout(order) {
+    const sellerGross = getSellerGrossEarning(order);
+    const commission = getSellerCommission(order);
+
+    return Math.max(sellerGross - commission, 0);
+  }
+
+  function getNefoTotalEarning(order) {
+    return getPlatformRevenue(order) + getSellerCommission(order);
   }
 
   function getItemsText(order) {
@@ -359,8 +377,20 @@ export default function OwnerAccounting() {
       return total + getPlatformRevenue(order);
     }, 0);
 
-    const sellerPayable = filteredOrders.reduce((total, order) => {
-      return total + getSellerPayable(order);
+    const sellerGrossEarning = filteredOrders.reduce((total, order) => {
+      return total + getSellerGrossEarning(order);
+    }, 0);
+
+    const sellerCommission = filteredOrders.reduce((total, order) => {
+      return total + getSellerCommission(order);
+    }, 0);
+
+    const sellerNetPayout = filteredOrders.reduce((total, order) => {
+      return total + getSellerNetPayout(order);
+    }, 0);
+
+    const nefoTotalEarning = filteredOrders.reduce((total, order) => {
+      return total + getNefoTotalEarning(order);
     }, 0);
 
     const paymentPendingOrders = filteredOrders.filter((order) => {
@@ -386,7 +416,10 @@ export default function OwnerAccounting() {
       grossSales,
       foodSales,
       platformRevenue,
-      sellerPayable,
+      sellerGrossEarning,
+      sellerCommission,
+      sellerNetPayout,
+      nefoTotalEarning,
       paymentPendingOrders,
       upiReferenceSubmitted,
       cashOrders,
@@ -417,7 +450,10 @@ export default function OwnerAccounting() {
           grossSales: 0,
           foodSales: 0,
           platformFee: 0,
-          sellerPayable: 0,
+          sellerGrossEarning: 0,
+          sellerCommission: 0,
+          sellerNetPayout: 0,
+          nefoTotalEarning: 0,
           pendingPayments: 0,
           upiReferenceSubmitted: 0,
           cashOrders: 0,
@@ -428,7 +464,10 @@ export default function OwnerAccounting() {
       ledger[sellerId].grossSales += Number(order.total_amount || 0);
       ledger[sellerId].foodSales += getOrderSubtotal(order);
       ledger[sellerId].platformFee += getPlatformRevenue(order);
-      ledger[sellerId].sellerPayable += getSellerPayable(order);
+      ledger[sellerId].sellerGrossEarning += getSellerGrossEarning(order);
+      ledger[sellerId].sellerCommission += getSellerCommission(order);
+      ledger[sellerId].sellerNetPayout += getSellerNetPayout(order);
+      ledger[sellerId].nefoTotalEarning += getNefoTotalEarning(order);
 
       if (status === "completed") ledger[sellerId].completedOrders += 1;
       if (status === "cancelled") ledger[sellerId].cancelledOrders += 1;
@@ -446,7 +485,9 @@ export default function OwnerAccounting() {
       if (paymentMethod === "cash") ledger[sellerId].cashOrders += 1;
     });
 
-    return Object.values(ledger).sort((a, b) => b.grossSales - a.grossSales);
+    return Object.values(ledger).sort(
+      (a, b) => b.sellerNetPayout - a.sellerNetPayout
+    );
   }, [filteredOrders, sellerMap]);
 
   function downloadAccountingCSV() {
@@ -467,7 +508,10 @@ export default function OwnerAccounting() {
       "Payment Reference",
       "Food Sales",
       "Platform Fee",
-      "Seller Payable",
+      "Seller Gross Earning",
+      "Seller Commission",
+      "Net Seller Payout",
+      "Nefo Total Earning",
       "Gross Total",
       "Scheduled Order",
       "Scheduled For",
@@ -490,7 +534,10 @@ export default function OwnerAccounting() {
       order.payment_reference || "",
       getOrderSubtotal(order),
       getOrderPlatformFee(order),
-      getSellerPayable(order),
+      getSellerGrossEarning(order),
+      getSellerCommission(order),
+      getSellerNetPayout(order),
+      getNefoTotalEarning(order),
       Number(order.total_amount || 0),
       order.scheduled_order ? "Yes" : "No",
       order.scheduled_for ? formatDateTime(order.scheduled_for) : "",
@@ -515,7 +562,7 @@ export default function OwnerAccounting() {
     const link = document.createElement("a");
 
     link.href = url;
-    link.download = `Nefo-accounting-${dateFilter}.csv`;
+    link.download = `Nefo-weekly-payout-${dateFilter}.csv`;
     link.click();
 
     URL.revokeObjectURL(url);
@@ -539,14 +586,14 @@ export default function OwnerAccounting() {
                 </div>
 
                 <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
-                  Accounting
-                  <span className="block text-[#111827]">control center</span>
+                  Weekly seller
+                  <span className="block text-[#111827]">payouts</span>
                 </h1>
 
                 <p className="text-[#51615D] mt-4 text-sm sm:text-lg max-w-2xl leading-relaxed">
-                  Daily finance view for sales, platform fee, seller payable,
-                  payment pending orders, UPI references, cash orders, and
-                  seller-wise settlement.
+                  Track seller earnings, deduct Nefo commission, calculate net
+                  seller payout, and verify payment status before weekly
+                  settlement.
                 </p>
               </div>
 
@@ -563,7 +610,7 @@ export default function OwnerAccounting() {
                   onClick={downloadAccountingCSV}
                   className="bg-[#073B35] hover:bg-[#0B5149] text-white font-black px-5 py-3 rounded-2xl shadow-lg shadow-[#073B35]/15 transition-all"
                 >
-                  Download Accounting CSV
+                  Download Payout CSV
                 </button>
               </div>
             </div>
@@ -649,70 +696,63 @@ export default function OwnerAccounting() {
                   value={`₹${analytics.foodSales}`}
                 />
                 <AccountingCard
+                  title="Seller Commission"
+                  value={`₹${analytics.sellerCommission}`}
+                />
+                <AccountingCard
+                  title="Net Seller Payout"
+                  value={`₹${analytics.sellerNetPayout}`}
+                />
+                <AccountingCard
                   title="Platform Fee"
                   value={`₹${analytics.platformRevenue}`}
                 />
                 <AccountingCard
-                  title="Seller Payable"
-                  value={`₹${analytics.sellerPayable}`}
+                  title="Nefo Total Earning"
+                  value={`₹${analytics.nefoTotalEarning}`}
                 />
                 <AccountingCard
                   title="Total Orders"
                   value={analytics.totalOrders}
                 />
                 <AccountingCard
-                  title="Active Orders"
-                  value={analytics.activeOrders}
-                />
-                <AccountingCard
-                  title="Completed"
-                  value={analytics.completedOrders}
-                />
-                <AccountingCard
-                  title="Cancelled"
-                  value={analytics.cancelledOrders}
-                />
-                <AccountingCard
                   title="Payment Pending"
                   value={analytics.paymentPendingOrders}
-                />
-                <AccountingCard
-                  title="UPI Ref Submitted"
-                  value={analytics.upiReferenceSubmitted}
-                />
-                <AccountingCard title="Cash / Later" value={analytics.cashOrders} />
-                <AccountingCard
-                  title="Avg Order Value"
-                  value={`₹${analytics.averageOrderValue}`}
                 />
               </section>
 
               <section className="mt-8 grid grid-cols-1 lg:grid-cols-[1fr_0.75fr] gap-5">
                 <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
                   <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                    Money Flow
+                    Weekly Payout Logic
                   </p>
 
                   <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
-                    {getDateFilterLabel()} finance summary
+                    {getDateFilterLabel()} payout summary
                   </h2>
 
                   <div className="mt-5 space-y-3">
                     <MoneyRow
-                      label="Customer Paid / Gross Sales"
-                      value={`₹${analytics.grossSales}`}
+                      label="Seller Gross Earning"
+                      value={`₹${analytics.sellerGrossEarning}`}
                     />
                     <MoneyRow
-                      label="Food Sales / Seller Base Amount"
-                      value={`₹${analytics.foodSales}`}
+                      label={`Nefo Commission (${Math.round(
+                        SELLER_COMMISSION_RATE * 100
+                      )}%)`}
+                      value={`₹${analytics.sellerCommission}`}
+                    />
+                    <MoneyRow
+                      label="Net Amount to Send Sellers"
+                      value={`₹${analytics.sellerNetPayout}`}
                     />
                     <MoneyRow
                       label="Nefo Platform Fee"
                       value={`₹${analytics.platformRevenue}`}
                     />
                     <MoneyRow
-                      label="Payable to Kitchens"
-                      value={`₹${analytics.sellerPayable}`}
+                      label="Nefo Total Earning"
+                      value={`₹${analytics.nefoTotalEarning}`}
                     />
                   </div>
                 </div>
@@ -722,21 +762,22 @@ export default function OwnerAccounting() {
 
                   <div className="relative">
                     <p className="text-[#41D3BD] font-black uppercase tracking-wide text-xs">
-                      Operational Note
+                      Payout Rule
                     </p>
 
                     <h2 className="text-2xl font-black text-white mt-2">
-                      Use this page for owner accounting
+                      Weekly payout = seller earning minus commission
                     </h2>
 
                     <p className="text-[#D7F5EF] text-sm mt-3 leading-relaxed">
-                      Owner Dashboard is for live order control. This page is for
-                      daily accounts, seller payable, platform fee, and settlement
-                      checking.
+                      For every non-cancelled order, Nefo calculates seller food
+                      earning, deducts seller commission, and shows the net payout
+                      amount. Use this page before sending weekly settlements.
                     </p>
 
                     <p className="text-[#41D3BD] text-sm font-black mt-5">
-                      Current report: {filteredOrders.length} orders
+                      Current commission:{" "}
+                      {Math.round(SELLER_COMMISSION_RATE * 100)}%
                     </p>
                   </div>
                 </div>
@@ -746,11 +787,11 @@ export default function OwnerAccounting() {
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                      Seller Ledger
+                      Weekly Seller Payout Ledger
                     </p>
 
                     <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
-                      Seller-wise payable report
+                      How much to send each seller
                     </h2>
                   </div>
 
@@ -762,25 +803,25 @@ export default function OwnerAccounting() {
                 {sellerLedger.length === 0 ? (
                   <div className="mt-6 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-8 text-center">
                     <p className="text-[#51615D] font-bold">
-                      No seller ledger found for selected filters.
+                      No seller payout data found for selected filters.
                     </p>
                   </div>
                 ) : (
                   <div className="mt-6 overflow-x-auto">
-                    <table className="w-full text-left min-w-[1050px]">
+                    <table className="w-full text-left min-w-[1180px]">
                       <thead>
                         <tr className="border-b border-[#D7F5EF] text-[#51615D] text-sm">
                           <th className="py-3 pr-4">Kitchen</th>
                           <th className="py-3 pr-4">Orders</th>
-                          <th className="py-3 pr-4">Active</th>
                           <th className="py-3 pr-4">Completed</th>
-                          <th className="py-3 pr-4">Cancelled</th>
                           <th className="py-3 pr-4">Gross Sales</th>
-                          <th className="py-3 pr-4">Food Sales</th>
+                          <th className="py-3 pr-4">Seller Earning</th>
+                          <th className="py-3 pr-4">Commission</th>
+                          <th className="py-3 pr-4">Net Payout</th>
                           <th className="py-3 pr-4">Platform Fee</th>
-                          <th className="py-3 pr-4">Seller Payable</th>
-                          <th className="py-3 pr-4">Payment Pending</th>
-                          <th className="py-3 pr-4">Settlement</th>
+                          <th className="py-3 pr-4">Nefo Earning</th>
+                          <th className="py-3 pr-4">Pending Payments</th>
+                          <th className="py-3 pr-4">Payout Status</th>
                         </tr>
                       </thead>
 
@@ -801,26 +842,26 @@ export default function OwnerAccounting() {
                             <td className="py-4 pr-4 text-[#51615D]">
                               {seller.totalOrders}
                             </td>
-                            <td className="py-4 pr-4 text-[#51615D]">
-                              {seller.activeOrders}
-                            </td>
                             <td className="py-4 pr-4 text-green-600 font-bold">
                               {seller.completedOrders}
-                            </td>
-                            <td className="py-4 pr-4 text-red-500 font-bold">
-                              {seller.cancelledOrders}
                             </td>
                             <td className="py-4 pr-4 text-[#073B35] font-black">
                               ₹{seller.grossSales}
                             </td>
                             <td className="py-4 pr-4 text-[#51615D]">
-                              ₹{seller.foodSales}
+                              ₹{seller.sellerGrossEarning}
+                            </td>
+                            <td className="py-4 pr-4 text-red-500 font-black">
+                              ₹{seller.sellerCommission}
+                            </td>
+                            <td className="py-4 pr-4 text-[#073B35] font-black">
+                              ₹{seller.sellerNetPayout}
                             </td>
                             <td className="py-4 pr-4 text-[#51615D]">
                               ₹{seller.platformFee}
                             </td>
                             <td className="py-4 pr-4 text-[#073B35] font-black">
-                              ₹{seller.sellerPayable}
+                              ₹{seller.nefoTotalEarning}
                             </td>
                             <td className="py-4 pr-4 text-yellow-700 font-bold">
                               {seller.pendingPayments}
@@ -834,8 +875,8 @@ export default function OwnerAccounting() {
                                 }`}
                               >
                                 {seller.pendingPayments > 0
-                                  ? "Check Payment"
-                                  : "Ready"}
+                                  ? "Hold / Verify"
+                                  : "Ready to Pay"}
                               </span>
                             </td>
                           </tr>
@@ -854,7 +895,7 @@ export default function OwnerAccounting() {
                     </p>
 
                     <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
-                      Order-wise accounting
+                      Order-wise payout calculation
                     </h2>
                   </div>
 
@@ -907,15 +948,19 @@ export default function OwnerAccounting() {
 
                             <div className="flex flex-wrap gap-2 mt-4">
                               <span className="bg-white border border-[#D7F5EF] text-[#073B35] text-xs font-black px-3 py-1.5 rounded-full">
-                                Food ₹{getOrderSubtotal(order)}
+                                Seller Earning ₹{getSellerGrossEarning(order)}
+                              </span>
+
+                              <span className="bg-white border border-red-200 text-red-500 text-xs font-black px-3 py-1.5 rounded-full">
+                                Commission ₹{getSellerCommission(order)}
                               </span>
 
                               <span className="bg-white border border-[#D7F5EF] text-[#073B35] text-xs font-black px-3 py-1.5 rounded-full">
-                                Platform ₹{getOrderPlatformFee(order)}
+                                Net Payout ₹{getSellerNetPayout(order)}
                               </span>
 
                               <span className="bg-white border border-[#D7F5EF] text-[#073B35] text-xs font-black px-3 py-1.5 rounded-full">
-                                Seller Payable ₹{getSellerPayable(order)}
+                                Nefo Earning ₹{getNefoTotalEarning(order)}
                               </span>
                             </div>
                           </div>
