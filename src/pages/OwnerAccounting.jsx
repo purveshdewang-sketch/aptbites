@@ -5,19 +5,20 @@ import { supabase } from "../lib/supabaseClient";
 
 const PLATFORM_FEE = 10;
 
-export default function OwnerDashboard() {
+export default function OwnerAccounting() {
   const [orders, setOrders] = useState([]);
   const [sellerMap, setSellerMap] = useState({});
   const [dateFilter, setDateFilter] = useState("today");
   const [paymentFilter, setPaymentFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    fetchOwnerData();
+    fetchAccountingData();
 
     const channel = supabase
-      .channel("owner-dashboard-orders")
+      .channel("owner-accounting-orders")
       .on(
         "postgres_changes",
         {
@@ -26,7 +27,7 @@ export default function OwnerDashboard() {
           table: "orders",
         },
         () => {
-          fetchOwnerData(false);
+          fetchAccountingData(false);
         }
       )
       .subscribe();
@@ -36,7 +37,7 @@ export default function OwnerDashboard() {
     };
   }, []);
 
-  async function fetchOwnerData(showLoading = true) {
+  async function fetchAccountingData(showLoading = true) {
     if (showLoading) {
       setLoading(true);
     }
@@ -151,10 +152,23 @@ export default function OwnerDashboard() {
     if (paymentFilter === "upi") return method === "upi";
     if (paymentFilter === "cash") return method === "cash";
     if (paymentFilter === "pending") return paymentStatus === "pending";
-    if (paymentFilter === "reference")
+    if (paymentFilter === "reference") {
       return paymentStatus === "reference_submitted";
+    }
 
     return true;
+  }
+
+  function matchesStatusFilter(order) {
+    const status = normalizeStatus(order.status);
+
+    if (statusFilter === "all") return true;
+
+    if (statusFilter === "active") {
+      return status !== "completed" && status !== "cancelled";
+    }
+
+    return status === statusFilter;
   }
 
   function getOrderItems(order) {
@@ -198,31 +212,95 @@ export default function OwnerDashboard() {
 
     const firstItem = getOrderItems(order)[0];
 
-    if (firstItem?.seller) return firstItem.seller;
     if (firstItem?.seller_kitchen_name) return firstItem.seller_kitchen_name;
+    if (firstItem?.seller) return firstItem.seller;
 
     return "Unknown Kitchen";
   }
 
+  function getSellerEmail(order) {
+    return sellerMap[order.seller_id]?.email || "";
+  }
+
+  function getSellerPhone(order) {
+    return sellerMap[order.seller_id]?.phone || "";
+  }
+
+  function getOrderSubtotal(order) {
+    const subtotal = Number(order.subtotal_amount || 0);
+
+    if (subtotal > 0) return subtotal;
+
+    const total = Number(order.total_amount || 0);
+    const platformFee = getOrderPlatformFee(order);
+
+    return Math.max(total - platformFee, 0);
+  }
+
+  function getOrderPlatformFee(order) {
+    return Number(order.platform_fee || PLATFORM_FEE || 0);
+  }
+
+  function getPlatformRevenue(order) {
+    const status = normalizeStatus(order.status);
+
+    if (status === "cancelled") return 0;
+
+    return getOrderPlatformFee(order);
+  }
+
+  function getSellerPayable(order) {
+    const status = normalizeStatus(order.status);
+
+    if (status === "cancelled") return 0;
+
+    return getOrderSubtotal(order);
+  }
+
+  function getItemsText(order) {
+    const items = getOrderItems(order);
+
+    if (items.length === 0) return "-";
+
+    return items
+      .map((item) => {
+        const name = item.name || "Item";
+        const quantity = Number(item.quantity || 1);
+        const price = Number(item.price || 0);
+
+        return `${name} x ${quantity} @ ₹${price}`;
+      })
+      .join("; ");
+  }
+
+  function getDateFilterLabel() {
+    if (dateFilter === "today") return "Today";
+    if (dateFilter === "yesterday") return "Yesterday";
+    if (dateFilter === "week") return "This Week";
+    if (dateFilter === "month") return "This Month";
+    if (dateFilter === "all") return "All Time";
+    return dateFilter;
+  }
+
   function getPaymentLabel(order) {
     const method = normalizePaymentMethod(order.payment_method);
-    const status = normalizePaymentStatus(order.payment_status);
+    const paymentStatus = normalizePaymentStatus(order.payment_status);
 
     if (method === "cash") return "Cash / Later";
-    if (status === "reference_submitted") return "UPI Ref Submitted";
+    if (paymentStatus === "reference_submitted") return "UPI Ref Submitted";
 
     return "UPI Pending";
   }
 
   function getPaymentBadgeClass(order) {
     const method = normalizePaymentMethod(order.payment_method);
-    const status = normalizePaymentStatus(order.payment_status);
+    const paymentStatus = normalizePaymentStatus(order.payment_status);
 
     if (method === "cash") {
       return "bg-blue-50 text-blue-700 border-blue-200";
     }
 
-    if (status === "reference_submitted") {
+    if (paymentStatus === "reference_submitted") {
       return "bg-green-50 text-green-700 border-green-200";
     }
 
@@ -245,9 +323,13 @@ export default function OwnerDashboard() {
 
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
-      return matchesDateFilter(order) && matchesPaymentFilter(order);
+      return (
+        matchesDateFilter(order) &&
+        matchesPaymentFilter(order) &&
+        matchesStatusFilter(order)
+      );
     });
-  }, [orders, dateFilter, paymentFilter]);
+  }, [orders, dateFilter, paymentFilter, statusFilter]);
 
   const analytics = useMemo(() => {
     const totalOrders = filteredOrders.length;
@@ -265,106 +347,129 @@ export default function OwnerDashboard() {
       return status !== "completed" && status !== "cancelled";
     }).length;
 
-    const totalSales = filteredOrders.reduce((total, order) => {
+    const grossSales = filteredOrders.reduce((total, order) => {
       return total + Number(order.total_amount || 0);
     }, 0);
 
-    const subtotalSales = filteredOrders.reduce((total, order) => {
-      return total + Number(order.subtotal_amount || 0);
+    const foodSales = filteredOrders.reduce((total, order) => {
+      return total + getOrderSubtotal(order);
     }, 0);
 
-    const platformFeeEarned = filteredOrders.reduce((total, order) => {
-      return total + Number(order.platform_fee || PLATFORM_FEE || 0);
+    const platformRevenue = filteredOrders.reduce((total, order) => {
+      return total + getPlatformRevenue(order);
     }, 0);
 
-    const upiReferenceSubmitted = filteredOrders.filter((order) => {
-      return (
-        normalizePaymentMethod(order.payment_method) === "upi" &&
-        normalizePaymentStatus(order.payment_status) === "reference_submitted"
-      );
+    const sellerPayable = filteredOrders.reduce((total, order) => {
+      return total + getSellerPayable(order);
+    }, 0);
+
+    const paymentPendingOrders = filteredOrders.filter((order) => {
+      return normalizePaymentStatus(order.payment_status) === "pending";
     }).length;
 
-    const paymentPending = filteredOrders.filter((order) => {
-      return normalizePaymentStatus(order.payment_status) === "pending";
+    const upiReferenceSubmitted = filteredOrders.filter((order) => {
+      return normalizePaymentStatus(order.payment_status) === "reference_submitted";
     }).length;
 
     const cashOrders = filteredOrders.filter((order) => {
       return normalizePaymentMethod(order.payment_method) === "cash";
     }).length;
 
+    const averageOrderValue =
+      totalOrders > 0 ? Math.round(grossSales / totalOrders) : 0;
+
     return {
       totalOrders,
       completedOrders,
       cancelledOrders,
       activeOrders,
-      totalSales,
-      subtotalSales,
-      platformFeeEarned,
+      grossSales,
+      foodSales,
+      platformRevenue,
+      sellerPayable,
+      paymentPendingOrders,
       upiReferenceSubmitted,
-      paymentPending,
       cashOrders,
+      averageOrderValue,
     };
   }, [filteredOrders]);
 
-  const sellerWiseReport = useMemo(() => {
-    const report = {};
+  const sellerLedger = useMemo(() => {
+    const ledger = {};
 
     filteredOrders.forEach((order) => {
       const sellerId = order.seller_id || "unknown";
       const sellerName = getSellerName(order);
+      const status = normalizeStatus(order.status);
+      const paymentStatus = normalizePaymentStatus(order.payment_status);
+      const paymentMethod = normalizePaymentMethod(order.payment_method);
 
-      if (!report[sellerId]) {
-        report[sellerId] = {
+      if (!ledger[sellerId]) {
+        ledger[sellerId] = {
           sellerId,
           sellerName,
-          orders: 0,
-          completed: 0,
-          cancelled: 0,
+          email: getSellerEmail(order),
+          phone: getSellerPhone(order),
+          totalOrders: 0,
+          activeOrders: 0,
+          completedOrders: 0,
+          cancelledOrders: 0,
           grossSales: 0,
+          foodSales: 0,
           platformFee: 0,
+          sellerPayable: 0,
           pendingPayments: 0,
+          upiReferenceSubmitted: 0,
+          cashOrders: 0,
         };
       }
 
-      report[sellerId].orders += 1;
-      report[sellerId].grossSales += Number(order.total_amount || 0);
-      report[sellerId].platformFee += Number(
-        order.platform_fee || PLATFORM_FEE || 0
-      );
+      ledger[sellerId].totalOrders += 1;
+      ledger[sellerId].grossSales += Number(order.total_amount || 0);
+      ledger[sellerId].foodSales += getOrderSubtotal(order);
+      ledger[sellerId].platformFee += getPlatformRevenue(order);
+      ledger[sellerId].sellerPayable += getSellerPayable(order);
 
-      if (normalizeStatus(order.status) === "completed") {
-        report[sellerId].completed += 1;
+      if (status === "completed") ledger[sellerId].completedOrders += 1;
+      if (status === "cancelled") ledger[sellerId].cancelledOrders += 1;
+
+      if (status !== "completed" && status !== "cancelled") {
+        ledger[sellerId].activeOrders += 1;
       }
 
-      if (normalizeStatus(order.status) === "cancelled") {
-        report[sellerId].cancelled += 1;
+      if (paymentStatus === "pending") ledger[sellerId].pendingPayments += 1;
+
+      if (paymentStatus === "reference_submitted") {
+        ledger[sellerId].upiReferenceSubmitted += 1;
       }
 
-      if (normalizePaymentStatus(order.payment_status) === "pending") {
-        report[sellerId].pendingPayments += 1;
-      }
+      if (paymentMethod === "cash") ledger[sellerId].cashOrders += 1;
     });
 
-    return Object.values(report).sort((a, b) => b.grossSales - a.grossSales);
+    return Object.values(ledger).sort((a, b) => b.grossSales - a.grossSales);
   }, [filteredOrders, sellerMap]);
 
-  function downloadCSV() {
+  function downloadAccountingCSV() {
     const headers = [
       "Order ID",
       "Date",
       "Customer",
-      "Phone",
-      "Seller",
+      "Customer Phone",
+      "Kitchen",
+      "Seller Email",
+      "Seller Phone",
+      "Items",
       "Delivery Type",
       "Flat",
-      "Status",
+      "Order Status",
       "Payment Method",
       "Payment Status",
       "Payment Reference",
-      "Subtotal",
+      "Food Sales",
       "Platform Fee",
-      "Total",
-      "Scheduled",
+      "Seller Payable",
+      "Gross Total",
+      "Scheduled Order",
       "Scheduled For",
     ];
 
@@ -374,17 +479,21 @@ export default function OwnerDashboard() {
       order.customer_name || "",
       order.phone || "",
       getSellerName(order),
+      getSellerEmail(order),
+      getSellerPhone(order),
+      getItemsText(order),
       order.delivery_type || "",
       order.flat || "",
-      order.status || "",
-      order.payment_method || "",
-      order.payment_status || "",
+      order.status || "confirmed",
+      order.payment_method || "upi",
+      order.payment_status || "pending",
       order.payment_reference || "",
-      order.subtotal_amount || 0,
-      order.platform_fee || 0,
-      order.total_amount || 0,
+      getOrderSubtotal(order),
+      getOrderPlatformFee(order),
+      getSellerPayable(order),
+      Number(order.total_amount || 0),
       order.scheduled_order ? "Yes" : "No",
-      order.scheduled_for || "",
+      order.scheduled_for ? formatDateTime(order.scheduled_for) : "",
     ]);
 
     const csvContent = [headers, ...rows]
@@ -406,7 +515,7 @@ export default function OwnerDashboard() {
     const link = document.createElement("a");
 
     link.href = url;
-    link.download = `Nefo-owner-report-${dateFilter}.csv`;
+    link.download = `Nefo-accounting-${dateFilter}.csv`;
     link.click();
 
     URL.revokeObjectURL(url);
@@ -425,49 +534,43 @@ export default function OwnerDashboard() {
             <div className="relative flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
               <div>
                 <div className="inline-flex items-center gap-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
-                  <span>👑</span>
-                  <span>Owner Dashboard</span>
+                  <span>📒</span>
+                  <span>Owner Accounting</span>
                 </div>
 
                 <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
-                  Orders
-                  <span className="block text-[#111827]">& payments</span>
+                  Accounting
+                  <span className="block text-[#111827]">control center</span>
                 </h1>
 
                 <p className="text-[#51615D] mt-4 text-sm sm:text-lg max-w-2xl leading-relaxed">
-                  Daily control center for Nefo orders, UPI references, platform
-                  fees, seller-wise performance, and operational records.
+                  Daily finance view for sales, platform fee, seller payable,
+                  payment pending orders, UPI references, cash orders, and
+                  seller-wise settlement.
                 </p>
               </div>
 
               <div className="flex flex-wrap gap-3">
                 <Link
-                  to="/marketplace"
+                  to="/owner-dashboard"
                   className="bg-[#FFFFF2] border border-[#D7F5EF] hover:bg-[#D7F5EF] text-[#073B35] font-black px-5 py-3 rounded-2xl transition-all"
                 >
-                  Marketplace
-                </Link>
-
-                <Link
-                  to="/owner-accounting"
-                  className="bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black px-5 py-3 rounded-2xl transition-all shadow-lg shadow-[#41D3BD]/20"
-                >
-                  Open Accounting
+                  Owner Dashboard
                 </Link>
 
                 <button
                   type="button"
-                  onClick={downloadCSV}
+                  onClick={downloadAccountingCSV}
                   className="bg-[#073B35] hover:bg-[#0B5149] text-white font-black px-5 py-3 rounded-2xl shadow-lg shadow-[#073B35]/15 transition-all"
                 >
-                  Download CSV
+                  Download Accounting CSV
                 </button>
               </div>
             </div>
           </section>
 
           <section className="mt-6 bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-4 sm:p-5 shadow-lg shadow-[#073B35]/5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto] gap-3">
               <select
                 value={dateFilter}
                 onChange={(event) => setDateFilter(event.target.value)}
@@ -492,9 +595,24 @@ export default function OwnerDashboard() {
                 <option value="cash">Cash / Pay Later</option>
               </select>
 
+              <select
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+                className="bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] font-bold"
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active Orders</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="cooking">Cooking</option>
+                <option value="packing">Packing</option>
+                <option value="ready_for_pickup">Ready for Pickup</option>
+              </select>
+
               <button
                 type="button"
-                onClick={() => fetchOwnerData()}
+                onClick={() => fetchAccountingData()}
                 className="bg-[#FFFFF2] border border-[#41D3BD]/45 hover:bg-[#D7F5EF] text-[#073B35] font-black px-5 py-4 rounded-2xl transition-all"
               >
                 Refresh
@@ -505,7 +623,7 @@ export default function OwnerDashboard() {
           {loading && (
             <div className="mt-8 bg-white/90 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-lg shadow-[#073B35]/5">
               <p className="text-[#51615D] font-bold">
-                Loading owner dashboard...
+                Loading accounting data...
               </p>
             </div>
           )}
@@ -513,7 +631,7 @@ export default function OwnerDashboard() {
           {!loading && errorMessage && (
             <div className="mt-8 bg-red-50 border border-red-200 rounded-3xl p-6">
               <p className="text-red-600 font-black">
-                Could not load dashboard.
+                Could not load accounting page.
               </p>
               <p className="text-red-500 text-sm mt-2">{errorMessage}</p>
             </div>
@@ -521,86 +639,204 @@ export default function OwnerDashboard() {
 
           {!loading && !errorMessage && (
             <>
-              <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-                <StatCard title="Total Orders" value={analytics.totalOrders} />
-                <StatCard title="Active Orders" value={analytics.activeOrders} />
-                <StatCard title="Completed" value={analytics.completedOrders} />
-                <StatCard title="Cancelled" value={analytics.cancelledOrders} />
-                <StatCard title="Total Sales" value={`₹${analytics.totalSales}`} />
-                <StatCard
-                  title="Subtotal Sales"
-                  value={`₹${analytics.subtotalSales}`}
+              <section className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <AccountingCard
+                  title="Gross Sales"
+                  value={`₹${analytics.grossSales}`}
                 />
-                <StatCard
+                <AccountingCard
+                  title="Food Sales"
+                  value={`₹${analytics.foodSales}`}
+                />
+                <AccountingCard
                   title="Platform Fee"
-                  value={`₹${analytics.platformFeeEarned}`}
+                  value={`₹${analytics.platformRevenue}`}
                 />
-                <StatCard
+                <AccountingCard
+                  title="Seller Payable"
+                  value={`₹${analytics.sellerPayable}`}
+                />
+                <AccountingCard
+                  title="Total Orders"
+                  value={analytics.totalOrders}
+                />
+                <AccountingCard
+                  title="Active Orders"
+                  value={analytics.activeOrders}
+                />
+                <AccountingCard
+                  title="Completed"
+                  value={analytics.completedOrders}
+                />
+                <AccountingCard
+                  title="Cancelled"
+                  value={analytics.cancelledOrders}
+                />
+                <AccountingCard
+                  title="Payment Pending"
+                  value={analytics.paymentPendingOrders}
+                />
+                <AccountingCard
                   title="UPI Ref Submitted"
                   value={analytics.upiReferenceSubmitted}
                 />
+                <AccountingCard title="Cash / Later" value={analytics.cashOrders} />
+                <AccountingCard
+                  title="Avg Order Value"
+                  value={`₹${analytics.averageOrderValue}`}
+                />
+              </section>
+
+              <section className="mt-8 grid grid-cols-1 lg:grid-cols-[1fr_0.75fr] gap-5">
+                <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
+                  <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
+                    Money Flow
+                  </p>
+
+                  <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
+                    {getDateFilterLabel()} finance summary
+                  </h2>
+
+                  <div className="mt-5 space-y-3">
+                    <MoneyRow
+                      label="Customer Paid / Gross Sales"
+                      value={`₹${analytics.grossSales}`}
+                    />
+                    <MoneyRow
+                      label="Food Sales / Seller Base Amount"
+                      value={`₹${analytics.foodSales}`}
+                    />
+                    <MoneyRow
+                      label="Nefo Platform Fee"
+                      value={`₹${analytics.platformRevenue}`}
+                    />
+                    <MoneyRow
+                      label="Payable to Kitchens"
+                      value={`₹${analytics.sellerPayable}`}
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-[#073B35] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/15 relative overflow-hidden">
+                  <div className="absolute -top-16 -right-16 w-48 h-48 bg-[#41D3BD]/20 blur-[70px] rounded-full" />
+
+                  <div className="relative">
+                    <p className="text-[#41D3BD] font-black uppercase tracking-wide text-xs">
+                      Operational Note
+                    </p>
+
+                    <h2 className="text-2xl font-black text-white mt-2">
+                      Use this page for owner accounting
+                    </h2>
+
+                    <p className="text-[#D7F5EF] text-sm mt-3 leading-relaxed">
+                      Owner Dashboard is for live order control. This page is for
+                      daily accounts, seller payable, platform fee, and settlement
+                      checking.
+                    </p>
+
+                    <p className="text-[#41D3BD] text-sm font-black mt-5">
+                      Current report: {filteredOrders.length} orders
+                    </p>
+                  </div>
+                </div>
               </section>
 
               <section className="mt-8 bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                      Seller Report
+                      Seller Ledger
                     </p>
 
-                    <h2 className="text-2xl sm:text-3xl font-black mt-1 text-[#111827]">
-                      Seller-wise sales
+                    <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
+                      Seller-wise payable report
                     </h2>
                   </div>
 
                   <p className="text-[#51615D] text-sm font-bold">
-                    {sellerWiseReport.length} sellers
+                    {sellerLedger.length} sellers
                   </p>
                 </div>
 
-                {sellerWiseReport.length === 0 ? (
-                  <p className="text-[#51615D] mt-6">No seller data found.</p>
+                {sellerLedger.length === 0 ? (
+                  <div className="mt-6 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-8 text-center">
+                    <p className="text-[#51615D] font-bold">
+                      No seller ledger found for selected filters.
+                    </p>
+                  </div>
                 ) : (
                   <div className="mt-6 overflow-x-auto">
-                    <table className="w-full text-left min-w-[760px]">
+                    <table className="w-full text-left min-w-[1050px]">
                       <thead>
                         <tr className="border-b border-[#D7F5EF] text-[#51615D] text-sm">
                           <th className="py-3 pr-4">Kitchen</th>
                           <th className="py-3 pr-4">Orders</th>
+                          <th className="py-3 pr-4">Active</th>
                           <th className="py-3 pr-4">Completed</th>
                           <th className="py-3 pr-4">Cancelled</th>
                           <th className="py-3 pr-4">Gross Sales</th>
+                          <th className="py-3 pr-4">Food Sales</th>
                           <th className="py-3 pr-4">Platform Fee</th>
-                          <th className="py-3 pr-4">Pending Payments</th>
+                          <th className="py-3 pr-4">Seller Payable</th>
+                          <th className="py-3 pr-4">Payment Pending</th>
+                          <th className="py-3 pr-4">Settlement</th>
                         </tr>
                       </thead>
 
                       <tbody>
-                        {sellerWiseReport.map((seller) => (
+                        {sellerLedger.map((seller) => (
                           <tr
                             key={seller.sellerId}
                             className="border-b border-[#D7F5EF] text-sm"
                           >
-                            <td className="py-4 pr-4 font-black text-[#111827]">
-                              {seller.sellerName}
+                            <td className="py-4 pr-4">
+                              <p className="font-black text-[#111827]">
+                                {seller.sellerName}
+                              </p>
+                              <p className="text-[#51615D] text-xs mt-1">
+                                {seller.phone || seller.email || "No contact"}
+                              </p>
                             </td>
                             <td className="py-4 pr-4 text-[#51615D]">
-                              {seller.orders}
+                              {seller.totalOrders}
+                            </td>
+                            <td className="py-4 pr-4 text-[#51615D]">
+                              {seller.activeOrders}
                             </td>
                             <td className="py-4 pr-4 text-green-600 font-bold">
-                              {seller.completed}
+                              {seller.completedOrders}
                             </td>
                             <td className="py-4 pr-4 text-red-500 font-bold">
-                              {seller.cancelled}
+                              {seller.cancelledOrders}
                             </td>
                             <td className="py-4 pr-4 text-[#073B35] font-black">
                               ₹{seller.grossSales}
                             </td>
                             <td className="py-4 pr-4 text-[#51615D]">
+                              ₹{seller.foodSales}
+                            </td>
+                            <td className="py-4 pr-4 text-[#51615D]">
                               ₹{seller.platformFee}
+                            </td>
+                            <td className="py-4 pr-4 text-[#073B35] font-black">
+                              ₹{seller.sellerPayable}
                             </td>
                             <td className="py-4 pr-4 text-yellow-700 font-bold">
                               {seller.pendingPayments}
+                            </td>
+                            <td className="py-4 pr-4">
+                              <span
+                                className={`text-xs font-black px-3 py-1.5 rounded-full border ${
+                                  seller.pendingPayments > 0
+                                    ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                                    : "bg-green-50 text-green-700 border-green-200"
+                                }`}
+                              >
+                                {seller.pendingPayments > 0
+                                  ? "Check Payment"
+                                  : "Ready"}
+                              </span>
                             </td>
                           </tr>
                         ))}
@@ -614,11 +850,11 @@ export default function OwnerDashboard() {
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                      Order Register
+                      Accounting Register
                     </p>
 
-                    <h2 className="text-2xl sm:text-3xl font-black mt-1 text-[#111827]">
-                      Orders + payments
+                    <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
+                      Order-wise accounting
                     </h2>
                   </div>
 
@@ -647,12 +883,13 @@ export default function OwnerDashboard() {
                               {formatDateTime(order.created_at)}
                             </p>
 
-                            <h3 className="text-3xl font-black mt-1 text-[#073B35]">
-                              ₹{order.total_amount}
+                            <h3 className="text-2xl sm:text-3xl font-black mt-1 text-[#073B35]">
+                              ₹{Number(order.total_amount || 0)}
                             </h3>
 
                             <p className="text-[#51615D] text-sm mt-2">
-                              {order.customer_name} • {order.phone}
+                              Customer: {order.customer_name || "Unknown"} •{" "}
+                              {order.phone || "No phone"}
                             </p>
 
                             <p className="text-[#51615D] text-sm mt-1">
@@ -660,8 +897,27 @@ export default function OwnerDashboard() {
                             </p>
 
                             <p className="text-[#51615D] text-sm mt-1">
-                              {order.delivery_type} • {order.flat}
+                              {order.delivery_type || "Delivery"} •{" "}
+                              {order.flat || "No flat"}
                             </p>
+
+                            <p className="text-[#51615D] text-sm mt-3 line-clamp-2">
+                              Items: {getItemsText(order)}
+                            </p>
+
+                            <div className="flex flex-wrap gap-2 mt-4">
+                              <span className="bg-white border border-[#D7F5EF] text-[#073B35] text-xs font-black px-3 py-1.5 rounded-full">
+                                Food ₹{getOrderSubtotal(order)}
+                              </span>
+
+                              <span className="bg-white border border-[#D7F5EF] text-[#073B35] text-xs font-black px-3 py-1.5 rounded-full">
+                                Platform ₹{getOrderPlatformFee(order)}
+                              </span>
+
+                              <span className="bg-white border border-[#D7F5EF] text-[#073B35] text-xs font-black px-3 py-1.5 rounded-full">
+                                Seller Payable ₹{getSellerPayable(order)}
+                              </span>
+                            </div>
                           </div>
 
                           <div className="flex flex-wrap sm:justify-end gap-2">
@@ -694,18 +950,6 @@ export default function OwnerDashboard() {
                             </p>
                           </div>
                         )}
-
-                        {order.scheduled_order && (
-                          <div className="mt-4 bg-[#41D3BD]/12 border border-[#41D3BD]/25 rounded-2xl p-4">
-                            <p className="text-[#073B35] text-xs font-black uppercase">
-                              Scheduled For
-                            </p>
-
-                            <p className="text-[#111827] font-bold mt-1">
-                              {formatDateTime(order.scheduled_for)}
-                            </p>
-                          </div>
-                        )}
                       </article>
                     ))}
                   </div>
@@ -719,7 +963,7 @@ export default function OwnerDashboard() {
   );
 }
 
-function StatCard({ title, value }) {
+function AccountingCard({ title, value }) {
   return (
     <div className="bg-white/90 border border-[#D7F5EF] rounded-3xl p-5 shadow-lg shadow-[#073B35]/5">
       <p className="text-[#51615D] text-xs uppercase font-black">{title}</p>
@@ -727,6 +971,15 @@ function StatCard({ title, value }) {
       <p className="text-2xl sm:text-3xl font-black text-[#073B35] mt-3">
         {value}
       </p>
+    </div>
+  );
+}
+
+function MoneyRow({ label, value }) {
+  return (
+    <div className="flex items-center justify-between gap-4 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4">
+      <p className="text-[#51615D] font-bold">{label}</p>
+      <p className="text-[#073B35] font-black shrink-0">{value}</p>
     </div>
   );
 }

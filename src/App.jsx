@@ -12,6 +12,7 @@ import Orders from "./pages/Orders";
 import OrderHistory from "./pages/OrderHistory";
 import FoodDetails from "./pages/FoodDetails";
 import OwnerDashboard from "./pages/OwnerDashboard";
+import OwnerAccounting from "./pages/OwnerAccounting";
 import Profile from "./pages/Profile";
 import ResetPassword from "./pages/ResetPassword";
 import CustomerCare from "./pages/CustomerCare";
@@ -286,6 +287,15 @@ export default function App() {
           element={
             <AdminOnlyRoute>
               <OwnerDashboard />
+            </AdminOnlyRoute>
+          }
+        />
+
+        <Route
+          path="/owner-accounting"
+          element={
+            <AdminOnlyRoute>
+              <OwnerAccounting />
             </AdminOnlyRoute>
           }
         />
