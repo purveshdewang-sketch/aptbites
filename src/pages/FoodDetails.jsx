@@ -5,7 +5,7 @@ import Navbar from "../components/Navbar";
 import { supabase } from "../lib/supabaseClient";
 import { useCart } from "../context/CartContext";
 
-const SELLER_MENU_CATEGORIES = [
+const KITCHEN_MENU_CATEGORIES = [
   "Meals",
   "Breakfast",
   "Snacks",
@@ -23,9 +23,9 @@ export default function FoodDetails() {
     useCart();
 
   const [food, setFood] = useState(null);
-  const [sellerFoods, setSellerFoods] = useState([]);
-  const [sellerOnline, setSellerOnline] = useState(true);
-  const [selectedSellerCategory, setSelectedSellerCategory] = useState("All");
+  const [kitchenFoods, setKitchenFoods] = useState([]);
+  const [kitchenOnline, setKitchenOnline] = useState(true);
+  const [selectedKitchenCategory, setSelectedKitchenCategory] = useState("All");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
@@ -37,13 +37,15 @@ export default function FoodDetails() {
 
   const stock = Number(food?.stock || 0);
   const category = food?.category || "Meals";
-  const kitchenName = food?.seller || "Kitchen";
+  const kitchenName =
+    food?.seller || food?.seller_kitchen_name || "Home Kitchen";
 
-  const sellerIsClosed = sellerOnline === false || food?.seller_online === false;
+  const kitchenIsClosed =
+    kitchenOnline === false || food?.seller_online === false;
   const isSoldOut = stock <= 0;
   const isLowStock = stock > 0 && stock <= 2;
   const isSellingFast = stock > 2 && stock <= 5;
-  const isBlocked = sellerIsClosed || isSoldOut;
+  const isBlocked = kitchenIsClosed || isSoldOut;
 
   useEffect(() => {
     fetchFoodDetails();
@@ -106,69 +108,69 @@ export default function FoodDetails() {
 
     if (!foodData) {
       setFood(null);
-      setSellerFoods([]);
+      setKitchenFoods([]);
       setMessage("This dish is no longer available.");
       setLoading(false);
       return;
     }
 
-    const sellerId = foodData.user_id || foodData.seller_id;
+    const kitchenId = foodData.user_id || foodData.seller_id;
 
-    let currentSellerOnline = true;
+    let currentKitchenOnline = true;
 
-    if (sellerId) {
+    if (kitchenId) {
       const { data: profileData } = await supabase
         .from("profiles")
         .select("id, seller_online")
-        .eq("id", sellerId)
+        .eq("id", kitchenId)
         .maybeSingle();
 
-      currentSellerOnline = profileData?.seller_online !== false;
+      currentKitchenOnline = profileData?.seller_online !== false;
     }
 
     const enrichedFood = {
       ...foodData,
-      seller_online: currentSellerOnline,
+      seller_online: currentKitchenOnline,
     };
 
     setFood(enrichedFood);
-    setSellerOnline(currentSellerOnline);
+    setKitchenOnline(currentKitchenOnline);
 
-    if (sellerId) {
+    if (kitchenId) {
       const { data: otherFoodsData } = await supabase
         .from("foods")
         .select("*")
-        .or(`user_id.eq.${sellerId},seller_id.eq.${sellerId}`)
+        .or(`user_id.eq.${kitchenId},seller_id.eq.${kitchenId}`)
         .neq("id", id)
         .order("id", { ascending: false });
 
-      const enrichedSellerFoods = (otherFoodsData || []).map((item) => ({
+      const enrichedKitchenFoods = (otherFoodsData || []).map((item) => ({
         ...item,
-        seller_online: currentSellerOnline,
+        seller_online: currentKitchenOnline,
       }));
 
-      setSellerFoods(enrichedSellerFoods);
+      setKitchenFoods(enrichedKitchenFoods);
     } else {
-      setSellerFoods([]);
+      setKitchenFoods([]);
     }
 
     setLoading(false);
   }
 
-  const availableSellerFoods = useMemo(() => {
-    return sellerFoods.filter((item) => Number(item.stock || 0) > 0);
-  }, [sellerFoods]);
+  const availableKitchenFoods = useMemo(() => {
+    return kitchenFoods.filter((item) => Number(item.stock || 0) > 0);
+  }, [kitchenFoods]);
 
-  const sellerCategoryCounts = useMemo(() => {
+  const kitchenCategoryCounts = useMemo(() => {
     const counts = {
-      All: sellerFoods.length,
+      All: kitchenFoods.length,
     };
 
-    SELLER_MENU_CATEGORIES.forEach((categoryName) => {
+    KITCHEN_MENU_CATEGORIES.forEach((categoryName) => {
       counts[categoryName] = 0;
     });
 
-    sellerFoods.forEach((item) => {
+    kitchenFoods.forEach((item) => {
       const itemCategory = item.category || "Meals";
 
       if (counts[itemCategory] !== undefined) {
@@ -177,20 +179,20 @@ export default function FoodDetails() {
     });
 
     return counts;
-  }, [sellerFoods]);
+  }, [kitchenFoods]);
 
-  const visibleSellerFoods = useMemo(() => {
-    if (selectedSellerCategory === "All") return sellerFoods;
+  const visibleKitchenFoods = useMemo(() => {
+    if (selectedKitchenCategory === "All") return kitchenFoods;
 
-    return sellerFoods.filter(
-      (item) => (item.category || "Meals") === selectedSellerCategory
+    return kitchenFoods.filter(
+      (item) => (item.category || "Meals") === selectedKitchenCategory
     );
-  }, [sellerFoods, selectedSellerCategory]);
+  }, [kitchenFoods, selectedKitchenCategory]);
 
   function handleAddToCart() {
     if (!food) return;
 
-    if (sellerIsClosed) {
+    if (kitchenIsClosed) {
       alert("This kitchen is closed right now.");
       return;
     }
@@ -216,6 +218,22 @@ export default function FoodDetails() {
     decreaseQuantity(food.id);
   }
 
+  function getAvailabilityText() {
+    if (kitchenIsClosed) return "Ordering temporarily unavailable";
+    if (isSoldOut) return "Sold out";
+    if (isLowStock) return `Only ${stock} portions left`;
+    if (isSellingFast) return `${stock} portions left • selling fast`;
+    return `${stock} portions available`;
+  }
+
+  function getAvailabilityClass() {
+    if (kitchenIsClosed || isSoldOut || isLowStock) {
+      return "text-red-500";
+    }
+
+    return "text-[#073B35]";
+  }
+
   if (loading) {
     return (
       <>
@@ -223,7 +241,13 @@ export default function FoodDetails() {
 
         <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-8 flex items-center justify-center">
           <div className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-xl shadow-[#073B35]/5">
-            <p className="text-[#51615D] font-bold">Loading dish...</p>
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-3xl">
+              🍽️
+            </div>
+
+            <p className="text-[#51615D] font-bold mt-4">
+              Loading dish details...
+            </p>
           </div>
         </main>
       </>
@@ -249,7 +273,7 @@ export default function FoodDetails() {
 
             <Link
               to="/marketplace"
-              className="block mt-7 bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black py-4 rounded-2xl shadow-lg shadow-[#41D3BD]/20"
+              className="block mt-7 bg-[#073B35] hover:bg-[#0B5149] text-white font-black py-4 rounded-2xl shadow-lg shadow-[#073B35]/15"
             >
               Back to Marketplace
             </Link>
@@ -264,93 +288,117 @@ export default function FoodDetails() {
       <Navbar />
 
       <main className="min-h-screen bg-[#FFFFF2] text-[#111827] pb-32">
-        <section className="px-4 sm:px-6 py-5 sm:py-10">
-          <div className="max-w-7xl mx-auto">
+        <section className="relative px-4 sm:px-6 py-5 sm:py-10">
+          <div className="absolute -top-24 -right-24 w-80 h-80 bg-[#41D3BD]/20 rounded-full blur-[100px]" />
+          <div className="absolute top-64 -left-28 w-80 h-80 bg-[#41D3BD]/10 rounded-full blur-[120px]" />
+
+          <div className="relative max-w-7xl mx-auto">
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="text-[#51615D] hover:text-[#1A9F8D] font-bold mb-4 transition-all"
+              className="inline-flex items-center gap-2 text-[#51615D] hover:text-[#073B35] font-black mb-4 transition-all bg-white/80 border border-[#D7F5EF] px-4 py-2 rounded-2xl shadow-sm"
             >
               ← Back
             </button>
 
             <div className="grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-5 lg:gap-10">
-              <div className="relative bg-white/85 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] overflow-hidden shadow-xl shadow-[#073B35]/5">
-                <img
-                  src={food.image}
-                  alt={food.name}
-                  className={`w-full aspect-square object-cover ${
-                    sellerIsClosed ? "grayscale opacity-60" : ""
-                  }`}
-                />
-
-                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 flex flex-wrap gap-2">
-                  <span
-                    className={`text-xs font-black px-3 py-1.5 rounded-full ${
-                      food.type === "Non-Veg"
-                        ? "bg-red-500 text-white"
-                        : "bg-[#41D3BD] text-[#073B35]"
+              <div className="relative bg-white border border-[#D7F5EF] rounded-[2rem] overflow-hidden shadow-xl shadow-[#073B35]/5">
+                <div className="relative aspect-square bg-[#D7F5EF] overflow-hidden">
+                  <img
+                    src={food.image}
+                    alt={food.name}
+                    className={`w-full h-full object-cover ${
+                      kitchenIsClosed ? "grayscale opacity-60" : ""
                     }`}
-                  >
-                    {food.type}
-                  </span>
+                  />
 
-                  <span className="text-xs font-black px-3 py-1.5 rounded-full bg-white/90 text-[#073B35] border border-[#D7F5EF]">
-                    {category}
-                  </span>
-                </div>
+                  <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-black/55 to-transparent" />
 
-                <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
-                  {sellerIsClosed ? (
-                    <span className="text-xs font-black px-3 py-1.5 rounded-full bg-red-600 text-white">
-                      CLOSED
+                  <div className="absolute top-3 left-3 sm:top-4 sm:left-4 flex flex-wrap gap-2">
+                    <span
+                      className={`text-xs font-black px-3 py-1.5 rounded-full shadow-sm ${
+                        food.type === "Non-Veg"
+                          ? "bg-red-500 text-white"
+                          : "bg-[#41D3BD] text-[#073B35]"
+                      }`}
+                    >
+                      {food.type || "Veg"}
                     </span>
-                  ) : isSoldOut ? (
-                    <span className="text-xs font-black px-3 py-1.5 rounded-full bg-[#111827] text-white">
-                      Sold Out
+
+                    <span className="text-xs font-black px-3 py-1.5 rounded-full bg-white/95 text-[#073B35] border border-[#D7F5EF] shadow-sm">
+                      {category}
                     </span>
-                  ) : isLowStock ? (
-                    <span className="text-xs font-black px-3 py-1.5 rounded-full bg-red-500 text-white">
-                      Only {stock} left
-                    </span>
-                  ) : isSellingFast ? (
-                    <span className="text-xs font-black px-3 py-1.5 rounded-full bg-[#41D3BD] text-[#073B35]">
-                      Selling Fast
-                    </span>
-                  ) : (
-                    <span className="text-xs font-black px-3 py-1.5 rounded-full bg-white/90 text-[#073B35] border border-[#D7F5EF]">
-                      Available
-                    </span>
-                  )}
+                  </div>
+
+                  <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
+                    {kitchenIsClosed ? (
+                      <span className="text-xs font-black px-3 py-1.5 rounded-full bg-red-600 text-white shadow-sm">
+                        CLOSED
+                      </span>
+                    ) : isSoldOut ? (
+                      <span className="text-xs font-black px-3 py-1.5 rounded-full bg-[#111827] text-white shadow-sm">
+                        SOLD OUT
+                      </span>
+                    ) : isLowStock ? (
+                      <span className="text-xs font-black px-3 py-1.5 rounded-full bg-red-500 text-white shadow-sm">
+                        Only {stock} left
+                      </span>
+                    ) : isSellingFast ? (
+                      <span className="text-xs font-black px-3 py-1.5 rounded-full bg-[#41D3BD] text-[#073B35] shadow-sm">
+                        Selling Fast
+                      </span>
+                    ) : (
+                      <span className="text-xs font-black px-3 py-1.5 rounded-full bg-white/95 text-[#073B35] border border-[#D7F5EF] shadow-sm">
+                        Available
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <div className="bg-white/95 backdrop-blur border border-white/70 rounded-[1.5rem] p-4 shadow-xl">
+                      <p className="text-[#1A9F8D] text-xs font-black uppercase tracking-wide">
+                        Fresh from kitchen
+                      </p>
+
+                      <h2 className="text-[#073B35] text-xl font-black mt-1 truncate">
+                        {kitchenName}
+                      </h2>
+
+                      <p className="text-[#51615D] text-xs mt-1">
+                        Exact kitchen door/location is not shown publicly.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="bg-white/85 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-5 sm:p-8 h-fit shadow-xl shadow-[#073B35]/5">
-                <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
-                  {kitchenName}
-                </p>
+              <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-8 h-fit shadow-xl shadow-[#073B35]/5">
+                <div className="inline-flex items-center gap-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
+                  <span>🌿</span>
+                  <span>{kitchenIsClosed ? "Kitchen Closed" : "Kitchen Open"}</span>
+                </div>
 
-                <h1 className="text-3xl sm:text-6xl font-black mt-3 leading-tight text-[#111827]">
+                <h1 className="text-4xl sm:text-6xl font-black mt-4 leading-[0.98] tracking-tight text-[#111827]">
                   {food.name}
                 </h1>
 
                 <div className="flex flex-wrap items-center gap-3 mt-5">
-                  <span className="bg-[#41D3BD] text-[#073B35] font-black px-5 py-2 rounded-2xl text-2xl shadow-lg shadow-[#41D3BD]/20">
+                  <span className="bg-[#073B35] text-white font-black px-5 py-2 rounded-2xl text-2xl shadow-lg shadow-[#073B35]/15">
                     ₹{food.price}
                   </span>
 
                   <span className="bg-[#FFFFF2] border border-[#D7F5EF] text-[#51615D] font-bold px-4 py-2 rounded-2xl">
-                    Ready: {food.time}
+                    Ready {food.time || "Soon"}
                   </span>
 
                   <span
                     className={`border font-bold px-4 py-2 rounded-2xl ${
-                      sellerIsClosed
+                      kitchenIsClosed
                         ? "border-red-200 bg-red-50 text-red-500"
                         : "border-[#41D3BD]/30 bg-[#41D3BD]/12 text-[#073B35]"
                     }`}
                   >
-                    {sellerIsClosed ? "Kitchen Closed" : "Kitchen Open"}
+                    {kitchenIsClosed ? "Closed" : "Open"}
                   </span>
                 </div>
 
@@ -360,62 +408,57 @@ export default function FoodDetails() {
                   </p>
                 )}
 
-                <div className="mt-6 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-5">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <p className="text-[#51615D] text-sm">Availability</p>
-                      <p
-                        className={`font-black mt-1 ${
-                          sellerIsClosed
-                            ? "text-red-500"
-                            : isSoldOut
-                            ? "text-[#9AA7A3]"
-                            : isLowStock
-                            ? "text-red-500"
-                            : "text-[#073B35]"
-                        }`}
-                      >
-                        {sellerIsClosed
-                          ? "Ordering temporarily unavailable"
-                          : isSoldOut
-                          ? "Sold out"
-                          : `${stock} portions left`}
-                      </p>
-                    </div>
+                <div className="mt-6 grid grid-cols-2 gap-3">
+                  <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4">
+                    <p className="text-[#51615D] text-xs font-bold uppercase">
+                      Availability
+                    </p>
 
-                    <div className="text-4xl">🍽️</div>
+                    <p className={`font-black mt-2 ${getAvailabilityClass()}`}>
+                      {getAvailabilityText()}
+                    </p>
+                  </div>
+
+                  <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4">
+                    <p className="text-[#51615D] text-xs font-bold uppercase">
+                      Category
+                    </p>
+
+                    <p className="font-black mt-2 text-[#073B35]">
+                      {category}
+                    </p>
                   </div>
                 </div>
 
                 <div className="mt-6">
-                  {quantity === 0 || sellerIsClosed ? (
+                  {quantity === 0 || kitchenIsClosed ? (
                     <button
                       type="button"
                       onClick={handleAddToCart}
                       disabled={isBlocked}
                       className={`w-full font-black py-5 rounded-2xl transition-all duration-200 shadow-lg text-lg ${
                         isBlocked
-                          ? "bg-[#D7F5EF] text-[#8AA5A0] cursor-not-allowed border border-[#D7F5EF]"
-                          : "bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-[0.98] text-[#073B35] shadow-[#41D3BD]/20"
+                          ? "bg-[#EAF7F4] text-[#8AA5A0] cursor-not-allowed border border-red-100"
+                          : "bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.98] text-white shadow-[#073B35]/15"
                       }`}
                     >
-                      {sellerIsClosed
+                      {kitchenIsClosed
                         ? "Kitchen Closed"
                         : isSoldOut
                         ? "Unavailable"
                         : "+ Add to Cart"}
                     </button>
                   ) : (
-                    <div className="flex items-center justify-between overflow-hidden rounded-2xl bg-[#41D3BD] text-[#073B35] font-black shadow-lg shadow-[#41D3BD]/20">
+                    <div className="flex items-center justify-between overflow-hidden rounded-2xl bg-[#073B35] text-white font-black shadow-lg shadow-[#073B35]/15">
                       <button
                         type="button"
                         onClick={handleDecrease}
-                        className="flex-1 py-5 text-2xl hover:bg-[#55E4CF] active:scale-95 transition-all duration-200"
+                        className="flex-1 py-5 text-2xl hover:bg-[#0B5149] active:scale-95 transition-all duration-200"
                       >
                         −
                       </button>
 
-                      <span className="px-6 py-5 bg-[#55E4CF] text-xl min-w-[90px] text-center">
+                      <span className="px-6 py-5 bg-[#41D3BD] text-[#073B35] text-xl min-w-[90px] text-center">
                         {quantity}
                       </span>
 
@@ -426,7 +469,7 @@ export default function FoodDetails() {
                         className={`flex-1 py-5 text-2xl transition-all duration-200 ${
                           quantity >= stock
                             ? "opacity-40 cursor-not-allowed"
-                            : "hover:bg-[#55E4CF] active:scale-95"
+                            : "hover:bg-[#0B5149] active:scale-95"
                         }`}
                       >
                         +
@@ -437,7 +480,7 @@ export default function FoodDetails() {
 
                 <Link
                   to="/cart"
-                  className="block text-center mt-4 border border-[#D7F5EF] bg-[#FFFFF2] hover:bg-[#D7F5EF] text-[#51615D] hover:text-[#073B35] font-bold py-4 rounded-2xl transition-all"
+                  className="block text-center mt-4 border border-[#D7F5EF] bg-[#FFFFF2] hover:bg-[#D7F5EF] text-[#51615D] hover:text-[#073B35] font-black py-4 rounded-2xl transition-all"
                 >
                   View Cart
                 </Link>
@@ -450,7 +493,7 @@ export default function FoodDetails() {
           <div className="max-w-7xl mx-auto">
             <div className="flex items-end justify-between gap-4 mb-5">
               <div>
-                <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
+                <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
                   More from kitchen
                 </p>
 
@@ -461,52 +504,52 @@ export default function FoodDetails() {
 
               <Link
                 to="/marketplace"
-                className="hidden sm:block text-[#1A9F8D] hover:text-[#073B35] font-bold transition-all"
+                className="hidden sm:block text-[#1A9F8D] hover:text-[#073B35] font-black transition-all"
               >
                 View Marketplace →
               </Link>
             </div>
 
-            {sellerFoods.length > 0 && (
-              <div className="flex gap-3 overflow-x-auto pb-3 mb-5">
+            {kitchenFoods.length > 0 && (
+              <div className="flex gap-3 overflow-x-auto pb-3 mb-5 scrollbar-hide">
                 <button
                   type="button"
-                  onClick={() => setSelectedSellerCategory("All")}
+                  onClick={() => setSelectedKitchenCategory("All")}
                   className={`shrink-0 px-4 py-3 rounded-2xl border font-black text-sm ${
-                    selectedSellerCategory === "All"
-                      ? "bg-[#41D3BD] text-[#073B35] border-[#41D3BD]"
+                    selectedKitchenCategory === "All"
+                      ? "bg-[#073B35] text-white border-[#073B35]"
                       : "bg-white/85 text-[#51615D] border-[#D7F5EF]"
                   }`}
                 >
-                  All ({sellerCategoryCounts.All || 0})
+                  All ({kitchenCategoryCounts.All || 0})
                 </button>
 
-                {SELLER_MENU_CATEGORIES.filter(
-                  (categoryName) => sellerCategoryCounts[categoryName] > 0
+                {KITCHEN_MENU_CATEGORIES.filter(
+                  (categoryName) => kitchenCategoryCounts[categoryName] > 0
                 ).map((categoryName) => (
                   <button
                     key={categoryName}
                     type="button"
-                    onClick={() => setSelectedSellerCategory(categoryName)}
+                    onClick={() => setSelectedKitchenCategory(categoryName)}
                     className={`shrink-0 px-4 py-3 rounded-2xl border font-black text-sm ${
-                      selectedSellerCategory === categoryName
-                        ? "bg-[#41D3BD] text-[#073B35] border-[#41D3BD]"
+                      selectedKitchenCategory === categoryName
+                        ? "bg-[#073B35] text-white border-[#073B35]"
                         : "bg-white/85 text-[#51615D] border-[#D7F5EF]"
                     }`}
                   >
-                    {categoryName} ({sellerCategoryCounts[categoryName]})
+                    {categoryName} ({kitchenCategoryCounts[categoryName]})
                   </button>
                 ))}
               </div>
             )}
 
-            {sellerFoods.length === 0 ? (
+            {kitchenFoods.length === 0 ? (
               <div className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-lg shadow-[#073B35]/5">
                 <p className="text-[#51615D]">
                   No other dishes from this kitchen right now.
                 </p>
               </div>
-            ) : visibleSellerFoods.length === 0 ? (
+            ) : visibleKitchenFoods.length === 0 ? (
               <div className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-lg shadow-[#073B35]/5">
                 <p className="text-[#51615D]">
                   No dishes in this category right now.
@@ -514,16 +557,16 @@ export default function FoodDetails() {
               </div>
             ) : (
               <>
-                {availableSellerFoods.length > 0 && (
+                {availableKitchenFoods.length > 0 && (
                   <div className="mb-5">
                     <p className="text-[#51615D] text-sm">
-                      {availableSellerFoods.length} available from this kitchen.
+                      {availableKitchenFoods.length} available from this kitchen.
                     </p>
                   </div>
                 )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
-                  {visibleSellerFoods.map((item) => (
+                  {visibleKitchenFoods.map((item) => (
                     <FoodCard key={item.id} item={item} />
                   ))}
                 </div>
@@ -535,7 +578,7 @@ export default function FoodDetails() {
         {cartCount > 0 && (
           <Link
             to="/cart"
-            className="fixed bottom-5 left-4 right-4 z-50 sm:left-auto sm:right-6 sm:w-auto bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-[0.98] text-[#073B35] font-black px-6 py-4 rounded-2xl shadow-2xl shadow-[#41D3BD]/25 flex items-center justify-center gap-3 transition-all"
+            className="fixed bottom-5 left-4 right-4 z-50 sm:left-auto sm:right-6 sm:w-auto bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.98] text-white font-black px-6 py-4 rounded-2xl shadow-2xl shadow-[#073B35]/25 flex items-center justify-center gap-3 transition-all"
           >
             <span>🛒</span>
             <span>

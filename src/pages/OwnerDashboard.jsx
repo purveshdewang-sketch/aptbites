@@ -56,7 +56,9 @@ export default function OwnerDashboard() {
     }
 
     const sellerIds = [
-      ...new Set((orderData || []).map((order) => order.seller_id).filter(Boolean)),
+      ...new Set(
+        (orderData || []).map((order) => order.seller_id).filter(Boolean)
+      ),
     ];
 
     let nextSellerMap = {};
@@ -64,7 +66,7 @@ export default function OwnerDashboard() {
     if (sellerIds.length > 0) {
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("id, full_name, email, phone")
+        .select("id, full_name, email, phone, seller_kitchen_name")
         .in("id", sellerIds);
 
       (profileData || []).forEach((profile) => {
@@ -149,7 +151,8 @@ export default function OwnerDashboard() {
     if (paymentFilter === "upi") return method === "upi";
     if (paymentFilter === "cash") return method === "cash";
     if (paymentFilter === "pending") return paymentStatus === "pending";
-    if (paymentFilter === "reference") return paymentStatus === "reference_submitted";
+    if (paymentFilter === "reference")
+      return paymentStatus === "reference_submitted";
 
     return true;
   }
@@ -187,13 +190,15 @@ export default function OwnerDashboard() {
   function getSellerName(order) {
     const sellerProfile = sellerMap[order.seller_id];
 
+    if (sellerProfile?.seller_kitchen_name) return sellerProfile.seller_kitchen_name;
     if (sellerProfile?.full_name) return sellerProfile.full_name;
 
     const firstItem = getOrderItems(order)[0];
 
     if (firstItem?.seller) return firstItem.seller;
+    if (firstItem?.seller_kitchen_name) return firstItem.seller_kitchen_name;
 
-    return "Unknown Seller";
+    return "Unknown Kitchen";
   }
 
   function getPaymentLabel(order) {
@@ -211,28 +216,28 @@ export default function OwnerDashboard() {
     const status = normalizePaymentStatus(order.payment_status);
 
     if (method === "cash") {
-      return "bg-blue-900/40 text-blue-300 border-blue-500/20";
+      return "bg-blue-50 text-blue-700 border-blue-200";
     }
 
     if (status === "reference_submitted") {
-      return "bg-green-900/40 text-green-300 border-green-500/20";
+      return "bg-green-50 text-green-700 border-green-200";
     }
 
-    return "bg-yellow-900/30 text-yellow-300 border-yellow-500/20";
+    return "bg-yellow-50 text-yellow-700 border-yellow-200";
   }
 
   function getStatusBadgeClass(status) {
     const currentStatus = normalizeStatus(status);
 
     if (currentStatus === "completed") {
-      return "bg-green-900/40 text-green-300 border-green-500/20";
+      return "bg-green-50 text-green-700 border-green-200";
     }
 
     if (currentStatus === "cancelled") {
-      return "bg-red-900/40 text-red-300 border-red-500/20";
+      return "bg-red-50 text-red-600 border-red-200";
     }
 
-    return "bg-yellow-900/30 text-yellow-300 border-yellow-500/20";
+    return "bg-[#41D3BD]/12 text-[#073B35] border-[#41D3BD]/30";
   }
 
   const filteredOrders = useMemo(() => {
@@ -320,7 +325,9 @@ export default function OwnerDashboard() {
 
       report[sellerId].orders += 1;
       report[sellerId].grossSales += Number(order.total_amount || 0);
-      report[sellerId].platformFee += Number(order.platform_fee || PLATFORM_FEE || 0);
+      report[sellerId].platformFee += Number(
+        order.platform_fee || PLATFORM_FEE || 0
+      );
 
       if (normalizeStatus(order.status) === "completed") {
         report[sellerId].completed += 1;
@@ -406,86 +413,99 @@ export default function OwnerDashboard() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-black text-white px-4 sm:px-6 py-7 sm:py-10 pb-28">
+      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-6 sm:py-10 pb-28">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
-            <div>
-              <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
-                Owner Dashboard
-              </p>
+          <section className="relative overflow-hidden bg-white/90 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-xl shadow-[#073B35]/5">
+            <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[95px]" />
+            <div className="absolute -bottom-28 -left-24 w-72 h-72 bg-[#41D3BD]/10 rounded-full blur-[110px]" />
 
-              <h1 className="text-3xl sm:text-5xl font-black mt-3 tracking-tight">
-                Orders & Payments
-              </h1>
+            <div className="relative flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
+              <div>
+                <div className="inline-flex items-center gap-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
+                  <span>👑</span>
+                  <span>Owner Dashboard</span>
+                </div>
 
-              <p className="text-gray-500 mt-3 max-w-2xl">
-                Daily control center for Nefo orders, payment references,
-                platform fees, and seller-wise performance.
-              </p>
+                <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
+                  Orders
+                  <span className="block text-[#111827]">& payments</span>
+                </h1>
+
+                <p className="text-[#51615D] mt-4 text-sm sm:text-lg max-w-2xl leading-relaxed">
+                  Daily control center for Nefo orders, UPI references, platform
+                  fees, seller-wise performance, and operational records.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  to="/marketplace"
+                  className="bg-[#FFFFF2] border border-[#D7F5EF] hover:bg-[#D7F5EF] text-[#073B35] font-black px-5 py-3 rounded-2xl transition-all"
+                >
+                  Marketplace
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={downloadCSV}
+                  className="bg-[#073B35] hover:bg-[#0B5149] text-white font-black px-5 py-3 rounded-2xl shadow-lg shadow-[#073B35]/15 transition-all"
+                >
+                  Download CSV
+                </button>
+              </div>
             </div>
+          </section>
 
-            <div className="flex flex-wrap gap-3">
-              <Link
-                to="/marketplace"
-                className="border border-[#333] hover:border-yellow-500/50 text-gray-300 hover:text-yellow-400 font-bold px-5 py-3 rounded-2xl"
+          <section className="mt-6 bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-4 sm:p-5 shadow-lg shadow-[#073B35]/5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] gap-3">
+              <select
+                value={dateFilter}
+                onChange={(event) => setDateFilter(event.target.value)}
+                className="bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] font-bold"
               >
-                Marketplace
-              </Link>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="all">All Time</option>
+              </select>
+
+              <select
+                value={paymentFilter}
+                onChange={(event) => setPaymentFilter(event.target.value)}
+                className="bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] font-bold"
+              >
+                <option value="all">All Payments</option>
+                <option value="upi">UPI Orders</option>
+                <option value="reference">UPI Reference Submitted</option>
+                <option value="pending">Payment Pending</option>
+                <option value="cash">Cash / Pay Later</option>
+              </select>
 
               <button
                 type="button"
-                onClick={downloadCSV}
-                className="bg-yellow-500 hover:bg-yellow-400 text-black font-black px-5 py-3 rounded-2xl"
+                onClick={() => fetchOwnerData()}
+                className="bg-[#FFFFF2] border border-[#41D3BD]/45 hover:bg-[#D7F5EF] text-[#073B35] font-black px-5 py-4 rounded-2xl transition-all"
               >
-                Download CSV
+                Refresh
               </button>
             </div>
-          </div>
-
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] gap-3">
-            <select
-              value={dateFilter}
-              onChange={(event) => setDateFilter(event.target.value)}
-              className="bg-[#111] border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500"
-            >
-              <option value="today">Today</option>
-              <option value="yesterday">Yesterday</option>
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-              <option value="all">All Time</option>
-            </select>
-
-            <select
-              value={paymentFilter}
-              onChange={(event) => setPaymentFilter(event.target.value)}
-              className="bg-[#111] border border-[#333] rounded-2xl px-5 py-4 outline-none focus:border-yellow-500"
-            >
-              <option value="all">All Payments</option>
-              <option value="upi">UPI Orders</option>
-              <option value="reference">UPI Reference Submitted</option>
-              <option value="pending">Payment Pending</option>
-              <option value="cash">Cash / Pay Later</option>
-            </select>
-
-            <button
-              type="button"
-              onClick={() => fetchOwnerData()}
-              className="bg-[#111] border border-[#333] hover:border-yellow-500/50 text-yellow-400 font-black px-5 py-4 rounded-2xl"
-            >
-              Refresh
-            </button>
-          </div>
+          </section>
 
           {loading && (
-            <div className="mt-8 bg-[#111] border border-[#222] rounded-3xl p-8 text-center">
-              <p className="text-gray-400 font-bold">Loading owner dashboard...</p>
+            <div className="mt-8 bg-white/90 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-lg shadow-[#073B35]/5">
+              <p className="text-[#51615D] font-bold">
+                Loading owner dashboard...
+              </p>
             </div>
           )}
 
           {!loading && errorMessage && (
-            <div className="mt-8 bg-red-950/40 border border-red-500/30 rounded-3xl p-6">
-              <p className="text-red-300 font-black">Could not load dashboard.</p>
-              <p className="text-red-200/70 text-sm mt-2">{errorMessage}</p>
+            <div className="mt-8 bg-red-50 border border-red-200 rounded-3xl p-6">
+              <p className="text-red-600 font-black">
+                Could not load dashboard.
+              </p>
+              <p className="text-red-500 text-sm mt-2">{errorMessage}</p>
             </div>
           )}
 
@@ -498,6 +518,10 @@ export default function OwnerDashboard() {
                 <StatCard title="Cancelled" value={analytics.cancelledOrders} />
                 <StatCard title="Total Sales" value={`₹${analytics.totalSales}`} />
                 <StatCard
+                  title="Subtotal Sales"
+                  value={`₹${analytics.subtotalSales}`}
+                />
+                <StatCard
                   title="Platform Fee"
                   value={`₹${analytics.platformFeeEarned}`}
                 />
@@ -505,33 +529,33 @@ export default function OwnerDashboard() {
                   title="UPI Ref Submitted"
                   value={analytics.upiReferenceSubmitted}
                 />
-                <StatCard title="Payment Pending" value={analytics.paymentPending} />
               </section>
 
-              <section className="mt-8 bg-[#111] border border-[#222] rounded-[2rem] p-5 sm:p-6">
+              <section className="mt-8 bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
+                    <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
                       Seller Report
                     </p>
-                    <h2 className="text-2xl sm:text-3xl font-black mt-1">
-                      Seller-wise Sales
+
+                    <h2 className="text-2xl sm:text-3xl font-black mt-1 text-[#111827]">
+                      Seller-wise sales
                     </h2>
                   </div>
 
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-[#51615D] text-sm font-bold">
                     {sellerWiseReport.length} sellers
                   </p>
                 </div>
 
                 {sellerWiseReport.length === 0 ? (
-                  <p className="text-gray-500 mt-6">No seller data found.</p>
+                  <p className="text-[#51615D] mt-6">No seller data found.</p>
                 ) : (
                   <div className="mt-6 overflow-x-auto">
                     <table className="w-full text-left min-w-[760px]">
                       <thead>
-                        <tr className="border-b border-[#222] text-gray-500 text-sm">
-                          <th className="py-3 pr-4">Seller</th>
+                        <tr className="border-b border-[#D7F5EF] text-[#51615D] text-sm">
+                          <th className="py-3 pr-4">Kitchen</th>
                           <th className="py-3 pr-4">Orders</th>
                           <th className="py-3 pr-4">Completed</th>
                           <th className="py-3 pr-4">Cancelled</th>
@@ -545,23 +569,27 @@ export default function OwnerDashboard() {
                         {sellerWiseReport.map((seller) => (
                           <tr
                             key={seller.sellerId}
-                            className="border-b border-[#1a1a1a] text-sm"
+                            className="border-b border-[#D7F5EF] text-sm"
                           >
-                            <td className="py-4 pr-4 font-black">
+                            <td className="py-4 pr-4 font-black text-[#111827]">
                               {seller.sellerName}
                             </td>
-                            <td className="py-4 pr-4">{seller.orders}</td>
-                            <td className="py-4 pr-4 text-green-400">
+                            <td className="py-4 pr-4 text-[#51615D]">
+                              {seller.orders}
+                            </td>
+                            <td className="py-4 pr-4 text-green-600 font-bold">
                               {seller.completed}
                             </td>
-                            <td className="py-4 pr-4 text-red-400">
+                            <td className="py-4 pr-4 text-red-500 font-bold">
                               {seller.cancelled}
                             </td>
-                            <td className="py-4 pr-4 text-yellow-400 font-black">
+                            <td className="py-4 pr-4 text-[#073B35] font-black">
                               ₹{seller.grossSales}
                             </td>
-                            <td className="py-4 pr-4">₹{seller.platformFee}</td>
-                            <td className="py-4 pr-4 text-yellow-400">
+                            <td className="py-4 pr-4 text-[#51615D]">
+                              ₹{seller.platformFee}
+                            </td>
+                            <td className="py-4 pr-4 text-yellow-700 font-bold">
                               {seller.pendingPayments}
                             </td>
                           </tr>
@@ -572,25 +600,26 @@ export default function OwnerDashboard() {
                 )}
               </section>
 
-              <section className="mt-8 bg-[#111] border border-[#222] rounded-[2rem] p-5 sm:p-6">
+              <section className="mt-8 bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-yellow-400 font-semibold uppercase tracking-wide text-sm">
+                    <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
                       Order Register
                     </p>
-                    <h2 className="text-2xl sm:text-3xl font-black mt-1">
-                      Orders + Payments
+
+                    <h2 className="text-2xl sm:text-3xl font-black mt-1 text-[#111827]">
+                      Orders + payments
                     </h2>
                   </div>
 
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-[#51615D] text-sm font-bold">
                     {filteredOrders.length} records
                   </p>
                 </div>
 
                 {filteredOrders.length === 0 ? (
-                  <div className="mt-6 bg-black/40 border border-[#222] rounded-3xl p-8 text-center">
-                    <p className="text-gray-400 font-bold">
+                  <div className="mt-6 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-8 text-center">
+                    <p className="text-[#51615D] font-bold">
                       No orders found for selected filters.
                     </p>
                   </div>
@@ -599,34 +628,35 @@ export default function OwnerDashboard() {
                     {filteredOrders.map((order) => (
                       <article
                         key={order.id}
-                        className="bg-black/40 border border-[#222] rounded-3xl p-4 sm:p-5"
+                        className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4 sm:p-5"
                       >
                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                           <div className="min-w-0">
-                            <p className="text-gray-500 text-sm">
-                              Order #{order.id} • {formatDateTime(order.created_at)}
+                            <p className="text-[#51615D] text-sm font-bold">
+                              Order #{order.id} •{" "}
+                              {formatDateTime(order.created_at)}
                             </p>
 
-                            <h3 className="text-2xl font-black mt-1">
+                            <h3 className="text-3xl font-black mt-1 text-[#073B35]">
                               ₹{order.total_amount}
                             </h3>
 
-                            <p className="text-gray-400 text-sm mt-2">
+                            <p className="text-[#51615D] text-sm mt-2">
                               {order.customer_name} • {order.phone}
                             </p>
 
-                            <p className="text-gray-500 text-sm mt-1">
-                              Seller: {getSellerName(order)}
+                            <p className="text-[#51615D] text-sm mt-1">
+                              Kitchen: {getSellerName(order)}
                             </p>
 
-                            <p className="text-gray-500 text-sm mt-1">
+                            <p className="text-[#51615D] text-sm mt-1">
                               {order.delivery_type} • {order.flat}
                             </p>
                           </div>
 
                           <div className="flex flex-wrap sm:justify-end gap-2">
                             <span
-                              className={`w-fit border text-xs font-bold px-3 py-1.5 rounded-full ${getStatusBadgeClass(
+                              className={`w-fit border text-xs font-black px-3 py-1.5 rounded-full ${getStatusBadgeClass(
                                 order.status
                               )}`}
                             >
@@ -634,7 +664,7 @@ export default function OwnerDashboard() {
                             </span>
 
                             <span
-                              className={`w-fit border text-xs font-bold px-3 py-1.5 rounded-full ${getPaymentBadgeClass(
+                              className={`w-fit border text-xs font-black px-3 py-1.5 rounded-full ${getPaymentBadgeClass(
                                 order
                               )}`}
                             >
@@ -644,22 +674,24 @@ export default function OwnerDashboard() {
                         </div>
 
                         {order.payment_reference && (
-                          <div className="mt-4 bg-green-950/30 border border-green-500/20 rounded-2xl p-4">
-                            <p className="text-green-400 text-xs font-black uppercase">
+                          <div className="mt-4 bg-green-50 border border-green-200 rounded-2xl p-4">
+                            <p className="text-green-700 text-xs font-black uppercase">
                               Payment Reference
                             </p>
-                            <p className="text-white font-bold mt-1 break-all">
+
+                            <p className="text-[#111827] font-bold mt-1 break-all">
                               {order.payment_reference}
                             </p>
                           </div>
                         )}
 
                         {order.scheduled_order && (
-                          <div className="mt-4 bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4">
-                            <p className="text-yellow-400 text-xs font-black uppercase">
+                          <div className="mt-4 bg-[#41D3BD]/12 border border-[#41D3BD]/25 rounded-2xl p-4">
+                            <p className="text-[#073B35] text-xs font-black uppercase">
                               Scheduled For
                             </p>
-                            <p className="text-white font-bold mt-1">
+
+                            <p className="text-[#111827] font-bold mt-1">
                               {formatDateTime(order.scheduled_for)}
                             </p>
                           </div>
@@ -679,9 +711,10 @@ export default function OwnerDashboard() {
 
 function StatCard({ title, value }) {
   return (
-    <div className="bg-[#111] border border-[#222] rounded-3xl p-5">
-      <p className="text-gray-500 text-xs uppercase font-bold">{title}</p>
-      <p className="text-2xl sm:text-3xl font-black text-yellow-400 mt-3">
+    <div className="bg-white/90 border border-[#D7F5EF] rounded-3xl p-5 shadow-lg shadow-[#073B35]/5">
+      <p className="text-[#51615D] text-xs uppercase font-black">{title}</p>
+
+      <p className="text-2xl sm:text-3xl font-black text-[#073B35] mt-3">
         {value}
       </p>
     </div>

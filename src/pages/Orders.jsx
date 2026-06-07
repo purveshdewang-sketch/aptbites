@@ -274,7 +274,7 @@ export default function Orders() {
     const progressWidth = getProgressWidth(status);
 
     return (
-      <div className="mt-5">
+      <div className="mt-6">
         <div className="grid grid-cols-5 gap-1 sm:gap-2">
           {ORDER_STEPS.map((step, index) => {
             const isActive = index <= activeIndex;
@@ -283,9 +283,9 @@ export default function Orders() {
             return (
               <div key={step.key} className="text-center">
                 <div
-                  className={`mx-auto w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center text-base sm:text-lg border transition-all duration-300 ${
+                  className={`mx-auto w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-base sm:text-lg border transition-all duration-300 ${
                     isActive
-                      ? "bg-[#41D3BD] text-[#073B35] border-[#41D3BD] shadow-lg shadow-[#41D3BD]/20"
+                      ? "bg-[#073B35] text-white border-[#073B35] shadow-lg shadow-[#073B35]/15"
                       : "bg-[#FFFFF2] text-[#9AA7A3] border-[#D7F5EF]"
                   } ${isCurrent ? "scale-110" : ""}`}
                 >
@@ -293,7 +293,7 @@ export default function Orders() {
                 </div>
 
                 <p
-                  className={`mt-2 text-[9px] sm:text-xs font-bold leading-tight ${
+                  className={`mt-2 text-[9px] sm:text-xs font-black leading-tight ${
                     isActive ? "text-[#073B35]" : "text-[#9AA7A3]"
                   }`}
                 >
@@ -306,7 +306,7 @@ export default function Orders() {
 
         <div className="mt-5 h-2.5 bg-[#FFFFF2] border border-[#D7F5EF] rounded-full overflow-hidden">
           <div
-            className="h-full bg-[#41D3BD] transition-all duration-700 ease-out"
+            className="h-full bg-[#073B35] transition-all duration-700 ease-out"
             style={{
               width: `${progressWidth}%`,
             }}
@@ -314,7 +314,7 @@ export default function Orders() {
         </div>
 
         {isScheduledOrder(order) && status === "confirmed" && (
-          <div className="mt-4 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] rounded-2xl p-4 font-bold">
+          <div className="mt-4 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] rounded-2xl p-4 font-black">
             🕒 Scheduled for {formatScheduledDateTime(order.scheduled_for)}
           </div>
         )}
@@ -327,7 +327,7 @@ export default function Orders() {
         )}
 
         {status === "ready_for_pickup" && (
-          <div className="mt-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl p-4 font-bold">
+          <div className="mt-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl p-4 font-black">
             🛍️ Your order is ready for pickup. Pickup coordination will happen
             through Nefo without showing the kitchen door publicly.
           </div>
@@ -353,36 +353,43 @@ export default function Orders() {
 
       <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-6 sm:py-10 pb-24">
         <div className="max-w-5xl mx-auto">
-          <div>
-            <p className="text-[#1A9F8D] font-semibold tracking-wide uppercase text-sm">
-              Active Orders
-            </p>
+          <section className="relative overflow-hidden bg-white/85 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-xl shadow-[#073B35]/5">
+            <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[95px]" />
+            <div className="absolute -bottom-28 -left-24 w-72 h-72 bg-[#41D3BD]/10 rounded-full blur-[110px]" />
 
-            <h1 className="text-3xl sm:text-5xl font-black mt-3 tracking-tight text-[#111827]">
-              Live Order Tracking
-            </h1>
+            <div className="relative">
+              <div className="inline-flex items-center gap-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
+                <span>📍</span>
+                <span>Active Orders</span>
+              </div>
 
-            <p className="text-[#51615D] mt-4 max-w-2xl leading-relaxed">
-              Track your Nefo orders from kitchen confirmation to final
-              completion.
-            </p>
-          </div>
+              <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
+                Live order
+                <span className="block text-[#111827]">tracking</span>
+              </h1>
+
+              <p className="text-[#51615D] mt-4 max-w-2xl leading-relaxed text-sm sm:text-lg">
+                Track your Nefo orders from kitchen confirmation to final
+                completion.
+              </p>
+            </div>
+          </section>
 
           {cancelMessage && (
-            <div className="mt-5 bg-red-50 border border-red-200 text-red-600 rounded-2xl p-4 text-sm font-bold">
+            <div className="mt-5 bg-red-50 border border-red-200 text-red-600 rounded-2xl p-4 text-sm font-black">
               {cancelMessage}
             </div>
           )}
 
           {!user && (
-            <div className="mt-10 bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-8 text-center shadow-xl shadow-[#073B35]/5">
-              <h2 className="text-2xl font-bold text-[#111827]">
+            <div className="mt-8 bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-8 text-center shadow-xl shadow-[#073B35]/5">
+              <h2 className="text-2xl font-black text-[#111827]">
                 Sign in to view orders
               </h2>
 
               <Link
                 to="/customer-login"
-                className="inline-block mt-7 bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-bold px-6 py-3 rounded-2xl"
+                className="inline-block mt-7 bg-[#073B35] hover:bg-[#0B5149] text-white font-black px-6 py-3 rounded-2xl"
               >
                 Sign In
               </Link>
@@ -394,7 +401,7 @@ export default function Orders() {
               {[1, 2, 3].map((item) => (
                 <div
                   key={item}
-                  className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-5 animate-pulse shadow-lg shadow-[#073B35]/5"
+                  className="bg-white/90 border border-[#D7F5EF] rounded-3xl p-5 animate-pulse shadow-lg shadow-[#073B35]/5"
                 >
                   <div className="h-5 bg-[#D7F5EF] rounded-full w-1/3" />
                   <div className="h-4 bg-[#D7F5EF] rounded-full w-2/3 mt-4" />
@@ -405,19 +412,19 @@ export default function Orders() {
           )}
 
           {user && errorMessage && (
-            <div className="mt-10 bg-red-50 border border-red-200 text-red-600 rounded-3xl p-5">
-              <p className="font-bold">Failed to load orders</p>
+            <div className="mt-8 bg-red-50 border border-red-200 text-red-600 rounded-3xl p-5">
+              <p className="font-black">Failed to load orders</p>
               <p className="text-sm mt-1">{errorMessage}</p>
             </div>
           )}
 
           {user && !loading && !errorMessage && visibleOrders.length === 0 && (
-            <div className="mt-10 bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-8 sm:p-10 text-center shadow-xl shadow-[#073B35]/5">
-              <div className="w-20 h-20 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-4xl">
+            <div className="mt-8 bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-8 sm:p-10 text-center shadow-xl shadow-[#073B35]/5">
+              <div className="w-24 h-24 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-5xl">
                 🍲
               </div>
 
-              <h2 className="text-2xl sm:text-3xl font-bold mt-6 text-[#111827]">
+              <h2 className="text-3xl sm:text-4xl font-black mt-6 text-[#111827]">
                 No active orders
               </h2>
 
@@ -428,14 +435,14 @@ export default function Orders() {
               <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Link
                   to="/marketplace"
-                  className="w-full sm:w-auto bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-95 text-[#073B35] font-bold px-6 py-3 rounded-2xl transition-all duration-200 text-center"
+                  className="w-full sm:w-auto bg-[#073B35] hover:bg-[#0B5149] active:scale-95 text-white font-black px-6 py-3 rounded-2xl transition-all duration-200 text-center"
                 >
                   Explore Marketplace
                 </Link>
 
                 <Link
                   to="/customer-care"
-                  className="w-full sm:w-auto border border-[#41D3BD]/45 bg-[#FFFFF2] text-[#073B35] hover:bg-[#D7F5EF] active:scale-95 font-bold px-6 py-3 rounded-2xl transition-all duration-200 text-center"
+                  className="w-full sm:w-auto border border-[#41D3BD]/45 bg-[#FFFFF2] text-[#073B35] hover:bg-[#D7F5EF] active:scale-95 font-black px-6 py-3 rounded-2xl transition-all duration-200 text-center"
                 >
                   Need Help?
                 </Link>
@@ -448,42 +455,43 @@ export default function Orders() {
               {visibleOrders.map((order) => {
                 const autoStatus = getAutoStatus(order);
                 const scheduled = isScheduledOrder(order);
+                const orderItems = getOrderItems(order);
 
                 return (
                   <article
                     key={order.id}
-                    className="bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-4 sm:p-6 shadow-xl shadow-[#073B35]/5"
+                    className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-4 sm:p-6 shadow-xl shadow-[#073B35]/5"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                       <div>
-                        <p className="text-[#51615D] text-sm">
+                        <p className="text-[#51615D] text-sm font-bold">
                           Order #{order.id}
                         </p>
 
-                        <h2 className="text-2xl sm:text-3xl font-black mt-1 text-[#073B35]">
+                        <h2 className="text-3xl sm:text-4xl font-black mt-1 text-[#073B35]">
                           ₹{order.total_amount}
                         </h2>
 
                         <p className="text-[#51615D] text-sm mt-2">
                           {order.delivery_type || "Delivery"} • Your address:{" "}
-                          {order.flat}
+                          {order.flat || "Not available"}
                         </p>
 
                         <div className="flex flex-wrap gap-2 mt-3">
                           {scheduled && (
-                            <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#41D3BD]/12 text-[#073B35] border border-[#41D3BD]/25">
+                            <span className="text-xs font-black px-3 py-1 rounded-full bg-[#41D3BD]/12 text-[#073B35] border border-[#41D3BD]/25">
                               🕒 Scheduled
                             </span>
                           )}
 
                           {scheduled && (
-                            <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#51615D]">
+                            <span className="text-xs font-black px-3 py-1 rounded-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#51615D]">
                               {formatScheduledDateTime(order.scheduled_for)}
                             </span>
                           )}
 
                           {isSelfPickup(order) && (
-                            <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span className="text-xs font-black px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                               🛍️ Self Pickup
                             </span>
                           )}
@@ -491,7 +499,7 @@ export default function Orders() {
                       </div>
 
                       <span
-                        className={`w-fit border text-xs font-bold px-3 py-1.5 rounded-full ${getStatusStyle(
+                        className={`w-fit border text-xs font-black px-3 py-1.5 rounded-full ${getStatusStyle(
                           autoStatus
                         )}`}
                       >
@@ -500,6 +508,31 @@ export default function Orders() {
                     </div>
 
                     <OrderStatusBar order={order} />
+
+                    <div className="mt-5 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4 space-y-3">
+                      {orderItems.map((item) => (
+                        <div
+                          key={`${order.id}-${item.id}`}
+                          className="flex items-center justify-between gap-4"
+                        >
+                          <div className="min-w-0">
+                            <p className="font-black truncate text-[#111827]">
+                              {item.name}
+                            </p>
+
+                            <p className="text-[#51615D] text-sm">
+                              Qty {item.quantity} × ₹{item.price}
+                            </p>
+                          </div>
+
+                          <p className="text-[#073B35] font-black shrink-0">
+                            ₹
+                            {Number(item.price || 0) *
+                              Number(item.quantity || 0)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
 
                     <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <button
@@ -518,30 +551,10 @@ export default function Orders() {
                       </Link>
                     </div>
 
-                    <div className="mt-5 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4 space-y-3">
-                      {getOrderItems(order).map((item) => (
-                        <div
-                          key={`${order.id}-${item.id}`}
-                          className="flex items-center justify-between gap-4"
-                        >
-                          <div className="min-w-0">
-                            <p className="font-semibold truncate text-[#111827]">
-                              {item.name}
-                            </p>
-
-                            <p className="text-[#51615D] text-sm">
-                              Qty {item.quantity} × ₹{item.price}
-                            </p>
-                          </div>
-
-                          <p className="text-[#073B35] font-bold shrink-0">
-                            ₹
-                            {Number(item.price || 0) *
-                              Number(item.quantity || 0)}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
+                    <p className="text-[#51615D] text-xs mt-4 leading-relaxed">
+                      Exact kitchen door/location is not shown publicly. Pickup
+                      coordination happens through Nefo after confirmation.
+                    </p>
                   </article>
                 );
               })}

@@ -278,6 +278,19 @@ export default function Marketplace() {
     );
   }, [foods]);
 
+  const closedOrSoldOutCount = useMemo(() => {
+    return foods.filter(
+      (item) => Number(item.stock || 0) <= 0 || item.seller_online === false
+    ).length;
+  }, [foods]);
+
+  const featuredFoods = useMemo(() => {
+    return foods
+      .filter((food) => Number(food.stock || 0) > 0 && food.seller_online !== false)
+      .sort((a, b) => Number(b.sold_count || 0) - Number(a.sold_count || 0))
+      .slice(0, 4);
+  }, [foods]);
+
   function clearFilters() {
     setSearchTerm("");
     setSelectedType("All");
@@ -286,12 +299,12 @@ export default function Marketplace() {
   }
 
   function getTypeLabel(type) {
-    if (type === "All") return "All Food Types";
+    if (type === "All") return "All Types";
     return type;
   }
 
   function getCategoryHeading() {
-    if (selectedCategory === "All") return "Today’s Specials";
+    if (selectedCategory === "All") return "Fresh food drops";
     return selectedCategory;
   }
 
@@ -316,7 +329,7 @@ export default function Marketplace() {
       } for ${parts.join(" • ")}`;
     }
 
-    return "Fresh homemade food drops available now.";
+    return "Homemade dishes available from trusted kitchens in your community.";
   }
 
   const hasActiveFilters =
@@ -327,112 +340,137 @@ export default function Marketplace() {
       <Navbar />
 
       <main className="min-h-screen bg-[#FFFFF2] text-[#111827] overflow-hidden pb-28">
-        <section className="relative px-4 sm:px-6 pt-4 pb-5 sm:pt-8 sm:pb-8 border-b border-[#D7F5EF]">
-          <div className="absolute top-0 right-0 w-72 h-72 bg-[#41D3BD]/18 rounded-full blur-[95px]" />
-          <div className="absolute top-24 left-0 w-72 h-72 bg-[#41D3BD]/10 rounded-full blur-[110px]" />
+        <section className="relative px-4 sm:px-6 pt-4 sm:pt-8 pb-4 sm:pb-8">
+          <div className="absolute -top-24 -right-24 w-80 h-80 bg-[#41D3BD]/20 rounded-full blur-[100px]" />
+          <div className="absolute top-36 -left-28 w-80 h-80 bg-[#41D3BD]/10 rounded-full blur-[120px]" />
 
           <div className="relative max-w-7xl mx-auto">
-            <div className="sm:hidden">
-              <p className="text-[#1A9F8D] font-black tracking-wide text-xs uppercase">
-                Marketplace
-              </p>
+            <div className="bg-white/85 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-xl shadow-[#073B35]/5 overflow-hidden">
+              <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-6 lg:gap-10 items-center">
+                <div>
+                  <div className="inline-flex items-center gap-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
+                    <span>🌿</span>
+                    <span>Homemade. Nearby. Fresh.</span>
+                  </div>
 
-              <h1 className="text-3xl font-black text-[#111827] mt-2 leading-tight">
-                Food around you
-              </h1>
+                  <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
+                    What would you like
+                    <span className="block text-[#111827]">to eat today?</span>
+                  </h1>
 
-              <p className="text-[#51615D] text-sm mt-2">
-                Fresh homemade drops from your community.
-              </p>
-            </div>
+                  <p className="text-[#51615D] text-sm sm:text-lg mt-5 max-w-2xl leading-relaxed">
+                    Order fresh homemade meals, snacks, sweets, tiffins and
+                    special food drops from kitchens inside your community.
+                  </p>
 
-            <div className="hidden sm:block">
-              <p className="text-[#1A9F8D] font-semibold tracking-wide text-sm uppercase">
-                Marketplace
-              </p>
-
-              <h1 className="text-5xl md:text-6xl font-black text-[#111827] mt-3 leading-[1.03] tracking-tight">
-                Fresh homemade food
-                <span className="block text-[#073B35]">
-                  from your community.
-                </span>
-              </h1>
-
-              <p className="text-[#51615D] text-lg mt-5 max-w-2xl leading-relaxed">
-                Discover meals, snacks, desserts, and special dishes prepared by
-                trusted home kitchens inside your neighbourhood.
-              </p>
-            </div>
-
-            <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <div className="bg-white/85 border border-[#D7F5EF] rounded-2xl p-4 shadow-lg shadow-[#073B35]/5">
-                <p className="text-[#51615D] text-[11px] uppercase font-bold">
-                  Available Now
-                </p>
-                <p className="text-2xl font-black text-[#073B35] mt-1">
-                  {availableFoods.length}
-                </p>
-              </div>
-
-              <div className="bg-white/85 border border-[#D7F5EF] rounded-2xl p-4 shadow-lg shadow-[#073B35]/5">
-                <p className="text-[#51615D] text-[11px] uppercase font-bold">
-                  Popular Today
-                </p>
-
-                {highestSellingFood ? (
-                  <Link
-                    to={`/food/${highestSellingFood.id}`}
-                    className="mt-2 flex items-center gap-3 group"
-                  >
-                    <img
-                      src={highestSellingFood.image}
-                      alt={highestSellingFood.name}
-                      className="w-11 h-11 rounded-full object-cover border border-[#D7F5EF]"
-                    />
-
-                    <div className="min-w-0">
-                      <p className="text-[#111827] group-hover:text-[#1A9F8D] font-black truncate transition-all text-sm sm:text-base">
-                        {highestSellingFood.name}
+                  <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3 max-w-xl">
+                    <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3 sm:p-4">
+                      <p className="text-[#51615D] text-[10px] sm:text-xs font-bold uppercase">
+                        Available
                       </p>
-
-                      <p className="text-[#1A9F8D] text-xs sm:text-sm font-bold">
-                        Popular Dish
+                      <p className="text-[#073B35] text-xl sm:text-2xl font-black mt-1">
+                        {availableFoods.length}
                       </p>
                     </div>
-                  </Link>
-                ) : (
-                  <p className="text-2xl font-black text-[#9AA7A3] mt-1">—</p>
-                )}
-              </div>
 
-              <div className="hidden sm:block bg-white/85 border border-[#D7F5EF] rounded-2xl p-4 shadow-lg shadow-[#073B35]/5">
-                <p className="text-[#51615D] text-xs uppercase font-bold">
-                  Food Drops
-                </p>
-                <p className="text-2xl font-black text-[#111827] mt-1">
-                  {foods.length}
-                </p>
+                    <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3 sm:p-4">
+                      <p className="text-[#51615D] text-[10px] sm:text-xs font-bold uppercase">
+                        Food Drops
+                      </p>
+                      <p className="text-[#111827] text-xl sm:text-2xl font-black mt-1">
+                        {foods.length}
+                      </p>
+                    </div>
+
+                    <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3 sm:p-4">
+                      <p className="text-[#51615D] text-[10px] sm:text-xs font-bold uppercase">
+                        Closed
+                      </p>
+                      <p className="text-[#9AA7A3] text-xl sm:text-2xl font-black mt-1">
+                        {closedOrSoldOutCount}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="hidden lg:block">
+                  {highestSellingFood ? (
+                    <Link
+                      to={`/food/${highestSellingFood.id}`}
+                      className="group block bg-[#073B35] text-white rounded-[2rem] p-4 shadow-2xl shadow-[#073B35]/20 overflow-hidden"
+                    >
+                      <div className="relative aspect-[4/3] rounded-[1.5rem] overflow-hidden bg-[#D7F5EF]">
+                        <img
+                          src={highestSellingFood.image}
+                          alt={highestSellingFood.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+                        />
+
+                        <div className="absolute top-3 left-3 bg-[#41D3BD] text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
+                          🔥 Popular Today
+                        </div>
+                      </div>
+
+                      <div className="p-2 pt-4">
+                        <p className="text-white/65 text-xs font-bold uppercase">
+                          Customer favourite
+                        </p>
+
+                        <h2 className="text-2xl font-black mt-1 truncate">
+                          {highestSellingFood.name}
+                        </h2>
+
+                        <div className="flex items-center justify-between mt-3">
+                          <p className="text-white/70 text-sm">
+                            Fresh from kitchen
+                          </p>
+
+                          <p className="text-[#41D3BD] font-black text-2xl">
+                            ₹{highestSellingFood.price}
+                          </p>
+                        </div>
+                      </div>
+                    </Link>
+                  ) : (
+                    <div className="bg-[#073B35] text-white rounded-[2rem] p-8 shadow-2xl shadow-[#073B35]/20">
+                      <div className="text-5xl">🍽️</div>
+                      <h2 className="text-3xl font-black mt-5">
+                        Fresh drops are loading
+                      </h2>
+                      <p className="text-white/70 mt-3">
+                        Popular dishes will appear here once customers start
+                        ordering.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            <div className="mt-4 sticky top-[76px] z-40 bg-[#FFFFF2]/95 backdrop-blur py-2 -mx-4 px-4 sm:static sm:bg-transparent sm:backdrop-blur-0 sm:mx-0 sm:px-0 sm:py-0">
-              <div className="grid grid-cols-1 gap-3 lg:flex lg:items-center lg:gap-4">
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder="Search dishes or kitchens..."
-                  className="bg-white/85 border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-5 py-4 w-full lg:max-w-lg outline-none focus:border-[#41D3BD] transition-all duration-200 text-base shadow-sm"
-                />
+            <div className="mt-4 sm:mt-6 sticky top-[76px] z-40 bg-[#FFFFF2]/95 backdrop-blur-xl py-3 -mx-4 px-4 sm:static sm:bg-transparent sm:backdrop-blur-0 sm:mx-0 sm:px-0 sm:py-0">
+              <div className="bg-white/90 border border-[#D7F5EF] rounded-[1.5rem] sm:rounded-[2rem] p-3 sm:p-4 shadow-lg shadow-[#073B35]/5">
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_auto] gap-3">
+                  <div className="relative">
+                    <span className="absolute left-5 top-1/2 -translate-y-1/2 text-[#1A9F8D]">
+                      🔎
+                    </span>
 
-                <div className="grid grid-cols-[1fr_auto] gap-3 lg:flex lg:gap-4">
-                  <div className="relative w-full lg:w-60">
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(event) => setSearchTerm(event.target.value)}
+                      placeholder="Search dishes or kitchens..."
+                      className="bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl pl-12 pr-5 py-4 w-full outline-none focus:border-[#41D3BD] transition-all duration-200 text-base"
+                    />
+                  </div>
+
+                  <div className="relative">
                     <button
                       type="button"
                       onClick={() => setTypeDropdownOpen(!typeDropdownOpen)}
-                      className="w-full bg-white/85 border border-[#D7F5EF] hover:border-[#41D3BD] text-[#111827] rounded-2xl px-5 py-4 flex items-center justify-between transition-all duration-200 shadow-sm"
+                      className="w-full lg:w-48 bg-[#FFFFF2] border border-[#D7F5EF] hover:border-[#41D3BD] text-[#111827] rounded-2xl px-5 py-4 flex items-center justify-between transition-all duration-200"
                     >
-                      <span className="font-semibold">
+                      <span className="font-black">
                         {getTypeLabel(selectedType)}
                       </span>
 
@@ -467,9 +505,9 @@ export default function Marketplace() {
                   <button
                     type="button"
                     onClick={hasActiveFilters ? clearFilters : undefined}
-                    className={`font-bold px-5 sm:px-8 py-4 rounded-2xl transition-all duration-200 min-h-[56px] shadow-lg ${
+                    className={`font-black px-6 py-4 rounded-2xl transition-all duration-200 shadow-lg ${
                       hasActiveFilters
-                        ? "border border-[#41D3BD] text-[#1A9F8D] hover:bg-[#D7F5EF] hover:text-[#073B35] bg-white/85 shadow-[#41D3BD]/10"
+                        ? "border border-[#41D3BD] text-[#1A9F8D] hover:bg-[#D7F5EF] hover:text-[#073B35] bg-white shadow-[#41D3BD]/10"
                         : "bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] shadow-[#41D3BD]/25"
                     }`}
                   >
@@ -481,7 +519,7 @@ export default function Marketplace() {
           </div>
         </section>
 
-        <section className="px-4 sm:px-6 pt-4 pb-2 bg-[#FFFFF2] border-b border-[#D7F5EF] sticky top-[76px] sm:top-0 z-30">
+        <section className="px-4 sm:px-6 pt-2 pb-3 bg-[#FFFFF2] sticky top-[76px] sm:top-0 z-30">
           <div className="max-w-7xl mx-auto">
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
               {FOOD_CATEGORIES.map((category) => {
@@ -493,19 +531,21 @@ export default function Marketplace() {
                     key={category.label}
                     type="button"
                     onClick={() => setSelectedCategory(category.label)}
-                    className={`shrink-0 min-w-[86px] sm:min-w-[110px] rounded-2xl border px-3 sm:px-4 py-3 transition-all duration-200 ${
+                    className={`shrink-0 min-w-[92px] sm:min-w-[118px] rounded-[1.4rem] border px-3 sm:px-4 py-3 transition-all duration-200 ${
                       isActive
-                        ? "bg-[#41D3BD] text-[#073B35] border-[#41D3BD] shadow-lg shadow-[#41D3BD]/20"
-                        : "bg-white/85 text-[#51615D] border-[#D7F5EF] hover:border-[#41D3BD]/70 hover:text-[#1A9F8D]"
+                        ? "bg-[#073B35] text-white border-[#073B35] shadow-lg shadow-[#073B35]/15"
+                        : "bg-white/90 text-[#51615D] border-[#D7F5EF] hover:border-[#41D3BD]/70 hover:text-[#073B35]"
                     }`}
                   >
                     <div className="text-xl sm:text-2xl">{category.emoji}</div>
+
                     <div className="font-black text-xs sm:text-sm mt-1">
                       {category.label}
                     </div>
+
                     <div
                       className={`text-[11px] sm:text-xs mt-0.5 ${
-                        isActive ? "text-[#073B35]/75" : "text-[#9AA7A3]"
+                        isActive ? "text-white/70" : "text-[#9AA7A3]"
                       }`}
                     >
                       {count} item{count === 1 ? "" : "s"}
@@ -517,15 +557,79 @@ export default function Marketplace() {
           </div>
         </section>
 
+        {featuredFoods.length > 0 && selectedCategory === "All" && !searchTerm && (
+          <section className="px-4 sm:px-6 pt-3 pb-2">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex items-end justify-between gap-4 mb-4">
+                <div>
+                  <p className="text-[#1A9F8D] text-xs font-black uppercase tracking-wide">
+                    Recommended
+                  </p>
+
+                  <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
+                    Popular today
+                  </h2>
+                </div>
+              </div>
+
+              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                {featuredFoods.map((food) => (
+                  <Link
+                    key={food.id}
+                    to={`/food/${food.id}`}
+                    className="shrink-0 w-[235px] sm:w-[280px] bg-white border border-[#D7F5EF] rounded-[1.75rem] overflow-hidden shadow-lg shadow-[#073B35]/5"
+                  >
+                    <div className="relative h-36 sm:h-44 bg-[#D7F5EF] overflow-hidden">
+                      <img
+                        src={food.image}
+                        alt={food.name}
+                        className="w-full h-full object-cover"
+                      />
+
+                      <div className="absolute top-3 left-3 bg-[#41D3BD] text-[#073B35] text-xs font-black px-3 py-1 rounded-full">
+                        {food.demand_badge?.label || "Fresh Drop"}
+                      </div>
+                    </div>
+
+                    <div className="p-4">
+                      <h3 className="text-[#111827] font-black truncate">
+                        {food.name}
+                      </h3>
+
+                      <p className="text-[#51615D] text-xs mt-1 truncate">
+                        Kitchen: {food.seller || food.seller_kitchen_name || "Home Kitchen"}
+                      </p>
+
+                      <div className="flex items-center justify-between mt-3">
+                        <p className="text-[#073B35] text-xl font-black">
+                          ₹{food.price}
+                        </p>
+
+                        <span className="bg-[#41D3BD]/12 text-[#073B35] border border-[#41D3BD]/25 text-xs font-black px-3 py-1 rounded-full">
+                          View
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
         <section className="px-4 sm:px-6 py-6 sm:py-10">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-end justify-between gap-4 mb-5 sm:mb-8">
               <div>
-                <h2 className="text-2xl sm:text-3xl font-black text-[#111827]">
+                <p className="text-[#1A9F8D] text-xs font-black uppercase tracking-wide">
+                  Explore
+                </p>
+
+                <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
                   {getCategoryHeading()}
                 </h2>
 
-                <p className="text-[#51615D] mt-2 text-sm sm:text-base">
+                <p className="text-[#51615D] mt-2 text-sm sm:text-base max-w-2xl">
                   {getCategorySubheading()}
                 </p>
               </div>
@@ -534,7 +638,7 @@ export default function Marketplace() {
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="hidden sm:block border border-[#41D3BD] text-[#1A9F8D] hover:bg-[#D7F5EF] hover:text-[#073B35] bg-white/85 px-5 py-3 rounded-2xl font-semibold transition-all duration-200"
+                  className="hidden sm:block border border-[#41D3BD] text-[#1A9F8D] hover:bg-[#D7F5EF] hover:text-[#073B35] bg-white px-5 py-3 rounded-2xl font-black transition-all duration-200"
                 >
                   View All
                 </button>
@@ -543,8 +647,12 @@ export default function Marketplace() {
 
             {loading && (
               <div className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-lg shadow-[#073B35]/5">
-                <p className="text-[#51615D] font-bold">
-                  Loading food drops...
+                <div className="w-14 h-14 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-2xl">
+                  🍽️
+                </div>
+
+                <p className="text-[#51615D] font-bold mt-4">
+                  Loading fresh food drops...
                 </p>
               </div>
             )}
@@ -561,9 +669,11 @@ export default function Marketplace() {
             {!loading && !errorMessage && filteredFoods.length === 0 && (
               <div className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-lg shadow-[#073B35]/5">
                 <div className="text-5xl">🍽️</div>
+
                 <p className="text-[#111827] font-black mt-4">
                   No dishes found.
                 </p>
+
                 <p className="text-[#51615D] text-sm mt-2">
                   Try another category, food type, or search term.
                 </p>
@@ -593,7 +703,7 @@ export default function Marketplace() {
         {cartCount > 0 && (
           <Link
             to="/cart"
-            className="fixed bottom-5 left-4 right-4 z-50 sm:left-auto sm:right-6 sm:w-auto bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-[0.98] text-[#073B35] font-black px-6 py-4 rounded-2xl shadow-2xl shadow-[#41D3BD]/25 flex items-center justify-center gap-3 transition-all"
+            className="fixed bottom-5 left-4 right-4 z-50 sm:left-auto sm:right-6 sm:w-auto bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.98] text-white font-black px-6 py-4 rounded-2xl shadow-2xl shadow-[#073B35]/25 flex items-center justify-center gap-3 transition-all"
           >
             <span>🛒</span>
             <span>

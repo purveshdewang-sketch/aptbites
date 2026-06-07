@@ -998,19 +998,6 @@ export default function SellerDashboard() {
     return "bg-purple-50 text-purple-700 border-purple-200";
   }
 
-  function getProgressPercentage(status) {
-    const currentStatus = normalizeStatus(status);
-
-    if (currentStatus === "pending") return 10;
-    if (currentStatus === "accepted") return 25;
-    if (currentStatus === "cooking") return 45;
-    if (currentStatus === "packing") return 75;
-    if (currentStatus === "ready_for_pickup") return 90;
-    if (currentStatus === "completed") return 100;
-
-    return 10;
-  }
-
   const activeSellerOrders = sellerOrders.filter((order) => {
     const dbStatus = normalizeStatus(order.status);
     const autoStatus = normalizeStatus(getAutoStatus(order));
@@ -1037,13 +1024,11 @@ export default function SellerDashboard() {
 
   const todayCompletedOrders = completedOrders.filter((order) => {
     if (!order.created_at) return false;
-
     return new Date(order.created_at).toDateString() === todayDateString;
   });
 
   const todayTotalOrders = sellerOrders.filter((order) => {
     if (!order.created_at) return false;
-
     return new Date(order.created_at).toDateString() === todayDateString;
   });
 
@@ -1090,6 +1075,9 @@ export default function SellerDashboard() {
   const totalOrdersCount = sellerOrders.length;
   const activeOrdersCount = activeSellerOrders.length;
   const soldOrdersCount = completedOrders.length;
+  const activeDishesCount = sellerFoods.filter(
+    (food) => Number(food.stock) > 0
+  ).length;
 
   if (!user) {
     return (
@@ -1097,8 +1085,12 @@ export default function SellerDashboard() {
         <Navbar />
 
         <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-10 flex items-center justify-center">
-          <div className="max-w-md w-full bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-8 text-center shadow-xl shadow-[#073B35]/5">
-            <h1 className="text-3xl font-black">Seller login required</h1>
+          <div className="max-w-md w-full bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-8 text-center shadow-xl shadow-[#073B35]/5">
+            <div className="w-20 h-20 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-4xl">
+              👨‍🍳
+            </div>
+
+            <h1 className="text-3xl font-black mt-6">Seller login required</h1>
 
             <p className="text-[#51615D] mt-4">
               Please sign in before adding or managing food dishes.
@@ -1106,7 +1098,7 @@ export default function SellerDashboard() {
 
             <Link
               to="/seller-login"
-              className="block mt-7 bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black py-4 rounded-2xl"
+              className="block mt-7 bg-[#073B35] hover:bg-[#0B5149] text-white font-black py-4 rounded-2xl"
             >
               Seller Sign In
             </Link>
@@ -1129,8 +1121,14 @@ export default function SellerDashboard() {
         <Navbar />
 
         <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-10 flex items-center justify-center">
-          <div className="max-w-md w-full bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-8 text-center shadow-xl shadow-[#073B35]/5">
-            <p className="text-[#51615D] font-bold">Loading seller profile...</p>
+          <div className="max-w-md w-full bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-8 text-center shadow-xl shadow-[#073B35]/5">
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-3xl">
+              👨‍🍳
+            </div>
+
+            <p className="text-[#51615D] font-bold mt-4">
+              Loading kitchen profile...
+            </p>
           </div>
         </main>
       </>
@@ -1144,103 +1142,110 @@ export default function SellerDashboard() {
 
         <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-8 sm:py-10">
           <div className="max-w-3xl mx-auto">
-            <div className="bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-6 sm:p-8 shadow-2xl shadow-[#073B35]/10">
-              <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
-                Seller Setup
-              </p>
+            <section className="relative overflow-hidden bg-white/90 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 shadow-2xl shadow-[#073B35]/10">
+              <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[95px]" />
 
-              <h1 className="text-3xl sm:text-5xl font-black mt-3 leading-tight">
-                Complete your kitchen profile
-              </h1>
-
-              <p className="text-[#51615D] mt-4 leading-relaxed">
-                These details are shown to customers and used while creating
-                dishes. Complete this once before managing your seller dashboard.
-              </p>
-
-              {message && (
-                <div className="mt-5 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 text-sm text-[#073B35]">
-                  {message}
-                </div>
-              )}
-
-              <form onSubmit={saveSellerSetup} className="mt-7 space-y-4">
-                <input
-                  name="seller_kitchen_name"
-                  value={sellerSetupData.seller_kitchen_name}
-                  onChange={handleSellerSetupChange}
-                  required
-                  className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
-                  placeholder="Kitchen / Seller Name e.g. Asha's Kitchen"
-                />
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <input
-                    name="flat"
-                    value={sellerSetupData.flat}
-                    onChange={handleSellerSetupChange}
-                    required
-                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
-                    placeholder="Tower / Flat e.g. B-1204"
-                  />
-
-                  <input
-                    name="phone"
-                    value={sellerSetupData.phone}
-                    onChange={handleSellerSetupChange}
-                    required
-                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
-                    placeholder="Phone Number"
-                  />
+              <div className="relative">
+                <div className="inline-flex items-center gap-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
+                  <span>👨‍🍳</span>
+                  <span>Seller Setup</span>
                 </div>
 
-                <input
-                  name="seller_specialty"
-                  value={sellerSetupData.seller_specialty}
-                  onChange={handleSellerSetupChange}
-                  required
-                  className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
-                  placeholder="Food Specialty e.g. South Indian breakfast, sweets, tiffin"
-                />
+                <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
+                  Complete your
+                  <span className="block text-[#111827]">kitchen profile</span>
+                </h1>
 
-                <textarea
-                  name="seller_about"
-                  value={sellerSetupData.seller_about}
-                  onChange={handleSellerSetupChange}
-                  rows="5"
-                  required
-                  className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] resize-none"
-                  placeholder="Tell customers about yourself, your cooking style, hygiene, or food story..."
-                />
+                <p className="text-[#51615D] mt-5 leading-relaxed">
+                  Complete this once before managing dishes and accepting
+                  orders. Your exact flat is used operationally and should not
+                  be shown publicly to customers.
+                </p>
 
-                <label className="flex items-start gap-3 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="accept_scheduled_orders"
-                    checked={sellerSetupData.accept_scheduled_orders}
-                    onChange={handleSellerSetupChange}
-                    className="mt-1 accent-[#41D3BD]"
-                  />
-
-                  <div>
-                    <p className="text-[#111827] font-bold">
-                      Accept scheduled orders
-                    </p>
-                    <p className="text-[#51615D] text-sm mt-1">
-                      Customers can choose date and time for later orders.
-                    </p>
+                {message && (
+                  <div className="mt-5 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 text-sm font-bold text-[#073B35]">
+                    {message}
                   </div>
-                </label>
+                )}
 
-                <button
-                  type="submit"
-                  disabled={profileSaving}
-                  className="w-full bg-[#41D3BD] hover:bg-[#55E4CF] disabled:opacity-50 text-[#073B35] font-black py-4 rounded-2xl shadow-lg shadow-[#41D3BD]/20"
-                >
-                  {profileSaving ? "Saving..." : "Save and Continue"}
-                </button>
-              </form>
-            </div>
+                <form onSubmit={saveSellerSetup} className="mt-7 space-y-4">
+                  <input
+                    name="seller_kitchen_name"
+                    value={sellerSetupData.seller_kitchen_name}
+                    onChange={handleSellerSetupChange}
+                    required
+                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD]"
+                    placeholder="Kitchen name e.g. Asha's Kitchen"
+                  />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <input
+                      name="flat"
+                      value={sellerSetupData.flat}
+                      onChange={handleSellerSetupChange}
+                      required
+                      className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD]"
+                      placeholder="Tower / Flat e.g. B-1204"
+                    />
+
+                    <input
+                      name="phone"
+                      value={sellerSetupData.phone}
+                      onChange={handleSellerSetupChange}
+                      required
+                      className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD]"
+                      placeholder="Phone Number"
+                    />
+                  </div>
+
+                  <input
+                    name="seller_specialty"
+                    value={sellerSetupData.seller_specialty}
+                    onChange={handleSellerSetupChange}
+                    required
+                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD]"
+                    placeholder="Specialty e.g. South Indian breakfast, sweets, tiffin"
+                  />
+
+                  <textarea
+                    name="seller_about"
+                    value={sellerSetupData.seller_about}
+                    onChange={handleSellerSetupChange}
+                    rows="5"
+                    required
+                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] resize-none"
+                    placeholder="Tell customers about your food, cooking style, hygiene, or food story..."
+                  />
+
+                  <label className="flex items-start gap-3 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="accept_scheduled_orders"
+                      checked={sellerSetupData.accept_scheduled_orders}
+                      onChange={handleSellerSetupChange}
+                      className="mt-1 accent-[#41D3BD]"
+                    />
+
+                    <div>
+                      <p className="text-[#111827] font-black">
+                        Accept scheduled orders
+                      </p>
+                      <p className="text-[#51615D] text-sm mt-1">
+                        Customers can choose date and time for later orders.
+                      </p>
+                    </div>
+                  </label>
+
+                  <button
+                    type="submit"
+                    disabled={profileSaving}
+                    className="w-full bg-[#073B35] hover:bg-[#0B5149] disabled:opacity-50 text-white font-black py-4 rounded-2xl shadow-lg shadow-[#073B35]/15"
+                  >
+                    {profileSaving ? "Saving..." : "Save and Continue"}
+                  </button>
+                </form>
+              </div>
+            </section>
           </div>
         </main>
       </>
@@ -1251,559 +1256,633 @@ export default function SellerDashboard() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-8 sm:py-10">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
-            <div>
-              <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
-                Seller Dashboard
-              </p>
+      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-6 sm:py-10 pb-24">
+        <div className="max-w-7xl mx-auto">
+          <section className="relative overflow-hidden bg-white/90 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-xl shadow-[#073B35]/5">
+            <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[95px]" />
+            <div className="absolute -bottom-28 -left-24 w-72 h-72 bg-[#41D3BD]/10 rounded-full blur-[110px]" />
 
-              <h1 className="text-3xl sm:text-5xl font-black mt-2 tracking-tight">
-                Manage your food drops
-              </h1>
+            <div className="relative flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
+              <div>
+                <div className="inline-flex items-center gap-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
+                  <span>👨‍🍳</span>
+                  <span>Nefo Kitchen Panel</span>
+                </div>
 
-              <p className="text-[#51615D] mt-3">
-                {sellerOnline
-                  ? "You are online and accepting orders."
-                  : "You are offline. Customers should not place new orders."}
-              </p>
+                <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
+                  Manage your
+                  <span className="block text-[#111827]">food drops</span>
+                </h1>
+
+                <p className="text-[#51615D] mt-4 text-sm sm:text-lg max-w-2xl">
+                  {sellerOnline
+                    ? "Your kitchen is online and visible for orders."
+                    : "Your kitchen is offline. Customers should not place new orders."}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-3 lg:justify-end">
+                <button
+                  type="button"
+                  onClick={toggleSellerOnline}
+                  className={`active:scale-95 font-black px-5 py-3 rounded-2xl text-center transition-all shadow-lg ${
+                    sellerOnline
+                      ? "bg-green-500 text-white shadow-green-500/20"
+                      : "bg-red-500 text-white shadow-red-500/20"
+                  }`}
+                >
+                  {sellerOnline ? "🟢 Online" : "🔴 Offline"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={toggleAcceptScheduledOrders}
+                  className={`active:scale-95 font-black px-5 py-3 rounded-2xl text-center transition-all ${
+                    acceptScheduledOrders
+                      ? "bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
+                      : "bg-white text-[#51615D] border border-[#D7F5EF]"
+                  }`}
+                >
+                  {acceptScheduledOrders ? "🕒 Schedule ON" : "🕒 Schedule OFF"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={toggleNotificationSound}
+                  className={`active:scale-95 font-black px-5 py-3 rounded-2xl text-center transition-all ${
+                    audioReady
+                      ? "bg-green-500 text-white"
+                      : "bg-white text-[#073B35] border border-[#41D3BD]/40"
+                  }`}
+                >
+                  {audioReady ? "🔕 Sound Off" : "🔔 Sound On"}
+                </button>
+
+                <Link
+                  to="/marketplace"
+                  className="bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-95 text-[#073B35] font-black px-5 py-3 rounded-2xl text-center transition-all"
+                >
+                  Marketplace
+                </Link>
+              </div>
             </div>
-
-            <div className="flex flex-wrap gap-3 lg:justify-end">
-              <Link
-                to="/"
-                className="border border-[#D7F5EF] bg-white/85 hover:bg-[#D7F5EF] text-[#51615D] hover:text-[#073B35] active:scale-95 font-bold px-5 py-3 rounded-full min-w-[140px] text-center transition-all"
-              >
-                ← Home
-              </Link>
-
-              <button
-                type="button"
-                onClick={toggleSellerOnline}
-                className={`active:scale-95 font-bold px-5 py-3 rounded-2xl text-center transition-all ${
-                  sellerOnline
-                    ? "bg-green-500 text-white"
-                    : "bg-red-500 text-white"
-                }`}
-              >
-                {sellerOnline ? "🟢 Online" : "🔴 Offline"}
-              </button>
-
-              <button
-                type="button"
-                onClick={toggleAcceptScheduledOrders}
-                className={`active:scale-95 font-bold px-5 py-3 rounded-2xl text-center transition-all ${
-                  acceptScheduledOrders
-                    ? "bg-[#41D3BD] text-[#073B35]"
-                    : "bg-white/85 text-[#51615D] border border-[#D7F5EF]"
-                }`}
-              >
-                {acceptScheduledOrders ? "🕒 Schedule ON" : "🕒 Schedule OFF"}
-              </button>
-
-              <button
-                type="button"
-                onClick={toggleNotificationSound}
-                className={`active:scale-95 font-bold px-5 py-3 rounded-2xl text-center transition-all ${
-                  audioReady
-                    ? "bg-green-500 text-white"
-                    : "bg-white/85 text-[#073B35] border border-[#41D3BD]/40"
-                }`}
-              >
-                {audioReady ? "🔕 Sound Off" : "🔔 Sound On"}
-              </button>
-
-              <Link
-                to="/marketplace"
-                className="bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-95 text-[#073B35] font-bold px-5 py-3 rounded-2xl text-center transition-all"
-              >
-                Marketplace
-              </Link>
-            </div>
-          </div>
+          </section>
 
           {message && (
-            <div className="mt-5 bg-white/85 border border-[#D7F5EF] rounded-2xl p-4 text-sm text-[#073B35] shadow-sm">
+            <div className="mt-5 bg-white/90 border border-[#D7F5EF] rounded-2xl p-4 text-sm font-bold text-[#073B35] shadow-sm">
               {message}
             </div>
           )}
 
-          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 mt-8">
+          <section className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-5 mt-8">
             {[
               ["Total Orders", totalOrdersCount],
-              ["Today’s sales", todayTotalOrders.length],
+              ["Today’s Orders", todayTotalOrders.length],
               ["Active Orders", activeOrdersCount],
               ["Sold Orders", soldOrdersCount],
-              [
-                "Active Dishes",
-                sellerFoods.filter((food) => Number(food.stock) > 0).length,
-              ],
+              ["Active Dishes", activeDishesCount],
             ].map(([label, value]) => (
               <div
                 key={label}
-                className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-5 shadow-lg shadow-[#073B35]/5"
+                className="bg-white/90 border border-[#D7F5EF] rounded-3xl p-4 sm:p-5 shadow-lg shadow-[#073B35]/5"
               >
-                <p className="text-[#51615D]">{label}</p>
-                <h2 className="text-4xl font-black text-[#073B35] mt-3">
+                <p className="text-[#51615D] text-xs sm:text-sm font-bold">
+                  {label}
+                </p>
+                <h2 className="text-3xl sm:text-4xl font-black text-[#073B35] mt-3">
                   {value}
                 </h2>
               </div>
             ))}
           </section>
 
-          <section className="mt-8 bg-white/85 border border-[#D7F5EF] rounded-3xl p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-              <div>
-                <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
-                  Earnings Analytics
-                </p>
-
-                <h2 className="text-2xl sm:text-3xl font-bold mt-1">
-                  Seller Earnings
-                </h2>
-              </div>
-
-              <p className="text-[#51615D] text-sm">
-                Calculated from completed orders only.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-6">
-              {[
-                ["Today’s Earnings", `₹${todayEarnings}`],
-                ["Gross Earnings", `₹${grossEarnings}`],
-                ["Completed Orders", completedOrders.length],
-                ["Avg Order Value", `₹${averageOrderValue}`],
-              ].map(([label, value]) => (
-                <div
-                  key={label}
-                  className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-5"
-                >
-                  <p className="text-[#51615D] text-sm">{label}</p>
-                  <h3 className="text-3xl font-black text-[#073B35] mt-3">
-                    {value}
-                  </h3>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="mt-8 bg-white/85 border border-[#D7F5EF] rounded-3xl p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
-            <div>
-              <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
+          <section className="mt-8 grid lg:grid-cols-[1fr_0.9fr] gap-6">
+            <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
+              <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
                 Incoming Orders
               </p>
 
-              <h2 className="text-2xl sm:text-3xl font-bold mt-1">
-                Active Order Panel
+              <h2 className="text-2xl sm:text-3xl font-black mt-1">
+                Active order panel
               </h2>
-            </div>
 
-            {ordersLoading ? (
-              <p className="text-[#51615D] mt-6">Loading seller orders...</p>
-            ) : activeSellerOrders.length === 0 ? (
-              <div className="mt-6 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-8 text-center">
-                <div className="text-5xl">🛎️</div>
-                <p className="text-[#51615D] font-bold mt-4">
-                  No active orders right now.
-                </p>
-                <p className="text-[#9AA7A3] text-sm mt-2">
-                  New customer orders will appear here automatically.
-                </p>
-              </div>
-            ) : (
-              <div className="mt-6 space-y-5">
-                {activeSellerOrders.map((order) => {
-                  const autoStatus = getAutoStatus(order);
-                  const sellerResponse = normalizeSellerResponse(
-                    order.seller_response
-                  );
-                  const orderIsSelfPickup = isSelfPickup(order);
-                  const scheduled = isScheduledOrder(order);
+              {ordersLoading ? (
+                <p className="text-[#51615D] mt-6">Loading seller orders...</p>
+              ) : activeSellerOrders.length === 0 ? (
+                <div className="mt-6 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-8 text-center">
+                  <div className="text-5xl">🛎️</div>
+                  <p className="text-[#51615D] font-black mt-4">
+                    No active orders right now.
+                  </p>
+                  <p className="text-[#9AA7A3] text-sm mt-2">
+                    New customer orders will appear here automatically.
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-6 space-y-5">
+                  {activeSellerOrders.map((order) => {
+                    const autoStatus = getAutoStatus(order);
+                    const sellerResponse = normalizeSellerResponse(
+                      order.seller_response
+                    );
+                    const orderIsSelfPickup = isSelfPickup(order);
+                    const scheduled = isScheduledOrder(order);
 
-                  return (
-                    <article
-                      key={order.id}
-                      className="relative bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4 sm:p-5"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                        <div>
-                          <p className="text-[#51615D] text-sm">
-                            Order #{order.id}
-                          </p>
+                    return (
+                      <article
+                        key={order.id}
+                        className="relative bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4 sm:p-5"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                          <div>
+                            <p className="text-[#51615D] text-sm font-bold">
+                              Order #{order.id}
+                            </p>
 
-                          <h3 className="text-2xl font-black mt-1 text-[#073B35]">
-                            ₹{order.total_amount}
-                          </h3>
+                            <h3 className="text-3xl font-black mt-1 text-[#073B35]">
+                              ₹{order.total_amount}
+                            </h3>
 
-                          <p className="text-[#51615D] text-sm mt-2">
-                            {order.customer_name} • {order.phone}
-                          </p>
+                            <p className="text-[#51615D] text-sm mt-2">
+                              {order.customer_name} • {order.phone}
+                            </p>
 
-                          <p className="text-[#51615D] text-sm mt-1">
-                            {order.delivery_type} • {order.flat}
-                          </p>
+                            <p className="text-[#51615D] text-sm mt-1">
+                              {order.delivery_type} • {order.flat}
+                            </p>
+
+                            {scheduled && (
+                              <p className="text-[#073B35] text-xs font-black mt-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 rounded-full px-3 py-1 w-fit">
+                                🕒 {formatScheduledDateTime(order.scheduled_for)}
+                              </p>
+                            )}
+                          </div>
+
+                          <span
+                            className={`w-fit border text-xs font-black px-3 py-1.5 rounded-full ${getStatusBadgeClass(
+                              autoStatus
+                            )}`}
+                          >
+                            {getStatusLabel(autoStatus)}
+                          </span>
                         </div>
 
-                        <span
-                          className={`w-fit border text-xs font-bold px-3 py-1.5 rounded-full ${getStatusBadgeClass(
-                            autoStatus
-                          )}`}
-                        >
-                          {getStatusLabel(autoStatus)}
-                        </span>
-                      </div>
+                        <div className="mt-4 bg-white/90 border border-[#D7F5EF] rounded-2xl p-4 space-y-3">
+                          {getOrderItems(order).map((item) => (
+                            <div
+                              key={`${order.id}-${item.id}`}
+                              className="flex items-center justify-between gap-4"
+                            >
+                              <div className="min-w-0">
+                                <p className="font-black truncate">
+                                  {item.name}
+                                </p>
+                                <p className="text-[#51615D] text-sm">
+                                  Qty {item.quantity} × ₹{item.price}
+                                </p>
+                              </div>
 
-                      <div className="mt-4 bg-white/85 border border-[#D7F5EF] rounded-2xl p-4 space-y-3">
-                        {getOrderItems(order).map((item) => (
-                          <div
-                            key={`${order.id}-${item.id}`}
-                            className="flex items-center justify-between gap-4"
-                          >
-                            <div className="min-w-0">
-                              <p className="font-semibold truncate">
-                                {item.name}
-                              </p>
-                              <p className="text-[#51615D] text-sm">
-                                Qty {item.quantity} × ₹{item.price}
+                              <p className="text-[#073B35] font-black shrink-0">
+                                ₹
+                                {Number(item.price || 0) *
+                                  Number(item.quantity || 0)}
                               </p>
                             </div>
-
-                            <p className="text-[#073B35] font-bold shrink-0">
-                              ₹
-                              {Number(item.price || 0) *
-                                Number(item.quantity || 0)}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-
-                      {sellerResponse === "pending" && (
-                        <div className="grid grid-cols-2 gap-3 mt-5">
-                          <button
-                            type="button"
-                            onClick={() => acceptOrder(order.id)}
-                            className="bg-green-500 hover:bg-green-400 active:scale-95 text-white font-black py-3 rounded-2xl transition-all"
-                          >
-                            Accept
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => rejectOrder(order.id)}
-                            className="bg-red-500 hover:bg-red-400 active:scale-95 text-white font-black py-3 rounded-2xl transition-all"
-                          >
-                            Reject
-                          </button>
+                          ))}
                         </div>
-                      )}
 
-                      {sellerResponse === "accepted" &&
-                        orderIsSelfPickup &&
-                        !order.ready_for_pickup && (
-                          <button
-                            type="button"
-                            onClick={() => markReadyForPickup(order.id)}
-                            className="mt-5 w-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white font-black py-3 rounded-2xl transition-all"
-                          >
-                            Mark Ready for Pickup
-                          </button>
+                        {sellerResponse === "pending" && (
+                          <div className="grid grid-cols-2 gap-3 mt-5">
+                            <button
+                              type="button"
+                              onClick={() => acceptOrder(order.id)}
+                              className="bg-green-500 hover:bg-green-400 active:scale-95 text-white font-black py-3 rounded-2xl transition-all"
+                            >
+                              Accept
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => rejectOrder(order.id)}
+                              className="bg-red-500 hover:bg-red-400 active:scale-95 text-white font-black py-3 rounded-2xl transition-all"
+                            >
+                              Reject
+                            </button>
+                          </div>
                         )}
 
-                      {sellerResponse === "accepted" && (
-                        <button
-                          type="button"
-                          onClick={() => completeOrder(order.id)}
-                          className="mt-5 w-full bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-95 text-[#073B35] font-black py-3 rounded-2xl transition-all"
-                        >
-                          Complete Order
-                        </button>
-                      )}
-                    </article>
-                  );
-                })}
-              </div>
-            )}
-          </section>
+                        {sellerResponse === "accepted" &&
+                          orderIsSelfPickup &&
+                          !order.ready_for_pickup && (
+                            <button
+                              type="button"
+                              onClick={() => markReadyForPickup(order.id)}
+                              className="mt-5 w-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white font-black py-3 rounded-2xl transition-all"
+                            >
+                              Mark Ready for Pickup
+                            </button>
+                          )}
 
-          <form
-            onSubmit={handleSubmit}
-            className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-5 sm:p-6 mt-8 shadow-xl shadow-[#073B35]/5"
-          >
-            <div className="flex items-center justify-between gap-4">
-              <h2 className="text-2xl font-bold text-[#073B35]">
-                {editingFood ? "Edit Dish" : "Add New Dish"}
-              </h2>
-
-              {editingFood && (
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="text-sm text-[#51615D] hover:text-[#1A9F8D]"
-                >
-                  Cancel Edit
-                </button>
+                        {sellerResponse === "accepted" && (
+                          <button
+                            type="button"
+                            onClick={() => completeOrder(order.id)}
+                            className="mt-5 w-full bg-[#073B35] hover:bg-[#0B5149] active:scale-95 text-white font-black py-3 rounded-2xl transition-all"
+                          >
+                            Complete Order
+                          </button>
+                        )}
+                      </article>
+                    );
+                  })}
+                </div>
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-              <input
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-xl px-4 py-3 outline-none focus:border-[#41D3BD]"
-                placeholder="Dish name"
-              />
+            <div className="space-y-6">
+              <section className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
+                <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
+                  Earnings
+                </p>
 
-              <input
-                name="price"
-                value={formData.price}
-                onChange={handleChange}
-                type="number"
-                min="1"
-                className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-xl px-4 py-3 outline-none focus:border-[#41D3BD]"
-                placeholder="Price ₹"
-              />
+                <h2 className="text-2xl sm:text-3xl font-black mt-1">
+                  Seller analytics
+                </h2>
 
-              <input
-                name="stock"
-                value={formData.stock}
-                onChange={handleChange}
-                type="number"
-                min="0"
-                className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-xl px-4 py-3 outline-none focus:border-[#41D3BD]"
-                placeholder="Available quantity"
-              />
+                <p className="text-[#51615D] text-sm mt-2">
+                  Calculated from completed orders only.
+                </p>
 
-              <input
-                name="time"
-                value={formData.time}
-                onChange={handleChange}
-                className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-xl px-4 py-3 outline-none focus:border-[#41D3BD]"
-                placeholder="Ready time e.g. 7:30 PM"
-              />
+                <div className="grid grid-cols-2 gap-3 mt-5">
+                  {[
+                    ["Today", `₹${todayEarnings}`],
+                    ["Gross", `₹${grossEarnings}`],
+                    ["Completed", completedOrders.length],
+                    ["Avg Order", `₹${averageOrderValue}`],
+                  ].map(([label, value]) => (
+                    <div
+                      key={label}
+                      className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4"
+                    >
+                      <p className="text-[#51615D] text-xs font-bold">
+                        {label}
+                      </p>
+                      <h3 className="text-2xl font-black text-[#073B35] mt-2">
+                        {value}
+                      </h3>
+                    </div>
+                  ))}
+                </div>
+              </section>
 
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-xl px-4 py-3 outline-none focus:border-[#41D3BD]"
-              >
-                {FOOD_CATEGORIES.map((category) => (
-                  <option key={category}>{category}</option>
-                ))}
-              </select>
+              <section className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
+                <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
+                  Best Sellers
+                </p>
 
-              <select
-                name="type"
-                value={formData.type}
-                onChange={handleChange}
-                className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-xl px-4 py-3 outline-none focus:border-[#41D3BD]"
-              >
-                <option>Veg</option>
-                <option>Non-Veg</option>
-              </select>
+                <h2 className="text-2xl font-black mt-1">Top dishes</h2>
 
-              <input
-                name="seller"
-                value={formData.seller}
-                onChange={handleChange}
-                className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-xl px-4 py-3 outline-none focus:border-[#41D3BD] md:col-span-2"
-                placeholder="Seller / kitchen name"
-              />
+                {bestSellingItems.length === 0 ? (
+                  <p className="text-[#51615D] text-sm mt-5">
+                    Completed order data will appear here.
+                  </p>
+                ) : (
+                  <div className="mt-5 space-y-3">
+                    {bestSellingItems.map((item) => (
+                      <div
+                        key={item.name}
+                        className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 flex items-center justify-between gap-3"
+                      >
+                        <div className="min-w-0">
+                          <p className="font-black truncate">{item.name}</p>
+                          <p className="text-[#51615D] text-sm">
+                            {item.quantity} sold
+                          </p>
+                        </div>
 
-              <div className="md:col-span-2">
-                <label className="block text-sm text-[#51615D] mb-3">
-                  Dish Image
-                </label>
+                        <p className="text-[#073B35] font-black">
+                          ₹{item.revenue}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+            </div>
+          </section>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <section className="mt-8 grid lg:grid-cols-[0.9fr_1.1fr] gap-6">
+            <form
+              onSubmit={handleSubmit}
+              className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5 h-fit"
+            >
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
+                    Menu Builder
+                  </p>
+
+                  <h2 className="text-2xl sm:text-3xl font-black text-[#073B35] mt-1">
+                    {editingFood ? "Edit dish" : "Add new dish"}
+                  </h2>
+                </div>
+
+                {editingFood && (
                   <button
                     type="button"
-                    onClick={() => uploadImageInputRef.current?.click()}
-                    className="flex flex-col items-center justify-center border-2 border-dashed border-[#D7F5EF] hover:border-[#41D3BD] bg-[#FFFFF2] rounded-3xl p-6 cursor-pointer transition-all"
+                    onClick={resetForm}
+                    className="text-sm text-[#51615D] hover:text-[#073B35] font-black"
                   >
-                    <div className="text-4xl mb-3">🖼️</div>
-                    <p className="text-[#111827] font-black">Upload Image</p>
-                    <p className="text-[#51615D] text-sm mt-1 text-center">
-                      Choose from gallery or files
-                    </p>
+                    Cancel
                   </button>
+                )}
+              </div>
 
-                  <button
-                    type="button"
-                    onClick={() => cameraImageInputRef.current?.click()}
-                    className="flex flex-col items-center justify-center border-2 border-dashed border-[#41D3BD]/50 hover:border-[#41D3BD] bg-[#41D3BD]/10 rounded-3xl p-6 cursor-pointer transition-all"
-                  >
-                    <div className="text-4xl mb-3">📸</div>
-                    <p className="text-[#073B35] font-black">Take Picture</p>
-                    <p className="text-[#51615D] text-sm mt-1 text-center">
-                      Open camera on phone
-                    </p>
-                  </button>
+              <div className="grid grid-cols-1 gap-4 mt-6">
+                <input
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+                  placeholder="Dish name"
+                />
+
+                <div className="grid grid-cols-2 gap-3">
+                  <input
+                    name="price"
+                    value={formData.price}
+                    onChange={handleChange}
+                    type="number"
+                    min="1"
+                    className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+                    placeholder="Price ₹"
+                  />
+
+                  <input
+                    name="stock"
+                    value={formData.stock}
+                    onChange={handleChange}
+                    type="number"
+                    min="0"
+                    className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+                    placeholder="Qty"
+                  />
                 </div>
 
                 <input
-                  ref={uploadImageInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/*"
-                  className="hidden"
-                  onChange={handleImageChange}
+                  name="time"
+                  value={formData.time}
+                  onChange={handleChange}
+                  className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+                  placeholder="Ready time e.g. 7:30 PM"
                 />
+
+                <div className="grid grid-cols-2 gap-3">
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+                  >
+                    {FOOD_CATEGORIES.map((category) => (
+                      <option key={category}>{category}</option>
+                    ))}
+                  </select>
+
+                  <select
+                    name="type"
+                    value={formData.type}
+                    onChange={handleChange}
+                    className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+                  >
+                    <option>Veg</option>
+                    <option>Non-Veg</option>
+                  </select>
+                </div>
 
                 <input
-                  ref={cameraImageInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/*"
-                  capture="environment"
-                  className="hidden"
-                  onChange={handleImageChange}
+                  name="seller"
+                  value={formData.seller}
+                  onChange={handleChange}
+                  className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+                  placeholder="Kitchen name"
                 />
 
-                {imagePreview && (
-                  <div className="mt-4 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-3">
-                    <img
-                      src={imagePreview}
-                      alt="Dish preview"
-                      className="w-full h-56 object-cover rounded-2xl border border-[#D7F5EF]"
-                    />
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows="4"
+                  className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] resize-none"
+                  placeholder="Short description / ingredients / hygiene note"
+                />
 
-                    <div className="grid grid-cols-2 gap-3 mt-3">
-                      <button
-                        type="button"
-                        onClick={() => uploadImageInputRef.current?.click()}
-                        className="border border-[#41D3BD]/60 text-[#073B35] hover:bg-[#41D3BD] font-bold py-3 rounded-2xl transition-all"
-                      >
-                        Change Image
-                      </button>
+                <div>
+                  <p className="text-sm text-[#51615D] font-bold mb-3">
+                    Dish Image
+                  </p>
 
-                      <button
-                        type="button"
-                        onClick={removeSelectedImage}
-                        className="border border-red-300 text-red-500 hover:bg-red-500 hover:text-white font-bold py-3 rounded-2xl transition-all"
-                      >
-                        Remove
-                      </button>
-                    </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => uploadImageInputRef.current?.click()}
+                      className="flex flex-col items-center justify-center border-2 border-dashed border-[#D7F5EF] hover:border-[#41D3BD] bg-[#FFFFF2] rounded-3xl p-5 cursor-pointer transition-all"
+                    >
+                      <div className="text-3xl mb-2">🖼️</div>
+                      <p className="text-[#111827] font-black text-sm">
+                        Upload
+                      </p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => cameraImageInputRef.current?.click()}
+                      className="flex flex-col items-center justify-center border-2 border-dashed border-[#41D3BD]/50 hover:border-[#41D3BD] bg-[#41D3BD]/10 rounded-3xl p-5 cursor-pointer transition-all"
+                    >
+                      <div className="text-3xl mb-2">📸</div>
+                      <p className="text-[#073B35] font-black text-sm">
+                        Camera
+                      </p>
+                    </button>
                   </div>
-                )}
+
+                  <input
+                    ref={uploadImageInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/*"
+                    className="hidden"
+                    onChange={handleImageChange}
+                  />
+
+                  <input
+                    ref={cameraImageInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={handleImageChange}
+                  />
+
+                  {imagePreview && (
+                    <div className="mt-4 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-3">
+                      <img
+                        src={imagePreview}
+                        alt="Dish preview"
+                        className="w-full h-56 object-cover rounded-2xl border border-[#D7F5EF]"
+                      />
+
+                      <div className="grid grid-cols-2 gap-3 mt-3">
+                        <button
+                          type="button"
+                          onClick={() => uploadImageInputRef.current?.click()}
+                          className="border border-[#41D3BD]/60 text-[#073B35] hover:bg-[#41D3BD] font-black py-3 rounded-2xl transition-all"
+                        >
+                          Change
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={removeSelectedImage}
+                          className="border border-red-300 text-red-500 hover:bg-red-500 hover:text-white font-black py-3 rounded-2xl transition-all"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
 
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-xl px-4 py-3 mt-4 outline-none focus:border-[#41D3BD]"
-              placeholder="Short description / ingredients / hygiene note"
-            />
+              <button
+                type="submit"
+                disabled={loading}
+                className="mt-5 w-full bg-[#073B35] hover:bg-[#0B5149] disabled:opacity-50 text-white font-black px-6 py-4 rounded-2xl shadow-lg shadow-[#073B35]/15"
+              >
+                {loading ? "Saving..." : editingFood ? "Update Dish" : "Add Dish"}
+              </button>
+            </form>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="mt-5 w-full sm:w-auto bg-[#41D3BD] hover:bg-[#55E4CF] disabled:opacity-50 text-[#073B35] font-bold px-6 py-3 rounded-2xl"
-            >
-              {loading ? "Saving..." : editingFood ? "Update Dish" : "Add Dish"}
-            </button>
-          </form>
+            <section>
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
+                    Live Menu
+                  </p>
 
-          <section className="mt-8">
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
-                  Your Live Dishes
-                </p>
+                  <h2 className="text-2xl sm:text-3xl font-black mt-1">
+                    Your dishes
+                  </h2>
+                </div>
 
-                <h2 className="text-2xl sm:text-3xl font-bold mt-1">
-                  Seller Menu
-                </h2>
+                <div className="bg-white/90 border border-[#D7F5EF] px-4 py-2 rounded-2xl text-sm font-bold text-[#51615D]">
+                  {sellerFoods.length} dishes
+                </div>
               </div>
 
-              <div className="bg-white/85 border border-[#D7F5EF] px-4 py-2 rounded-2xl text-sm text-[#51615D]">
-                {sellerFoods.length} dishes
-              </div>
-            </div>
+              {foodsLoading ? (
+                <p className="text-[#51615D]">Loading your dishes...</p>
+              ) : sellerFoods.length === 0 ? (
+                <div className="bg-white/90 border border-[#D7F5EF] rounded-3xl p-8 text-center">
+                  <p className="text-[#51615D]">No dishes added yet.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  {sellerFoods.map((food) => (
+                    <div
+                      key={food.id}
+                      className="bg-white/90 border border-[#D7F5EF] rounded-3xl overflow-hidden hover:border-[#41D3BD]/70 transition-all shadow-lg shadow-[#073B35]/5"
+                    >
+                      <div className="relative aspect-[4/3] bg-[#D7F5EF]">
+                        <img
+                          src={food.image}
+                          alt={food.name}
+                          className="w-full h-full object-cover"
+                        />
 
-            {foodsLoading ? (
-              <p className="text-[#51615D]">Loading your dishes...</p>
-            ) : sellerFoods.length === 0 ? (
-              <div className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-8 text-center">
-                <p className="text-[#51615D]">No dishes added yet.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-                {sellerFoods.map((food) => (
-                  <div
-                    key={food.id}
-                    className="bg-white/85 border border-[#D7F5EF] rounded-3xl overflow-hidden hover:border-[#41D3BD]/70 transition-all shadow-lg shadow-[#073B35]/5"
-                  >
-                    <img
-                      src={food.image}
-                      alt={food.name}
-                      className="w-full aspect-square object-cover"
-                    />
-
-                    <div className="p-5">
-                      <div className="flex justify-between gap-3">
-                        <div>
-                          <h3 className="text-xl font-bold">{food.name}</h3>
-                          <p className="text-[#51615D] text-sm mt-1">
-                            {food.seller}
-                          </p>
-                        </div>
-
-                        <div className="text-right">
-                          <p className="text-[#073B35] font-bold text-2xl">
-                            ₹{food.price}
-                          </p>
-
-                          <p
-                            className={`text-sm font-semibold ${
-                              Number(food.stock) <= 2
-                                ? "text-red-500"
-                                : Number(food.stock) <= 5
-                                ? "text-orange-500"
-                                : "text-[#51615D]"
+                        <div className="absolute top-3 left-3">
+                          <span
+                            className={`text-xs font-black px-3 py-1.5 rounded-full shadow-sm ${
+                              food.type === "Non-Veg"
+                                ? "bg-red-500 text-white"
+                                : "bg-[#41D3BD] text-[#073B35]"
                             }`}
                           >
-                            {Number(food.stock) <= 2
-                              ? `🔥 Only ${food.stock} left`
-                              : `${food.stock} left`}
-                          </p>
+                            {food.type || "Veg"}
+                          </span>
+                        </div>
+
+                        {Number(food.stock) === 0 && (
+                          <div className="absolute inset-0 bg-black/65 flex items-center justify-center">
+                            <span className="bg-white text-[#073B35] font-black px-4 py-2 rounded-2xl">
+                              Sold Out
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="p-5">
+                        <div className="flex justify-between gap-3">
+                          <div className="min-w-0">
+                            <h3 className="text-xl font-black truncate">
+                              {food.name}
+                            </h3>
+                            <p className="text-[#51615D] text-sm mt-1 truncate">
+                              {food.category || "Meals"} • {food.time || "Soon"}
+                            </p>
+                          </div>
+
+                          <div className="text-right shrink-0">
+                            <p className="text-[#073B35] font-black text-2xl">
+                              ₹{food.price}
+                            </p>
+
+                            <p
+                              className={`text-sm font-black ${
+                                Number(food.stock) <= 2
+                                  ? "text-red-500"
+                                  : Number(food.stock) <= 5
+                                  ? "text-orange-500"
+                                  : "text-[#51615D]"
+                              }`}
+                            >
+                              {Number(food.stock) <= 2
+                                ? `Only ${food.stock} left`
+                                : `${food.stock} left`}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-2 mt-5">
+                          <button
+                            type="button"
+                            onClick={() => startEdit(food)}
+                            className="bg-[#073B35] hover:bg-[#0B5149] text-white font-black py-2.5 rounded-xl"
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => toggleStock(food)}
+                            className="border border-[#41D3BD]/60 text-[#073B35] hover:bg-[#41D3BD] font-black py-2.5 rounded-xl"
+                          >
+                            {Number(food.stock) === 0 ? "In Stock" : "Sold Out"}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => deleteDish(food.id)}
+                            className="border border-red-300 text-red-500 hover:bg-red-500 hover:text-white font-black py-2.5 rounded-xl"
+                          >
+                            Delete
+                          </button>
                         </div>
                       </div>
-
-                      <div className="grid grid-cols-3 gap-2 mt-5">
-                        <button
-                          type="button"
-                          onClick={() => startEdit(food)}
-                          className="bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-bold py-2 rounded-xl"
-                        >
-                          Edit
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => toggleStock(food)}
-                          className="border border-[#41D3BD]/60 text-[#073B35] hover:bg-[#41D3BD] font-bold py-2 rounded-xl"
-                        >
-                          {Number(food.stock) === 0 ? "In Stock" : "Sold Out"}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => deleteDish(food.id)}
-                          className="border border-red-300 text-red-500 hover:bg-red-500 hover:text-white font-bold py-2 rounded-xl"
-                        >
-                          Delete
-                        </button>
-                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </section>
           </section>
         </div>
       </main>

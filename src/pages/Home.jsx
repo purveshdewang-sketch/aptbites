@@ -95,7 +95,9 @@ export default function Home() {
   async function fetchHomeFoods() {
     const { data, error } = await supabase
       .from("foods")
-      .select("id, name, seller, price, image, category, type, stock")
+      .select(
+        "id, name, seller, seller_kitchen_name, price, image, category, type, stock"
+      )
       .order("id", { ascending: false })
       .limit(8);
 
@@ -110,6 +112,10 @@ export default function Home() {
     setHeroIndex(0);
   }
 
+  function getKitchenName(food) {
+    return food?.seller || food?.seller_kitchen_name || "Home Kitchen";
+  }
+
   const shouldShowSellFood = !user || isSeller || isAdmin;
   const sellFoodPath =
     user && (isSeller || isAdmin) ? "/seller-dashboard" : "/seller-login";
@@ -122,7 +128,7 @@ export default function Home() {
 
   const heroBackgroundStyle = heroFood?.image
     ? {
-        backgroundImage: `linear-gradient(90deg, rgba(7,59,53,0.92) 0%, rgba(7,59,53,0.78) 34%, rgba(7,59,53,0.34) 68%, rgba(7,59,53,0.12) 100%), url("${heroFood.image}")`,
+        backgroundImage: `linear-gradient(90deg, rgba(7,59,53,0.96) 0%, rgba(7,59,53,0.84) 38%, rgba(7,59,53,0.42) 72%, rgba(7,59,53,0.18) 100%), url("${heroFood.image}")`,
       }
     : {
         backgroundImage:
@@ -133,27 +139,28 @@ export default function Home() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] overflow-hidden">
-        <section className="px-4 sm:px-6 pt-5 pb-24 sm:pt-7 sm:pb-14">
+      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] overflow-hidden pb-24 lg:pb-0">
+        <section className="px-4 sm:px-6 pt-5 pb-8 sm:pt-7 sm:pb-12">
           <div className="max-w-7xl mx-auto">
             <div
-              className="relative min-h-[520px] sm:min-h-[480px] lg:min-h-[520px] rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-cover bg-center shadow-2xl shadow-[#073B35]/20 border border-[#D7F5EF]"
+              className="relative min-h-[560px] sm:min-h-[520px] lg:min-h-[560px] rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-cover bg-center shadow-2xl shadow-[#073B35]/20 border border-[#D7F5EF]"
               style={heroBackgroundStyle}
             >
-              <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/35" />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-transparent to-black/35" />
+              <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#41D3BD]/20 rounded-full blur-[110px]" />
 
-              <div className="relative z-10 h-full min-h-[520px] sm:min-h-[480px] lg:min-h-[520px] flex items-center">
+              <div className="relative z-10 h-full min-h-[560px] sm:min-h-[520px] lg:min-h-[560px] flex items-center">
                 <div className="w-full px-5 sm:px-10 lg:px-14 py-10">
                   <div className="max-w-3xl">
                     <div className="inline-flex items-center gap-2 bg-[#FFFFF2]/95 border border-white/40 rounded-full px-4 py-2 mb-6 shadow-lg shadow-black/10 backdrop-blur">
                       <span className="w-2.5 h-2.5 rounded-full bg-[#41D3BD]" />
                       <p className="text-[#073B35] font-black text-xs tracking-wide uppercase">
-                        Neighbourhood homemade food
+                        Homemade nearby food
                       </p>
                     </div>
 
-                    <h1 className="text-white text-[2.7rem] sm:text-6xl lg:text-7xl font-black leading-[1.02] tracking-tight drop-shadow-xl">
-                      Authentic food,
+                    <h1 className="text-white text-[2.75rem] sm:text-6xl lg:text-7xl font-black leading-[0.98] tracking-tight drop-shadow-xl">
+                      Fresh food,
                       <span className="block text-[#41D3BD]">
                         made closer to you.
                       </span>
@@ -161,8 +168,7 @@ export default function Home() {
 
                     <p className="text-white/90 mt-5 text-base sm:text-xl leading-relaxed max-w-2xl drop-shadow">
                       Discover fresh meals, snacks, sweets, tiffins, and daily
-                      food drops prepared by trusted home chefs inside your
-                      community.
+                      food drops from trusted kitchens inside your community.
                     </p>
 
                     <div
@@ -202,8 +208,9 @@ export default function Home() {
                           <p className="text-white font-black truncate">
                             Now showing: {heroFood.name}
                           </p>
+
                           <p className="text-white/70 text-sm truncate">
-                            By {heroFood.seller || "local home chef"}
+                            Kitchen: {getKitchenName(heroFood)}
                           </p>
                         </div>
                       </Link>
@@ -234,12 +241,12 @@ export default function Home() {
             <section className="mt-10 sm:mt-12">
               <div className="flex items-end justify-between gap-4 mb-5 sm:mb-7">
                 <div>
-                  <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
+                  <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
                     Fresh around you
                   </p>
 
                   <h2 className="text-3xl sm:text-4xl font-black text-[#111827] mt-2">
-                    Trending Now
+                    Trending now
                   </h2>
                 </div>
 
@@ -271,6 +278,14 @@ export default function Home() {
                             {food.category || "Homemade"}
                           </span>
                         </div>
+
+                        {Number(food.stock || 0) <= 0 && (
+                          <div className="absolute inset-0 bg-black/65 flex items-center justify-center">
+                            <span className="bg-white text-[#073B35] text-sm font-black px-4 py-2 rounded-2xl">
+                              Sold Out
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       <div className="p-4">
@@ -281,7 +296,7 @@ export default function Home() {
                             </h3>
 
                             <p className="text-[#51615D] text-sm mt-1 truncate">
-                              By {food.seller || "local home chef"}
+                              Kitchen: {getKitchenName(food)}
                             </p>
                           </div>
 
@@ -302,13 +317,13 @@ export default function Home() {
                   </h3>
 
                   <p className="text-[#51615D] mt-2">
-                    Once sellers upload dishes, they will appear here
+                    Once kitchens upload dishes, they will appear here
                     automatically.
                   </p>
 
                   <Link
                     to="/marketplace"
-                    className="inline-block mt-6 bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black px-6 py-3 rounded-2xl"
+                    className="inline-block mt-6 bg-[#073B35] hover:bg-[#0B5149] text-white font-black px-6 py-3 rounded-2xl"
                   >
                     Explore Marketplace
                   </Link>
@@ -322,7 +337,7 @@ export default function Home() {
                   🍲
                 </div>
 
-                <h3 className="text-[#1A9F8D] font-black text-xl mt-5">
+                <h3 className="text-[#073B35] font-black text-xl mt-5">
                   Fresh
                 </h3>
 
@@ -336,26 +351,26 @@ export default function Home() {
                   🏠
                 </div>
 
-                <h3 className="text-[#1A9F8D] font-black text-xl mt-5">
+                <h3 className="text-[#073B35] font-black text-xl mt-5">
                   Local
                 </h3>
 
                 <p className="text-[#51615D] mt-2 leading-relaxed">
-                  Food made inside your apartment or neighbourhood community.
+                  Food made within your apartment or neighbourhood community.
                 </p>
               </div>
 
               <div className="bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] p-6 shadow-lg shadow-[#073B35]/5">
                 <div className="w-12 h-12 rounded-2xl bg-[#41D3BD]/15 flex items-center justify-center text-2xl">
-                  ⭐
+                  🔒
                 </div>
 
-                <h3 className="text-[#1A9F8D] font-black text-xl mt-5">
-                  Trusted
+                <h3 className="text-[#073B35] font-black text-xl mt-5">
+                  Privacy-safe
                 </h3>
 
                 <p className="text-[#51615D] mt-2 leading-relaxed">
-                  Prepared by residents and home chefs near you.
+                  Exact kitchen door/location is not shown publicly.
                 </p>
               </div>
             </section>
@@ -373,8 +388,8 @@ export default function Home() {
                 </h2>
 
                 <p className="text-[#D7F5EF] text-base sm:text-lg mt-4 leading-relaxed">
-                  No long-distance delivery, no generic menus — just real food,
-                  made by people around you.
+                  No long-distance delivery, no generic menus — just real food
+                  made by trusted kitchens around you.
                 </p>
               </div>
             </section>
@@ -384,7 +399,7 @@ export default function Home() {
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#FFFFF2]/95 backdrop-blur-xl border-t border-[#D7F5EF] px-4 py-3">
           <Link
             to="/marketplace"
-            className="block w-full bg-[#41D3BD] active:scale-[0.98] text-[#073B35] text-center font-black py-4 rounded-2xl shadow-xl shadow-[#41D3BD]/25"
+            className="block w-full bg-[#073B35] active:scale-[0.98] text-white text-center font-black py-4 rounded-2xl shadow-xl shadow-[#073B35]/15"
           >
             Start Ordering
           </Link>

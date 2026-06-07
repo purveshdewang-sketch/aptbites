@@ -286,6 +286,10 @@ export default function Checkout() {
     });
   }
 
+  function getKitchenName(item) {
+    return item.seller || item.seller_kitchen_name || "Home Kitchen";
+  }
+
   async function copyToClipboard(value, label) {
     try {
       await navigator.clipboard.writeText(String(value));
@@ -462,10 +466,10 @@ export default function Checkout() {
     }
   }
 
-  function MobileSectionHeader({ number, title, subtitle }) {
+  function StepHeader({ number, title, subtitle }) {
     return (
       <div className="flex items-start gap-3">
-        <div className="w-8 h-8 rounded-xl bg-[#41D3BD] text-[#073B35] font-black flex items-center justify-center shrink-0">
+        <div className="w-9 h-9 rounded-2xl bg-[#073B35] text-white font-black flex items-center justify-center shrink-0 shadow-lg shadow-[#073B35]/15">
           {number}
         </div>
 
@@ -486,22 +490,22 @@ export default function Checkout() {
   function OrderSummaryCard({ compact = false }) {
     return (
       <section
-        className={`bg-white/85 border border-[#D7F5EF] rounded-[2rem] shadow-xl shadow-[#073B35]/5 ${
-          compact ? "p-4" : "p-5 sm:p-8 h-fit lg:sticky lg:top-24"
+        className={`bg-white/90 border border-[#D7F5EF] rounded-[2rem] shadow-xl shadow-[#073B35]/5 ${
+          compact ? "p-4" : "p-5 sm:p-6 h-fit lg:sticky lg:top-24"
         }`}
       >
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-xs sm:text-sm">
+            <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
               Order Summary
             </p>
 
-            <h2 className="text-xl sm:text-3xl font-black mt-1 sm:mt-2 text-[#111827]">
-              Your Food
+            <h2 className="text-2xl sm:text-3xl font-black mt-1 text-[#111827]">
+              Your food
             </h2>
           </div>
 
-          <div className="bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] text-xs px-3 py-1.5 rounded-full font-semibold">
+          <div className="bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] text-xs px-3 py-1.5 rounded-full font-black">
             {cartItems.length} items
           </div>
         </div>
@@ -523,6 +527,10 @@ export default function Checkout() {
                   <div className="min-w-0">
                     <p className="font-black truncate text-[#111827]">
                       {item.name}
+                    </p>
+
+                    <p className="text-[#51615D] text-xs mt-1 truncate">
+                      Kitchen: {getKitchenName(item)}
                     </p>
 
                     <p className="text-[#51615D] text-sm mt-1">
@@ -576,10 +584,10 @@ export default function Checkout() {
 
           <div className="flex items-center justify-between text-sm">
             <p className="text-[#51615D]">Platform Fee</p>
-            <p className="font-bold text-[#073B35]">₹{PLATFORM_FEE}</p>
+            <p className="font-bold text-[#111827]">₹{PLATFORM_FEE}</p>
           </div>
 
-          <div className="border-t border-[#D7F5EF] pt-5 flex items-center justify-between">
+          <div className="border-t border-[#D7F5EF] pt-5 flex items-end justify-between">
             <div>
               <p className="text-[#51615D] text-sm">Total Amount</p>
               <p className="text-[#51615D] text-xs mt-1">
@@ -587,7 +595,7 @@ export default function Checkout() {
               </p>
             </div>
 
-            <p className="text-3xl sm:text-4xl font-black text-[#073B35]">
+            <p className="text-4xl font-black text-[#073B35]">
               ₹{totalAmount}
             </p>
           </div>
@@ -597,7 +605,7 @@ export default function Checkout() {
               <button
                 onClick={handlePlaceOrder}
                 disabled={loading}
-                className="w-full mt-3 bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-[#073B35] font-black py-5 rounded-2xl text-lg transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
+                className="w-full mt-3 bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-5 rounded-2xl text-lg transition-all duration-200 shadow-lg shadow-[#073B35]/15"
               >
                 {loading
                   ? "Checking live stock..."
@@ -608,12 +616,17 @@ export default function Checkout() {
 
               <Link
                 to="/cart"
-                className="block text-center mt-3 border border-[#D7F5EF] bg-[#FFFFF2] hover:bg-[#D7F5EF] text-[#51615D] hover:text-[#073B35] font-bold py-3 rounded-2xl transition-all"
+                className="block text-center mt-3 border border-[#D7F5EF] bg-[#FFFFF2] hover:bg-[#D7F5EF] text-[#51615D] hover:text-[#073B35] font-black py-3 rounded-2xl transition-all"
               >
                 Back to Cart
               </Link>
             </>
           )}
+
+          <p className="text-[#51615D] text-xs leading-relaxed">
+            From your community. Exact kitchen door/location is not shown
+            publicly.
+          </p>
         </div>
       </section>
     );
@@ -625,12 +638,12 @@ export default function Checkout() {
         <Navbar />
 
         <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-8 flex items-center justify-center">
-          <div className="max-w-xl w-full bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-8 sm:p-10 text-center shadow-xl shadow-[#073B35]/5">
+          <div className="max-w-xl w-full bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-8 sm:p-10 text-center shadow-xl shadow-[#073B35]/5">
             <div className="w-24 h-24 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-5xl">
               🎉
             </div>
 
-            <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide mt-6">
+            <p className="text-[#1A9F8D] font-black uppercase tracking-wide mt-6">
               {orderTiming === "scheduled"
                 ? "Order Scheduled"
                 : "Order Confirmed"}
@@ -648,7 +661,7 @@ export default function Checkout() {
 
             <Link
               to="/orders"
-              className="block mt-8 bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-95 text-[#073B35] font-black py-4 rounded-2xl transition-all duration-200"
+              className="block mt-8 bg-[#073B35] hover:bg-[#0B5149] active:scale-95 text-white font-black py-4 rounded-2xl transition-all duration-200"
             >
               Track My Order
             </Link>
@@ -662,66 +675,55 @@ export default function Checkout() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-5 sm:py-10 pb-36 lg:pb-10">
+      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-6 sm:py-10 pb-36 lg:pb-10">
         <div className="max-w-6xl mx-auto">
-          <div className="lg:hidden mb-5">
-            <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-xs">
-              Checkout
-            </p>
+          <section className="relative overflow-hidden bg-white/85 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-xl shadow-[#073B35]/5 mb-6 lg:mb-8">
+            <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[95px]" />
+            <div className="absolute -bottom-28 -left-24 w-72 h-72 bg-[#41D3BD]/10 rounded-full blur-[110px]" />
 
-            <div className="flex items-end justify-between gap-4 mt-2">
+            <div className="relative flex items-end justify-between gap-4">
               <div>
-                <h1 className="text-3xl font-black tracking-tight text-[#111827]">
+                <div className="inline-flex items-center gap-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
+                  <span>✅</span>
+                  <span>Checkout</span>
+                </div>
+
+                <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
                   Complete order
                 </h1>
 
-                <p className="text-[#51615D] text-sm mt-2">
-                  Delivery, UPI payment and confirmation.
+                <p className="text-[#51615D] mt-4 text-sm sm:text-lg max-w-2xl leading-relaxed">
+                  Confirm delivery details, complete UPI payment, and submit the
+                  transaction reference.
                 </p>
               </div>
 
               <button
                 type="button"
                 onClick={() => setShowMobileSummary(!showMobileSummary)}
-                className="shrink-0 bg-white/85 border border-[#D7F5EF] text-[#073B35] font-black px-4 py-2 rounded-2xl shadow-sm"
+                className="lg:hidden shrink-0 bg-white border border-[#D7F5EF] text-[#073B35] font-black px-4 py-3 rounded-2xl shadow-sm"
               >
                 ₹{totalAmount}
               </button>
             </div>
 
             {showMobileSummary && (
-              <div className="mt-4">
+              <div className="relative lg:hidden mt-5">
                 <OrderSummaryCard compact />
               </div>
             )}
-          </div>
+          </section>
 
           <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-6 lg:gap-8">
             <section className="space-y-5 sm:space-y-6">
-              <div className="bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-8 shadow-xl shadow-[#073B35]/5">
-                <div className="hidden lg:block">
-                  <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
-                    Checkout
-                  </p>
+              <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
+                <StepHeader
+                  number="1"
+                  title="Delivery details"
+                  subtitle="Confirm your name, phone, address and delivery option."
+                />
 
-                  <h1 className="text-5xl font-black mt-3 tracking-tight text-[#111827]">
-                    Delivery details
-                  </h1>
-
-                  <p className="text-[#51615D] mt-4 leading-relaxed">
-                    Homemade food prepared inside your neighbourhood community.
-                  </p>
-                </div>
-
-                <div className="lg:hidden">
-                  <MobileSectionHeader
-                    number="1"
-                    title="Delivery details"
-                    subtitle="Confirm your name, flat and delivery option."
-                  />
-                </div>
-
-                <div className="mt-6 sm:mt-8 space-y-4">
+                <div className="mt-6 space-y-4">
                   <input
                     name="fullName"
                     value={formData.fullName}
@@ -758,7 +760,7 @@ export default function Checkout() {
                         onClick={() => selectDeliveryType("Doorstep delivery")}
                         className={`py-4 rounded-2xl font-black border transition-all ${
                           formData.deliveryType === "Doorstep delivery"
-                            ? "bg-[#41D3BD] text-[#073B35] border-[#41D3BD]"
+                            ? "bg-[#073B35] text-white border-[#073B35] shadow-lg shadow-[#073B35]/15"
                             : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
                         }`}
                       >
@@ -770,7 +772,7 @@ export default function Checkout() {
                         onClick={() => selectDeliveryType("Self pickup")}
                         className={`py-4 rounded-2xl font-black border transition-all ${
                           formData.deliveryType === "Self pickup"
-                            ? "bg-[#41D3BD] text-[#073B35] border-[#41D3BD]"
+                            ? "bg-[#073B35] text-white border-[#073B35] shadow-lg shadow-[#073B35]/15"
                             : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
                         }`}
                       >
@@ -798,25 +800,34 @@ export default function Checkout() {
                 </div>
               </div>
 
-              <div className="bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-8 shadow-xl shadow-[#073B35]/5">
-                <MobileSectionHeader
+              <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
+                <StepHeader
                   number="2"
                   title="Order timing"
                   subtitle="Order now or schedule for later if the kitchen allows it."
                 />
 
                 <div className="mt-6">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <button
                       type="button"
                       onClick={() => selectOrderTiming("now")}
-                      className={`py-4 rounded-2xl font-black border transition-all ${
+                      className={`text-left rounded-2xl p-4 border transition-all ${
                         orderTiming === "now"
-                          ? "bg-[#41D3BD] text-[#073B35] border-[#41D3BD]"
+                          ? "bg-[#073B35] text-white border-[#073B35] shadow-lg shadow-[#073B35]/15"
                           : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
                       }`}
                     >
-                      ⚡ Now
+                      <p className="font-black text-lg">⚡ Now</p>
+                      <p
+                        className={`text-sm mt-1 ${
+                          orderTiming === "now"
+                            ? "text-white/70"
+                            : "text-[#51615D]"
+                        }`}
+                      >
+                        Prepare immediately.
+                      </p>
                     </button>
 
                     <button
@@ -826,9 +837,9 @@ export default function Checkout() {
                         checkingKitchenSchedule ||
                         !kitchenAcceptsScheduledOrders
                       }
-                      className={`py-4 rounded-2xl font-black border transition-all ${
+                      className={`text-left rounded-2xl p-4 border transition-all ${
                         orderTiming === "scheduled"
-                          ? "bg-[#41D3BD] text-[#073B35] border-[#41D3BD]"
+                          ? "bg-[#073B35] text-white border-[#073B35] shadow-lg shadow-[#073B35]/15"
                           : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
                       } ${
                         checkingKitchenSchedule ||
@@ -837,7 +848,16 @@ export default function Checkout() {
                           : ""
                       }`}
                     >
-                      🕒 Schedule
+                      <p className="font-black text-lg">🕒 Schedule</p>
+                      <p
+                        className={`text-sm mt-1 ${
+                          orderTiming === "scheduled"
+                            ? "text-white/70"
+                            : "text-[#51615D]"
+                        }`}
+                      >
+                        Choose date and time.
+                      </p>
                     </button>
                   </div>
 
@@ -884,166 +904,149 @@ export default function Checkout() {
                 </div>
               </div>
 
-              <div className="bg-white/85 border border-[#D7F5EF] rounded-[2rem] overflow-hidden shadow-xl shadow-[#073B35]/5">
-                <div className="bg-[#41D3BD] text-[#073B35] p-5 sm:p-6">
+              <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] overflow-hidden shadow-xl shadow-[#073B35]/5">
+                <div className="bg-[#073B35] text-white p-5 sm:p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-sm font-black uppercase tracking-wide text-[#073B35]/70">
+                      <p className="text-sm font-black uppercase tracking-wide text-white/60">
                         Step 3
                       </p>
 
                       <h2 className="text-2xl sm:text-3xl font-black mt-1">
                         UPI Payment
                       </h2>
+
+                      <p className="text-white/65 text-sm mt-2">
+                        Pay first, then submit reference to confirm the order.
+                      </p>
                     </div>
 
-                    <div className="text-right">
-                      <p className="text-xs font-black uppercase text-[#073B35]/70">
+                    <div className="text-right shrink-0">
+                      <p className="text-xs font-black uppercase text-white/60">
                         Payable
                       </p>
 
-                      <p className="text-3xl sm:text-4xl font-black">
+                      <p className="text-3xl sm:text-4xl font-black text-[#41D3BD]">
                         ₹{totalAmount}
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-5 bg-[#073B35]/10 border border-[#073B35]/10 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
+                  <div className="mt-5 bg-white/10 border border-white/10 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
                     <div>
                       <p className="font-black">UPI payment only</p>
-                      <p className="text-[#073B35]/70 text-xs mt-0.5">
-                        Pay and submit transaction reference
+                      <p className="text-white/60 text-xs mt-0.5">
+                        Copy, scan, or open your UPI app
                       </p>
                     </div>
 
-                    <p className="font-black text-xs sm:text-sm break-all text-right">
+                    <p className="font-black text-xs sm:text-sm break-all text-right text-[#41D3BD]">
                       {Nefo_UPI_ID}
                     </p>
                   </div>
                 </div>
 
                 <div className="p-5 sm:p-6">
-                  <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4">
-                    <p className="text-[#1A9F8D] text-sm font-black uppercase tracking-wide">
-                      Payment Method
-                    </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <a
+                      href={upiPaymentLink}
+                      className="block text-center w-full bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.98] text-white font-black py-4 rounded-2xl transition-all shadow-lg shadow-[#073B35]/15"
+                    >
+                      Pay via UPI App
+                    </a>
 
-                    <p className="text-[#111827] text-xl font-black mt-1">
-                      UPI Payment Only
-                    </p>
-
-                    <p className="text-[#51615D] text-sm mt-2">
-                      Complete UPI payment and enter the transaction reference
-                      before placing the order.
-                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowQr((current) => !current)}
+                      className="block text-center w-full bg-[#FFFFF2] border border-[#41D3BD]/40 hover:bg-[#D7F5EF] text-[#073B35] font-black py-4 rounded-2xl transition-all"
+                    >
+                      {showQr ? "Hide QR" : "Scan QR"}
+                    </button>
                   </div>
 
-                  <div className="mt-5">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <a
-                        href={upiPaymentLink}
-                        className="block text-center w-full bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-[0.98] text-[#073B35] font-black py-4 rounded-2xl transition-all shadow-lg shadow-[#41D3BD]/20"
-                      >
-                        Pay via UPI App
-                      </a>
-
-                      <button
-                        type="button"
-                        onClick={() => setShowQr((current) => !current)}
-                        className="block text-center w-full bg-[#FFFFF2] border border-[#41D3BD]/40 hover:bg-[#D7F5EF] text-[#073B35] font-black py-4 rounded-2xl transition-all"
-                      >
-                        {showQr ? "Hide QR" : "Scan QR"}
-                      </button>
-                    </div>
-
-                    {showQr && (
-                      <div className="mt-5 bg-[#FFFFF2] border border-[#D7F5EF] rounded-[2rem] p-5 text-center">
-                        <p className="text-[#1A9F8D] text-sm font-black uppercase tracking-wide">
-                          Scan & Pay
-                        </p>
-
-                        <div className="mt-4 bg-white rounded-3xl p-4 w-fit mx-auto border border-[#D7F5EF]">
-                          <img
-                            src={qrCodeUrl}
-                            alt="Nefo UPI QR Code"
-                            className="w-56 h-56 object-contain"
-                          />
-                        </div>
-
-                        <p className="text-[#073B35] font-black mt-4">
-                          ₹{totalAmount}
-                        </p>
-
-                        <p className="text-[#51615D] text-sm mt-1 break-all">
-                          {Nefo_UPI_ID}
-                        </p>
-
-                        <p className="text-[#51615D] text-xs mt-3 leading-relaxed">
-                          Scan this QR using any UPI app. After payment, enter
-                          the transaction reference below.
-                        </p>
-                      </div>
-                    )}
-
-                    <p className="text-[#51615D] text-sm text-center mt-3">
-                      Opens your installed UPI app if supported by your phone.
-                    </p>
-
-                    <div className="grid grid-cols-2 gap-3 mt-5">
-                      {["Google Pay", "PhonePe", "Paytm", "BHIM"].map((app) => (
-                        <a
-                          key={app}
-                          href={upiPaymentLink}
-                          className="text-center bg-[#FFFFF2] border border-[#D7F5EF] hover:border-[#41D3BD]/60 rounded-2xl py-4 font-black transition-all text-[#073B35]"
-                        >
-                          {app}
-                        </a>
-                      ))}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 mt-5">
-                      <button
-                        type="button"
-                        onClick={() => copyToClipboard(Nefo_UPI_ID, "UPI ID")}
-                        className="bg-[#FFFFF2] border border-[#D7F5EF] hover:border-[#41D3BD]/60 rounded-2xl py-4 font-black transition-all text-[#073B35]"
-                      >
-                        Copy UPI ID
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => copyToClipboard(totalAmount, "Amount")}
-                        className="bg-[#FFFFF2] border border-[#D7F5EF] hover:border-[#41D3BD]/60 rounded-2xl py-4 font-black transition-all text-[#073B35]"
-                      >
-                        Copy Amount
-                      </button>
-                    </div>
-
-                    {paymentMessage && (
-                      <p className="text-[#1A9F8D] text-sm font-bold mt-3 text-center">
-                        {paymentMessage}
-                      </p>
-                    )}
-
-                    <div className="mt-5 border-t border-[#D7F5EF] pt-5">
+                  {showQr && (
+                    <div className="mt-5 bg-[#FFFFF2] border border-[#D7F5EF] rounded-[2rem] p-5 text-center">
                       <p className="text-[#1A9F8D] text-sm font-black uppercase tracking-wide">
-                        I have paid
+                        Scan & Pay
                       </p>
 
-                      <input
-                        value={paymentReference}
-                        onChange={(event) =>
-                          setPaymentReference(event.target.value)
-                        }
-                        className="w-full mt-3 bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] transition-all"
-                        placeholder="Enter UPI reference / transaction ID"
-                      />
+                      <div className="mt-4 bg-white rounded-3xl p-4 w-fit mx-auto border border-[#D7F5EF]">
+                        <img
+                          src={qrCodeUrl}
+                          alt="Nefo UPI QR Code"
+                          className="w-56 h-56 object-contain"
+                        />
+                      </div>
+
+                      <p className="text-[#073B35] font-black mt-4">
+                        ₹{totalAmount}
+                      </p>
+
+                      <p className="text-[#51615D] text-sm mt-1 break-all">
+                        {Nefo_UPI_ID}
+                      </p>
 
                       <p className="text-[#51615D] text-xs mt-3 leading-relaxed">
-                        This reference is required. Orders cannot be placed
-                        without UPI payment reference.
+                        Scan this QR using any UPI app. After payment, enter
+                        the transaction reference below.
                       </p>
                     </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-3 mt-5">
+                    {["Google Pay", "PhonePe", "Paytm", "BHIM"].map((app) => (
+                      <a
+                        key={app}
+                        href={upiPaymentLink}
+                        className="text-center bg-[#FFFFF2] border border-[#D7F5EF] hover:border-[#41D3BD]/60 rounded-2xl py-4 font-black transition-all text-[#073B35]"
+                      >
+                        {app}
+                      </a>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mt-5">
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(Nefo_UPI_ID, "UPI ID")}
+                      className="bg-[#FFFFF2] border border-[#D7F5EF] hover:border-[#41D3BD]/60 rounded-2xl py-4 font-black transition-all text-[#073B35]"
+                    >
+                      Copy UPI ID
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(totalAmount, "Amount")}
+                      className="bg-[#FFFFF2] border border-[#D7F5EF] hover:border-[#41D3BD]/60 rounded-2xl py-4 font-black transition-all text-[#073B35]"
+                    >
+                      Copy Amount
+                    </button>
+                  </div>
+
+                  {paymentMessage && (
+                    <p className="text-[#1A9F8D] text-sm font-bold mt-3 text-center">
+                      {paymentMessage}
+                    </p>
+                  )}
+
+                  <div className="mt-5 border-t border-[#D7F5EF] pt-5">
+                    <p className="text-[#1A9F8D] text-sm font-black uppercase tracking-wide">
+                      I have paid
+                    </p>
+
+                    <input
+                      value={paymentReference}
+                      onChange={(event) =>
+                        setPaymentReference(event.target.value)
+                      }
+                      className="w-full mt-3 bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] transition-all"
+                      placeholder="Enter UPI reference / transaction ID"
+                    />
+
+                    <p className="text-[#51615D] text-xs mt-3 leading-relaxed">
+                      This reference is required. Orders cannot be placed
+                      without UPI payment reference.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1060,7 +1063,7 @@ export default function Checkout() {
             <button
               type="button"
               onClick={() => setShowMobileSummary(!showMobileSummary)}
-              className="shrink-0 bg-white/85 border border-[#D7F5EF] rounded-2xl px-4 py-3 text-left shadow-sm"
+              className="shrink-0 bg-white border border-[#D7F5EF] rounded-2xl px-4 py-3 text-left shadow-sm"
             >
               <p className="text-[#51615D] text-[11px] font-bold uppercase">
                 Total
@@ -1073,7 +1076,7 @@ export default function Checkout() {
             <button
               onClick={handlePlaceOrder}
               disabled={loading}
-              className="flex-1 bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-[#073B35] font-black py-4 rounded-2xl transition-all shadow-lg shadow-[#41D3BD]/20"
+              className="flex-1 bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-4 rounded-2xl transition-all shadow-lg shadow-[#073B35]/15"
             >
               {loading
                 ? "Checking..."

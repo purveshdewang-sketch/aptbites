@@ -210,12 +210,12 @@ export default function Profile() {
         <Navbar />
 
         <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-10 flex items-center justify-center">
-          <div className="max-w-md w-full bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-7 text-center shadow-xl shadow-[#073B35]/5">
-            <div className="w-20 h-20 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-4xl">
+          <div className="max-w-md w-full bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-8 text-center shadow-xl shadow-[#073B35]/5">
+            <div className="w-24 h-24 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-5xl">
               👤
             </div>
 
-            <h1 className="text-3xl font-black mt-5 text-[#111827]">
+            <h1 className="text-3xl font-black mt-6 text-[#111827]">
               Sign in required
             </h1>
 
@@ -225,7 +225,7 @@ export default function Profile() {
 
             <Link
               to="/customer-login"
-              className="block mt-7 bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black py-4 rounded-2xl shadow-lg shadow-[#41D3BD]/20"
+              className="block mt-7 bg-[#073B35] hover:bg-[#0B5149] text-white font-black py-4 rounded-2xl shadow-lg shadow-[#073B35]/15"
             >
               Sign In
             </Link>
@@ -239,52 +239,58 @@ export default function Profile() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-5 sm:py-10 pb-32 sm:pb-24">
-        <div className="max-w-5xl mx-auto">
-          <div className="sm:hidden">
-            <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-xs">
-              My Profile
-            </p>
+      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-6 sm:py-10 pb-36 sm:pb-24">
+        <div className="max-w-6xl mx-auto">
+          <section className="relative overflow-hidden bg-white/90 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-xl shadow-[#073B35]/5">
+            <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[95px]" />
+            <div className="absolute -bottom-28 -left-24 w-72 h-72 bg-[#41D3BD]/10 rounded-full blur-[110px]" />
 
-            <h1 className="text-3xl font-black mt-2 leading-tight text-[#111827]">
-              Account details
-            </h1>
+            <div className="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5">
+              <div>
+                <div className="inline-flex items-center gap-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
+                  <span>👤</span>
+                  <span>My Profile</span>
+                </div>
 
-            <p className="text-[#51615D] text-sm mt-2">
-              Manage your details, password, and seller profile.
-            </p>
-          </div>
+                <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
+                  Account
+                  <span className="block text-[#111827]">details</span>
+                </h1>
 
-          <div className="hidden sm:block">
-            <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
-              My Profile
-            </p>
+                <p className="text-[#51615D] mt-4 text-sm sm:text-lg max-w-2xl leading-relaxed">
+                  Manage your contact details, address, password, and seller
+                  profile.
+                </p>
+              </div>
 
-            <h1 className="text-5xl font-black mt-2 text-[#111827]">
-              Account details
-            </h1>
+              <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4 min-w-[180px]">
+                <p className="text-[#51615D] text-xs font-bold uppercase">
+                  Account Type
+                </p>
 
-            <p className="text-[#51615D] mt-3">
-              Edit your contact details, address, and seller profile.
-            </p>
-          </div>
+                <p className="text-[#073B35] text-2xl font-black mt-1 capitalize">
+                  {role || "customer"}
+                </p>
+              </div>
+            </div>
+          </section>
 
           {message && (
-            <div className="mt-5 sm:mt-6 bg-white/85 border border-[#D7F5EF] rounded-2xl p-4 text-sm text-[#073B35] shadow-sm">
+            <div className="mt-5 bg-white/90 border border-[#D7F5EF] rounded-2xl p-4 text-sm font-bold text-[#073B35] shadow-sm">
               {message}
             </div>
           )}
 
           {loading ? (
-            <div className="mt-6 sm:mt-8 bg-white/85 border border-[#D7F5EF] rounded-3xl p-8 shadow-lg shadow-[#073B35]/5">
+            <div className="mt-6 bg-white/90 border border-[#D7F5EF] rounded-3xl p-8 shadow-lg shadow-[#073B35]/5">
               <p className="text-[#51615D] font-bold">Loading profile...</p>
             </div>
           ) : (
-            <div className="grid lg:grid-cols-[1fr_0.75fr] gap-5 sm:gap-6 mt-6 sm:mt-8">
+            <div className="grid lg:grid-cols-[1fr_0.75fr] gap-5 sm:gap-6 mt-6">
               <section className="space-y-5">
-                <div className="bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
+                <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-3xl bg-[#41D3BD] text-[#073B35] font-black text-2xl flex items-center justify-center shadow-lg shadow-[#41D3BD]/20">
+                    <div className="w-16 h-16 rounded-3xl bg-[#073B35] text-white font-black text-2xl flex items-center justify-center shadow-lg shadow-[#073B35]/15">
                       {getInitial()}
                     </div>
 
@@ -299,7 +305,7 @@ export default function Profile() {
 
                       <div className="mt-2 inline-flex items-center rounded-full bg-[#41D3BD]/12 border border-[#41D3BD]/25 px-3 py-1">
                         <span className="text-[#073B35] text-xs font-black capitalize">
-                          {role || "customer"} account
+                          {isSeller ? "Seller access enabled" : "Customer account"}
                         </span>
                       </div>
                     </div>
@@ -309,24 +315,28 @@ export default function Profile() {
                 <form
                   id="profile-form"
                   onSubmit={handleSaveProfile}
-                  className="bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-7 shadow-lg shadow-[#073B35]/5"
+                  className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-7 shadow-lg shadow-[#073B35]/5"
                 >
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <h2 className="text-2xl font-black text-[#111827]">
-                        Basic Details
-                      </h2>
-                      <p className="text-[#51615D] text-sm mt-1">
-                        These details are used for orders and delivery.
-                      </p>
-                    </div>
+                  <div>
+                    <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
+                      Basic Details
+                    </p>
+
+                    <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
+                      Personal information
+                    </h2>
+
+                    <p className="text-[#51615D] text-sm mt-2">
+                      These details are used for order coordination.
+                    </p>
                   </div>
 
-                  <div className="mt-5 space-y-4">
+                  <div className="mt-6 space-y-4">
                     <div>
-                      <label className="block text-[#51615D] text-xs font-bold uppercase tracking-wide mb-2">
+                      <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
                         Full Name
                       </label>
+
                       <input
                         name="full_name"
                         value={formData.full_name}
@@ -337,9 +347,10 @@ export default function Profile() {
                     </div>
 
                     <div>
-                      <label className="block text-[#51615D] text-xs font-bold uppercase tracking-wide mb-2">
+                      <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
                         Email
                       </label>
+
                       <input
                         value={user.email || ""}
                         disabled
@@ -350,9 +361,10 @@ export default function Profile() {
                     </div>
 
                     <div>
-                      <label className="block text-[#51615D] text-xs font-bold uppercase tracking-wide mb-2">
+                      <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
                         Phone Number
                       </label>
+
                       <input
                         name="phone"
                         value={formData.phone}
@@ -363,9 +375,10 @@ export default function Profile() {
                     </div>
 
                     <div>
-                      <label className="block text-[#51615D] text-xs font-bold uppercase tracking-wide mb-2">
+                      <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
                         Tower / Flat
                       </label>
+
                       <input
                         name="flat"
                         value={formData.flat}
@@ -378,19 +391,24 @@ export default function Profile() {
 
                   {isSeller && (
                     <div className="mt-8 border-t border-[#D7F5EF] pt-6">
-                      <h2 className="text-2xl font-black text-[#111827]">
+                      <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
                         Seller Details
-                      </h2>
-
-                      <p className="text-[#51615D] text-sm mt-1">
-                        These details are shown to customers.
                       </p>
 
-                      <div className="mt-5 space-y-4">
+                      <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
+                        Kitchen profile
+                      </h2>
+
+                      <p className="text-[#51615D] text-sm mt-2">
+                        These details help customers understand your kitchen.
+                      </p>
+
+                      <div className="mt-6 space-y-4">
                         <div>
-                          <label className="block text-[#51615D] text-xs font-bold uppercase tracking-wide mb-2">
+                          <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
                             Kitchen / Seller Name
                           </label>
+
                           <input
                             name="seller_kitchen_name"
                             value={formData.seller_kitchen_name}
@@ -401,9 +419,10 @@ export default function Profile() {
                         </div>
 
                         <div>
-                          <label className="block text-[#51615D] text-xs font-bold uppercase tracking-wide mb-2">
+                          <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
                             Food Specialty
                           </label>
+
                           <input
                             name="seller_specialty"
                             value={formData.seller_specialty}
@@ -414,9 +433,10 @@ export default function Profile() {
                         </div>
 
                         <div>
-                          <label className="block text-[#51615D] text-xs font-bold uppercase tracking-wide mb-2">
+                          <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
                             About Your Kitchen
                           </label>
+
                           <textarea
                             name="seller_about"
                             value={formData.seller_about}
@@ -437,15 +457,27 @@ export default function Profile() {
                           />
 
                           <div>
-                            <p className="text-[#111827] font-bold">
+                            <p className="text-[#111827] font-black">
                               Accept scheduled orders
                             </p>
+
                             <p className="text-[#51615D] text-sm mt-1">
                               Customers can choose date and time for later
                               orders.
                             </p>
                           </div>
                         </label>
+
+                        <div className="bg-[#41D3BD]/12 border border-[#41D3BD]/25 rounded-2xl p-4">
+                          <p className="text-[#073B35] font-black text-sm">
+                            Privacy note
+                          </p>
+
+                          <p className="text-[#51615D] text-xs mt-1 leading-relaxed">
+                            Exact kitchen door/location should not be shown
+                            publicly to customers.
+                          </p>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -455,7 +487,7 @@ export default function Profile() {
                     disabled={saving || !profileChanged}
                     className={`hidden sm:block mt-7 w-full font-black py-4 rounded-2xl transition-all ${
                       profileChanged
-                        ? "bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] shadow-lg shadow-[#41D3BD]/20"
+                        ? "bg-[#073B35] hover:bg-[#0B5149] text-white shadow-lg shadow-[#073B35]/15"
                         : "bg-[#D7F5EF] text-[#8AA5A0] cursor-not-allowed"
                     } disabled:opacity-60`}
                   >
@@ -469,8 +501,8 @@ export default function Profile() {
               </section>
 
               <aside className="space-y-5">
-                <div className="bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
-                  <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
+                <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
+                  <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
                     Account Type
                   </p>
 
@@ -484,7 +516,14 @@ export default function Profile() {
                       : "You are using a customer account."}
                   </p>
 
-                  {!isSeller && (
+                  {isSeller ? (
+                    <Link
+                      to="/seller-dashboard"
+                      className="block mt-5 bg-[#073B35] hover:bg-[#0B5149] text-white text-center font-black py-3 rounded-2xl transition-all"
+                    >
+                      Open Seller Dashboard
+                    </Link>
+                  ) : (
                     <p className="text-[#51615D] text-sm mt-3 leading-relaxed">
                       To sell food, use “Switch to Seller Account” from the
                       profile menu.
@@ -492,8 +531,8 @@ export default function Profile() {
                   )}
                 </div>
 
-                <div className="bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
-                  <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
+                <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
+                  <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
                     Password
                   </p>
 
@@ -516,8 +555,8 @@ export default function Profile() {
                   </button>
                 </div>
 
-                <div className="bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
-                  <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
+                <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
+                  <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
                     Legal & Support
                   </p>
 
@@ -533,7 +572,7 @@ export default function Profile() {
                   <div className="grid gap-3 mt-5">
                     <Link
                       to="/customer-care"
-                      className="bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black text-center py-3 rounded-2xl transition-all"
+                      className="bg-[#073B35] hover:bg-[#0B5149] text-white font-black text-center py-3 rounded-2xl transition-all"
                     >
                       Customer Care
                     </Link>
@@ -561,8 +600,8 @@ export default function Profile() {
                   </div>
                 </div>
 
-                <div className="bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
-                  <p className="text-[#1A9F8D] font-semibold uppercase tracking-wide text-sm">
+                <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
+                  <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
                     Session
                   </p>
 
@@ -587,7 +626,7 @@ export default function Profile() {
               disabled={saving || !profileChanged}
               className={`w-full active:scale-[0.98] disabled:opacity-60 font-black py-4 rounded-2xl transition-all ${
                 profileChanged
-                  ? "bg-[#41D3BD] text-[#073B35] shadow-xl shadow-[#41D3BD]/20"
+                  ? "bg-[#073B35] text-white shadow-xl shadow-[#073B35]/15"
                   : "bg-[#D7F5EF] text-[#8AA5A0] cursor-not-allowed"
               }`}
             >

@@ -106,6 +106,22 @@ export default function OrderHistory() {
     return [];
   }
 
+  function getOrderDate(order) {
+    if (!order.created_at) return "Date not available";
+
+    const date = new Date(order.created_at);
+
+    if (Number.isNaN(date.getTime())) return "Date not available";
+
+    return date.toLocaleString([], {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
+
   function handleReorder(order) {
     if (normalizeStatus(order.status) === "cancelled") {
       alert("Cancelled orders cannot be reordered directly.");
@@ -140,31 +156,39 @@ export default function OrderHistory() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-8 sm:py-10">
+      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-6 sm:py-10 pb-24">
         <div className="max-w-5xl mx-auto">
-          <div>
-            <p className="text-[#1A9F8D] font-semibold tracking-wide uppercase text-sm">
-              Order History
-            </p>
+          <section className="relative overflow-hidden bg-white/85 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-xl shadow-[#073B35]/5">
+            <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[95px]" />
+            <div className="absolute -bottom-28 -left-24 w-72 h-72 bg-[#41D3BD]/10 rounded-full blur-[110px]" />
 
-            <h1 className="text-4xl sm:text-5xl font-black mt-3 tracking-tight text-[#111827]">
-              Past Orders
-            </h1>
+            <div className="relative">
+              <div className="inline-flex items-center gap-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
+                <span>📜</span>
+                <span>Order History</span>
+              </div>
 
-            <p className="text-[#51615D] mt-4 max-w-2xl leading-relaxed">
-              View your completed, picked-up, and cancelled Nefo orders.
-            </p>
-          </div>
+              <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
+                Past orders
+                <span className="block text-[#111827]">and reorders</span>
+              </h1>
+
+              <p className="text-[#51615D] mt-4 max-w-2xl leading-relaxed text-sm sm:text-lg">
+                View completed, picked-up, and cancelled Nefo orders. Reorder
+                your favourite dishes when they are available again.
+              </p>
+            </div>
+          </section>
 
           {!user && (
-            <div className="mt-10 bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-8 text-center shadow-xl shadow-[#073B35]/5">
-              <h2 className="text-2xl font-bold text-[#111827]">
+            <div className="mt-8 bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-8 text-center shadow-xl shadow-[#073B35]/5">
+              <h2 className="text-2xl font-black text-[#111827]">
                 Sign in to view history
               </h2>
 
               <Link
                 to="/customer-login"
-                className="inline-block mt-7 bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-bold px-6 py-3 rounded-2xl shadow-lg shadow-[#41D3BD]/20"
+                className="inline-block mt-7 bg-[#073B35] hover:bg-[#0B5149] text-white font-black px-6 py-3 rounded-2xl shadow-lg shadow-[#073B35]/15"
               >
                 Sign In
               </Link>
@@ -172,33 +196,34 @@ export default function OrderHistory() {
           )}
 
           {user && loading && (
-            <div className="mt-10 space-y-4">
+            <div className="mt-8 space-y-4">
               {[1, 2].map((item) => (
                 <div
                   key={item}
-                  className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-6 animate-pulse shadow-lg shadow-[#073B35]/5"
+                  className="bg-white/90 border border-[#D7F5EF] rounded-3xl p-6 animate-pulse shadow-lg shadow-[#073B35]/5"
                 >
                   <div className="h-5 bg-[#D7F5EF] rounded-full w-1/3" />
                   <div className="h-4 bg-[#D7F5EF] rounded-full w-2/3 mt-4" />
+                  <div className="h-20 bg-[#D7F5EF] rounded-2xl mt-5" />
                 </div>
               ))}
             </div>
           )}
 
           {user && errorMessage && (
-            <div className="mt-10 bg-red-50 border border-red-200 text-red-600 rounded-3xl p-5">
-              <p className="font-bold">Failed to load order history</p>
+            <div className="mt-8 bg-red-50 border border-red-200 text-red-600 rounded-3xl p-5">
+              <p className="font-black">Failed to load order history</p>
               <p className="text-sm mt-1">{errorMessage}</p>
             </div>
           )}
 
           {user && !loading && !errorMessage && orders.length === 0 && (
-            <div className="mt-10 bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-8 sm:p-10 text-center shadow-xl shadow-[#073B35]/5">
-              <div className="w-20 h-20 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-4xl">
+            <div className="mt-8 bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-8 sm:p-10 text-center shadow-xl shadow-[#073B35]/5">
+              <div className="w-24 h-24 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-5xl">
                 📜
               </div>
 
-              <h2 className="text-2xl sm:text-3xl font-bold mt-6 text-[#111827]">
+              <h2 className="text-3xl sm:text-4xl font-black mt-6 text-[#111827]">
                 No order history yet
               </h2>
 
@@ -209,14 +234,14 @@ export default function OrderHistory() {
               <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Link
                   to="/orders"
-                  className="w-full sm:w-auto bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-95 text-[#073B35] font-bold px-6 py-3 rounded-2xl transition-all duration-200 shadow-lg shadow-[#41D3BD]/20 text-center"
+                  className="w-full sm:w-auto bg-[#073B35] hover:bg-[#0B5149] active:scale-95 text-white font-black px-6 py-3 rounded-2xl transition-all duration-200 shadow-lg shadow-[#073B35]/15 text-center"
                 >
                   View Active Orders
                 </Link>
 
                 <Link
                   to="/customer-care"
-                  className="w-full sm:w-auto border border-[#41D3BD]/45 bg-[#FFFFF2] text-[#073B35] hover:bg-[#D7F5EF] active:scale-95 font-bold px-6 py-3 rounded-2xl transition-all duration-200 text-center"
+                  className="w-full sm:w-auto border border-[#41D3BD]/45 bg-[#FFFFF2] text-[#073B35] hover:bg-[#D7F5EF] active:scale-95 font-black px-6 py-3 rounded-2xl transition-all duration-200 text-center"
                 >
                   Need Help?
                 </Link>
@@ -225,7 +250,7 @@ export default function OrderHistory() {
           )}
 
           {user && !loading && !errorMessage && orders.length > 0 && (
-            <div className="mt-10 space-y-5">
+            <div className="mt-8 space-y-5">
               {orders.map((order) => {
                 const orderStatus = normalizeStatus(order.status);
                 const orderItems = getOrderItems(order);
@@ -233,26 +258,30 @@ export default function OrderHistory() {
                 return (
                   <article
                     key={order.id}
-                    className="bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5"
+                    className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-4 sm:p-6 shadow-xl shadow-[#073B35]/5"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                       <div>
-                        <p className="text-[#51615D] text-sm">
+                        <p className="text-[#51615D] text-sm font-bold">
                           Order #{order.id}
                         </p>
 
-                        <h2 className="text-2xl font-black mt-1 text-[#073B35]">
-                          ₹{order.total_amount}
+                        <h2 className="text-3xl sm:text-4xl font-black mt-1 text-[#073B35]">
+                          ₹{order.total_amount || 0}
                         </h2>
 
                         <p className="text-[#51615D] text-sm mt-2">
                           {order.delivery_type || "Delivery"} • Your address:{" "}
                           {order.flat || "Not available"}
                         </p>
+
+                        <p className="text-[#9AA7A3] text-xs mt-2">
+                          {getOrderDate(order)}
+                        </p>
                       </div>
 
                       <span
-                        className={`w-fit border text-xs font-bold px-3 py-1.5 rounded-full ${getStatusStyle(
+                        className={`w-fit border text-xs font-black px-3 py-1.5 rounded-full ${getStatusStyle(
                           order.status
                         )}`}
                       >
@@ -261,31 +290,37 @@ export default function OrderHistory() {
                     </div>
 
                     <div className="mt-5 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4 space-y-3">
-                      {orderItems.map((item) => (
-                        <div
-                          key={`${order.id}-${item.id}`}
-                          className="flex items-center justify-between gap-4"
-                        >
-                          <div className="min-w-0">
-                            <p className="font-semibold truncate text-[#111827]">
-                              {item.name}
-                            </p>
+                      {orderItems.length === 0 ? (
+                        <p className="text-[#51615D] text-sm">
+                          No item details available for this order.
+                        </p>
+                      ) : (
+                        orderItems.map((item) => (
+                          <div
+                            key={`${order.id}-${item.id}`}
+                            className="flex items-center justify-between gap-4"
+                          >
+                            <div className="min-w-0">
+                              <p className="font-black truncate text-[#111827]">
+                                {item.name}
+                              </p>
 
-                            <p className="text-[#51615D] text-sm">
-                              Qty {item.quantity} × ₹{item.price}
+                              <p className="text-[#51615D] text-sm">
+                                Qty {item.quantity} × ₹{item.price}
+                              </p>
+                            </div>
+
+                            <p className="text-[#073B35] font-black shrink-0">
+                              ₹
+                              {Number(item.price || 0) *
+                                Number(item.quantity || 0)}
                             </p>
                           </div>
-
-                          <p className="text-[#073B35] font-bold shrink-0">
-                            ₹
-                            {Number(item.price || 0) *
-                              Number(item.quantity || 0)}
-                          </p>
-                        </div>
-                      ))}
+                        ))
+                      )}
                     </div>
 
-                    <div className="mt-4 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 space-y-2 text-sm">
+                    <div className="mt-4 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 space-y-3 text-sm">
                       <div className="flex justify-between text-[#51615D]">
                         <span>Subtotal</span>
                         <span>₹{order.subtotal_amount || 0}</span>
@@ -296,14 +331,14 @@ export default function OrderHistory() {
                         <span>₹{order.platform_fee || 10}</span>
                       </div>
 
-                      <div className="flex justify-between text-[#073B35] font-black border-t border-[#D7F5EF] pt-2">
+                      <div className="flex justify-between text-[#073B35] font-black border-t border-[#D7F5EF] pt-3">
                         <span>Total</span>
                         <span>₹{order.total_amount || 0}</span>
                       </div>
                     </div>
 
                     {order.notes && (
-                      <p className="text-[#51615D] text-sm mt-4">
+                      <p className="text-[#51615D] text-sm mt-4 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4">
                         Note: {order.notes}
                       </p>
                     )}
@@ -315,8 +350,9 @@ export default function OrderHistory() {
                         </div>
                       ) : (
                         <button
+                          type="button"
                           onClick={() => handleReorder(order)}
-                          className="w-full bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-[0.98] text-[#073B35] font-black py-3 rounded-2xl transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
+                          className="w-full bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.98] text-white font-black py-3 rounded-2xl transition-all duration-200 shadow-lg shadow-[#073B35]/15"
                         >
                           Re-order
                         </button>
@@ -329,6 +365,11 @@ export default function OrderHistory() {
                         Need Help?
                       </Link>
                     </div>
+
+                    <p className="text-[#51615D] text-xs mt-4 leading-relaxed">
+                      Exact kitchen door/location is not shown publicly. Pickup
+                      coordination happens through Nefo after confirmation.
+                    </p>
                   </article>
                 );
               })}
