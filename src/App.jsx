@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  Link,
+  useLocation,
+} from "react-router-dom";
 
 import Home from "./pages/Home";
 import CustomerLogin from "./pages/CustomerLogin";
@@ -18,14 +25,13 @@ import OwnerAccounting from "./pages/OwnerAccounting";
 import Profile from "./pages/Profile";
 import ResetPassword from "./pages/ResetPassword";
 import CustomerCare from "./pages/CustomerCare";
+import CustomerCareAgent from "./pages/CustomerCareAgent";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import RefundPolicy from "./pages/RefundPolicy";
 
 import { useAuth } from "./context/AuthContext";
 import { supabase } from "./lib/supabaseClient";
-import CustomerCareAgent from "./pages/CustomerCareAgent";
-
 
 function LoadingScreen() {
   return (
@@ -35,11 +41,39 @@ function LoadingScreen() {
   );
 }
 
+function FloatingHelpButton() {
+  const location = useLocation();
+
+  const hiddenRoutes = [
+    "/customer-login",
+    "/seller-login",
+    "/reset-password",
+    "/care-agent",
+  ];
+
+  if (hiddenRoutes.includes(location.pathname)) return null;
+
+  const needsHigherPosition =
+    location.pathname === "/cart" ||
+    location.pathname === "/checkout" ||
+    location.pathname.startsWith("/food/");
+
+  return (
+    <Link
+      to="/care-agent"
+      className={`fixed right-4 z-[999] bg-[#073B35] hover:bg-[#0B5149] text-white font-black px-4 py-3 rounded-full shadow-2xl shadow-[#073B35]/25 border border-[#41D3BD]/30 active:scale-95 transition-all ${
+        needsHigherPosition ? "bottom-24" : "bottom-5"
+      }`}
+    >
+      💬 Help
+    </Link>
+  );
+}
+
 function ProtectedRoute({ children }) {
   const { user, authLoading } = useAuth();
 
   if (authLoading) return <LoadingScreen />;
-
   if (!user) return <Navigate to="/customer-login" replace />;
 
   return children;
@@ -115,9 +149,7 @@ function SellerOnlyRoute({ children }) {
   }, [user, authLoading]);
 
   if (authLoading || checkingRole) return <LoadingScreen />;
-
   if (!user) return <Navigate to="/customer-login" replace />;
-
   if (!sellerAllowed) return <Navigate to="/seller-registration" replace />;
 
   return children;
@@ -183,9 +215,7 @@ function AdminOnlyRoute({ children }) {
   }, [user, authLoading]);
 
   if (authLoading || checkingRole) return <LoadingScreen />;
-
   if (!user) return <Navigate to="/customer-login" replace />;
-
   if (!adminAllowed) return <Navigate to="/" replace />;
 
   return children;
@@ -281,11 +311,13 @@ export default function App() {
         />
 
         <Route
-    path="/care-agent"
-    element={ <ProtectedRoute> <CustomerCareAgent /> </ProtectedRoute>
-  }
-      />
-
+          path="/care-agent"
+          element={
+            <ProtectedRoute>
+              <CustomerCareAgent />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/seller-dashboard"
@@ -361,6 +393,8 @@ export default function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+
+      <FloatingHelpButton />
     </BrowserRouter>
   );
 }
