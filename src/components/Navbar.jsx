@@ -13,7 +13,8 @@ export default function Navbar() {
   const [logoFailed, setLogoFailed] = useState(false);
   const [isSeller, setIsSeller] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [switchingSeller, setSwitchingSeller] = useState(false);
+  const [sellerApplicationStatus, setSellerApplicationStatus] =
+    useState("not_applied");
 
   const dropdownRef = useRef(null);
   const mobileDropdownRef = useRef(null);
@@ -31,40 +32,44 @@ export default function Navbar() {
       if (!user) {
         setIsSeller(false);
         setIsAdmin(false);
+        setSellerApplicationStatus("not_applied");
         return;
       }
 
       const metadataRole = String(user?.user_metadata?.role || "").toLowerCase();
 
-      if (metadataRole === "admin") {
-        setIsAdmin(true);
-      }
-
-      if (metadataRole === "seller") {
-        setIsSeller(true);
-      }
-
       const { data, error } = await supabase
         .from("profiles")
-        .select("role, is_seller")
+        .select("role, is_seller, seller_application_status")
         .eq("id", user.id)
         .maybeSingle();
 
       if (error) {
-        setIsSeller(metadataRole === "seller");
-        setIsAdmin(metadataRole === "admin");
+        const metadataIsAdmin = metadataRole === "admin";
+        const metadataIsSeller = metadataRole === "seller";
+
+        setIsAdmin(metadataIsAdmin);
+        setIsSeller(metadataIsAdmin || metadataIsSeller);
+        setSellerApplicationStatus("not_applied");
         return;
       }
 
       const profileRole = String(data?.role || "").toLowerCase();
+      const applicationStatus = String(
+        data?.seller_application_status || "not_applied"
+      ).toLowerCase();
 
-      setIsAdmin(profileRole === "admin" || metadataRole === "admin");
-      setIsSeller(
-        profileRole === "seller" ||
-          profileRole === "admin" ||
-          data?.is_seller === true ||
-          metadataRole === "seller"
-      );
+      const adminAllowed = profileRole === "admin" || metadataRole === "admin";
+
+      const sellerAllowed =
+        adminAllowed ||
+        (profileRole === "seller" &&
+          data?.is_seller === true &&
+          applicationStatus === "approved");
+
+      setIsAdmin(adminAllowed);
+      setIsSeller(sellerAllowed);
+      setSellerApplicationStatus(applicationStatus);
     }
 
     checkUserRoles();
@@ -91,42 +96,16 @@ export default function Navbar() {
     };
   }, []);
 
-  async function handleSwitchToSeller() {
-    if (!user) return;
+  function handleSellerAction() {
+    setProfileOpen(false);
+    setMobileMenuOpen(false);
 
-    const confirmSwitch = window.confirm(
-      "Switch this account to a seller account? You will get access to Seller Dashboard."
-    );
-
-    if (!confirmSwitch) return;
-
-    setSwitchingSeller(true);
-
-    const { error } = await supabase.from("profiles").upsert({
-      id: user.id,
-      email: user.email,
-      role: "seller",
-      is_seller: true,
-    });
-
-    if (error) {
-      alert(`Could not switch account: ${error.message}`);
-      setSwitchingSeller(false);
+    if (isSeller) {
+      navigate("/seller-dashboard");
       return;
     }
 
-    await supabase.auth.updateUser({
-      data: {
-        role: "seller",
-      },
-    });
-
-    setIsSeller(true);
-    setProfileOpen(false);
-    setMobileMenuOpen(false);
-    setSwitchingSeller(false);
-
-    navigate("/seller-dashboard");
+    navigate("/seller-registration");
   }
 
   async function handleLogout() {
@@ -135,6 +114,7 @@ export default function Navbar() {
     setMobileMenuOpen(false);
     setIsSeller(false);
     setIsAdmin(false);
+    setSellerApplicationStatus("not_applied");
     navigate("/");
   }
 
@@ -150,8 +130,17 @@ export default function Navbar() {
 
   function getAccountLabel() {
     if (isAdmin) return "Admin account";
-    if (isSeller) return "Seller account";
+    if (isSeller) return "Approved seller";
+    if (sellerApplicationStatus === "pending") return "Seller review pending";
+    if (sellerApplicationStatus === "rejected") return "Seller application rejected";
     return "Customer account";
+  }
+
+  function getSellerActionLabel() {
+    if (isSeller) return "Seller Dashboard";
+    if (sellerApplicationStatus === "pending") return "Seller Application Pending";
+    if (sellerApplicationStatus === "rejected") return "Re-apply to Sell";
+    return "Apply to Sell on Nefo";
   }
 
   function LogoMark() {
@@ -218,16 +207,40 @@ export default function Navbar() {
               })}
 
               {isAdmin && (
-                <Link
-                  to="/owner-dashboard"
-                  className={`text-sm font-semibold transition-all duration-200 ${
-                    location.pathname === "/owner-dashboard"
-                      ? "text-[#41D3BD]"
-                      : "text-[#D7F5EF] hover:text-[#41D3BD]"
-                  }`}
-                >
-                  Owner Dashboard
-                </Link>
+                <>
+                  <Link
+                    to="/owner-dashboard"
+                    className={`text-sm font-semibold transition-all duration-200 ${
+                      location.pathname === "/owner-dashboard"
+                        ? "text-[#41D3BD]"
+                        : "text-[#D7F5EF] hover:text-[#41D3BD]"
+                    }`}
+                  >
+                    Owner Dashboard
+                  </Link>
+
+                  <Link
+                    to="/owner-accounting"
+                    className={`text-sm font-semibold transition-all duration-200 ${
+                      location.pathname === "/owner-accounting"
+                        ? "text-[#41D3BD]"
+                        : "text-[#D7F5EF] hover:text-[#41D3BD]"
+                    }`}
+                  >
+                    Accounting
+                  </Link>
+
+                  <Link
+                    to="/owner-seller-applications"
+                    className={`text-sm font-semibold transition-all duration-200 ${
+                      location.pathname === "/owner-seller-applications"
+                        ? "text-[#41D3BD]"
+                        : "text-[#D7F5EF] hover:text-[#41D3BD]"
+                    }`}
+                  >
+                    Seller Applications
+                  </Link>
+                </>
               )}
             </div>
 
@@ -313,33 +326,41 @@ export default function Navbar() {
                           </Link>
 
                           {isAdmin && (
-                            <Link
-                              to="/owner-dashboard"
-                              className="block px-4 py-3 rounded-2xl text-[#1A9F8D] hover:bg-[#D7F5EF] transition-all"
-                            >
-                              Owner Dashboard
-                            </Link>
+                            <>
+                              <Link
+                                to="/owner-dashboard"
+                                className="block px-4 py-3 rounded-2xl text-[#1A9F8D] hover:bg-[#D7F5EF] transition-all"
+                              >
+                                Owner Dashboard
+                              </Link>
+
+                              <Link
+                                to="/owner-accounting"
+                                className="block px-4 py-3 rounded-2xl text-[#1A9F8D] hover:bg-[#D7F5EF] transition-all"
+                              >
+                                Owner Accounting
+                              </Link>
+
+                              <Link
+                                to="/owner-seller-applications"
+                                className="block px-4 py-3 rounded-2xl text-[#1A9F8D] hover:bg-[#D7F5EF] transition-all"
+                              >
+                                Seller Applications
+                              </Link>
+                            </>
                           )}
 
-                          {isSeller ? (
-                            <Link
-                              to="/seller-dashboard"
-                              className="block px-4 py-3 rounded-2xl text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D] transition-all"
-                            >
-                              Seller Dashboard
-                            </Link>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={handleSwitchToSeller}
-                              disabled={switchingSeller}
-                              className="w-full text-left px-4 py-3 rounded-2xl text-[#1A9F8D] hover:bg-[#D7F5EF] transition-all disabled:opacity-50"
-                            >
-                              {switchingSeller
-                                ? "Switching..."
-                                : "Switch to Seller Account"}
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            onClick={handleSellerAction}
+                            className={`w-full text-left px-4 py-3 rounded-2xl transition-all ${
+                              isSeller
+                                ? "text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D]"
+                                : "text-[#1A9F8D] hover:bg-[#D7F5EF]"
+                            }`}
+                          >
+                            {getSellerActionLabel()}
+                          </button>
 
                           <button
                             type="button"
@@ -434,16 +455,40 @@ export default function Navbar() {
                 </Link>
 
                 {isAdmin && (
-                  <Link
-                    to="/owner-dashboard"
-                    className={`px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
-                      location.pathname === "/owner-dashboard"
-                        ? "bg-[#41D3BD] text-[#073B35]"
-                        : "text-[#1A9F8D] hover:bg-[#D7F5EF]"
-                    }`}
-                  >
-                    Owner Dashboard
-                  </Link>
+                  <>
+                    <Link
+                      to="/owner-dashboard"
+                      className={`px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
+                        location.pathname === "/owner-dashboard"
+                          ? "bg-[#41D3BD] text-[#073B35]"
+                          : "text-[#1A9F8D] hover:bg-[#D7F5EF]"
+                      }`}
+                    >
+                      Owner Dashboard
+                    </Link>
+
+                    <Link
+                      to="/owner-accounting"
+                      className={`px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
+                        location.pathname === "/owner-accounting"
+                          ? "bg-[#41D3BD] text-[#073B35]"
+                          : "text-[#1A9F8D] hover:bg-[#D7F5EF]"
+                      }`}
+                    >
+                      Owner Accounting
+                    </Link>
+
+                    <Link
+                      to="/owner-seller-applications"
+                      className={`px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
+                        location.pathname === "/owner-seller-applications"
+                          ? "bg-[#41D3BD] text-[#073B35]"
+                          : "text-[#1A9F8D] hover:bg-[#D7F5EF]"
+                      }`}
+                    >
+                      Seller Applications
+                    </Link>
+                  </>
                 )}
 
                 <div className="h-px bg-[#D7F5EF] my-2" />
@@ -462,25 +507,13 @@ export default function Navbar() {
                   Order History
                 </Link>
 
-                {isSeller ? (
-                  <Link
-                    to="/seller-dashboard"
-                    className="px-4 py-3 rounded-2xl text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D]"
-                  >
-                    Seller Dashboard
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleSwitchToSeller}
-                    disabled={switchingSeller}
-                    className="text-left px-4 py-3 rounded-2xl text-[#1A9F8D] hover:bg-[#D7F5EF] disabled:opacity-50"
-                  >
-                    {switchingSeller
-                      ? "Switching..."
-                      : "Switch to Seller Account"}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={handleSellerAction}
+                  className="text-left px-4 py-3 rounded-2xl text-[#1A9F8D] hover:bg-[#D7F5EF]"
+                >
+                  {getSellerActionLabel()}
+                </button>
 
                 <button
                   type="button"

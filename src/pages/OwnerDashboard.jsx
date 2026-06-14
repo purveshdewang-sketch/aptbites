@@ -455,6 +455,13 @@ export default function OwnerDashboard() {
                   Open Accounting
                 </Link>
 
+                <Link
+                  to="/owner-seller-applications"
+                  className="bg-[#FFFFF2] border border-[#41D3BD]/45 hover:bg-[#D7F5EF] text-[#073B35] font-black px-5 py-3 rounded-2xl transition-all"
+                >
+                  Seller Applications
+                </Link>
+
                 <button
                   type="button"
                   onClick={downloadCSV}

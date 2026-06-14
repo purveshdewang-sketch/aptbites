@@ -6,6 +6,8 @@ import CustomerLogin from "./pages/CustomerLogin";
 import SellerLogin from "./pages/SellerLogin";
 import Marketplace from "./pages/Marketplace";
 import SellerDashboard from "./pages/SellerDashboard";
+import SellerRegistration from "./pages/SellerRegistration";
+import OwnerSellerApplications from "./pages/OwnerSellerApplications";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
@@ -63,16 +65,9 @@ function SellerOnlyRoute({ children }) {
 
       setCheckingRole(true);
 
-      const localSellerAccess =
-        localStorage.getItem(`Nefo_seller_access_${user.id}`) === "yes";
-
       const metadataRole = String(user?.user_metadata?.role || "").toLowerCase();
 
-      if (
-        localSellerAccess ||
-        metadataRole === "seller" ||
-        metadataRole === "admin"
-      ) {
+      if (metadataRole === "admin") {
         if (!cancelled) {
           setSellerAllowed(true);
           setCheckingRole(false);
@@ -82,7 +77,7 @@ function SellerOnlyRoute({ children }) {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("role, is_seller")
+        .select("role, is_seller, seller_application_status")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -95,17 +90,18 @@ function SellerOnlyRoute({ children }) {
       }
 
       const profileRole = String(data?.role || "").toLowerCase();
+      const applicationStatus = String(
+        data?.seller_application_status || "not_applied"
+      ).toLowerCase();
 
-      const isSeller =
-        profileRole === "seller" ||
-        profileRole === "admin" ||
-        data?.is_seller === true;
+      const isApprovedSeller =
+        profileRole === "seller" &&
+        data?.is_seller === true &&
+        applicationStatus === "approved";
 
-      if (isSeller) {
-        localStorage.setItem(`Nefo_seller_access_${user.id}`, "yes");
-      }
+      const isAdmin = profileRole === "admin";
 
-      setSellerAllowed(isSeller);
+      setSellerAllowed(isApprovedSeller || isAdmin);
       setCheckingRole(false);
     }
 
@@ -120,7 +116,7 @@ function SellerOnlyRoute({ children }) {
 
   if (!user) return <Navigate to="/customer-login" replace />;
 
-  if (!sellerAllowed) return <Navigate to="/customer-login" replace />;
+  if (!sellerAllowed) return <Navigate to="/seller-registration" replace />;
 
   return children;
 }
@@ -200,6 +196,15 @@ export default function App() {
         <Route path="/customer-login" element={<CustomerLogin />} />
         <Route path="/seller-login" element={<SellerLogin />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+
+        <Route
+          path="/seller-registration"
+          element={
+            <ProtectedRoute>
+              <SellerRegistration />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/privacy-policy"
@@ -296,6 +301,15 @@ export default function App() {
           element={
             <AdminOnlyRoute>
               <OwnerAccounting />
+            </AdminOnlyRoute>
+          }
+        />
+
+        <Route
+          path="/owner-seller-applications"
+          element={
+            <AdminOnlyRoute>
+              <OwnerSellerApplications />
             </AdminOnlyRoute>
           }
         />
