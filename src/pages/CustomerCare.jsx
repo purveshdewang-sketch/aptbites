@@ -31,6 +31,28 @@ export default function CustomerCare() {
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+                <Link
+                  to="/care-agent"
+                  className="group bg-[#073B35] rounded-3xl p-5 transition-all shadow-xl shadow-[#073B35]/15"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-[#41D3BD]/15 flex items-center justify-center text-2xl">
+                    🤖
+                  </div>
+
+                  <h2 className="text-xl font-black mt-4 text-white">
+                    Smart Care Agent
+                  </h2>
+
+                  <p className="text-[#D7F5EF] text-sm mt-2 leading-relaxed">
+                    Get instant help for orders, payments, refunds, packing, and
+                    food issues.
+                  </p>
+
+                  <p className="mt-4 text-[#41D3BD] group-hover:text-[#55E4CF] font-black">
+                    Open Agent
+                  </p>
+                </Link>
+
                 <a
                   href={`mailto:${SUPPORT_EMAIL}`}
                   className="group bg-[#FFFFF2] border border-[#D7F5EF] hover:border-[#41D3BD]/60 rounded-3xl p-5 transition-all"
@@ -44,8 +66,7 @@ export default function CustomerCare() {
                   </h2>
 
                   <p className="text-[#51615D] text-sm mt-2 leading-relaxed">
-                    Use this for orders, refunds, payment issues, account help,
-                    and seller support.
+                    Use this for non-urgent support and account help.
                   </p>
 
                   <p className="mt-4 text-[#1A9F8D] group-hover:text-[#073B35] font-black break-all">
@@ -74,24 +95,6 @@ export default function CustomerCare() {
                     View Orders
                   </p>
                 </Link>
-
-                <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-5">
-                  <div className="w-12 h-12 rounded-2xl bg-[#41D3BD]/15 flex items-center justify-center text-2xl">
-                    🕘
-                  </div>
-
-                  <h2 className="text-xl font-black mt-4 text-[#073B35]">
-                    Support Hours
-                  </h2>
-
-                  <p className="text-[#51615D] text-sm mt-2 leading-relaxed">
-                    We are available during daily food ordering hours.
-                  </p>
-
-                  <p className="mt-4 text-[#1A9F8D] font-black">
-                    9:00 AM – 9:00 PM
-                  </p>
-                </div>
               </div>
             </div>
           </section>
@@ -112,6 +115,8 @@ export default function CustomerCare() {
                   "Kitchen did not accept or prepare the order",
                   "Wrong item, missing item, or quantity issue",
                   "Refund or cancellation request",
+                  "Payment reference or UPI issue",
+                  "Packing required / no packing issue",
                   "Seller dashboard or food listing problem",
                   "Login, password reset, or account issue",
                 ].map((item) => (
@@ -138,8 +143,15 @@ export default function CustomerCare() {
 
                 <div className="grid gap-3 mt-6">
                   <Link
-                    to="/orders"
+                    to="/care-agent"
                     className="bg-[#073B35] hover:bg-[#0B5149] text-white font-black text-center py-4 rounded-2xl shadow-lg shadow-[#073B35]/15 transition-all"
+                  >
+                    Open Smart Care Agent
+                  </Link>
+
+                  <Link
+                    to="/orders"
+                    className="bg-[#FFFFF2] border border-[#D7F5EF] hover:bg-[#D7F5EF] text-[#073B35] font-black text-center py-4 rounded-2xl transition-all"
                   >
                     View Active Orders
                   </Link>
@@ -168,7 +180,7 @@ export default function CustomerCare() {
 
                 <p className="text-[#8AA5A0] text-xs mt-5 leading-relaxed">
                   For faster support, keep your order number and UPI reference
-                  ready before emailing us.
+                  ready.
                 </p>
               </div>
 
@@ -177,24 +189,24 @@ export default function CustomerCare() {
 
                 <div className="relative">
                   <p className="text-[#41D3BD] font-black uppercase tracking-wide text-xs">
-                    Payment Help
+                    Smart Ticketing
                   </p>
 
                   <h2 className="text-2xl font-black text-white mt-2">
-                    UPI reference is important
+                    Let the care agent create your ticket
                   </h2>
 
                   <p className="text-[#D7F5EF] text-sm mt-3 leading-relaxed">
-                    For payment issues, email your order number, UPI reference,
-                    amount paid, payment time, and screenshots if available.
+                    The Smart Care Agent can attach your order details, payment
+                    status, packing choice, and issue type automatically.
                   </p>
 
-                  <a
-                    href={`mailto:${SUPPORT_EMAIL}`}
-                    className="inline-block mt-4 text-[#41D3BD] hover:text-[#55E4CF] font-black break-all"
+                  <Link
+                    to="/care-agent"
+                    className="inline-block mt-5 bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black px-5 py-3 rounded-2xl"
                   >
-                    {SUPPORT_EMAIL}
-                  </a>
+                    Start Smart Support
+                  </Link>
                 </div>
               </div>
             </aside>
@@ -239,4 +251,4 @@ export default function CustomerCare() {
       </main>
     </>
   );
-}
+} 

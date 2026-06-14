@@ -24,6 +24,8 @@ import RefundPolicy from "./pages/RefundPolicy";
 
 import { useAuth } from "./context/AuthContext";
 import { supabase } from "./lib/supabaseClient";
+import CustomerCareAgent from "./pages/CustomerCareAgent";
+
 
 function LoadingScreen() {
   return (
@@ -277,6 +279,13 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+    path="/care-agent"
+    element={ <ProtectedRoute> <CustomerCareAgent /> </ProtectedRoute>
+  }
+      />
+
 
         <Route
           path="/seller-dashboard"
