@@ -15,23 +15,6 @@ export default function Checkout() {
 
   const navigate = useNavigate();
 
-  const subtotalAmount = Number(cartTotal || 0);
-  const totalAmount = subtotalAmount + PLATFORM_FEE;
-  const paymentMethod = "upi";
-
-  const upiPaymentLink = `upi://pay?pa=${encodeURIComponent(
-    Nefo_UPI_ID
-  )}&pn=${encodeURIComponent(
-    Nefo_PAYEE_NAME
-  )}&am=${totalAmount}&cu=INR&tn=${encodeURIComponent("Nefo food order")}`;
-
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(
-    upiPaymentLink
-  )}`;
-
-  const getCheckoutStorageKey = () =>
-    user ? `Nefo_checkout_details_${user.id}` : "Nefo_checkout_details_guest";
-
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
@@ -48,6 +31,7 @@ export default function Checkout() {
     useState(false);
   const [deliveryAvailable, setDeliveryAvailable] = useState(true);
   const [pickupAvailable, setPickupAvailable] = useState(true);
+  const [packingCharge, setPackingCharge] = useState(5);
   const [checkingKitchenSettings, setCheckingKitchenSettings] = useState(true);
 
   const [paymentReference, setPaymentReference] = useState("");
@@ -57,6 +41,11 @@ export default function Checkout() {
 
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const subtotalAmount = Number(cartTotal || 0);
+  const safePackingCharge = getSafePackingCharge(packingCharge);
+  const totalAmount = subtotalAmount + safePackingCharge + PLATFORM_FEE;
+  const paymentMethod = "upi";
 
   const formattedSchedule = formatScheduledDateTime(
     scheduledDate,
@@ -68,6 +57,19 @@ export default function Checkout() {
     !checkingKitchenSettings &&
     !deliveryAvailable &&
     !pickupAvailable;
+
+  const upiPaymentLink = `upi://pay?pa=${encodeURIComponent(
+    Nefo_UPI_ID
+  )}&pn=${encodeURIComponent(
+    Nefo_PAYEE_NAME
+  )}&am=${totalAmount}&cu=INR&tn=${encodeURIComponent("Nefo food order")}`;
+
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(
+    upiPaymentLink
+  )}`;
+
+  const getCheckoutStorageKey = () =>
+    user ? `Nefo_checkout_details_${user.id}` : "Nefo_checkout_details_guest";
 
   useEffect(() => {
     async function loadSavedCheckoutDetails() {
@@ -164,6 +166,7 @@ export default function Checkout() {
         setKitchenAcceptsScheduledOrders(false);
         setDeliveryAvailable(false);
         setPickupAvailable(false);
+        setPackingCharge(5);
         setCheckingKitchenSettings(false);
 
         if (orderTiming === "scheduled") {
@@ -182,10 +185,12 @@ export default function Checkout() {
       const nextScheduleAllowed = settings.accept_scheduled_orders === true;
       const nextDeliveryAvailable = settings.delivery_available !== false;
       const nextPickupAvailable = settings.pickup_available !== false;
+      const nextPackingCharge = getSafePackingCharge(settings.packing_charge);
 
       setKitchenAcceptsScheduledOrders(nextScheduleAllowed);
       setDeliveryAvailable(nextDeliveryAvailable);
       setPickupAvailable(nextPickupAvailable);
+      setPackingCharge(nextPackingCharge);
       setCheckingKitchenSettings(false);
 
       if (!nextScheduleAllowed && orderTiming === "scheduled") {
@@ -237,18 +242,25 @@ export default function Checkout() {
     checkKitchenSettings();
   }, [cartItems, orderTiming]);
 
+  function getSafePackingCharge(value) {
+    return Math.min(15, Math.max(5, Number(value || 5)));
+  }
+
   async function fetchKitchenSettings(kitchenId) {
     if (!kitchenId || kitchenId === "MIXED_KITCHENS") {
       return {
         accept_scheduled_orders: false,
         delivery_available: false,
         pickup_available: false,
+        packing_charge: 5,
       };
     }
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("accept_scheduled_orders, delivery_available, pickup_available")
+      .select(
+        "accept_scheduled_orders, delivery_available, pickup_available, packing_charge"
+      )
       .eq("id", kitchenId)
       .maybeSingle();
 
@@ -257,6 +269,7 @@ export default function Checkout() {
         accept_scheduled_orders: false,
         delivery_available: false,
         pickup_available: false,
+        packing_charge: 5,
       };
     }
 
@@ -264,6 +277,7 @@ export default function Checkout() {
       accept_scheduled_orders: data?.accept_scheduled_orders === true,
       delivery_available: data?.delivery_available !== false,
       pickup_available: data?.pickup_available !== false,
+      packing_charge: getSafePackingCharge(data?.packing_charge),
     };
   }
 
@@ -471,6 +485,11 @@ export default function Checkout() {
 
     try {
       const latestKitchenSettings = await fetchKitchenSettings(kitchenId);
+      const latestPackingCharge = getSafePackingCharge(
+        latestKitchenSettings.packing_charge
+      );
+
+      setPackingCharge(latestPackingCharge);
 
       if (
         latestKitchenSettings.delivery_available === false &&
@@ -538,6 +557,9 @@ export default function Checkout() {
 
       await validateLiveStockBeforeOrder();
 
+      const latestTotalAmount =
+        subtotalAmount + latestPackingCharge + PLATFORM_FEE;
+
       const orderPayload = {
         user_id: user.id,
         seller_id: kitchenId,
@@ -547,8 +569,9 @@ export default function Checkout() {
         delivery_type: formData.deliveryType,
         notes: formData.notes,
         subtotal_amount: subtotalAmount,
+        packing_charge: latestPackingCharge,
         platform_fee: PLATFORM_FEE,
-        total_amount: totalAmount,
+        total_amount: latestTotalAmount,
         status: "confirmed",
         items: cartItems,
         scheduled_order: orderTiming === "scheduled",
@@ -723,6 +746,11 @@ export default function Checkout() {
           <div className="flex items-center justify-between text-sm">
             <p className="text-[#51615D]">Subtotal</p>
             <p className="font-bold text-[#111827]">₹{subtotalAmount}</p>
+          </div>
+
+          <div className="flex items-center justify-between text-sm">
+            <p className="text-[#51615D]">Packing Charge</p>
+            <p className="font-bold text-[#111827]">₹{safePackingCharge}</p>
           </div>
 
           <div className="flex items-center justify-between text-sm">

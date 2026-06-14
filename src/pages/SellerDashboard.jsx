@@ -42,6 +42,7 @@ export default function SellerDashboard() {
     accept_scheduled_orders: true,
     delivery_available: true,
     pickup_available: true,
+    packing_charge: 5,
   });
 
   const [sellerProfileComplete, setSellerProfileComplete] = useState(false);
@@ -54,6 +55,7 @@ export default function SellerDashboard() {
   const [acceptScheduledOrders, setAcceptScheduledOrders] = useState(true);
   const [deliveryAvailable, setDeliveryAvailable] = useState(true);
   const [pickupAvailable, setPickupAvailable] = useState(true);
+  const [packingCharge, setPackingCharge] = useState(5);
   const [timerTick, setTimerTick] = useState(0);
   const [editingFood, setEditingFood] = useState(null);
   const [imageFile, setImageFile] = useState(null);
@@ -139,6 +141,10 @@ export default function SellerDashboard() {
     return user ? `Nefo_seller_name_${user.id}` : "Nefo_seller_name";
   }
 
+  function getSafePackingCharge(value) {
+    return Math.min(15, Math.max(5, Number(value || 5)));
+  }
+
   function isSellerSetupComplete(profile) {
     return Boolean(
       profile?.seller_kitchen_name &&
@@ -157,7 +163,7 @@ export default function SellerDashboard() {
     const { data, error } = await supabase
       .from("profiles")
       .select(
-        "role, is_seller, seller_online, accept_scheduled_orders, delivery_available, pickup_available, seller_kitchen_name, flat, phone, seller_specialty, seller_about"
+        "role, is_seller, seller_online, accept_scheduled_orders, delivery_available, pickup_available, packing_charge, seller_kitchen_name, flat, phone, seller_specialty, seller_about"
       )
       .eq("id", user.id)
       .maybeSingle();
@@ -184,10 +190,13 @@ export default function SellerDashboard() {
       return;
     }
 
+    const safePackingCharge = getSafePackingCharge(data?.packing_charge || 5);
+
     setSellerOnline(data?.seller_online !== false);
     setAcceptScheduledOrders(data?.accept_scheduled_orders !== false);
     setDeliveryAvailable(data?.delivery_available !== false);
     setPickupAvailable(data?.pickup_available !== false);
+    setPackingCharge(safePackingCharge);
 
     const setupData = {
       seller_kitchen_name: data?.seller_kitchen_name || "",
@@ -198,6 +207,7 @@ export default function SellerDashboard() {
       accept_scheduled_orders: data?.accept_scheduled_orders !== false,
       delivery_available: data?.delivery_available !== false,
       pickup_available: data?.pickup_available !== false,
+      packing_charge: safePackingCharge,
     };
 
     setSellerSetupData(setupData);
@@ -231,7 +241,12 @@ export default function SellerDashboard() {
 
     setSellerSetupData((currentData) => ({
       ...currentData,
-      [name]: type === "checkbox" ? checked : value,
+      [name]:
+        type === "checkbox"
+          ? checked
+          : name === "packing_charge"
+          ? getSafePackingCharge(value)
+          : value,
     }));
   }
 
@@ -259,6 +274,10 @@ export default function SellerDashboard() {
       return;
     }
 
+    const safePackingCharge = getSafePackingCharge(
+      sellerSetupData.packing_charge
+    );
+
     setProfileSaving(true);
     setMessage("");
 
@@ -271,6 +290,7 @@ export default function SellerDashboard() {
       accept_scheduled_orders: sellerSetupData.accept_scheduled_orders,
       delivery_available: sellerSetupData.delivery_available,
       pickup_available: sellerSetupData.pickup_available,
+      packing_charge: safePackingCharge,
       full_name: sellerSetupData.seller_kitchen_name.trim(),
       flat: sellerSetupData.flat.trim(),
       phone: sellerSetupData.phone.trim(),
@@ -303,6 +323,7 @@ export default function SellerDashboard() {
     setAcceptScheduledOrders(sellerSetupData.accept_scheduled_orders);
     setDeliveryAvailable(sellerSetupData.delivery_available);
     setPickupAvailable(sellerSetupData.pickup_available);
+    setPackingCharge(safePackingCharge);
     setSellerProfileComplete(true);
     setProfileSaving(false);
     setMessage("Seller profile completed successfully.");
@@ -425,6 +446,32 @@ export default function SellerDashboard() {
         ? "Self pickup is now available for customers."
         : "Self pickup is now turned off."
     );
+  }
+
+  async function updatePackingCharge(nextCharge) {
+    if (!user) return;
+
+    const safeCharge = getSafePackingCharge(nextCharge);
+
+    setPackingCharge(safeCharge);
+
+    setSellerSetupData((currentData) => ({
+      ...currentData,
+      packing_charge: safeCharge,
+    }));
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ packing_charge: safeCharge })
+      .eq("id", user.id);
+
+    if (error) {
+      setMessage(`Could not update packing charge: ${error.message}`);
+      fetchSellerProfile();
+      return;
+    }
+
+    setMessage(`Packing charge updated to ₹${safeCharge}.`);
   }
 
   function toggleNotificationSound() {
@@ -1388,6 +1435,41 @@ export default function SellerDashboard() {
                     </label>
                   </div>
 
+                  <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-5">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-[#111827] font-black">
+                          Packing charge
+                        </p>
+                        <p className="text-[#51615D] text-sm mt-1">
+                          This will be added to customer checkout for your
+                          orders.
+                        </p>
+                      </div>
+
+                      <div className="bg-[#073B35] text-white font-black px-4 py-2 rounded-2xl">
+                        ₹{sellerSetupData.packing_charge}
+                      </div>
+                    </div>
+
+                    <input
+                      type="range"
+                      name="packing_charge"
+                      min="5"
+                      max="15"
+                      step="1"
+                      value={sellerSetupData.packing_charge}
+                      onChange={handleSellerSetupChange}
+                      className="w-full mt-5 accent-[#41D3BD]"
+                    />
+
+                    <div className="flex justify-between text-xs font-black text-[#51615D] mt-2">
+                      <span>₹5</span>
+                      <span>₹10</span>
+                      <span>₹15</span>
+                    </div>
+                  </div>
+
                   <button
                     type="submit"
                     disabled={profileSaving}
@@ -1509,6 +1591,56 @@ export default function SellerDashboard() {
               {message}
             </div>
           )}
+
+          <section className="mt-6 bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
+                  Checkout Settings
+                </p>
+
+                <h2 className="text-2xl font-black text-[#073B35] mt-1">
+                  Packing charge
+                </h2>
+
+                <p className="text-[#51615D] text-sm mt-2">
+                  Choose a packing charge from ₹5 to ₹15. This charge will be
+                  shown on checkout for your kitchen orders.
+                </p>
+              </div>
+
+              <div className="bg-[#073B35] text-white font-black text-2xl px-6 py-3 rounded-2xl shadow-lg shadow-[#073B35]/15">
+                ₹{packingCharge}
+              </div>
+            </div>
+
+            <input
+              type="range"
+              min="5"
+              max="15"
+              step="1"
+              value={packingCharge}
+              onChange={(event) => {
+                const nextCharge = Number(event.target.value);
+
+                setPackingCharge(nextCharge);
+
+                setSellerSetupData((currentData) => ({
+                  ...currentData,
+                  packing_charge: nextCharge,
+                }));
+              }}
+              onMouseUp={(event) => updatePackingCharge(event.target.value)}
+              onTouchEnd={(event) => updatePackingCharge(event.target.value)}
+              className="w-full mt-6 accent-[#41D3BD]"
+            />
+
+            <div className="flex justify-between text-xs sm:text-sm font-black text-[#51615D] mt-2">
+              <span>₹5</span>
+              <span>₹10</span>
+              <span>₹15</span>
+            </div>
+          </section>
 
           <section className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-5 mt-8">
             {[
