@@ -114,16 +114,31 @@ export default function Marketplace() {
       ),
     ];
 
-    let kitchenStatusMap = {};
+    let kitchenMap = {};
 
     if (kitchenIds.length > 0) {
-      const { data: profileData } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("id, seller_online")
+        .select(
+          "id, seller_online, seller_kitchen_name, delivery_available, pickup_available"
+        )
         .in("id", kitchenIds);
 
-      kitchenStatusMap = (profileData || []).reduce((map, profile) => {
-        map[profile.id] = profile.seller_online !== false;
+      if (profileError) {
+        setErrorMessage(profileError.message);
+        setFoods([]);
+        setLoading(false);
+        return;
+      }
+
+      kitchenMap = (profileData || []).reduce((map, profile) => {
+        map[profile.id] = {
+          seller_online: profile.seller_online !== false,
+          seller_kitchen_name: profile.seller_kitchen_name || "",
+          delivery_available: profile.delivery_available !== false,
+          pickup_available: profile.pickup_available !== false,
+        };
+
         return map;
       }, {});
     }
@@ -142,11 +157,20 @@ export default function Marketplace() {
 
     const enrichedFoods = (foodData || []).map((food) => {
       const kitchenId = food.user_id || food.seller_id;
+      const kitchenProfile = kitchenMap[kitchenId] || {};
       const soldCount = salesMap[String(food.id)] || 0;
 
       return {
         ...food,
-        seller_online: kitchenStatusMap[kitchenId] !== false,
+        seller_id: kitchenId,
+        seller_online: kitchenProfile.seller_online !== false,
+        seller_kitchen_name:
+          kitchenProfile.seller_kitchen_name ||
+          food.seller_kitchen_name ||
+          food.seller ||
+          "Home Kitchen",
+        delivery_available: kitchenProfile.delivery_available !== false,
+        pickup_available: kitchenProfile.pickup_available !== false,
         sold_count: soldCount,
         demand_badge: getDemandBadge(soldCount),
       };
@@ -221,6 +245,16 @@ export default function Marketplace() {
     return null;
   }
 
+  function getFulfillmentText(food) {
+    const deliveryOn = food.delivery_available !== false;
+    const pickupOn = food.pickup_available !== false;
+
+    if (deliveryOn && pickupOn) return "Delivery • Pickup";
+    if (deliveryOn) return "Delivery only";
+    if (pickupOn) return "Pickup only";
+    return "Unavailable";
+  }
+
   const highestSellingFood = useMemo(() => {
     const soldFoods = foods
       .filter((food) => Number(food.sold_count || 0) > 0)
@@ -274,19 +308,30 @@ export default function Marketplace() {
 
   const availableFoods = useMemo(() => {
     return foods.filter(
-      (item) => Number(item.stock || 0) > 0 && item.seller_online !== false
+      (item) =>
+        Number(item.stock || 0) > 0 &&
+        item.seller_online !== false &&
+        (item.delivery_available !== false || item.pickup_available !== false)
     );
   }, [foods]);
 
   const closedOrSoldOutCount = useMemo(() => {
     return foods.filter(
-      (item) => Number(item.stock || 0) <= 0 || item.seller_online === false
+      (item) =>
+        Number(item.stock || 0) <= 0 ||
+        item.seller_online === false ||
+        (item.delivery_available === false && item.pickup_available === false)
     ).length;
   }, [foods]);
 
   const featuredFoods = useMemo(() => {
     return foods
-      .filter((food) => Number(food.stock || 0) > 0 && food.seller_online !== false)
+      .filter(
+        (food) =>
+          Number(food.stock || 0) > 0 &&
+          food.seller_online !== false &&
+          (food.delivery_available !== false || food.pickup_available !== false)
+      )
       .sort((a, b) => Number(b.sold_count || 0) - Number(a.sold_count || 0))
       .slice(0, 4);
   }, [foods]);
@@ -409,6 +454,20 @@ export default function Marketplace() {
                         <div className="absolute top-3 left-3 bg-[#41D3BD] text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
                           🔥 Popular Today
                         </div>
+
+                        <div className="absolute bottom-3 left-3 right-3 flex flex-wrap gap-2">
+                          {highestSellingFood.delivery_available !== false && (
+                            <span className="bg-white/95 text-[#073B35] px-3 py-1 rounded-full text-[11px] font-black">
+                              🚚 Delivery
+                            </span>
+                          )}
+
+                          {highestSellingFood.pickup_available !== false && (
+                            <span className="bg-white/95 text-[#073B35] px-3 py-1 rounded-full text-[11px] font-black">
+                              🛍️ Pickup
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <div className="p-2 pt-4">
@@ -422,7 +481,7 @@ export default function Marketplace() {
 
                         <div className="flex items-center justify-between mt-3">
                           <p className="text-white/70 text-sm">
-                            Fresh from kitchen
+                            {getFulfillmentText(highestSellingFood)}
                           </p>
 
                           <p className="text-[#41D3BD] font-black text-2xl">
@@ -597,8 +656,25 @@ export default function Marketplace() {
                       </h3>
 
                       <p className="text-[#51615D] text-xs mt-1 truncate">
-                        Kitchen: {food.seller || food.seller_kitchen_name || "Home Kitchen"}
+                        Kitchen:{" "}
+                        {food.seller_kitchen_name ||
+                          food.seller ||
+                          "Home Kitchen"}
                       </p>
+
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {food.delivery_available !== false && (
+                          <span className="bg-[#41D3BD]/12 text-[#073B35] border border-[#41D3BD]/25 text-[11px] font-black px-2.5 py-1 rounded-full">
+                            🚚 Delivery
+                          </span>
+                        )}
+
+                        {food.pickup_available !== false && (
+                          <span className="bg-[#FFFFF2] text-[#073B35] border border-[#D7F5EF] text-[11px] font-black px-2.5 py-1 rounded-full">
+                            🛍️ Pickup
+                          </span>
+                        )}
+                      </div>
 
                       <div className="flex items-center justify-between mt-3">
                         <p className="text-[#073B35] text-xl font-black">

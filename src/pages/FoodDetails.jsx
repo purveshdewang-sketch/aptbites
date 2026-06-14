@@ -25,6 +25,8 @@ export default function FoodDetails() {
   const [food, setFood] = useState(null);
   const [kitchenFoods, setKitchenFoods] = useState([]);
   const [kitchenOnline, setKitchenOnline] = useState(true);
+  const [deliveryAvailable, setDeliveryAvailable] = useState(true);
+  const [pickupAvailable, setPickupAvailable] = useState(true);
   const [selectedKitchenCategory, setSelectedKitchenCategory] = useState("All");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -38,14 +40,16 @@ export default function FoodDetails() {
   const stock = Number(food?.stock || 0);
   const category = food?.category || "Meals";
   const kitchenName =
-    food?.seller || food?.seller_kitchen_name || "Home Kitchen";
+    food?.seller_kitchen_name || food?.seller || "Home Kitchen";
 
   const kitchenIsClosed =
     kitchenOnline === false || food?.seller_online === false;
+  const fulfillmentUnavailable =
+    deliveryAvailable === false && pickupAvailable === false;
   const isSoldOut = stock <= 0;
   const isLowStock = stock > 0 && stock <= 2;
   const isSellingFast = stock > 2 && stock <= 5;
-  const isBlocked = kitchenIsClosed || isSoldOut;
+  const isBlocked = kitchenIsClosed || fulfillmentUnavailable || isSoldOut;
 
   useEffect(() => {
     fetchFoodDetails();
@@ -116,25 +120,47 @@ export default function FoodDetails() {
 
     const kitchenId = foodData.user_id || foodData.seller_id;
 
-    let currentKitchenOnline = true;
+    let kitchenProfile = {
+      seller_online: true,
+      seller_kitchen_name: "",
+      delivery_available: true,
+      pickup_available: true,
+    };
 
     if (kitchenId) {
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("id, seller_online")
+        .select(
+          "id, seller_online, seller_kitchen_name, delivery_available, pickup_available"
+        )
         .eq("id", kitchenId)
         .maybeSingle();
 
-      currentKitchenOnline = profileData?.seller_online !== false;
+      kitchenProfile = {
+        seller_online: profileData?.seller_online !== false,
+        seller_kitchen_name: profileData?.seller_kitchen_name || "",
+        delivery_available: profileData?.delivery_available !== false,
+        pickup_available: profileData?.pickup_available !== false,
+      };
     }
 
     const enrichedFood = {
       ...foodData,
-      seller_online: currentKitchenOnline,
+      seller_id: kitchenId,
+      seller_online: kitchenProfile.seller_online,
+      seller_kitchen_name:
+        kitchenProfile.seller_kitchen_name ||
+        foodData.seller_kitchen_name ||
+        foodData.seller ||
+        "Home Kitchen",
+      delivery_available: kitchenProfile.delivery_available,
+      pickup_available: kitchenProfile.pickup_available,
     };
 
     setFood(enrichedFood);
-    setKitchenOnline(currentKitchenOnline);
+    setKitchenOnline(kitchenProfile.seller_online);
+    setDeliveryAvailable(kitchenProfile.delivery_available);
+    setPickupAvailable(kitchenProfile.pickup_available);
 
     if (kitchenId) {
       const { data: otherFoodsData } = await supabase
@@ -146,7 +172,15 @@ export default function FoodDetails() {
 
       const enrichedKitchenFoods = (otherFoodsData || []).map((item) => ({
         ...item,
-        seller_online: currentKitchenOnline,
+        seller_id: kitchenId,
+        seller_online: kitchenProfile.seller_online,
+        seller_kitchen_name:
+          kitchenProfile.seller_kitchen_name ||
+          item.seller_kitchen_name ||
+          item.seller ||
+          "Home Kitchen",
+        delivery_available: kitchenProfile.delivery_available,
+        pickup_available: kitchenProfile.pickup_available,
       }));
 
       setKitchenFoods(enrichedKitchenFoods);
@@ -158,7 +192,12 @@ export default function FoodDetails() {
   }
 
   const availableKitchenFoods = useMemo(() => {
-    return kitchenFoods.filter((item) => Number(item.stock || 0) > 0);
+    return kitchenFoods.filter(
+      (item) =>
+        Number(item.stock || 0) > 0 &&
+        item.seller_online !== false &&
+        (item.delivery_available !== false || item.pickup_available !== false)
+    );
   }, [kitchenFoods]);
 
   const kitchenCategoryCounts = useMemo(() => {
@@ -197,6 +236,11 @@ export default function FoodDetails() {
       return;
     }
 
+    if (fulfillmentUnavailable) {
+      alert("This kitchen is not offering delivery or pickup right now.");
+      return;
+    }
+
     if (isSoldOut) {
       alert("This dish is sold out.");
       return;
@@ -220,6 +264,7 @@ export default function FoodDetails() {
 
   function getAvailabilityText() {
     if (kitchenIsClosed) return "Ordering temporarily unavailable";
+    if (fulfillmentUnavailable) return "Kitchen is not taking orders right now";
     if (isSoldOut) return "Sold out";
     if (isLowStock) return `Only ${stock} portions left`;
     if (isSellingFast) return `${stock} portions left • selling fast`;
@@ -227,11 +272,50 @@ export default function FoodDetails() {
   }
 
   function getAvailabilityClass() {
-    if (kitchenIsClosed || isSoldOut || isLowStock) {
+    if (kitchenIsClosed || fulfillmentUnavailable || isSoldOut || isLowStock) {
       return "text-red-500";
     }
 
     return "text-[#073B35]";
+  }
+
+  function getKitchenStatusText() {
+    if (kitchenIsClosed) return "Kitchen Closed";
+    if (fulfillmentUnavailable) return "Not Taking Orders";
+    return "Kitchen Open";
+  }
+
+  function getMainButtonLabel() {
+    if (kitchenIsClosed) return "Kitchen Closed";
+    if (fulfillmentUnavailable) return "Unavailable";
+    if (isSoldOut) return "Unavailable";
+    return "+ Add to Cart";
+  }
+
+  function FulfillmentBadges() {
+    if (fulfillmentUnavailable) {
+      return (
+        <span className="bg-red-50 text-red-600 border border-red-100 font-black rounded-full text-xs px-3 py-1.5">
+          Not taking orders
+        </span>
+      );
+    }
+
+    return (
+      <>
+        {deliveryAvailable && (
+          <span className="bg-[#41D3BD]/12 text-[#073B35] border border-[#41D3BD]/25 font-black rounded-full text-xs px-3 py-1.5">
+            🚚 Delivery
+          </span>
+        )}
+
+        {pickupAvailable && (
+          <span className="bg-[#FFFFF2] text-[#073B35] border border-[#D7F5EF] font-black rounded-full text-xs px-3 py-1.5">
+            🛍️ Self Pickup
+          </span>
+        )}
+      </>
+    );
   }
 
   if (loading) {
@@ -308,7 +392,9 @@ export default function FoodDetails() {
                     src={food.image}
                     alt={food.name}
                     className={`w-full h-full object-cover ${
-                      kitchenIsClosed ? "grayscale opacity-60" : ""
+                      kitchenIsClosed || fulfillmentUnavailable
+                        ? "grayscale opacity-60"
+                        : ""
                     }`}
                   />
 
@@ -334,6 +420,10 @@ export default function FoodDetails() {
                     {kitchenIsClosed ? (
                       <span className="text-xs font-black px-3 py-1.5 rounded-full bg-red-600 text-white shadow-sm">
                         CLOSED
+                      </span>
+                    ) : fulfillmentUnavailable ? (
+                      <span className="text-xs font-black px-3 py-1.5 rounded-full bg-red-600 text-white shadow-sm">
+                        OFF
                       </span>
                     ) : isSoldOut ? (
                       <span className="text-xs font-black px-3 py-1.5 rounded-full bg-[#111827] text-white shadow-sm">
@@ -364,7 +454,11 @@ export default function FoodDetails() {
                         {kitchenName}
                       </h2>
 
-                      <p className="text-[#51615D] text-xs mt-1">
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        <FulfillmentBadges />
+                      </div>
+
+                      <p className="text-[#51615D] text-xs mt-3">
                         Exact kitchen door/location is not shown publicly.
                       </p>
                     </div>
@@ -373,9 +467,15 @@ export default function FoodDetails() {
               </div>
 
               <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-8 h-fit shadow-xl shadow-[#073B35]/5">
-                <div className="inline-flex items-center gap-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
+                <div
+                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-black border ${
+                    kitchenIsClosed || fulfillmentUnavailable
+                      ? "bg-red-50 border-red-100 text-red-600"
+                      : "bg-[#41D3BD]/12 border-[#41D3BD]/25 text-[#073B35]"
+                  }`}
+                >
                   <span>🌿</span>
-                  <span>{kitchenIsClosed ? "Kitchen Closed" : "Kitchen Open"}</span>
+                  <span>{getKitchenStatusText()}</span>
                 </div>
 
                 <h1 className="text-4xl sm:text-6xl font-black mt-4 leading-[0.98] tracking-tight text-[#111827]">
@@ -393,13 +493,17 @@ export default function FoodDetails() {
 
                   <span
                     className={`border font-bold px-4 py-2 rounded-2xl ${
-                      kitchenIsClosed
+                      kitchenIsClosed || fulfillmentUnavailable
                         ? "border-red-200 bg-red-50 text-red-500"
                         : "border-[#41D3BD]/30 bg-[#41D3BD]/12 text-[#073B35]"
                     }`}
                   >
-                    {kitchenIsClosed ? "Closed" : "Open"}
+                    {getKitchenStatusText()}
                   </span>
+                </div>
+
+                <div className="flex flex-wrap gap-2 mt-5">
+                  <FulfillmentBadges />
                 </div>
 
                 {food.description && (
@@ -431,7 +535,7 @@ export default function FoodDetails() {
                 </div>
 
                 <div className="mt-6">
-                  {quantity === 0 || kitchenIsClosed ? (
+                  {quantity === 0 || isBlocked ? (
                     <button
                       type="button"
                       onClick={handleAddToCart}
@@ -442,11 +546,7 @@ export default function FoodDetails() {
                           : "bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.98] text-white shadow-[#073B35]/15"
                       }`}
                     >
-                      {kitchenIsClosed
-                        ? "Kitchen Closed"
-                        : isSoldOut
-                        ? "Unavailable"
-                        : "+ Add to Cart"}
+                      {getMainButtonLabel()}
                     </button>
                   ) : (
                     <div className="flex items-center justify-between overflow-hidden rounded-2xl bg-[#073B35] text-white font-black shadow-lg shadow-[#073B35]/15">

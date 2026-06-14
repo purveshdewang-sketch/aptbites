@@ -48,9 +48,7 @@ export default function SellerLogin() {
     }
 
     if (!profileResult.isApprovedSeller) {
-      setMessage(
-        "You are already signed in, but this account is not approved as a seller."
-      );
+      setMessage(getSellerAccessMessage(profileResult.profile));
       setCheckingSession(false);
       return;
     }
@@ -67,7 +65,7 @@ export default function SellerLogin() {
     const { data: profile, error } = await supabase
       .from("profiles")
       .select(
-        "role, is_seller, full_name, phone, flat, seller_kitchen_name, seller_specialty, seller_about, accept_scheduled_orders"
+        "role, is_seller, seller_application_status, full_name, phone, flat, seller_kitchen_name, seller_specialty, seller_about, accept_scheduled_orders"
       )
       .eq("id", userId)
       .maybeSingle();
@@ -82,18 +80,39 @@ export default function SellerLogin() {
     }
 
     const profileRole = String(profile?.role || "").toLowerCase();
+    const applicationStatus = String(
+      profile?.seller_application_status || "not_applied"
+    ).toLowerCase();
+
+    const isAdmin = profileRole === "admin";
 
     const isApprovedSeller =
-      profile?.is_seller === true ||
-      profileRole === "seller" ||
-      profileRole === "admin";
+      profileRole === "seller" &&
+      profile?.is_seller === true &&
+      applicationStatus === "approved";
 
     return {
       ok: true,
       message: "",
       profile,
-      isApprovedSeller,
+      isApprovedSeller: isAdmin || isApprovedSeller,
     };
+  }
+
+  function getSellerAccessMessage(profile) {
+    const applicationStatus = String(
+      profile?.seller_application_status || "not_applied"
+    ).toLowerCase();
+
+    if (applicationStatus === "pending") {
+      return "Your seller application is under review. Please wait for owner approval.";
+    }
+
+    if (applicationStatus === "rejected") {
+      return "Your seller application was rejected. Please open Seller Registration to review and re-apply.";
+    }
+
+    return "This account is not approved as a seller. Please apply to sell on Nefo first.";
   }
 
   function fillSellerForm(user, profile) {
@@ -136,14 +155,15 @@ export default function SellerLogin() {
     }
 
     const existingRole = String(existingProfile?.role || "").toLowerCase();
-    const finalRole = existingRole === "admin" ? "admin" : "seller";
+    const isAdmin = existingRole === "admin";
 
     const sellerProfilePayload = {
       id: user.id,
       email: user.email,
-      role: finalRole,
+      role: isAdmin ? "admin" : "seller",
       is_seller: true,
       seller_online: true,
+      seller_application_status: "approved",
       accept_scheduled_orders: formData.acceptScheduledOrders,
       full_name: formData.kitchenName.trim(),
       flat: formData.flat.trim(),
@@ -161,7 +181,6 @@ export default function SellerLogin() {
       throw new Error(`Seller details could not be saved: ${error.message}`);
     }
 
-    localStorage.setItem(`Nefo_seller_access_${user.id}`, "yes");
     localStorage.setItem(
       `Nefo_seller_name_${user.id}`,
       formData.kitchenName.trim()
@@ -206,9 +225,7 @@ export default function SellerLogin() {
         }
 
         if (!profileResult.isApprovedSeller) {
-          setMessage(
-            "This account is not approved as a seller. Please ask the app owner to enable seller access."
-          );
+          setMessage(getSellerAccessMessage(profileResult.profile));
           setLoading(false);
           return;
         }
@@ -237,9 +254,7 @@ export default function SellerLogin() {
       }
 
       if (!profileResult.isApprovedSeller) {
-        setMessage(
-          "This account is not approved as a seller. Please ask the app owner to enable seller access."
-        );
+        setMessage(getSellerAccessMessage(profileResult.profile));
         setLoading(false);
         return;
       }
@@ -375,25 +390,19 @@ export default function SellerLogin() {
                 <div className="bg-white/10 border border-white/10 rounded-3xl p-4">
                   <p className="text-[#41D3BD] text-2xl">🛎️</p>
                   <p className="text-white font-black mt-3">Orders</p>
-                  <p className="text-white/60 text-xs mt-1">
-                    Live requests
-                  </p>
+                  <p className="text-white/60 text-xs mt-1">Live requests</p>
                 </div>
 
                 <div className="bg-white/10 border border-white/10 rounded-3xl p-4">
                   <p className="text-[#41D3BD] text-2xl">🍲</p>
                   <p className="text-white font-black mt-3">Menu</p>
-                  <p className="text-white/60 text-xs mt-1">
-                    Dish control
-                  </p>
+                  <p className="text-white/60 text-xs mt-1">Dish control</p>
                 </div>
 
                 <div className="bg-white/10 border border-white/10 rounded-3xl p-4">
                   <p className="text-[#41D3BD] text-2xl">📊</p>
                   <p className="text-white font-black mt-3">Sales</p>
-                  <p className="text-white/60 text-xs mt-1">
-                    Basic analytics
-                  </p>
+                  <p className="text-white/60 text-xs mt-1">Basic analytics</p>
                 </div>
               </div>
             </div>
@@ -447,6 +456,24 @@ export default function SellerLogin() {
             {message && (
               <div className="mt-5 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 text-sm font-bold text-[#073B35]">
                 {message}
+              </div>
+            )}
+
+            {!currentUser && message && (
+              <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                <Link
+                  to="/seller-registration"
+                  className="flex-1 text-center bg-[#41D3BD]/15 border border-[#41D3BD]/30 hover:bg-[#41D3BD]/25 text-[#073B35] font-black px-4 py-3 rounded-2xl transition-all"
+                >
+                  Open Seller Registration
+                </Link>
+
+                <Link
+                  to="/customer-login"
+                  className="flex-1 text-center bg-white border border-[#D7F5EF] hover:bg-[#FFFFF2] text-[#51615D] font-black px-4 py-3 rounded-2xl transition-all"
+                >
+                  Customer Login
+                </Link>
               </div>
             )}
 
