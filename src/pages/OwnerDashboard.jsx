@@ -37,9 +37,7 @@ export default function OwnerDashboard() {
   }, []);
 
   async function fetchOwnerData(showLoading = true) {
-    if (showLoading) {
-      setLoading(true);
-    }
+    if (showLoading) setLoading(true);
 
     setErrorMessage("");
 
@@ -56,9 +54,7 @@ export default function OwnerDashboard() {
     }
 
     const sellerIds = [
-      ...new Set(
-        (orderData || []).map((order) => order.seller_id).filter(Boolean)
-      ),
+      ...new Set((orderData || []).map((order) => order.seller_id).filter(Boolean)),
     ];
 
     let nextSellerMap = {};
@@ -66,7 +62,9 @@ export default function OwnerDashboard() {
     if (sellerIds.length > 0) {
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("id, full_name, email, phone, seller_kitchen_name")
+        .select(
+          "id, full_name, email, phone, seller_kitchen_name, seller_online, delivery_available, pickup_available"
+        )
         .in("id", sellerIds);
 
       (profileData || []).forEach((profile) => {
@@ -151,8 +149,9 @@ export default function OwnerDashboard() {
     if (paymentFilter === "upi") return method === "upi";
     if (paymentFilter === "cash") return method === "cash";
     if (paymentFilter === "pending") return paymentStatus === "pending";
-    if (paymentFilter === "reference")
+    if (paymentFilter === "reference") {
       return paymentStatus === "reference_submitted";
+    }
 
     return true;
   }
@@ -176,7 +175,6 @@ export default function OwnerDashboard() {
     if (!value) return "-";
 
     const date = new Date(value);
-
     if (Number.isNaN(date.getTime())) return "-";
 
     return date.toLocaleString([], {
@@ -190,10 +188,7 @@ export default function OwnerDashboard() {
   function getSellerName(order) {
     const sellerProfile = sellerMap[order.seller_id];
 
-    if (sellerProfile?.seller_kitchen_name) {
-      return sellerProfile.seller_kitchen_name;
-    }
-
+    if (sellerProfile?.seller_kitchen_name) return sellerProfile.seller_kitchen_name;
     if (sellerProfile?.full_name) return sellerProfile.full_name;
 
     const firstItem = getOrderItems(order)[0];
@@ -218,10 +213,7 @@ export default function OwnerDashboard() {
     const method = normalizePaymentMethod(order.payment_method);
     const status = normalizePaymentStatus(order.payment_status);
 
-    if (method === "cash") {
-      return "bg-blue-50 text-blue-700 border-blue-200";
-    }
-
+    if (method === "cash") return "bg-blue-50 text-blue-700 border-blue-200";
     if (status === "reference_submitted") {
       return "bg-green-50 text-green-700 border-green-200";
     }
@@ -348,6 +340,48 @@ export default function OwnerDashboard() {
     return Object.values(report).sort((a, b) => b.grossSales - a.grossSales);
   }, [filteredOrders, sellerMap]);
 
+  const aiInsights = useMemo(() => {
+    const insights = [];
+
+    if (analytics.totalOrders === 0) {
+      insights.push("No orders found for this filter. Check seller availability and marketplace visibility.");
+    }
+
+    if (analytics.activeOrders > 0) {
+      insights.push(`${analytics.activeOrders} active orders need live monitoring.`);
+    }
+
+    if (analytics.paymentPending > 0) {
+      insights.push(`${analytics.paymentPending} orders have pending payment status. Verify references before settlement.`);
+    }
+
+    if (analytics.cancelledOrders > 0) {
+      insights.push(`${analytics.cancelledOrders} cancelled orders detected. Review seller/customer issues.`);
+    }
+
+    const sellersWithPendingPayments = sellerWiseReport.filter(
+      (seller) => seller.pendingPayments > 0
+    );
+
+    if (sellersWithPendingPayments.length > 0) {
+      insights.push(`${sellersWithPendingPayments.length} sellers have pending payment follow-ups.`);
+    }
+
+    const topSeller = sellerWiseReport[0];
+
+    if (topSeller && topSeller.orders > 0) {
+      insights.push(`${topSeller.sellerName} is the top kitchen for this period with ₹${topSeller.grossSales} sales.`);
+    }
+
+    if (analytics.platformFeeEarned > 0) {
+      insights.push(`Platform fee earned for this filter is ₹${analytics.platformFeeEarned}.`);
+    }
+
+    return insights.length > 0
+      ? insights
+      : ["Operations look stable for the selected filter."];
+  }, [analytics, sellerWiseReport]);
+
   function downloadCSV() {
     const headers = [
       "Order ID",
@@ -416,9 +450,9 @@ export default function OwnerDashboard() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-6 sm:py-10 pb-28">
+      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-3 sm:px-6 py-4 sm:py-10 pb-32">
         <div className="max-w-7xl mx-auto">
-          <section className="relative overflow-hidden bg-white/90 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-xl shadow-[#073B35]/5">
+          <section className="relative overflow-hidden bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-xl shadow-[#073B35]/5">
             <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[95px]" />
             <div className="absolute -bottom-28 -left-24 w-72 h-72 bg-[#41D3BD]/10 rounded-full blur-[110px]" />
 
@@ -436,44 +470,79 @@ export default function OwnerDashboard() {
 
                 <p className="text-[#51615D] mt-4 text-sm sm:text-lg max-w-2xl leading-relaxed">
                   Daily control center for Nefo orders, UPI references, platform
-                  fees, seller-wise performance, and operational records.
+                  fees, seller performance, and operational records.
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-3">
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3">
                 <Link
                   to="/marketplace"
-                  className="bg-[#FFFFF2] border border-[#D7F5EF] hover:bg-[#D7F5EF] text-[#073B35] font-black px-5 py-3 rounded-2xl transition-all"
+                  className="bg-[#FFFFF2] border border-[#D7F5EF] hover:bg-[#D7F5EF] text-[#073B35] font-black px-4 sm:px-5 py-3 rounded-2xl transition-all text-center text-sm"
                 >
                   Marketplace
                 </Link>
 
                 <Link
                   to="/owner-accounting"
-                  className="bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black px-5 py-3 rounded-2xl transition-all shadow-lg shadow-[#41D3BD]/20"
+                  className="bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black px-4 sm:px-5 py-3 rounded-2xl transition-all shadow-lg shadow-[#41D3BD]/20 text-center text-sm"
                 >
-                  Open Accounting
+                  Accounting
                 </Link>
 
                 <Link
                   to="/owner-seller-applications"
-                  className="bg-[#FFFFF2] border border-[#41D3BD]/45 hover:bg-[#D7F5EF] text-[#073B35] font-black px-5 py-3 rounded-2xl transition-all"
+                  className="bg-[#FFFFF2] border border-[#41D3BD]/45 hover:bg-[#D7F5EF] text-[#073B35] font-black px-4 sm:px-5 py-3 rounded-2xl transition-all text-center text-sm"
                 >
-                  Seller Applications
+                  Applications
                 </Link>
 
                 <button
                   type="button"
                   onClick={downloadCSV}
-                  className="bg-[#073B35] hover:bg-[#0B5149] text-white font-black px-5 py-3 rounded-2xl shadow-lg shadow-[#073B35]/15 transition-all"
+                  className="bg-[#073B35] hover:bg-[#0B5149] text-white font-black px-4 sm:px-5 py-3 rounded-2xl shadow-lg shadow-[#073B35]/15 transition-all text-sm"
                 >
-                  Download CSV
+                  CSV
                 </button>
               </div>
             </div>
           </section>
 
-          <section className="mt-6 bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-4 sm:p-5 shadow-lg shadow-[#073B35]/5">
+          <section className="mt-5 bg-[#073B35] rounded-[1.75rem] sm:rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/15 overflow-hidden relative">
+            <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[90px]" />
+
+            <div className="relative">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[#41D3BD] font-black uppercase tracking-wide text-xs">
+                    Nefo AI Insights
+                  </p>
+
+                  <h2 className="text-white text-2xl sm:text-3xl font-black mt-1">
+                    Owner command center
+                  </h2>
+                </div>
+
+                <span className="bg-white/10 border border-white/10 text-[#D7F5EF] text-xs font-black px-3 py-1.5 rounded-full">
+                  Live
+                </span>
+              </div>
+
+              <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-3">
+                {aiInsights.map((insight, index) => (
+                  <div
+                    key={index}
+                    className="bg-white/10 border border-white/10 rounded-2xl p-4"
+                  >
+                    <p className="text-white font-bold text-sm leading-relaxed">
+                      {index + 1}. {insight}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section className="mt-5 bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-4 sm:p-5 shadow-lg shadow-[#073B35]/5">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] gap-3">
               <select
                 value={dateFilter}
@@ -510,7 +579,7 @@ export default function OwnerDashboard() {
           </section>
 
           {loading && (
-            <div className="mt-8 bg-white/90 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-lg shadow-[#073B35]/5">
+            <div className="mt-6 bg-white/90 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-lg shadow-[#073B35]/5">
               <p className="text-[#51615D] font-bold">
                 Loading owner dashboard...
               </p>
@@ -518,7 +587,7 @@ export default function OwnerDashboard() {
           )}
 
           {!loading && errorMessage && (
-            <div className="mt-8 bg-red-50 border border-red-200 rounded-3xl p-6">
+            <div className="mt-6 bg-red-50 border border-red-200 rounded-3xl p-6">
               <p className="text-red-600 font-black">
                 Could not load dashboard.
               </p>
@@ -528,7 +597,7 @@ export default function OwnerDashboard() {
 
           {!loading && !errorMessage && (
             <>
-              <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+              <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-6">
                 <StatCard title="Total Orders" value={analytics.totalOrders} />
                 <StatCard title="Active Orders" value={analytics.activeOrders} />
                 <StatCard title="Completed" value={analytics.completedOrders} />
@@ -548,7 +617,7 @@ export default function OwnerDashboard() {
                 />
               </section>
 
-              <section className="mt-8 bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
+              <section className="mt-6 bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
@@ -568,56 +637,52 @@ export default function OwnerDashboard() {
                 {sellerWiseReport.length === 0 ? (
                   <p className="text-[#51615D] mt-6">No seller data found.</p>
                 ) : (
-                  <div className="mt-6 overflow-x-auto">
-                    <table className="w-full text-left min-w-[760px]">
-                      <thead>
-                        <tr className="border-b border-[#D7F5EF] text-[#51615D] text-sm">
-                          <th className="py-3 pr-4">Kitchen</th>
-                          <th className="py-3 pr-4">Orders</th>
-                          <th className="py-3 pr-4">Completed</th>
-                          <th className="py-3 pr-4">Cancelled</th>
-                          <th className="py-3 pr-4">Gross Sales</th>
-                          <th className="py-3 pr-4">Platform Fee</th>
-                          <th className="py-3 pr-4">Pending Payments</th>
-                        </tr>
-                      </thead>
-
-                      <tbody>
-                        {sellerWiseReport.map((seller) => (
-                          <tr
-                            key={seller.sellerId}
-                            className="border-b border-[#D7F5EF] text-sm"
-                          >
-                            <td className="py-4 pr-4 font-black text-[#111827]">
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                    {sellerWiseReport.map((seller) => (
+                      <div
+                        key={seller.sellerId}
+                        className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-[#111827] font-black truncate">
                               {seller.sellerName}
-                            </td>
-                            <td className="py-4 pr-4 text-[#51615D]">
-                              {seller.orders}
-                            </td>
-                            <td className="py-4 pr-4 text-green-600 font-bold">
-                              {seller.completed}
-                            </td>
-                            <td className="py-4 pr-4 text-red-500 font-bold">
-                              {seller.cancelled}
-                            </td>
-                            <td className="py-4 pr-4 text-[#073B35] font-black">
-                              ₹{seller.grossSales}
-                            </td>
-                            <td className="py-4 pr-4 text-[#51615D]">
-                              ₹{seller.platformFee}
-                            </td>
-                            <td className="py-4 pr-4 text-yellow-700 font-bold">
-                              {seller.pendingPayments}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                            </p>
+
+                            <p className="text-[#51615D] text-xs mt-1">
+                              {seller.orders} orders
+                            </p>
+                          </div>
+
+                          <p className="text-[#073B35] font-black text-xl shrink-0">
+                            ₹{seller.grossSales}
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-2 mt-4">
+                          <SmallMetric label="Done" value={seller.completed} />
+                          <SmallMetric label="Cancel" value={seller.cancelled} />
+                          <SmallMetric
+                            label="Pending"
+                            value={seller.pendingPayments}
+                          />
+                        </div>
+
+                        <div className="mt-3 bg-white border border-[#D7F5EF] rounded-2xl p-3">
+                          <p className="text-[#51615D] text-xs font-black uppercase">
+                            Platform Fee
+                          </p>
+                          <p className="text-[#073B35] font-black mt-1">
+                            ₹{seller.platformFee}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </section>
 
-              <section className="mt-8 bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
+              <section className="mt-6 bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
@@ -728,12 +793,23 @@ export default function OwnerDashboard() {
 
 function StatCard({ title, value }) {
   return (
-    <div className="bg-white/90 border border-[#D7F5EF] rounded-3xl p-5 shadow-lg shadow-[#073B35]/5">
-      <p className="text-[#51615D] text-xs uppercase font-black">{title}</p>
+    <div className="bg-white/90 border border-[#D7F5EF] rounded-3xl p-4 sm:p-5 shadow-lg shadow-[#073B35]/5">
+      <p className="text-[#51615D] text-[10px] sm:text-xs uppercase font-black">
+        {title}
+      </p>
 
-      <p className="text-2xl sm:text-3xl font-black text-[#073B35] mt-3">
+      <p className="text-xl sm:text-3xl font-black text-[#073B35] mt-3">
         {value}
       </p>
+    </div>
+  );
+}
+
+function SmallMetric({ label, value }) {
+  return (
+    <div className="bg-white border border-[#D7F5EF] rounded-2xl p-3">
+      <p className="text-[#51615D] text-[10px] uppercase font-black">{label}</p>
+      <p className="text-[#073B35] font-black mt-1">{value}</p>
     </div>
   );
 }

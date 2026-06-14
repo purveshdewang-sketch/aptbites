@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../context/AuthContext";
+import { getCustomerAIResponse } from "../lib/supportAI";
 
 const QUICK_ACTIONS = [
   {
