@@ -398,7 +398,7 @@ export default function Marketplace() {
                     <span>Homemade. Nearby. Fresh.</span>
                   </div>
 
-                  <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
+                  <h1 className="text-3xl sm:text-5xl lg:text-6xlfont-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
                     What would you like
                     <span className="block text-[#111827]">to eat today?</span>
                   </h1>
@@ -506,7 +506,7 @@ export default function Marketplace() {
               </div>
             </div>
 
-            <div className="mt-4 sm:mt-6 sticky top-[76px] z-40 bg-[#FFFFF2]/95 backdrop-blur-xl py-3 -mx-4 px-4 sm:static sm:bg-transparent sm:backdrop-blur-0 sm:mx-0 sm:px-0 sm:py-0">
+            <div className="mt-4 sm:mt-6 sticky top-[92px] z-40 bg-[#FFFFF2]/95 backdrop-blur-xl py-3 -mx-4 px-4 sm:static sm:bg-transparent sm:backdrop-blur-0 sm:mx-0 sm:px-0 sm:py-0">
               <div className="bg-white/90 border border-[#D7F5EF] rounded-[1.5rem] sm:rounded-[2rem] p-3 sm:p-4 shadow-lg shadow-[#073B35]/5">
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_auto] gap-3">
                   <div className="relative">
@@ -636,7 +636,7 @@ export default function Marketplace() {
                   <Link
                     key={food.id}
                     to={`/food/${food.id}`}
-                    className="shrink-0 w-[235px] sm:w-[280px] bg-white border border-[#D7F5EF] rounded-[1.75rem] overflow-hidden shadow-lg shadow-[#073B35]/5"
+                    className="shrink-0 w-[260px] sm:w-[300px] bg-white border border-[#D7F5EF] rounded-[1.75rem] overflow-hidden shadow-lg shadow-[#073B35]/5"
                   >
                     <div className="relative h-36 sm:h-44 bg-[#D7F5EF] overflow-hidden">
                       <img
@@ -767,7 +767,7 @@ export default function Marketplace() {
             )}
 
             {!loading && !errorMessage && filteredFoods.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
+              <div className="grid grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
                 {filteredFoods.map((item) => (
                   <FoodCard key={item.id} item={item} />
                 ))}
@@ -779,7 +779,7 @@ export default function Marketplace() {
         {cartCount > 0 && (
           <Link
             to="/cart"
-            className="fixed bottom-5 left-4 right-4 z-50 sm:left-auto sm:right-6 sm:w-auto bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.98] text-white font-black px-6 py-4 rounded-2xl shadow-2xl shadow-[#073B35]/25 flex items-center justify-center gap-3 transition-all"
+            className="fixed bottom-20 left-4 right-4 z-50 sm:left-auto sm:right-6 sm:w-auto bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.98] text-white font-black px-6 py-4 rounded-2xl shadow-2xl shadow-[#073B35]/25 flex items-center justify-center gap-3 transition-all"
           >
             <span>🛒</span>
             <span>

@@ -132,7 +132,9 @@ export default function Navbar() {
     if (isAdmin) return "Admin account";
     if (isSeller) return "Approved seller";
     if (sellerApplicationStatus === "pending") return "Seller review pending";
-    if (sellerApplicationStatus === "rejected") return "Seller application rejected";
+    if (sellerApplicationStatus === "rejected") {
+      return "Seller application rejected";
+    }
     return "Customer account";
   }
 
@@ -141,6 +143,10 @@ export default function Navbar() {
     if (sellerApplicationStatus === "pending") return "Seller Application Pending";
     if (sellerApplicationStatus === "rejected") return "Re-apply to Sell";
     return "Apply to Sell on Nefo";
+  }
+
+  function isActive(path) {
+    return location.pathname === path;
   }
 
   function LogoMark() {
@@ -163,7 +169,7 @@ export default function Navbar() {
   if (authLoading) {
     return (
       <header className="sticky top-0 z-50 bg-[#073B35] border-b border-[#0F5B51]">
-        <div className="h-16 sm:h-[72px]" />
+        <div className="h-[92px] sm:h-[72px]" />
       </header>
     );
   }
@@ -172,46 +178,42 @@ export default function Navbar() {
     <>
       <header className="sticky top-0 z-50 bg-[#073B35]/96 backdrop-blur-2xl border-b border-[#0F5B51] shadow-lg shadow-[#073B35]/25">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="h-16 sm:h-[72px] flex items-center justify-between">
+          <div className="h-[92px] sm:h-[72px] flex items-center justify-between gap-3">
             <Link to="/" className="flex items-center gap-3 group min-w-0">
               <LogoMark />
 
               <div className="leading-none min-w-0">
-                <p className="text-[#FFFFF2] font-bold text-lg tracking-tight group-hover:text-[#41D3BD] transition-all truncate">
+                <p className="text-[#FFFFF2] font-black text-2xl sm:text-lg tracking-tight group-hover:text-[#41D3BD] transition-all truncate">
                   Nefo
                 </p>
 
-                <p className="text-[10px] text-[#BFE8E1] mt-1 tracking-wide uppercase truncate">
-                  neighbourhood food
+                <p className="text-xs sm:text-[10px] text-[#BFE8E1] mt-2 sm:mt-1 tracking-wide uppercase truncate">
+                  Neighbourhood Food
                 </p>
               </div>
             </Link>
 
             <div className="hidden md:flex items-center gap-7">
-              {navLinks.map((link) => {
-                const isActive = location.pathname === link.path;
-
-                return (
-                  <Link
-                    key={link.name}
-                    to={link.path}
-                    className={`text-sm font-semibold transition-all duration-200 ${
-                      isActive
-                        ? "text-[#41D3BD]"
-                        : "text-[#D7F5EF] hover:text-[#41D3BD]"
-                    }`}
-                  >
-                    {link.name}
-                  </Link>
-                );
-              })}
+              {navLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  to={link.path}
+                  className={`text-sm font-semibold transition-all duration-200 ${
+                    isActive(link.path)
+                      ? "text-[#41D3BD]"
+                      : "text-[#D7F5EF] hover:text-[#41D3BD]"
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              ))}
 
               {isAdmin && (
                 <>
                   <Link
                     to="/owner-dashboard"
                     className={`text-sm font-semibold transition-all duration-200 ${
-                      location.pathname === "/owner-dashboard"
+                      isActive("/owner-dashboard")
                         ? "text-[#41D3BD]"
                         : "text-[#D7F5EF] hover:text-[#41D3BD]"
                     }`}
@@ -222,7 +224,7 @@ export default function Navbar() {
                   <Link
                     to="/owner-accounting"
                     className={`text-sm font-semibold transition-all duration-200 ${
-                      location.pathname === "/owner-accounting"
+                      isActive("/owner-accounting")
                         ? "text-[#41D3BD]"
                         : "text-[#D7F5EF] hover:text-[#41D3BD]"
                     }`}
@@ -233,7 +235,7 @@ export default function Navbar() {
                   <Link
                     to="/owner-seller-applications"
                     className={`text-sm font-semibold transition-all duration-200 ${
-                      location.pathname === "/owner-seller-applications"
+                      isActive("/owner-seller-applications")
                         ? "text-[#41D3BD]"
                         : "text-[#D7F5EF] hover:text-[#41D3BD]"
                     }`}
@@ -244,7 +246,7 @@ export default function Navbar() {
               )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               {!user && (
                 <Link
                   to="/customer-login"
@@ -256,9 +258,10 @@ export default function Navbar() {
 
               <Link
                 to="/cart"
-                className="relative bg-[#0B4A43] hover:bg-[#0F5B51] border border-[#14796D] hover:border-[#41D3BD] active:scale-95 text-[#FFFFF2] w-11 h-11 sm:w-auto sm:h-auto sm:px-4 sm:py-2 rounded-2xl transition-all duration-200 flex items-center justify-center gap-2 shadow-sm"
+                aria-label="Cart"
+                className="relative bg-[#0B4A43] hover:bg-[#0F5B51] border border-[#14796D] hover:border-[#41D3BD] active:scale-95 text-[#FFFFF2] w-[58px] h-[58px] sm:w-auto sm:h-auto sm:px-4 sm:py-2 rounded-3xl sm:rounded-2xl transition-all duration-200 flex items-center justify-center gap-2 shadow-sm"
               >
-                <span className="text-lg">🛒</span>
+                <span className="text-2xl sm:text-lg">🛒</span>
 
                 <span className="hidden sm:inline text-sm font-bold">
                   Cart
@@ -297,78 +300,13 @@ export default function Navbar() {
                         </div>
 
                         <div className="p-2">
-                          <Link
-                            to="/profile"
-                            className="block px-4 py-3 rounded-2xl text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D] transition-all"
-                          >
-                            My Profile
-                          </Link>
-
-                          <Link
-                            to="/marketplace"
-                            className="block px-4 py-3 rounded-2xl text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D] transition-all"
-                          >
-                            Marketplace
-                          </Link>
-
-                          <Link
-                            to="/orders"
-                            className="block px-4 py-3 rounded-2xl text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D] transition-all"
-                          >
-                            Active Orders
-                          </Link>
-
-                          <Link
-                            to="/order-history"
-                            className="block px-4 py-3 rounded-2xl text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D] transition-all"
-                          >
-                            Order History
-                          </Link>
-
-                          {isAdmin && (
-                            <>
-                              <Link
-                                to="/owner-dashboard"
-                                className="block px-4 py-3 rounded-2xl text-[#1A9F8D] hover:bg-[#D7F5EF] transition-all"
-                              >
-                                Owner Dashboard
-                              </Link>
-
-                              <Link
-                                to="/owner-accounting"
-                                className="block px-4 py-3 rounded-2xl text-[#1A9F8D] hover:bg-[#D7F5EF] transition-all"
-                              >
-                                Owner Accounting
-                              </Link>
-
-                              <Link
-                                to="/owner-seller-applications"
-                                className="block px-4 py-3 rounded-2xl text-[#1A9F8D] hover:bg-[#D7F5EF] transition-all"
-                              >
-                                Seller Applications
-                              </Link>
-                            </>
-                          )}
-
-                          <button
-                            type="button"
-                            onClick={handleSellerAction}
-                            className={`w-full text-left px-4 py-3 rounded-2xl transition-all ${
-                              isSeller
-                                ? "text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D]"
-                                : "text-[#1A9F8D] hover:bg-[#D7F5EF]"
-                            }`}
-                          >
-                            {getSellerActionLabel()}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={handleLogout}
-                            className="w-full text-left px-4 py-3 rounded-2xl text-red-500 hover:bg-red-50 transition-all"
-                          >
-                            Sign Out
-                          </button>
+                          <DesktopMenuLinks
+                            isAdmin={isAdmin}
+                            isSeller={isSeller}
+                            handleSellerAction={handleSellerAction}
+                            getSellerActionLabel={getSellerActionLabel}
+                            handleLogout={handleLogout}
+                          />
                         </div>
                       </div>
                     )}
@@ -376,8 +314,9 @@ export default function Navbar() {
 
                   <button
                     type="button"
-                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    className="md:hidden w-11 h-11 rounded-2xl bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black flex items-center justify-center transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
+                    onClick={() => setMobileMenuOpen(true)}
+                    aria-label="Open menu"
+                    className="md:hidden w-[58px] h-[58px] rounded-3xl bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black flex items-center justify-center transition-all duration-200 shadow-lg shadow-[#41D3BD]/20 text-xl"
                   >
                     {getInitial()}
                   </button>
@@ -385,7 +324,8 @@ export default function Navbar() {
               ) : (
                 <Link
                   to="/customer-login"
-                  className="md:hidden w-11 h-11 rounded-2xl bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black flex items-center justify-center transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
+                  aria-label="Sign in"
+                  className="md:hidden w-[58px] h-[58px] rounded-3xl bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black flex items-center justify-center transition-all duration-200 shadow-lg shadow-[#41D3BD]/20 text-xl"
                 >
                   →
                 </Link>
@@ -396,19 +336,19 @@ export default function Navbar() {
       </header>
 
       {mobileMenuOpen && user && (
-        <div className="md:hidden fixed inset-0 z-[70] bg-[#073B35]/45 backdrop-blur-sm">
+        <div className="md:hidden fixed inset-0 z-[70] bg-[#073B35]/55 backdrop-blur-sm">
           <div
             ref={mobileDropdownRef}
-            className="absolute top-[76px] right-4 left-4 bg-[#FFFFF2] border border-[#D7F5EF] rounded-[2rem] shadow-2xl shadow-[#073B35]/25 overflow-hidden"
+            className="absolute top-[104px] right-3 left-3 bg-[#FFFFF2] border border-[#D7F5EF] rounded-[2rem] shadow-2xl shadow-[#073B35]/25 overflow-hidden"
           >
             <div className="p-5 border-b border-[#D7F5EF]">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#41D3BD] text-[#073B35] font-black flex items-center justify-center shadow-lg shadow-[#41D3BD]/20">
+                <div className="w-14 h-14 rounded-2xl bg-[#41D3BD] text-[#073B35] font-black flex items-center justify-center shadow-lg shadow-[#41D3BD]/20 text-xl">
                   {getInitial()}
                 </div>
 
                 <div className="min-w-0">
-                  <p className="text-[#111827] font-semibold truncate">
+                  <p className="text-[#111827] font-black truncate text-base">
                     {user.email}
                   </p>
 
@@ -419,98 +359,78 @@ export default function Navbar() {
               </div>
             </div>
 
-            <div className="p-3 max-h-[75vh] overflow-y-auto">
-              <div className="grid gap-1">
-                <Link
+            <div className="p-3 max-h-[72vh] overflow-y-auto">
+              <div className="grid gap-2">
+                <MobileLink
                   to="/"
-                  className={`px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
-                    location.pathname === "/"
-                      ? "bg-[#41D3BD] text-[#073B35]"
-                      : "text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D]"
-                  }`}
-                >
-                  Home
-                </Link>
+                  active={isActive("/")}
+                  label="Home"
+                />
 
-                <Link
+                <MobileLink
                   to="/marketplace"
-                  className={`px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
-                    location.pathname === "/marketplace"
-                      ? "bg-[#41D3BD] text-[#073B35]"
-                      : "text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D]"
-                  }`}
-                >
-                  Marketplace
-                </Link>
+                  active={isActive("/marketplace")}
+                  label="Marketplace"
+                />
 
-                <Link
+                <MobileLink
                   to="/profile"
-                  className={`px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
-                    location.pathname === "/profile"
-                      ? "bg-[#41D3BD] text-[#073B35]"
-                      : "text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D]"
-                  }`}
-                >
-                  My Profile
-                </Link>
+                  active={isActive("/profile")}
+                  label="My Profile"
+                />
 
                 {isAdmin && (
                   <>
-                    <Link
+                    <MobileLink
                       to="/owner-dashboard"
-                      className={`px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
-                        location.pathname === "/owner-dashboard"
-                          ? "bg-[#41D3BD] text-[#073B35]"
-                          : "text-[#1A9F8D] hover:bg-[#D7F5EF]"
-                      }`}
-                    >
-                      Owner Dashboard
-                    </Link>
+                      active={isActive("/owner-dashboard")}
+                      label="Owner Dashboard"
+                      highlight
+                    />
 
-                    <Link
+                    <MobileLink
                       to="/owner-accounting"
-                      className={`px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
-                        location.pathname === "/owner-accounting"
-                          ? "bg-[#41D3BD] text-[#073B35]"
-                          : "text-[#1A9F8D] hover:bg-[#D7F5EF]"
-                      }`}
-                    >
-                      Owner Accounting
-                    </Link>
+                      active={isActive("/owner-accounting")}
+                      label="Owner Accounting"
+                      highlight
+                    />
 
-                    <Link
+                    <MobileLink
                       to="/owner-seller-applications"
-                      className={`px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
-                        location.pathname === "/owner-seller-applications"
-                          ? "bg-[#41D3BD] text-[#073B35]"
-                          : "text-[#1A9F8D] hover:bg-[#D7F5EF]"
-                      }`}
-                    >
-                      Seller Applications
-                    </Link>
+                      active={isActive("/owner-seller-applications")}
+                      label="Seller Applications"
+                      highlight
+                    />
                   </>
                 )}
 
                 <div className="h-px bg-[#D7F5EF] my-2" />
 
-                <Link
+                <MobileLink
                   to="/orders"
-                  className="px-4 py-3 rounded-2xl text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D]"
-                >
-                  Active Orders
-                </Link>
+                  active={isActive("/orders")}
+                  label="Active Orders"
+                />
 
-                <Link
+                <MobileLink
                   to="/order-history"
-                  className="px-4 py-3 rounded-2xl text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D]"
-                >
-                  Order History
-                </Link>
+                  active={isActive("/order-history")}
+                  label="Order History"
+                />
+
+                {isSeller && (
+                  <MobileLink
+                    to="/seller-helper"
+                    active={isActive("/seller-helper")}
+                    label="Seller Assistant"
+                    highlight
+                  />
+                )}
 
                 <button
                   type="button"
                   onClick={handleSellerAction}
-                  className="text-left px-4 py-3 rounded-2xl text-[#1A9F8D] hover:bg-[#D7F5EF]"
+                  className="text-left px-4 py-4 rounded-2xl text-[#1A9F8D] hover:bg-[#D7F5EF] font-black"
                 >
                   {getSellerActionLabel()}
                 </button>
@@ -518,7 +438,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="mt-2 bg-red-50 text-red-500 font-bold px-4 py-3 rounded-2xl"
+                  className="mt-2 bg-red-50 text-red-500 font-black px-4 py-4 rounded-2xl"
                 >
                   Sign Out
                 </button>
@@ -528,5 +448,116 @@ export default function Navbar() {
         </div>
       )}
     </>
+  );
+}
+
+function DesktopMenuLinks({
+  isAdmin,
+  isSeller,
+  handleSellerAction,
+  getSellerActionLabel,
+  handleLogout,
+}) {
+  return (
+    <>
+      <Link
+        to="/profile"
+        className="block px-4 py-3 rounded-2xl text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D] transition-all"
+      >
+        My Profile
+      </Link>
+
+      <Link
+        to="/marketplace"
+        className="block px-4 py-3 rounded-2xl text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D] transition-all"
+      >
+        Marketplace
+      </Link>
+
+      <Link
+        to="/orders"
+        className="block px-4 py-3 rounded-2xl text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D] transition-all"
+      >
+        Active Orders
+      </Link>
+
+      <Link
+        to="/order-history"
+        className="block px-4 py-3 rounded-2xl text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D] transition-all"
+      >
+        Order History
+      </Link>
+
+      {isAdmin && (
+        <>
+          <Link
+            to="/owner-dashboard"
+            className="block px-4 py-3 rounded-2xl text-[#1A9F8D] hover:bg-[#D7F5EF] transition-all"
+          >
+            Owner Dashboard
+          </Link>
+
+          <Link
+            to="/owner-accounting"
+            className="block px-4 py-3 rounded-2xl text-[#1A9F8D] hover:bg-[#D7F5EF] transition-all"
+          >
+            Owner Accounting
+          </Link>
+
+          <Link
+            to="/owner-seller-applications"
+            className="block px-4 py-3 rounded-2xl text-[#1A9F8D] hover:bg-[#D7F5EF] transition-all"
+          >
+            Seller Applications
+          </Link>
+        </>
+      )}
+
+      {isSeller && (
+        <Link
+          to="/seller-helper"
+          className="block px-4 py-3 rounded-2xl text-[#1A9F8D] hover:bg-[#D7F5EF] transition-all"
+        >
+          Seller Assistant
+        </Link>
+      )}
+
+      <button
+        type="button"
+        onClick={handleSellerAction}
+        className={`w-full text-left px-4 py-3 rounded-2xl transition-all ${
+          isSeller
+            ? "text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D]"
+            : "text-[#1A9F8D] hover:bg-[#D7F5EF]"
+        }`}
+      >
+        {getSellerActionLabel()}
+      </button>
+
+      <button
+        type="button"
+        onClick={handleLogout}
+        className="w-full text-left px-4 py-3 rounded-2xl text-red-500 hover:bg-red-50 transition-all"
+      >
+        Sign Out
+      </button>
+    </>
+  );
+}
+
+function MobileLink({ to, active, label, highlight = false }) {
+  return (
+    <Link
+      to={to}
+      className={`px-4 py-4 rounded-2xl text-sm font-black transition-all ${
+        active
+          ? "bg-[#41D3BD] text-[#073B35]"
+          : highlight
+          ? "text-[#1A9F8D] hover:bg-[#D7F5EF]"
+          : "text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D]"
+      }`}
+    >
+      {label}
+    </Link>
   );
 }

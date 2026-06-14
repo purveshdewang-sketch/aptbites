@@ -34,7 +34,7 @@ export default function FoodCard({ item }) {
     }
 
     if (fulfillmentUnavailable) {
-      alert("This kitchen is not offering delivery or pickup right now.");
+      alert("This kitchen is not taking delivery or pickup orders right now.");
       return;
     }
 
@@ -45,13 +45,12 @@ export default function FoodCard({ item }) {
 
     setTimeout(() => {
       setShowToast(false);
-    }, 1500);
+    }, 1400);
   }
 
   function handleDecrease(event) {
     event.preventDefault();
     event.stopPropagation();
-
     decreaseQuantity(item.id);
   }
 
@@ -70,7 +69,7 @@ export default function FoodCard({ item }) {
   function getAvailabilityText() {
     if (kitchenIsClosed) return "Closed";
     if (fulfillmentUnavailable) return "Unavailable";
-    if (isSoldOut) return "Sold Out";
+    if (isSoldOut) return "Sold out";
     if (isLowStock) return `Only ${stock} left`;
     return `${stock} left`;
   }
@@ -84,17 +83,17 @@ export default function FoodCard({ item }) {
   }
 
   function getBlockedLabel() {
-    if (kitchenIsClosed) return "CLOSED";
-    if (fulfillmentUnavailable) return "OFF";
-    if (isSoldOut) return "SOLD OUT";
-    return "OFF";
+    if (kitchenIsClosed) return "Closed";
+    if (fulfillmentUnavailable) return "Unavailable";
+    if (isSoldOut) return "Sold out";
+    return "Unavailable";
   }
 
   function getButtonLabel() {
-    if (kitchenIsClosed) return "Kitchen Closed";
+    if (kitchenIsClosed) return "Closed";
     if (fulfillmentUnavailable) return "Unavailable";
-    if (isSoldOut) return "Unavailable";
-    return "+ Add to Cart";
+    if (isSoldOut) return "Sold Out";
+    return "ADD";
   }
 
   function FulfillmentBadges({ compact = false }) {
@@ -138,7 +137,7 @@ export default function FoodCard({ item }) {
   return (
     <>
       {showToast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[999] w-[92%] sm:w-[340px] bg-white border border-[#D7F5EF] rounded-[1.5rem] p-4 shadow-2xl shadow-[#073B35]/20">
+        <div className="fixed top-24 left-3 right-3 z-[999] sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[340px] bg-white border border-[#D7F5EF] rounded-[1.5rem] p-4 shadow-2xl shadow-[#073B35]/20">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-2xl bg-[#41D3BD]/15 flex items-center justify-center text-xl">
               ✅
@@ -164,7 +163,7 @@ export default function FoodCard({ item }) {
 
       <Link
         to={`/food/${item.id}`}
-        className={`group block bg-white border rounded-[1.5rem] sm:rounded-[1.75rem] overflow-hidden transition-all duration-300 shadow-lg shadow-[#073B35]/5 ${
+        className={`group block bg-white border rounded-[1.35rem] sm:rounded-[1.75rem] overflow-hidden transition-all duration-300 shadow-lg shadow-[#073B35]/5 ${
           kitchenIsClosed || fulfillmentUnavailable
             ? "border-red-200"
             : "border-[#D7F5EF] hover:border-[#41D3BD]/70 hover:shadow-xl hover:shadow-[#073B35]/10"
@@ -172,14 +171,12 @@ export default function FoodCard({ item }) {
       >
         <div className="sm:hidden p-2.5">
           <div className="flex gap-3">
-            <div className="relative w-28 h-28 shrink-0 rounded-[1.25rem] overflow-hidden bg-[#D7F5EF]">
+            <div className="relative w-[116px] h-[116px] shrink-0 rounded-[1.25rem] overflow-hidden bg-[#D7F5EF]">
               <img
                 src={item.image}
                 alt={item.name}
                 className={`w-full h-full object-cover ${
-                  kitchenIsClosed || fulfillmentUnavailable
-                    ? "grayscale opacity-45"
-                    : ""
+                  kitchenIsClosed || fulfillmentUnavailable ? "grayscale opacity-45" : ""
                 }`}
               />
 
@@ -195,13 +192,16 @@ export default function FoodCard({ item }) {
                 </span>
               </div>
 
-              {demandBadge && !kitchenIsClosed && !isSoldOut && !fulfillmentUnavailable && (
-                <div className="absolute bottom-2 left-2 right-2 bg-white/95 backdrop-blur border border-[#D7F5EF] rounded-xl px-2 py-1">
-                  <p className="text-[#1A9F8D] text-[9px] font-black truncate">
-                    🔥 {demandBadge.label}
-                  </p>
-                </div>
-              )}
+              {demandBadge &&
+                !kitchenIsClosed &&
+                !isSoldOut &&
+                !fulfillmentUnavailable && (
+                  <div className="absolute bottom-2 left-2 right-2 bg-white/95 backdrop-blur border border-[#D7F5EF] rounded-xl px-2 py-1">
+                    <p className="text-[#1A9F8D] text-[9px] font-black truncate">
+                      🔥 {demandBadge.label}
+                    </p>
+                  </div>
+                )}
 
               {isBlocked && (
                 <div className="absolute inset-0 bg-black/65 flex items-center justify-center text-center px-2">
@@ -212,20 +212,34 @@ export default function FoodCard({ item }) {
               )}
             </div>
 
-            <div className="flex-1 min-w-0">
-              <h3
-                className={`text-base font-black leading-tight line-clamp-2 ${
-                  kitchenIsClosed || fulfillmentUnavailable
-                    ? "text-[#9AA7A3]"
-                    : "text-[#111827]"
-                }`}
-              >
-                {item.name}
-              </h3>
+            <div className="flex-1 min-w-0 py-0.5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <h3
+                    className={`text-[15px] font-black leading-tight line-clamp-2 ${
+                      kitchenIsClosed || fulfillmentUnavailable
+                        ? "text-[#9AA7A3]"
+                        : "text-[#111827]"
+                    }`}
+                  >
+                    {item.name}
+                  </h3>
 
-              <p className="text-[#51615D] text-[11px] mt-1 truncate">
-                {kitchenName}
-              </p>
+                  <p className="text-[#51615D] text-[11px] mt-1 truncate">
+                    {kitchenName}
+                  </p>
+                </div>
+
+                <p
+                  className={`font-black text-lg shrink-0 ${
+                    kitchenIsClosed || fulfillmentUnavailable
+                      ? "text-[#9AA7A3]"
+                      : "text-[#073B35]"
+                  }`}
+                >
+                  ₹{item.price}
+                </p>
+              </div>
 
               <div className="flex flex-wrap gap-1.5 mt-2">
                 <FulfillmentBadges compact />
@@ -252,41 +266,31 @@ export default function FoodCard({ item }) {
                 </p>
               )}
 
-              <div className="flex items-end justify-between gap-2 mt-2.5">
-                <p
-                  className={`font-black text-xl ${
-                    kitchenIsClosed || fulfillmentUnavailable
-                      ? "text-[#9AA7A3]"
-                      : "text-[#073B35]"
-                  }`}
-                >
-                  ₹{item.price}
-                </p>
-
+              <div className="flex justify-end mt-2.5">
                 {quantity === 0 || isBlocked ? (
                   <button
                     type="button"
                     onClick={handleAddToCart}
                     disabled={isBlocked}
-                    className={`min-w-[70px] font-black py-2 px-3 rounded-2xl text-xs border transition-all ${
+                    className={`min-w-[78px] h-10 font-black px-3 rounded-2xl text-xs border transition-all ${
                       isBlocked
                         ? "bg-[#EAF7F4] text-[#9AA7A3] border-red-100 cursor-not-allowed"
-                        : "bg-[#41D3BD] text-[#073B35] border-[#41D3BD] shadow-lg shadow-[#41D3BD]/20"
+                        : "bg-[#41D3BD] text-[#073B35] border-[#41D3BD] shadow-lg shadow-[#41D3BD]/20 active:scale-95"
                     }`}
                   >
-                    {isBlocked ? "OFF" : "ADD"}
+                    {getButtonLabel()}
                   </button>
                 ) : (
                   <div className="flex items-center overflow-hidden rounded-2xl bg-[#073B35] text-white font-black shadow-lg shadow-[#073B35]/15">
                     <button
                       type="button"
                       onClick={handleDecrease}
-                      className="w-8 h-9 text-lg active:bg-[#0B5149]"
+                      className="w-9 h-10 text-lg active:bg-[#0B5149]"
                     >
                       −
                     </button>
 
-                    <span className="min-w-8 h-9 flex items-center justify-center text-xs bg-[#41D3BD] text-[#073B35]">
+                    <span className="min-w-9 h-10 flex items-center justify-center text-xs bg-[#41D3BD] text-[#073B35]">
                       {quantity}
                     </span>
 
@@ -294,7 +298,7 @@ export default function FoodCard({ item }) {
                       type="button"
                       onClick={handleIncrease}
                       disabled={quantity >= stock}
-                      className={`w-8 h-9 text-lg ${
+                      className={`w-9 h-10 text-lg ${
                         quantity >= stock
                           ? "opacity-40 cursor-not-allowed"
                           : "active:bg-[#0B5149]"
@@ -332,11 +336,14 @@ export default function FoodCard({ item }) {
                 {item.type || "Veg"}
               </span>
 
-              {demandBadge && !kitchenIsClosed && !isSoldOut && !fulfillmentUnavailable && (
-                <span className="w-fit text-xs font-black px-3 py-1.5 rounded-full bg-white/95 text-[#073B35] border border-[#D7F5EF] shadow-sm">
-                  🔥 {demandBadge.label}
-                </span>
-              )}
+              {demandBadge &&
+                !kitchenIsClosed &&
+                !isSoldOut &&
+                !fulfillmentUnavailable && (
+                  <span className="w-fit text-xs font-black px-3 py-1.5 rounded-full bg-white/95 text-[#073B35] border border-[#D7F5EF] shadow-sm">
+                    🔥 {demandBadge.label}
+                  </span>
+                )}
             </div>
 
             <div className="absolute top-3 right-3 z-20">
@@ -377,6 +384,7 @@ export default function FoodCard({ item }) {
                       ? "Not Taking Orders"
                       : "Sold Out"}
                   </p>
+
                   <p className="text-[#51615D] text-xs mt-1">
                     Ordering is temporarily unavailable
                   </p>
@@ -451,7 +459,7 @@ export default function FoodCard({ item }) {
                       : "bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.98] text-white shadow-lg shadow-[#073B35]/15"
                   }`}
                 >
-                  {getButtonLabel()}
+                  {isBlocked ? getButtonLabel() : "+ Add to Cart"}
                 </button>
               ) : (
                 <div className="flex items-center justify-between overflow-hidden rounded-2xl bg-[#073B35] text-white font-black shadow-lg shadow-[#073B35]/15">

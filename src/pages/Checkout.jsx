@@ -857,7 +857,7 @@ export default function Checkout() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-3 sm:px-6 py-4 sm:py-10 pb-36 lg:pb-10">
+      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-3 sm:px-6 py-4 sm:py-10 pb-40 lg:pb-10">
         <div className="max-w-6xl mx-auto">
           <section className="relative overflow-hidden bg-white/85 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2.5rem] p-4 sm:p-8 shadow-xl shadow-[#073B35]/5 mb-5 lg:mb-8">
             <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[95px]" />
@@ -875,7 +875,7 @@ export default function Checkout() {
                   onClick={() => setShowMobileSummary(!showMobileSummary)}
                   className="lg:hidden shrink-0 bg-[#073B35] text-white font-black px-4 py-2 rounded-2xl text-xs shadow-sm"
                 >
-                  ₹{totalAmount}
+                  Summary • ₹{totalAmount}
                 </button>
               </div>
 
@@ -1364,7 +1364,7 @@ export default function Checkout() {
               {loading
                 ? "Checking..."
                 : checkoutBlocked
-                ? "Kitchen Unavailable"
+                ? "Unavailable"
                 : orderTiming === "scheduled"
                 ? "Schedule Order"
                 : "Place Order"}

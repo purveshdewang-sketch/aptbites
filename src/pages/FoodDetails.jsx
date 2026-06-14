@@ -58,14 +58,8 @@ export default function FoodDetails() {
       .channel(`food-details-foods-${id}`)
       .on(
         "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "foods",
-        },
-        () => {
-          fetchFoodDetails(false);
-        }
+        { event: "*", schema: "public", table: "foods" },
+        () => fetchFoodDetails(false)
       )
       .subscribe();
 
@@ -73,14 +67,8 @@ export default function FoodDetails() {
       .channel(`food-details-profiles-${id}`)
       .on(
         "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "profiles",
-        },
-        () => {
-          fetchFoodDetails(false);
-        }
+        { event: "*", schema: "public", table: "profiles" },
+        () => fetchFoodDetails(false)
       )
       .subscribe();
 
@@ -233,7 +221,7 @@ export default function FoodDetails() {
     }
 
     if (fulfillmentUnavailable) {
-      alert("This kitchen is not offering delivery or pickup right now.");
+      alert("This kitchen is not taking delivery or pickup orders right now.");
       return;
     }
 
@@ -284,8 +272,8 @@ export default function FoodDetails() {
   function getMainButtonLabel() {
     if (kitchenIsClosed) return "Kitchen Closed";
     if (fulfillmentUnavailable) return "Unavailable";
-    if (isSoldOut) return "Unavailable";
-    return "+ Add to Cart";
+    if (isSoldOut) return "Sold Out";
+    return "Add to Cart";
   }
 
   function FulfillmentBadges({ compact = false }) {
@@ -319,7 +307,7 @@ export default function FoodDetails() {
               compact ? "text-[10px] px-2.5 py-1" : "text-xs px-3 py-1.5"
             }`}
           >
-            🛍️ Self Pickup
+            🛍️ Pickup
           </span>
         )}
       </>
@@ -330,7 +318,7 @@ export default function FoodDetails() {
     return (
       <>
         <Navbar />
-        <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-8 flex items-center justify-center">
+        <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 py-8 flex items-center justify-center">
           <div className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-xl shadow-[#073B35]/5">
             <div className="w-16 h-16 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-3xl">
               🍽️
@@ -348,7 +336,7 @@ export default function FoodDetails() {
     return (
       <>
         <Navbar />
-        <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-8 flex items-center justify-center">
+        <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 py-8 flex items-center justify-center">
           <div className="max-w-md w-full bg-white/85 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-xl shadow-[#073B35]/5">
             <div className="text-5xl">🍽️</div>
             <h1 className="text-3xl font-black mt-4 text-[#111827]">
@@ -373,8 +361,8 @@ export default function FoodDetails() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] pb-36 sm:pb-32">
-        <section className="relative px-3 sm:px-6 py-4 sm:py-10">
+      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] pb-44 sm:pb-32">
+        <section className="relative px-3 sm:px-6 py-3 sm:py-10">
           <div className="absolute -top-24 -right-24 w-80 h-80 bg-[#41D3BD]/20 rounded-full blur-[100px]" />
           <div className="absolute top-64 -left-28 w-80 h-80 bg-[#41D3BD]/10 rounded-full blur-[120px]" />
 
@@ -382,14 +370,14 @@ export default function FoodDetails() {
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="inline-flex items-center gap-2 text-[#51615D] hover:text-[#073B35] font-black mb-3 sm:mb-4 transition-all bg-white/80 border border-[#D7F5EF] px-4 py-2 rounded-2xl shadow-sm text-sm"
+              className="inline-flex items-center gap-2 text-[#51615D] hover:text-[#073B35] font-black mb-3 transition-all bg-white/80 border border-[#D7F5EF] px-4 py-2 rounded-2xl shadow-sm text-sm"
             >
               ← Back
             </button>
 
             <div className="grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-4 lg:gap-10">
               <div className="relative bg-white border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] overflow-hidden shadow-xl shadow-[#073B35]/5">
-                <div className="relative aspect-[4/3] sm:aspect-square bg-[#D7F5EF] overflow-hidden">
+                <div className="relative aspect-[1.05/1] sm:aspect-square bg-[#D7F5EF] overflow-hidden">
                   <img
                     src={food.image}
                     alt={food.name}
@@ -400,7 +388,7 @@ export default function FoodDetails() {
                     }`}
                   />
 
-                  <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
 
                   <div className="absolute top-3 left-3 flex flex-wrap gap-2 pr-20">
                     <span
@@ -480,7 +468,7 @@ export default function FoodDetails() {
                   <span>{getKitchenStatusText()}</span>
                 </div>
 
-                <h1 className="text-3xl sm:text-6xl font-black mt-4 leading-[0.98] tracking-tight text-[#111827]">
+                <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black mt-4 leading-[0.98] tracking-tight text-[#111827]">
                   {food.name}
                 </h1>
 
@@ -655,7 +643,7 @@ export default function FoodDetails() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
                   {visibleKitchenFoods.map((item) => (
                     <FoodCard key={item.id} item={item} />
                   ))}
@@ -684,7 +672,7 @@ export default function FoodDetails() {
                 className={`flex-1 font-black py-4 rounded-2xl transition-all ${
                   isBlocked
                     ? "bg-[#EAF7F4] text-[#8AA5A0] cursor-not-allowed border border-red-100"
-                    : "bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
+                    : "bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.98]"
                 }`}
               >
                 {getMainButtonLabel()}

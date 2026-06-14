@@ -1279,7 +1279,7 @@ export default function SellerDashboard() {
       <>
         <Navbar />
 
-        <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-6 sm:py-10 pb-24">
+        <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-6 sm:py-10 pb-20">
           <div className="max-w-3xl mx-auto">
             <section className="relative overflow-hidden bg-white/90 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-2xl shadow-[#073B35]/10">
               <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[95px]" />
@@ -1526,74 +1526,65 @@ export default function SellerDashboard() {
                   </p>
                 </div>
 
-                <div className="hidden lg:flex flex-wrap gap-3 lg:justify-end">
-                  <button
-                    type="button"
-                    onClick={toggleSellerOnline}
-                    className={`active:scale-95 font-black px-5 py-3 rounded-2xl text-center transition-all shadow-lg ${
-                      sellerOnline
-                        ? "bg-green-500 text-white shadow-green-500/20"
-                        : "bg-red-500 text-white shadow-red-500/20"
-                    }`}
-                  >
-                    {sellerOnline ? "🟢 Online" : "🔴 Offline"}
-                  </button>
+                <div className="lg:hidden mt-5 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={toggleSellerOnline}
+                  className={`active:scale-95 font-black px-3 py-3 rounded-2xl text-xs transition-all shadow-sm ${
+                    sellerOnline ? "bg-green-500 text-white" : "bg-red-500 text-white"
+                  }`}
+                >
+                  {sellerOnline ? "🟢 Online" : "🔴 Offline"}
+                </button>
 
-                  <button
-                    type="button"
-                    onClick={toggleAcceptScheduledOrders}
-                    className={`active:scale-95 font-black px-5 py-3 rounded-2xl text-center transition-all ${
-                      acceptScheduledOrders
-                        ? "bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
-                        : "bg-white text-[#51615D] border border-[#D7F5EF]"
-                    }`}
-                  >
-                    {acceptScheduledOrders ? "🕒 Schedule ON" : "🕒 Schedule OFF"}
-                  </button>
+                <button
+                  type="button"
+                  onClick={toggleAcceptScheduledOrders}
+                  className={`active:scale-95 font-black px-3 py-3 rounded-2xl text-xs transition-all ${
+                    acceptScheduledOrders
+                      ? "bg-[#073B35] text-white"
+                      : "bg-white text-[#51615D] border border-[#D7F5EF]"
+                  }`}
+                >
+                  {acceptScheduledOrders ? "🕒 Schedule ON" : "🕒 Schedule OFF"}
+                </button>
 
-                  <button
-                    type="button"
-                    onClick={toggleDeliveryAvailable}
-                    className={`active:scale-95 font-black px-5 py-3 rounded-2xl text-center transition-all ${
-                      deliveryAvailable
-                        ? "bg-[#41D3BD] text-[#073B35] shadow-lg shadow-[#41D3BD]/20"
-                        : "bg-white text-[#51615D] border border-[#D7F5EF]"
-                    }`}
-                  >
-                    {deliveryAvailable ? "🚚 Delivery ON" : "🚚 Delivery OFF"}
-                  </button>
+                <button
+                  type="button"
+                  onClick={toggleDeliveryAvailable}
+                  className={`active:scale-95 font-black px-3 py-3 rounded-2xl text-xs transition-all ${
+                    deliveryAvailable
+                      ? "bg-[#41D3BD] text-[#073B35]"
+                      : "bg-white text-[#51615D] border border-[#D7F5EF]"
+                  }`}
+                >
+                  {deliveryAvailable ? "🚚 Delivery ON" : "🚚 Delivery OFF"}
+                </button>
 
-                  <button
-                    type="button"
-                    onClick={togglePickupAvailable}
-                    className={`active:scale-95 font-black px-5 py-3 rounded-2xl text-center transition-all ${
-                      pickupAvailable
-                        ? "bg-[#41D3BD] text-[#073B35] shadow-lg shadow-[#41D3BD]/20"
-                        : "bg-white text-[#51615D] border border-[#D7F5EF]"
-                    }`}
-                  >
-                    {pickupAvailable ? "🛍️ Pickup ON" : "🛍️ Pickup OFF"}
-                  </button>
+                <button
+                  type="button"
+                  onClick={togglePickupAvailable}
+                  className={`active:scale-95 font-black px-3 py-3 rounded-2xl text-xs transition-all ${
+                    pickupAvailable
+                      ? "bg-[#41D3BD] text-[#073B35]"
+                      : "bg-white text-[#51615D] border border-[#D7F5EF]"
+                  }`}
+                >
+                  {pickupAvailable ? "🛍️ Pickup ON" : "🛍️ Pickup OFF"}
+                </button>
 
-                  <button
-                    type="button"
-                    onClick={toggleNotificationSound}
-                    className={`active:scale-95 font-black px-5 py-3 rounded-2xl text-center transition-all ${
-                      audioReady
-                        ? "bg-green-500 text-white"
-                        : "bg-white text-[#073B35] border border-[#41D3BD]/40"
-                    }`}
-                  >
-                    {audioReady ? "🔕 Sound Off" : "🔔 Sound On"}
-                  </button>
-
-                  <Link
-                    to="/marketplace"
-                    className="bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-95 text-[#073B35] font-black px-5 py-3 rounded-2xl text-center transition-all"
-                  >
-                    Marketplace
-                  </Link>
-                </div>
+                <button
+                  type="button"
+                  onClick={toggleNotificationSound}
+                  className={`col-span-2 active:scale-95 font-black px-3 py-3 rounded-2xl text-xs transition-all ${
+                    audioReady
+                      ? "bg-green-500 text-white"
+                      : "bg-white text-[#073B35] border border-[#41D3BD]/40"
+                  }`}
+                >
+                  {audioReady ? "🔕 Sound Off" : "🔔 Sound On"}
+                </button>
+              </div>
               </div>
 
               <div className="lg:hidden mt-5 -mx-1 overflow-x-auto pb-1">
