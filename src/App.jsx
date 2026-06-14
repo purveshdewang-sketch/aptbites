@@ -50,6 +50,7 @@ function FloatingHelpButton() {
     "/seller-login",
     "/reset-password",
     "/care-agent",
+    "/seller-helper",
   ];
 
   if (hiddenRoutes.includes(location.pathname)) return null;
@@ -59,14 +60,30 @@ function FloatingHelpButton() {
     location.pathname === "/checkout" ||
     location.pathname.startsWith("/food/");
 
+  const sellerPages = [
+    "/seller-dashboard",
+    "/seller-helper",
+    "/owner-dashboard",
+    "/owner-accounting",
+    "/owner-seller-applications",
+  ];
+
+  const isSellerPage = sellerPages.some((page) =>
+    location.pathname.startsWith(page)
+  );
+
   return (
     <Link
-      to="/care-agent"
-      className={`fixed right-4 z-[999] bg-[#073B35] hover:bg-[#0B5149] text-white font-black px-4 py-3 rounded-full shadow-2xl shadow-[#073B35]/25 border border-[#41D3BD]/30 active:scale-95 transition-all ${
+      to={isSellerPage ? "/seller-helper" : "/care-agent"}
+      className={`fixed right-4 z-[999] font-black px-4 py-3 rounded-full shadow-2xl active:scale-95 transition-all ${
         needsHigherPosition ? "bottom-24" : "bottom-5"
+      } ${
+        isSellerPage
+          ? "bg-[#FFB703] hover:bg-[#FFC533] text-[#111827]"
+          : "bg-[#073B35] hover:bg-[#0B5149] text-white border border-[#41D3BD]/30"
       }`}
     >
-      💬 Help
+      {isSellerPage ? "👨‍🍳 Seller Help" : "💬 Help"}
     </Link>
   );
 }
