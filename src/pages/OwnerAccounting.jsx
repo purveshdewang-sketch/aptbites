@@ -22,14 +22,8 @@ export default function OwnerAccounting() {
       .channel("owner-accounting-orders")
       .on(
         "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "orders",
-        },
-        () => {
-          fetchAccountingData(false);
-        }
+        { event: "*", schema: "public", table: "orders" },
+        () => fetchAccountingData(false)
       )
       .subscribe();
 
@@ -39,9 +33,7 @@ export default function OwnerAccounting() {
   }, []);
 
   async function fetchAccountingData(showLoading = true) {
-    if (showLoading) {
-      setLoading(true);
-    }
+    if (showLoading) setLoading(true);
 
     setErrorMessage("");
 
@@ -58,18 +50,22 @@ export default function OwnerAccounting() {
     }
 
     const sellerIds = [
-      ...new Set(
-        (orderData || []).map((order) => order.seller_id).filter(Boolean)
-      ),
+      ...new Set((orderData || []).map((order) => order.seller_id).filter(Boolean)),
     ];
 
-    let nextSellerMap = {};
+    const nextSellerMap = {};
 
     if (sellerIds.length > 0) {
-      const { data: profileData } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("id, full_name, email, phone, seller_kitchen_name")
+        .select(
+          "id, full_name, email, phone, seller_kitchen_name, bank_account_holder, bank_name, bank_account_number, bank_ifsc, bank_upi_id"
+        )
         .in("id", sellerIds);
+
+      if (profileError) {
+        setErrorMessage(profileError.message);
+      }
 
       (profileData || []).forEach((profile) => {
         nextSellerMap[profile.id] = profile;
@@ -153,9 +149,7 @@ export default function OwnerAccounting() {
     if (paymentFilter === "upi") return method === "upi";
     if (paymentFilter === "cash") return method === "cash";
     if (paymentFilter === "pending") return paymentStatus === "pending";
-    if (paymentFilter === "reference") {
-      return paymentStatus === "reference_submitted";
-    }
+    if (paymentFilter === "reference") return paymentStatus === "reference_submitted";
 
     return true;
   }
@@ -202,13 +196,14 @@ export default function OwnerAccounting() {
     });
   }
 
+  function getSellerProfile(order) {
+    return sellerMap[order.seller_id] || {};
+  }
+
   function getSellerName(order) {
-    const sellerProfile = sellerMap[order.seller_id];
+    const sellerProfile = getSellerProfile(order);
 
-    if (sellerProfile?.seller_kitchen_name) {
-      return sellerProfile.seller_kitchen_name;
-    }
-
+    if (sellerProfile?.seller_kitchen_name) return sellerProfile.seller_kitchen_name;
     if (sellerProfile?.full_name) return sellerProfile.full_name;
 
     const firstItem = getOrderItems(order)[0];
@@ -220,11 +215,11 @@ export default function OwnerAccounting() {
   }
 
   function getSellerEmail(order) {
-    return sellerMap[order.seller_id]?.email || "";
+    return getSellerProfile(order)?.email || "";
   }
 
   function getSellerPhone(order) {
-    return sellerMap[order.seller_id]?.phone || "";
+    return getSellerProfile(order)?.phone || "";
   }
 
   function getOrderSubtotal(order) {
@@ -244,31 +239,22 @@ export default function OwnerAccounting() {
 
   function getPlatformRevenue(order) {
     const status = normalizeStatus(order.status);
-
     if (status === "cancelled") return 0;
-
     return getOrderPlatformFee(order);
   }
 
   function getSellerGrossEarning(order) {
     const status = normalizeStatus(order.status);
-
     if (status === "cancelled") return 0;
-
     return getOrderSubtotal(order);
   }
 
   function getSellerCommission(order) {
-    const sellerGross = getSellerGrossEarning(order);
-
-    return Math.round(sellerGross * SELLER_COMMISSION_RATE);
+    return Math.round(getSellerGrossEarning(order) * SELLER_COMMISSION_RATE);
   }
 
   function getSellerNetPayout(order) {
-    const sellerGross = getSellerGrossEarning(order);
-    const commission = getSellerCommission(order);
-
-    return Math.max(sellerGross - commission, 0);
+    return Math.max(getSellerGrossEarning(order) - getSellerCommission(order), 0);
   }
 
   function getNefoTotalEarning(order) {
@@ -314,10 +300,7 @@ export default function OwnerAccounting() {
     const method = normalizePaymentMethod(order.payment_method);
     const paymentStatus = normalizePaymentStatus(order.payment_status);
 
-    if (method === "cash") {
-      return "bg-blue-50 text-blue-700 border-blue-200";
-    }
-
+    if (method === "cash") return "bg-blue-50 text-blue-700 border-blue-200";
     if (paymentStatus === "reference_submitted") {
       return "bg-green-50 text-green-700 border-green-200";
     }
@@ -365,33 +348,40 @@ export default function OwnerAccounting() {
       return status !== "completed" && status !== "cancelled";
     }).length;
 
-    const grossSales = filteredOrders.reduce((total, order) => {
-      return total + Number(order.total_amount || 0);
-    }, 0);
+    const grossSales = filteredOrders.reduce(
+      (total, order) => total + Number(order.total_amount || 0),
+      0
+    );
 
-    const foodSales = filteredOrders.reduce((total, order) => {
-      return total + getOrderSubtotal(order);
-    }, 0);
+    const foodSales = filteredOrders.reduce(
+      (total, order) => total + getOrderSubtotal(order),
+      0
+    );
 
-    const platformRevenue = filteredOrders.reduce((total, order) => {
-      return total + getPlatformRevenue(order);
-    }, 0);
+    const platformRevenue = filteredOrders.reduce(
+      (total, order) => total + getPlatformRevenue(order),
+      0
+    );
 
-    const sellerGrossEarning = filteredOrders.reduce((total, order) => {
-      return total + getSellerGrossEarning(order);
-    }, 0);
+    const sellerGrossEarning = filteredOrders.reduce(
+      (total, order) => total + getSellerGrossEarning(order),
+      0
+    );
 
-    const sellerCommission = filteredOrders.reduce((total, order) => {
-      return total + getSellerCommission(order);
-    }, 0);
+    const sellerCommission = filteredOrders.reduce(
+      (total, order) => total + getSellerCommission(order),
+      0
+    );
 
-    const sellerNetPayout = filteredOrders.reduce((total, order) => {
-      return total + getSellerNetPayout(order);
-    }, 0);
+    const sellerNetPayout = filteredOrders.reduce(
+      (total, order) => total + getSellerNetPayout(order),
+      0
+    );
 
-    const nefoTotalEarning = filteredOrders.reduce((total, order) => {
-      return total + getNefoTotalEarning(order);
-    }, 0);
+    const nefoTotalEarning = filteredOrders.reduce(
+      (total, order) => total + getNefoTotalEarning(order),
+      0
+    );
 
     const paymentPendingOrders = filteredOrders.filter((order) => {
       return normalizePaymentStatus(order.payment_status) === "pending";
@@ -432,6 +422,7 @@ export default function OwnerAccounting() {
 
     filteredOrders.forEach((order) => {
       const sellerId = order.seller_id || "unknown";
+      const sellerProfile = getSellerProfile(order);
       const sellerName = getSellerName(order);
       const status = normalizeStatus(order.status);
       const paymentStatus = normalizePaymentStatus(order.payment_status);
@@ -443,6 +434,11 @@ export default function OwnerAccounting() {
           sellerName,
           email: getSellerEmail(order),
           phone: getSellerPhone(order),
+          bankAccountHolder: sellerProfile.bank_account_holder || "",
+          bankName: sellerProfile.bank_name || "",
+          bankAccountNumber: sellerProfile.bank_account_number || "",
+          bankIfsc: sellerProfile.bank_ifsc || "",
+          bankUpiId: sellerProfile.bank_upi_id || "",
           totalOrders: 0,
           activeOrders: 0,
           completedOrders: 0,
@@ -471,17 +467,9 @@ export default function OwnerAccounting() {
 
       if (status === "completed") ledger[sellerId].completedOrders += 1;
       if (status === "cancelled") ledger[sellerId].cancelledOrders += 1;
-
-      if (status !== "completed" && status !== "cancelled") {
-        ledger[sellerId].activeOrders += 1;
-      }
-
+      if (status !== "completed" && status !== "cancelled") ledger[sellerId].activeOrders += 1;
       if (paymentStatus === "pending") ledger[sellerId].pendingPayments += 1;
-
-      if (paymentStatus === "reference_submitted") {
-        ledger[sellerId].upiReferenceSubmitted += 1;
-      }
-
+      if (paymentStatus === "reference_submitted") ledger[sellerId].upiReferenceSubmitted += 1;
       if (paymentMethod === "cash") ledger[sellerId].cashOrders += 1;
     });
 
@@ -499,6 +487,11 @@ export default function OwnerAccounting() {
       "Kitchen",
       "Seller Email",
       "Seller Phone",
+      "Bank Account Holder",
+      "Bank Name",
+      "Bank Account Number",
+      "Bank IFSC",
+      "Bank UPI ID",
       "Items",
       "Delivery Type",
       "Flat",
@@ -517,31 +510,40 @@ export default function OwnerAccounting() {
       "Scheduled For",
     ];
 
-    const rows = filteredOrders.map((order) => [
-      order.id,
-      formatDateTime(order.created_at),
-      order.customer_name || "",
-      order.phone || "",
-      getSellerName(order),
-      getSellerEmail(order),
-      getSellerPhone(order),
-      getItemsText(order),
-      order.delivery_type || "",
-      order.flat || "",
-      order.status || "confirmed",
-      order.payment_method || "upi",
-      order.payment_status || "pending",
-      order.payment_reference || "",
-      getOrderSubtotal(order),
-      getOrderPlatformFee(order),
-      getSellerGrossEarning(order),
-      getSellerCommission(order),
-      getSellerNetPayout(order),
-      getNefoTotalEarning(order),
-      Number(order.total_amount || 0),
-      order.scheduled_order ? "Yes" : "No",
-      order.scheduled_for ? formatDateTime(order.scheduled_for) : "",
-    ]);
+    const rows = filteredOrders.map((order) => {
+      const sellerProfile = getSellerProfile(order);
+
+      return [
+        order.id,
+        formatDateTime(order.created_at),
+        order.customer_name || "",
+        order.phone || "",
+        getSellerName(order),
+        getSellerEmail(order),
+        getSellerPhone(order),
+        sellerProfile.bank_account_holder || "",
+        sellerProfile.bank_name || "",
+        sellerProfile.bank_account_number || "",
+        sellerProfile.bank_ifsc || "",
+        sellerProfile.bank_upi_id || "",
+        getItemsText(order),
+        order.delivery_type || "",
+        order.flat || "",
+        order.status || "confirmed",
+        order.payment_method || "upi",
+        order.payment_status || "pending",
+        order.payment_reference || "",
+        getOrderSubtotal(order),
+        getOrderPlatformFee(order),
+        getSellerGrossEarning(order),
+        getSellerCommission(order),
+        getSellerNetPayout(order),
+        getNefoTotalEarning(order),
+        Number(order.total_amount || 0),
+        order.scheduled_order ? "Yes" : "No",
+        order.scheduled_for ? formatDateTime(order.scheduled_for) : "",
+      ];
+    });
 
     const csvContent = [headers, ...rows]
       .map((row) =>
@@ -591,8 +593,8 @@ export default function OwnerAccounting() {
                 </h1>
 
                 <p className="text-[#51615D] mt-4 text-sm sm:text-lg max-w-2xl leading-relaxed">
-                  Track seller earnings, deduct Nefo commission, calculate net
-                  seller payout, and verify payment status before weekly
+                  Track seller earnings, deduct Nefo commission, view seller
+                  bank details, and calculate net seller payout before weekly
                   settlement.
                 </p>
               </div>
@@ -687,38 +689,14 @@ export default function OwnerAccounting() {
           {!loading && !errorMessage && (
             <>
               <section className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <AccountingCard
-                  title="Gross Sales"
-                  value={`₹${analytics.grossSales}`}
-                />
-                <AccountingCard
-                  title="Food Sales"
-                  value={`₹${analytics.foodSales}`}
-                />
-                <AccountingCard
-                  title="Seller Commission"
-                  value={`₹${analytics.sellerCommission}`}
-                />
-                <AccountingCard
-                  title="Net Seller Payout"
-                  value={`₹${analytics.sellerNetPayout}`}
-                />
-                <AccountingCard
-                  title="Platform Fee"
-                  value={`₹${analytics.platformRevenue}`}
-                />
-                <AccountingCard
-                  title="Nefo Total Earning"
-                  value={`₹${analytics.nefoTotalEarning}`}
-                />
-                <AccountingCard
-                  title="Total Orders"
-                  value={analytics.totalOrders}
-                />
-                <AccountingCard
-                  title="Payment Pending"
-                  value={analytics.paymentPendingOrders}
-                />
+                <AccountingCard title="Gross Sales" value={`₹${analytics.grossSales}`} />
+                <AccountingCard title="Food Sales" value={`₹${analytics.foodSales}`} />
+                <AccountingCard title="Seller Commission" value={`₹${analytics.sellerCommission}`} />
+                <AccountingCard title="Net Seller Payout" value={`₹${analytics.sellerNetPayout}`} />
+                <AccountingCard title="Platform Fee" value={`₹${analytics.platformRevenue}`} />
+                <AccountingCard title="Nefo Total Earning" value={`₹${analytics.nefoTotalEarning}`} />
+                <AccountingCard title="Total Orders" value={analytics.totalOrders} />
+                <AccountingCard title="Payment Pending" value={analytics.paymentPendingOrders} />
               </section>
 
               <section className="mt-8 grid grid-cols-1 lg:grid-cols-[1fr_0.75fr] gap-5">
@@ -732,28 +710,16 @@ export default function OwnerAccounting() {
                   </h2>
 
                   <div className="mt-5 space-y-3">
-                    <MoneyRow
-                      label="Seller Gross Earning"
-                      value={`₹${analytics.sellerGrossEarning}`}
-                    />
+                    <MoneyRow label="Seller Gross Earning" value={`₹${analytics.sellerGrossEarning}`} />
                     <MoneyRow
                       label={`Nefo Commission (${Math.round(
                         SELLER_COMMISSION_RATE * 100
                       )}%)`}
                       value={`₹${analytics.sellerCommission}`}
                     />
-                    <MoneyRow
-                      label="Net Amount to Send Sellers"
-                      value={`₹${analytics.sellerNetPayout}`}
-                    />
-                    <MoneyRow
-                      label="Nefo Platform Fee"
-                      value={`₹${analytics.platformRevenue}`}
-                    />
-                    <MoneyRow
-                      label="Nefo Total Earning"
-                      value={`₹${analytics.nefoTotalEarning}`}
-                    />
+                    <MoneyRow label="Net Amount to Send Sellers" value={`₹${analytics.sellerNetPayout}`} />
+                    <MoneyRow label="Nefo Platform Fee" value={`₹${analytics.platformRevenue}`} />
+                    <MoneyRow label="Nefo Total Earning" value={`₹${analytics.nefoTotalEarning}`} />
                   </div>
                 </div>
 
@@ -776,8 +742,7 @@ export default function OwnerAccounting() {
                     </p>
 
                     <p className="text-[#41D3BD] text-sm font-black mt-5">
-                      Current commission:{" "}
-                      {Math.round(SELLER_COMMISSION_RATE * 100)}%
+                      Current commission: {Math.round(SELLER_COMMISSION_RATE * 100)}%
                     </p>
                   </div>
                 </div>
@@ -808,7 +773,7 @@ export default function OwnerAccounting() {
                   </div>
                 ) : (
                   <div className="mt-6 overflow-x-auto">
-                    <table className="w-full text-left min-w-[1180px]">
+                    <table className="w-full text-left min-w-[1650px]">
                       <thead>
                         <tr className="border-b border-[#D7F5EF] text-[#51615D] text-sm">
                           <th className="py-3 pr-4">Kitchen</th>
@@ -818,6 +783,11 @@ export default function OwnerAccounting() {
                           <th className="py-3 pr-4">Seller Earning</th>
                           <th className="py-3 pr-4">Commission</th>
                           <th className="py-3 pr-4">Net Payout</th>
+                          <th className="py-3 pr-4">Account Holder</th>
+                          <th className="py-3 pr-4">Bank</th>
+                          <th className="py-3 pr-4">Account No.</th>
+                          <th className="py-3 pr-4">IFSC</th>
+                          <th className="py-3 pr-4">UPI</th>
                           <th className="py-3 pr-4">Platform Fee</th>
                           <th className="py-3 pr-4">Nefo Earning</th>
                           <th className="py-3 pr-4">Pending Payments</th>
@@ -856,6 +826,21 @@ export default function OwnerAccounting() {
                             </td>
                             <td className="py-4 pr-4 text-[#073B35] font-black">
                               ₹{seller.sellerNetPayout}
+                            </td>
+                            <td className="py-4 pr-4 text-[#111827] font-bold">
+                              {seller.bankAccountHolder || "Not added"}
+                            </td>
+                            <td className="py-4 pr-4 text-[#51615D]">
+                              {seller.bankName || "Not added"}
+                            </td>
+                            <td className="py-4 pr-4 text-[#51615D]">
+                              {seller.bankAccountNumber || "Not added"}
+                            </td>
+                            <td className="py-4 pr-4 text-[#51615D]">
+                              {seller.bankIfsc || "Not added"}
+                            </td>
+                            <td className="py-4 pr-4 text-[#51615D]">
+                              {seller.bankUpiId || "-"}
                             </td>
                             <td className="py-4 pr-4 text-[#51615D]">
                               ₹{seller.platformFee}
@@ -912,91 +897,133 @@ export default function OwnerAccounting() {
                   </div>
                 ) : (
                   <div className="mt-6 space-y-4">
-                    {filteredOrders.map((order) => (
-                      <article
-                        key={order.id}
-                        className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4 sm:p-5"
-                      >
-                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                          <div className="min-w-0">
-                            <p className="text-[#51615D] text-sm font-bold">
-                              Order #{order.id} •{" "}
-                              {formatDateTime(order.created_at)}
-                            </p>
+                    {filteredOrders.map((order) => {
+                      const sellerProfile = getSellerProfile(order);
 
-                            <h3 className="text-2xl sm:text-3xl font-black mt-1 text-[#073B35]">
-                              ₹{Number(order.total_amount || 0)}
-                            </h3>
+                      return (
+                        <article
+                          key={order.id}
+                          className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4 sm:p-5"
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                            <div className="min-w-0">
+                              <p className="text-[#51615D] text-sm font-bold">
+                                Order #{order.id} • {formatDateTime(order.created_at)}
+                              </p>
 
-                            <p className="text-[#51615D] text-sm mt-2">
-                              Customer: {order.customer_name || "Unknown"} •{" "}
-                              {order.phone || "No phone"}
-                            </p>
+                              <h3 className="text-2xl sm:text-3xl font-black mt-1 text-[#073B35]">
+                                ₹{Number(order.total_amount || 0)}
+                              </h3>
 
-                            <p className="text-[#51615D] text-sm mt-1">
-                              Kitchen: {getSellerName(order)}
-                            </p>
+                              <p className="text-[#51615D] text-sm mt-2">
+                                Customer: {order.customer_name || "Unknown"} •{" "}
+                                {order.phone || "No phone"}
+                              </p>
 
-                            <p className="text-[#51615D] text-sm mt-1">
-                              {order.delivery_type || "Delivery"} •{" "}
-                              {order.flat || "No flat"}
-                            </p>
+                              <p className="text-[#51615D] text-sm mt-1">
+                                Kitchen: {getSellerName(order)}
+                              </p>
 
-                            <p className="text-[#51615D] text-sm mt-3 line-clamp-2">
-                              Items: {getItemsText(order)}
-                            </p>
+                              <p className="text-[#51615D] text-sm mt-1">
+                                {order.delivery_type || "Delivery"} •{" "}
+                                {order.flat || "No flat"}
+                              </p>
 
-                            <div className="flex flex-wrap gap-2 mt-4">
-                              <span className="bg-white border border-[#D7F5EF] text-[#073B35] text-xs font-black px-3 py-1.5 rounded-full">
-                                Seller Earning ₹{getSellerGrossEarning(order)}
+                              <p className="text-[#51615D] text-sm mt-3 line-clamp-2">
+                                Items: {getItemsText(order)}
+                              </p>
+
+                              <div className="mt-4 bg-white border border-[#D7F5EF] rounded-2xl p-4">
+                                <p className="text-[#073B35] font-black text-sm">
+                                  Seller Bank Details
+                                </p>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 text-xs font-bold text-[#51615D]">
+                                  <p>
+                                    Holder:{" "}
+                                    <span className="text-[#111827]">
+                                      {sellerProfile.bank_account_holder || "Not added"}
+                                    </span>
+                                  </p>
+                                  <p>
+                                    Bank:{" "}
+                                    <span className="text-[#111827]">
+                                      {sellerProfile.bank_name || "Not added"}
+                                    </span>
+                                  </p>
+                                  <p>
+                                    A/C:{" "}
+                                    <span className="text-[#111827]">
+                                      {sellerProfile.bank_account_number || "Not added"}
+                                    </span>
+                                  </p>
+                                  <p>
+                                    IFSC:{" "}
+                                    <span className="text-[#111827]">
+                                      {sellerProfile.bank_ifsc || "Not added"}
+                                    </span>
+                                  </p>
+                                  <p>
+                                    UPI:{" "}
+                                    <span className="text-[#111827]">
+                                      {sellerProfile.bank_upi_id || "-"}
+                                    </span>
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="flex flex-wrap gap-2 mt-4">
+                                <span className="bg-white border border-[#D7F5EF] text-[#073B35] text-xs font-black px-3 py-1.5 rounded-full">
+                                  Seller Earning ₹{getSellerGrossEarning(order)}
+                                </span>
+
+                                <span className="bg-white border border-red-200 text-red-500 text-xs font-black px-3 py-1.5 rounded-full">
+                                  Commission ₹{getSellerCommission(order)}
+                                </span>
+
+                                <span className="bg-white border border-[#D7F5EF] text-[#073B35] text-xs font-black px-3 py-1.5 rounded-full">
+                                  Net Payout ₹{getSellerNetPayout(order)}
+                                </span>
+
+                                <span className="bg-white border border-[#D7F5EF] text-[#073B35] text-xs font-black px-3 py-1.5 rounded-full">
+                                  Nefo Earning ₹{getNefoTotalEarning(order)}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap sm:justify-end gap-2">
+                              <span
+                                className={`w-fit border text-xs font-black px-3 py-1.5 rounded-full ${getStatusBadgeClass(
+                                  order.status
+                                )}`}
+                              >
+                                {order.status || "confirmed"}
                               </span>
 
-                              <span className="bg-white border border-red-200 text-red-500 text-xs font-black px-3 py-1.5 rounded-full">
-                                Commission ₹{getSellerCommission(order)}
-                              </span>
-
-                              <span className="bg-white border border-[#D7F5EF] text-[#073B35] text-xs font-black px-3 py-1.5 rounded-full">
-                                Net Payout ₹{getSellerNetPayout(order)}
-                              </span>
-
-                              <span className="bg-white border border-[#D7F5EF] text-[#073B35] text-xs font-black px-3 py-1.5 rounded-full">
-                                Nefo Earning ₹{getNefoTotalEarning(order)}
+                              <span
+                                className={`w-fit border text-xs font-black px-3 py-1.5 rounded-full ${getPaymentBadgeClass(
+                                  order
+                                )}`}
+                              >
+                                {getPaymentLabel(order)}
                               </span>
                             </div>
                           </div>
 
-                          <div className="flex flex-wrap sm:justify-end gap-2">
-                            <span
-                              className={`w-fit border text-xs font-black px-3 py-1.5 rounded-full ${getStatusBadgeClass(
-                                order.status
-                              )}`}
-                            >
-                              {order.status || "confirmed"}
-                            </span>
+                          {order.payment_reference && (
+                            <div className="mt-4 bg-green-50 border border-green-200 rounded-2xl p-4">
+                              <p className="text-green-700 text-xs font-black uppercase">
+                                Payment Reference
+                              </p>
 
-                            <span
-                              className={`w-fit border text-xs font-black px-3 py-1.5 rounded-full ${getPaymentBadgeClass(
-                                order
-                              )}`}
-                            >
-                              {getPaymentLabel(order)}
-                            </span>
-                          </div>
-                        </div>
-
-                        {order.payment_reference && (
-                          <div className="mt-4 bg-green-50 border border-green-200 rounded-2xl p-4">
-                            <p className="text-green-700 text-xs font-black uppercase">
-                              Payment Reference
-                            </p>
-
-                            <p className="text-[#111827] font-bold mt-1 break-all">
-                              {order.payment_reference}
-                            </p>
-                          </div>
-                        )}
-                      </article>
-                    ))}
+                              <p className="text-[#111827] font-bold mt-1 break-all">
+                                {order.payment_reference}
+                              </p>
+                            </div>
+                          )}
+                        </article>
+                      );
+                    })}
                   </div>
                 )}
               </section>

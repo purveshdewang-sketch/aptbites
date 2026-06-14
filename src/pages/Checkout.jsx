@@ -26,6 +26,7 @@ export default function Checkout() {
   const [orderTiming, setOrderTiming] = useState("now");
   const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
+  const [packingRequired, setPackingRequired] = useState(true);
 
   const [kitchenAcceptsScheduledOrders, setKitchenAcceptsScheduledOrders] =
     useState(false);
@@ -43,8 +44,9 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
 
   const subtotalAmount = Number(cartTotal || 0);
-  const safePackingCharge = getSafePackingCharge(packingCharge);
-  const totalAmount = subtotalAmount + safePackingCharge + PLATFORM_FEE;
+  const sellerPackingCharge = getSafePackingCharge(packingCharge);
+  const effectivePackingCharge = packingRequired ? sellerPackingCharge : 0;
+  const totalAmount = subtotalAmount + effectivePackingCharge + PLATFORM_FEE;
   const paymentMethod = "upi";
 
   const formattedSchedule = formatScheduledDateTime(
@@ -90,6 +92,7 @@ export default function Checkout() {
           setScheduledDate(parsedDetails.scheduledDate || "");
           setScheduledTime(parsedDetails.scheduledTime || "");
           setPaymentReference(parsedDetails.paymentReference || "");
+          setPackingRequired(parsedDetails.packingRequired !== false);
         } catch {
           localStorage.removeItem(getCheckoutStorageKey());
         }
@@ -144,6 +147,7 @@ export default function Checkout() {
       scheduledDate,
       scheduledTime,
       paymentReference,
+      packingRequired,
     };
 
     localStorage.setItem(getCheckoutStorageKey(), JSON.stringify(detailsToSave));
@@ -155,6 +159,7 @@ export default function Checkout() {
     scheduledDate,
     scheduledTime,
     paymentReference,
+    packingRequired,
     user,
   ]);
 
@@ -200,19 +205,14 @@ export default function Checkout() {
       }
 
       setFormData((current) => {
-        if (!nextDeliveryAvailable && !nextPickupAvailable) {
-          return current;
-        }
+        if (!nextDeliveryAvailable && !nextPickupAvailable) return current;
 
         if (
           current.deliveryType === "Doorstep delivery" &&
           !nextDeliveryAvailable &&
           nextPickupAvailable
         ) {
-          return {
-            ...current,
-            deliveryType: "Self pickup",
-          };
+          return { ...current, deliveryType: "Self pickup" };
         }
 
         if (
@@ -220,10 +220,7 @@ export default function Checkout() {
           !nextPickupAvailable &&
           nextDeliveryAvailable
         ) {
-          return {
-            ...current,
-            deliveryType: "Doorstep delivery",
-          };
+          return { ...current, deliveryType: "Doorstep delivery" };
         }
 
         if (!current.deliveryType) {
@@ -279,11 +276,6 @@ export default function Checkout() {
       pickup_available: data?.pickup_available !== false,
       packing_charge: getSafePackingCharge(data?.packing_charge),
     };
-  }
-
-  async function fetchKitchenSchedulePermission(kitchenId) {
-    const settings = await fetchKitchenSettings(kitchenId);
-    return settings.accept_scheduled_orders === true;
   }
 
   function handleChange(event) {
@@ -410,9 +402,7 @@ export default function Checkout() {
       .select("id, name, stock, user_id, seller_id")
       .in("id", foodIds);
 
-    if (error) {
-      throw new Error(error.message);
-    }
+    if (error) throw new Error(error.message);
 
     const latestFoodMap = new Map();
 
@@ -423,16 +413,12 @@ export default function Checkout() {
     for (const cartItem of cartItems) {
       const latestFood = latestFoodMap.get(cartItem.id);
 
-      if (!latestFood) {
-        throw new Error(`${cartItem.name} is no longer available.`);
-      }
+      if (!latestFood) throw new Error(`${cartItem.name} is no longer available.`);
 
       const liveStock = Number(latestFood.stock || 0);
       const requestedQty = Number(cartItem.quantity || 0);
 
-      if (liveStock <= 0) {
-        throw new Error(`${cartItem.name} is sold out.`);
-      }
+      if (liveStock <= 0) throw new Error(`${cartItem.name} is sold out.`);
 
       if (requestedQty > liveStock) {
         throw new Error(
@@ -485,11 +471,14 @@ export default function Checkout() {
 
     try {
       const latestKitchenSettings = await fetchKitchenSettings(kitchenId);
-      const latestPackingCharge = getSafePackingCharge(
+      const latestSellerPackingCharge = getSafePackingCharge(
         latestKitchenSettings.packing_charge
       );
+      const latestEffectivePackingCharge = packingRequired
+        ? latestSellerPackingCharge
+        : 0;
 
-      setPackingCharge(latestPackingCharge);
+      setPackingCharge(latestSellerPackingCharge);
 
       if (
         latestKitchenSettings.delivery_available === false &&
@@ -558,7 +547,7 @@ export default function Checkout() {
       await validateLiveStockBeforeOrder();
 
       const latestTotalAmount =
-        subtotalAmount + latestPackingCharge + PLATFORM_FEE;
+        subtotalAmount + latestEffectivePackingCharge + PLATFORM_FEE;
 
       const orderPayload = {
         user_id: user.id,
@@ -569,7 +558,8 @@ export default function Checkout() {
         delivery_type: formData.deliveryType,
         notes: formData.notes,
         subtotal_amount: subtotalAmount,
-        packing_charge: latestPackingCharge,
+        packing_required: packingRequired,
+        packing_charge: latestEffectivePackingCharge,
         platform_fee: PLATFORM_FEE,
         total_amount: latestTotalAmount,
         status: "confirmed",
@@ -585,15 +575,11 @@ export default function Checkout() {
         order_items: cartItems,
       });
 
-      if (stockError) {
-        throw new Error(stockError.message);
-      }
+      if (stockError) throw new Error(stockError.message);
 
       const { error } = await supabase.from("orders").insert([orderPayload]);
 
-      if (error) {
-        throw new Error(error.message);
-      }
+      if (error) throw new Error(error.message);
 
       localStorage.setItem(
         getCheckoutStorageKey(),
@@ -605,6 +591,7 @@ export default function Checkout() {
           scheduledDate,
           scheduledTime,
           paymentReference,
+          packingRequired,
         })
       );
 
@@ -648,7 +635,9 @@ export default function Checkout() {
     return (
       <section
         className={`bg-white/95 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] shadow-xl shadow-[#073B35]/5 ${
-          compact ? "p-4 max-h-[70vh] overflow-y-auto" : "p-5 sm:p-6 h-fit lg:sticky lg:top-24"
+          compact
+            ? "p-4 max-h-[70vh] overflow-y-auto"
+            : "p-5 sm:p-6 h-fit lg:sticky lg:top-24"
         }`}
       >
         <div className="flex items-center justify-between gap-4">
@@ -716,6 +705,17 @@ export default function Checkout() {
             </div>
           )}
 
+          {!packingRequired && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4">
+              <p className="text-yellow-700 text-sm font-black">
+                No packing selected
+              </p>
+              <p className="text-yellow-700 text-xs mt-1">
+                Please carry your own container.
+              </p>
+            </div>
+          )}
+
           {checkoutBlocked && (
             <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
               <p className="text-red-600 text-sm font-black">
@@ -750,8 +750,15 @@ export default function Checkout() {
             </div>
 
             <div className="flex items-center justify-between text-sm">
-              <p className="text-[#51615D]">Packing Charge</p>
-              <p className="font-bold text-[#111827]">₹{safePackingCharge}</p>
+              <p className="text-[#51615D]">
+                Packing Charge{" "}
+                {!packingRequired && (
+                  <span className="text-yellow-700 font-black">(Skipped)</span>
+                )}
+              </p>
+              <p className="font-bold text-[#111827]">
+                ₹{effectivePackingCharge}
+              </p>
             </div>
 
             <div className="flex items-center justify-between text-sm">
@@ -877,8 +884,8 @@ export default function Checkout() {
               </h1>
 
               <p className="text-[#51615D] mt-3 sm:mt-4 text-sm sm:text-lg max-w-2xl leading-relaxed">
-                Confirm details, pay by UPI, and submit the transaction
-                reference.
+                Confirm details, select packing, pay by UPI, and submit the
+                transaction reference.
               </p>
 
               <div className="lg:hidden mt-4 grid grid-cols-3 gap-2">
@@ -896,7 +903,7 @@ export default function Checkout() {
                     Pack
                   </p>
                   <p className="text-[#073B35] font-black text-lg">
-                    ₹{safePackingCharge}
+                    ₹{effectivePackingCharge}
                   </p>
                 </div>
 
@@ -1010,23 +1017,6 @@ export default function Checkout() {
                         )}
                       </div>
                     )}
-
-                    {formData.deliveryType === "Self pickup" &&
-                      pickupAvailable && (
-                        <p className="text-[#51615D] text-xs mt-3 leading-relaxed">
-                          Pickup coordination will happen after the kitchen
-                          accepts your order. Exact kitchen door details are not
-                          shown publicly.
-                        </p>
-                      )}
-
-                    {formData.deliveryType === "Doorstep delivery" &&
-                      deliveryAvailable && (
-                        <p className="text-[#51615D] text-xs mt-3 leading-relaxed">
-                          Delivery will be coordinated by the kitchen / Nefo
-                          team after order acceptance.
-                        </p>
-                      )}
                   </div>
 
                   <textarea
@@ -1043,6 +1033,62 @@ export default function Checkout() {
               <div className="bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-4 sm:p-6 shadow-xl shadow-[#073B35]/5">
                 <StepHeader
                   number="2"
+                  title="Packing option"
+                  subtitle="Choose whether you want kitchen packing or you will carry your own container."
+                />
+
+                <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPackingRequired(true)}
+                    className={`text-left rounded-2xl p-4 border transition-all ${
+                      packingRequired
+                        ? "bg-[#073B35] text-white border-[#073B35] shadow-lg shadow-[#073B35]/15"
+                        : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
+                    }`}
+                  >
+                    <p className="font-black text-lg">🥡 Packing required</p>
+                    <p
+                      className={`text-sm mt-1 ${
+                        packingRequired ? "text-white/70" : "text-[#51615D]"
+                      }`}
+                    >
+                      Packing charge ₹{sellerPackingCharge} will apply.
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPackingRequired(false)}
+                    className={`text-left rounded-2xl p-4 border transition-all ${
+                      !packingRequired
+                        ? "bg-[#073B35] text-white border-[#073B35] shadow-lg shadow-[#073B35]/15"
+                        : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
+                    }`}
+                  >
+                    <p className="font-black text-lg">♻️ No packing required</p>
+                    <p
+                      className={`text-sm mt-1 ${
+                        !packingRequired ? "text-white/70" : "text-[#51615D]"
+                      }`}
+                    >
+                      Packing charge ₹0. Carry your own container.
+                    </p>
+                  </button>
+                </div>
+
+                {!packingRequired && (
+                  <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-2xl p-4">
+                    <p className="text-yellow-700 font-black text-sm">
+                      Please carry your own container.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-4 sm:p-6 shadow-xl shadow-[#073B35]/5">
+                <StepHeader
+                  number="3"
                   title="Order timing"
                   subtitle="Order now or schedule for later if the kitchen allows it."
                 />
@@ -1151,7 +1197,7 @@ export default function Checkout() {
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <p className="text-xs sm:text-sm font-black uppercase tracking-wide text-white/60">
-                        Step 3
+                        Step 4
                       </p>
 
                       <h2 className="text-2xl sm:text-3xl font-black mt-1">
@@ -1226,11 +1272,6 @@ export default function Checkout() {
 
                       <p className="text-[#51615D] text-sm mt-1 break-all">
                         {Nefo_UPI_ID}
-                      </p>
-
-                      <p className="text-[#51615D] text-xs mt-3 leading-relaxed">
-                        Scan this QR using any UPI app. After payment, enter
-                        the transaction reference below.
                       </p>
                     </div>
                   )}

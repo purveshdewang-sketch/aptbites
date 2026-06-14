@@ -17,6 +17,11 @@ export default function Profile() {
     accept_scheduled_orders: true,
     delivery_available: true,
     pickup_available: true,
+    bank_account_holder: "",
+    bank_name: "",
+    bank_account_number: "",
+    bank_ifsc: "",
+    bank_upi_id: "",
   });
 
   const [originalFormData, setOriginalFormData] = useState(null);
@@ -55,12 +60,17 @@ export default function Profile() {
       accept_scheduled_orders: true,
       delivery_available: true,
       pickup_available: true,
+      bank_account_holder: "",
+      bank_name: "",
+      bank_account_number: "",
+      bank_ifsc: "",
+      bank_upi_id: "",
     };
 
     const { data, error } = await supabase
       .from("profiles")
       .select(
-        "role, is_seller, full_name, phone, flat, seller_kitchen_name, seller_specialty, seller_about, accept_scheduled_orders, delivery_available, pickup_available, seller_application_status"
+        "role, is_seller, full_name, phone, flat, seller_kitchen_name, seller_specialty, seller_about, accept_scheduled_orders, delivery_available, pickup_available, seller_application_status, bank_account_holder, bank_name, bank_account_number, bank_ifsc, bank_upi_id"
       )
       .eq("id", user.id)
       .maybeSingle();
@@ -100,6 +110,11 @@ export default function Profile() {
       accept_scheduled_orders: data?.accept_scheduled_orders !== false,
       delivery_available: data?.delivery_available !== false,
       pickup_available: data?.pickup_available !== false,
+      bank_account_holder: data?.bank_account_holder || "",
+      bank_name: data?.bank_name || "",
+      bank_account_number: data?.bank_account_number || "",
+      bank_ifsc: data?.bank_ifsc || "",
+      bank_upi_id: data?.bank_upi_id || "",
     };
 
     setFormData(loadedProfile);
@@ -131,9 +146,12 @@ export default function Profile() {
       return;
     }
 
+    const nextValue =
+      name === "bank_ifsc" ? value.toUpperCase() : value;
+
     setFormData((currentData) => ({
       ...currentData,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === "checkbox" ? checked : nextValue,
     }));
   }
 
@@ -167,6 +185,11 @@ export default function Profile() {
       flat: formData.flat,
       role,
       is_seller: isSeller,
+      bank_account_holder: formData.bank_account_holder,
+      bank_name: formData.bank_name,
+      bank_account_number: formData.bank_account_number,
+      bank_ifsc: formData.bank_ifsc,
+      bank_upi_id: formData.bank_upi_id,
     };
 
     if (isSeller) {
@@ -205,6 +228,11 @@ export default function Profile() {
       accept_scheduled_orders: formData.accept_scheduled_orders,
       delivery_available: formData.delivery_available,
       pickup_available: formData.pickup_available,
+      bank_account_holder: formData.bank_account_holder,
+      bank_name: formData.bank_name,
+      bank_account_number: formData.bank_account_number,
+      bank_ifsc: formData.bank_ifsc,
+      bank_upi_id: formData.bank_upi_id,
     };
 
     setOriginalFormData(savedProfile);
@@ -302,8 +330,8 @@ export default function Profile() {
                 </h1>
 
                 <p className="text-[#51615D] mt-4 text-sm sm:text-lg max-w-2xl leading-relaxed">
-                  Manage your contact details, address, password, and seller
-                  profile.
+                  Manage your contact details, address, password, seller
+                  profile, and payout details.
                 </p>
               </div>
 
@@ -349,7 +377,9 @@ export default function Profile() {
 
                       <div className="mt-2 inline-flex items-center rounded-full bg-[#41D3BD]/12 border border-[#41D3BD]/25 px-3 py-1">
                         <span className="text-[#073B35] text-xs font-black capitalize">
-                          {isSeller ? "Seller access enabled" : "Customer account"}
+                          {isSeller
+                            ? "Seller access enabled"
+                            : "Customer account"}
                         </span>
                       </div>
                     </div>
@@ -432,6 +462,108 @@ export default function Profile() {
                       />
                     </div>
                   </div>
+
+                  {isSeller && (
+                    <div className="mt-8 border-t border-[#D7F5EF] pt-6">
+                      <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
+                        Payout Details
+                      </p>
+
+                      <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
+                        Bank account
+                      </h2>
+
+                      <p className="text-[#51615D] text-sm mt-2">
+                        These details are used only for seller payouts and
+                        settlements.
+                      </p>
+
+                      <div className="mt-6 space-y-4">
+                        <div>
+                          <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
+                            Account Holder Name
+                          </label>
+
+                          <input
+                            name="bank_account_holder"
+                            value={formData.bank_account_holder}
+                            onChange={handleChange}
+                            className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] text-[#111827] text-base"
+                            placeholder="Account Holder Name"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
+                            Bank Name
+                          </label>
+
+                          <input
+                            name="bank_name"
+                            value={formData.bank_name}
+                            onChange={handleChange}
+                            className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] text-[#111827] text-base"
+                            placeholder="Bank Name"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
+                            Account Number
+                          </label>
+
+                          <input
+                            name="bank_account_number"
+                            value={formData.bank_account_number}
+                            onChange={handleChange}
+                            inputMode="numeric"
+                            className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] text-[#111827] text-base"
+                            placeholder="Account Number"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
+                            IFSC Code
+                          </label>
+
+                          <input
+                            name="bank_ifsc"
+                            value={formData.bank_ifsc}
+                            onChange={handleChange}
+                            className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] text-[#111827] text-base uppercase"
+                            placeholder="IFSC Code"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
+                            UPI ID Optional
+                          </label>
+
+                          <input
+                            name="bank_upi_id"
+                            value={formData.bank_upi_id}
+                            onChange={handleChange}
+                            className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] text-[#111827] text-base"
+                            placeholder="yourupi@bank"
+                          />
+                        </div>
+
+                        <div className="bg-[#41D3BD]/12 border border-[#41D3BD]/25 rounded-2xl p-4">
+                          <p className="text-[#073B35] font-black text-sm">
+                            Secure information
+                          </p>
+
+                          <p className="text-[#51615D] text-xs mt-1 leading-relaxed">
+                            Bank details are never shown to customers. They are
+                            used only for seller payouts by Nefo admin or
+                            accounting.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {isSeller && (
                     <div className="mt-8 border-t border-[#D7F5EF] pt-6">
@@ -616,6 +748,48 @@ export default function Profile() {
                     </p>
                   )}
                 </div>
+
+                {isSeller && (
+                  <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
+                    <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
+                      Payout Status
+                    </p>
+
+                    <h2 className="text-2xl font-black mt-2 text-[#111827]">
+                      Bank details
+                    </h2>
+
+                    <div className="mt-4 space-y-3 text-sm font-bold">
+                      <div className="flex items-center justify-between bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3 gap-3">
+                        <span className="text-[#51615D]">Account Holder</span>
+                        <span className="text-[#073B35] text-right truncate max-w-[150px]">
+                          {formData.bank_account_holder || "Not added"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3 gap-3">
+                        <span className="text-[#51615D]">Bank</span>
+                        <span className="text-[#073B35] text-right truncate max-w-[150px]">
+                          {formData.bank_name || "Not added"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3 gap-3">
+                        <span className="text-[#51615D]">IFSC</span>
+                        <span className="text-[#073B35] text-right truncate max-w-[150px]">
+                          {formData.bank_ifsc || "Not added"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3 gap-3">
+                        <span className="text-[#51615D]">UPI</span>
+                        <span className="text-[#073B35] text-right truncate max-w-[150px]">
+                          {formData.bank_upi_id || "Optional"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {isSeller && (
                   <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
