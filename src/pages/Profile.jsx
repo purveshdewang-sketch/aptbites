@@ -15,6 +15,8 @@ export default function Profile() {
     seller_specialty: "",
     seller_about: "",
     accept_scheduled_orders: true,
+    delivery_available: true,
+    pickup_available: true,
   });
 
   const [originalFormData, setOriginalFormData] = useState(null);
@@ -51,12 +53,14 @@ export default function Profile() {
       seller_specialty: "",
       seller_about: "",
       accept_scheduled_orders: true,
+      delivery_available: true,
+      pickup_available: true,
     };
 
     const { data, error } = await supabase
       .from("profiles")
       .select(
-        "role, is_seller, full_name, phone, flat, seller_kitchen_name, seller_specialty, seller_about, accept_scheduled_orders"
+        "role, is_seller, full_name, phone, flat, seller_kitchen_name, seller_specialty, seller_about, accept_scheduled_orders, delivery_available, pickup_available, seller_application_status"
       )
       .eq("id", user.id)
       .maybeSingle();
@@ -73,10 +77,15 @@ export default function Profile() {
       data?.role || user?.user_metadata?.role || "customer"
     ).toLowerCase();
 
+    const applicationStatus = String(
+      data?.seller_application_status || "not_applied"
+    ).toLowerCase();
+
     const sellerAllowed =
-      profileRole === "seller" ||
       profileRole === "admin" ||
-      data?.is_seller === true;
+      (profileRole === "seller" &&
+        data?.is_seller === true &&
+        applicationStatus === "approved");
 
     setRole(profileRole || "customer");
     setIsSeller(sellerAllowed);
@@ -89,6 +98,8 @@ export default function Profile() {
       seller_specialty: data?.seller_specialty || "",
       seller_about: data?.seller_about || "",
       accept_scheduled_orders: data?.accept_scheduled_orders !== false,
+      delivery_available: data?.delivery_available !== false,
+      pickup_available: data?.pickup_available !== false,
     };
 
     setFormData(loadedProfile);
@@ -99,6 +110,26 @@ export default function Profile() {
 
   function handleChange(event) {
     const { name, value, type, checked } = event.target;
+
+    if (
+      type === "checkbox" &&
+      name === "delivery_available" &&
+      checked === false &&
+      formData.pickup_available === false
+    ) {
+      setMessage("At least one option must stay ON: Delivery or Self Pickup.");
+      return;
+    }
+
+    if (
+      type === "checkbox" &&
+      name === "pickup_available" &&
+      checked === false &&
+      formData.delivery_available === false
+    ) {
+      setMessage("At least one option must stay ON: Delivery or Self Pickup.");
+      return;
+    }
 
     setFormData((currentData) => ({
       ...currentData,
@@ -113,6 +144,15 @@ export default function Profile() {
 
     if (!profileChanged) {
       setMessage("No profile changes to save.");
+      return;
+    }
+
+    if (
+      isSeller &&
+      formData.delivery_available === false &&
+      formData.pickup_available === false
+    ) {
+      setMessage("At least one option must stay ON: Delivery or Self Pickup.");
       return;
     }
 
@@ -134,6 +174,8 @@ export default function Profile() {
       profilePayload.seller_specialty = formData.seller_specialty;
       profilePayload.seller_about = formData.seller_about;
       profilePayload.accept_scheduled_orders = formData.accept_scheduled_orders;
+      profilePayload.delivery_available = formData.delivery_available;
+      profilePayload.pickup_available = formData.pickup_available;
     }
 
     const { error } = await supabase.from("profiles").upsert(profilePayload);
@@ -161,6 +203,8 @@ export default function Profile() {
       seller_specialty: formData.seller_specialty,
       seller_about: formData.seller_about,
       accept_scheduled_orders: formData.accept_scheduled_orders,
+      delivery_available: formData.delivery_available,
+      pickup_available: formData.pickup_available,
     };
 
     setOriginalFormData(savedProfile);
@@ -468,6 +512,48 @@ export default function Profile() {
                           </div>
                         </label>
 
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <label className="flex items-start gap-3 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              name="delivery_available"
+                              checked={formData.delivery_available}
+                              onChange={handleChange}
+                              className="mt-1 accent-[#41D3BD]"
+                            />
+
+                            <div>
+                              <p className="text-[#111827] font-black">
+                                Delivery available
+                              </p>
+
+                              <p className="text-[#51615D] text-sm mt-1">
+                                Customers can choose doorstep delivery.
+                              </p>
+                            </div>
+                          </label>
+
+                          <label className="flex items-start gap-3 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              name="pickup_available"
+                              checked={formData.pickup_available}
+                              onChange={handleChange}
+                              className="mt-1 accent-[#41D3BD]"
+                            />
+
+                            <div>
+                              <p className="text-[#111827] font-black">
+                                Self pickup available
+                              </p>
+
+                              <p className="text-[#51615D] text-sm mt-1">
+                                Customers can choose self pickup.
+                              </p>
+                            </div>
+                          </label>
+                        </div>
+
                         <div className="bg-[#41D3BD]/12 border border-[#41D3BD]/25 rounded-2xl p-4">
                           <p className="text-[#073B35] font-black text-sm">
                             Privacy note
@@ -525,11 +611,64 @@ export default function Profile() {
                     </Link>
                   ) : (
                     <p className="text-[#51615D] text-sm mt-3 leading-relaxed">
-                      To sell food, use “Switch to Seller Account” from the
-                      profile menu.
+                      To sell food, use “Apply to Sell on Nefo” from the profile
+                      menu.
                     </p>
                   )}
                 </div>
+
+                {isSeller && (
+                  <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
+                    <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
+                      Seller Settings
+                    </p>
+
+                    <h2 className="text-2xl font-black mt-2 text-[#111827]">
+                      Order options
+                    </h2>
+
+                    <div className="mt-4 space-y-3 text-sm font-bold">
+                      <div className="flex items-center justify-between bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3">
+                        <span className="text-[#51615D]">Delivery</span>
+                        <span
+                          className={
+                            formData.delivery_available
+                              ? "text-green-600"
+                              : "text-red-500"
+                          }
+                        >
+                          {formData.delivery_available ? "ON" : "OFF"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3">
+                        <span className="text-[#51615D]">Self Pickup</span>
+                        <span
+                          className={
+                            formData.pickup_available
+                              ? "text-green-600"
+                              : "text-red-500"
+                          }
+                        >
+                          {formData.pickup_available ? "ON" : "OFF"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3">
+                        <span className="text-[#51615D]">Scheduled Orders</span>
+                        <span
+                          className={
+                            formData.accept_scheduled_orders
+                              ? "text-green-600"
+                              : "text-red-500"
+                          }
+                        >
+                          {formData.accept_scheduled_orders ? "ON" : "OFF"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
                   <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">

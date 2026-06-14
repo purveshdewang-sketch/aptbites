@@ -40,6 +40,8 @@ export default function SellerDashboard() {
     seller_specialty: "",
     seller_about: "",
     accept_scheduled_orders: true,
+    delivery_available: true,
+    pickup_available: true,
   });
 
   const [sellerProfileComplete, setSellerProfileComplete] = useState(false);
@@ -50,6 +52,8 @@ export default function SellerDashboard() {
   const [sellerOrders, setSellerOrders] = useState([]);
   const [sellerOnline, setSellerOnline] = useState(true);
   const [acceptScheduledOrders, setAcceptScheduledOrders] = useState(true);
+  const [deliveryAvailable, setDeliveryAvailable] = useState(true);
+  const [pickupAvailable, setPickupAvailable] = useState(true);
   const [timerTick, setTimerTick] = useState(0);
   const [editingFood, setEditingFood] = useState(null);
   const [imageFile, setImageFile] = useState(null);
@@ -153,7 +157,7 @@ export default function SellerDashboard() {
     const { data, error } = await supabase
       .from("profiles")
       .select(
-        "role, is_seller, seller_online, accept_scheduled_orders, seller_kitchen_name, flat, phone, seller_specialty, seller_about"
+        "role, is_seller, seller_online, accept_scheduled_orders, delivery_available, pickup_available, seller_kitchen_name, flat, phone, seller_specialty, seller_about"
       )
       .eq("id", user.id)
       .maybeSingle();
@@ -174,7 +178,7 @@ export default function SellerDashboard() {
     if (!isApprovedSeller) {
       setSellerProfileComplete(false);
       setMessage(
-        "This account is not approved as a seller. Please ask the app owner to enable seller access."
+        "This account is not approved as a seller. Please apply to sell on Nefo and wait for owner approval."
       );
       setProfileLoading(false);
       return;
@@ -182,6 +186,8 @@ export default function SellerDashboard() {
 
     setSellerOnline(data?.seller_online !== false);
     setAcceptScheduledOrders(data?.accept_scheduled_orders !== false);
+    setDeliveryAvailable(data?.delivery_available !== false);
+    setPickupAvailable(data?.pickup_available !== false);
 
     const setupData = {
       seller_kitchen_name: data?.seller_kitchen_name || "",
@@ -190,6 +196,8 @@ export default function SellerDashboard() {
       seller_specialty: data?.seller_specialty || "",
       seller_about: data?.seller_about || "",
       accept_scheduled_orders: data?.accept_scheduled_orders !== false,
+      delivery_available: data?.delivery_available !== false,
+      pickup_available: data?.pickup_available !== false,
     };
 
     setSellerSetupData(setupData);
@@ -243,6 +251,14 @@ export default function SellerDashboard() {
       return;
     }
 
+    if (
+      sellerSetupData.delivery_available === false &&
+      sellerSetupData.pickup_available === false
+    ) {
+      setMessage("At least one option must stay ON: Delivery or Self Pickup.");
+      return;
+    }
+
     setProfileSaving(true);
     setMessage("");
 
@@ -253,6 +269,8 @@ export default function SellerDashboard() {
       is_seller: true,
       seller_online: true,
       accept_scheduled_orders: sellerSetupData.accept_scheduled_orders,
+      delivery_available: sellerSetupData.delivery_available,
+      pickup_available: sellerSetupData.pickup_available,
       full_name: sellerSetupData.seller_kitchen_name.trim(),
       flat: sellerSetupData.flat.trim(),
       phone: sellerSetupData.phone.trim(),
@@ -283,6 +301,8 @@ export default function SellerDashboard() {
 
     setSellerOnline(true);
     setAcceptScheduledOrders(sellerSetupData.accept_scheduled_orders);
+    setDeliveryAvailable(sellerSetupData.delivery_available);
+    setPickupAvailable(sellerSetupData.pickup_available);
     setSellerProfileComplete(true);
     setProfileSaving(false);
     setMessage("Seller profile completed successfully.");
@@ -334,6 +354,76 @@ export default function SellerDashboard() {
       nextStatus
         ? "Scheduled orders are now accepted."
         : "Scheduled orders are now turned off."
+    );
+  }
+
+  async function toggleDeliveryAvailable() {
+    if (!user) return;
+
+    const nextStatus = !deliveryAvailable;
+
+    if (!nextStatus && !pickupAvailable) {
+      setMessage("At least one option must stay ON: Delivery or Self Pickup.");
+      return;
+    }
+
+    setDeliveryAvailable(nextStatus);
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ delivery_available: nextStatus })
+      .eq("id", user.id);
+
+    if (error) {
+      setDeliveryAvailable(!nextStatus);
+      setMessage(`Could not update delivery setting: ${error.message}`);
+      return;
+    }
+
+    setSellerSetupData((currentData) => ({
+      ...currentData,
+      delivery_available: nextStatus,
+    }));
+
+    setMessage(
+      nextStatus
+        ? "Delivery is now available for customers."
+        : "Delivery is now turned off."
+    );
+  }
+
+  async function togglePickupAvailable() {
+    if (!user) return;
+
+    const nextStatus = !pickupAvailable;
+
+    if (!nextStatus && !deliveryAvailable) {
+      setMessage("At least one option must stay ON: Delivery or Self Pickup.");
+      return;
+    }
+
+    setPickupAvailable(nextStatus);
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ pickup_available: nextStatus })
+      .eq("id", user.id);
+
+    if (error) {
+      setPickupAvailable(!nextStatus);
+      setMessage(`Could not update pickup setting: ${error.message}`);
+      return;
+    }
+
+    setSellerSetupData((currentData) => ({
+      ...currentData,
+      pickup_available: nextStatus,
+    }));
+
+    setMessage(
+      nextStatus
+        ? "Self pickup is now available for customers."
+        : "Self pickup is now turned off."
     );
   }
 
@@ -1236,6 +1326,68 @@ export default function SellerDashboard() {
                     </div>
                   </label>
 
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <label className="flex items-start gap-3 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="delivery_available"
+                        checked={sellerSetupData.delivery_available}
+                        onChange={(event) => {
+                          const checked = event.target.checked;
+
+                          if (!checked && !sellerSetupData.pickup_available) {
+                            setMessage(
+                              "At least one option must stay ON: Delivery or Self Pickup."
+                            );
+                            return;
+                          }
+
+                          handleSellerSetupChange(event);
+                        }}
+                        className="mt-1 accent-[#41D3BD]"
+                      />
+
+                      <div>
+                        <p className="text-[#111827] font-black">
+                          Delivery available
+                        </p>
+                        <p className="text-[#51615D] text-sm mt-1">
+                          Customers can choose doorstep delivery.
+                        </p>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start gap-3 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="pickup_available"
+                        checked={sellerSetupData.pickup_available}
+                        onChange={(event) => {
+                          const checked = event.target.checked;
+
+                          if (!checked && !sellerSetupData.delivery_available) {
+                            setMessage(
+                              "At least one option must stay ON: Delivery or Self Pickup."
+                            );
+                            return;
+                          }
+
+                          handleSellerSetupChange(event);
+                        }}
+                        className="mt-1 accent-[#41D3BD]"
+                      />
+
+                      <div>
+                        <p className="text-[#111827] font-black">
+                          Self pickup available
+                        </p>
+                        <p className="text-[#51615D] text-sm mt-1">
+                          Customers can choose self pickup.
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+
                   <button
                     type="submit"
                     disabled={profileSaving}
@@ -1304,6 +1456,30 @@ export default function SellerDashboard() {
                   }`}
                 >
                   {acceptScheduledOrders ? "🕒 Schedule ON" : "🕒 Schedule OFF"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={toggleDeliveryAvailable}
+                  className={`active:scale-95 font-black px-5 py-3 rounded-2xl text-center transition-all ${
+                    deliveryAvailable
+                      ? "bg-[#41D3BD] text-[#073B35] shadow-lg shadow-[#41D3BD]/20"
+                      : "bg-white text-[#51615D] border border-[#D7F5EF]"
+                  }`}
+                >
+                  {deliveryAvailable ? "🚚 Delivery ON" : "🚚 Delivery OFF"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={togglePickupAvailable}
+                  className={`active:scale-95 font-black px-5 py-3 rounded-2xl text-center transition-all ${
+                    pickupAvailable
+                      ? "bg-[#41D3BD] text-[#073B35] shadow-lg shadow-[#41D3BD]/20"
+                      : "bg-white text-[#51615D] border border-[#D7F5EF]"
+                  }`}
+                >
+                  {pickupAvailable ? "🛍️ Pickup ON" : "🛍️ Pickup OFF"}
                 </button>
 
                 <button

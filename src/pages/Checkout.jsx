@@ -43,9 +43,12 @@ export default function Checkout() {
   const [orderTiming, setOrderTiming] = useState("now");
   const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
+
   const [kitchenAcceptsScheduledOrders, setKitchenAcceptsScheduledOrders] =
     useState(false);
-  const [checkingKitchenSchedule, setCheckingKitchenSchedule] = useState(true);
+  const [deliveryAvailable, setDeliveryAvailable] = useState(true);
+  const [pickupAvailable, setPickupAvailable] = useState(true);
+  const [checkingKitchenSettings, setCheckingKitchenSettings] = useState(true);
 
   const [paymentReference, setPaymentReference] = useState("");
   const [paymentMessage, setPaymentMessage] = useState("");
@@ -59,6 +62,12 @@ export default function Checkout() {
     scheduledDate,
     scheduledTime
   );
+
+  const checkoutBlocked =
+    cartItems.length > 0 &&
+    !checkingKitchenSettings &&
+    !deliveryAvailable &&
+    !pickupAvailable;
 
   useEffect(() => {
     async function loadSavedCheckoutDetails() {
@@ -148,12 +157,14 @@ export default function Checkout() {
   ]);
 
   useEffect(() => {
-    async function checkKitchenSchedulePermission() {
+    async function checkKitchenSettings() {
       const kitchenId = getKitchenIdFromCart();
 
       if (!kitchenId || kitchenId === "MIXED_KITCHENS") {
         setKitchenAcceptsScheduledOrders(false);
-        setCheckingKitchenSchedule(false);
+        setDeliveryAvailable(false);
+        setPickupAvailable(false);
+        setCheckingKitchenSettings(false);
 
         if (orderTiming === "scheduled") {
           setOrderTiming("now");
@@ -164,35 +175,101 @@ export default function Checkout() {
         return;
       }
 
-      setCheckingKitchenSchedule(true);
+      setCheckingKitchenSettings(true);
 
-      const allowed = await fetchKitchenSchedulePermission(kitchenId);
+      const settings = await fetchKitchenSettings(kitchenId);
 
-      setKitchenAcceptsScheduledOrders(allowed);
-      setCheckingKitchenSchedule(false);
+      const nextScheduleAllowed = settings.accept_scheduled_orders === true;
+      const nextDeliveryAvailable = settings.delivery_available !== false;
+      const nextPickupAvailable = settings.pickup_available !== false;
 
-      if (!allowed && orderTiming === "scheduled") {
+      setKitchenAcceptsScheduledOrders(nextScheduleAllowed);
+      setDeliveryAvailable(nextDeliveryAvailable);
+      setPickupAvailable(nextPickupAvailable);
+      setCheckingKitchenSettings(false);
+
+      if (!nextScheduleAllowed && orderTiming === "scheduled") {
         setOrderTiming("now");
         setScheduledDate("");
         setScheduledTime("");
       }
+
+      setFormData((current) => {
+        if (!nextDeliveryAvailable && !nextPickupAvailable) {
+          return current;
+        }
+
+        if (
+          current.deliveryType === "Doorstep delivery" &&
+          !nextDeliveryAvailable &&
+          nextPickupAvailable
+        ) {
+          return {
+            ...current,
+            deliveryType: "Self pickup",
+          };
+        }
+
+        if (
+          current.deliveryType === "Self pickup" &&
+          !nextPickupAvailable &&
+          nextDeliveryAvailable
+        ) {
+          return {
+            ...current,
+            deliveryType: "Doorstep delivery",
+          };
+        }
+
+        if (!current.deliveryType) {
+          return {
+            ...current,
+            deliveryType: nextDeliveryAvailable
+              ? "Doorstep delivery"
+              : "Self pickup",
+          };
+        }
+
+        return current;
+      });
     }
 
-    checkKitchenSchedulePermission();
+    checkKitchenSettings();
   }, [cartItems, orderTiming]);
 
-  async function fetchKitchenSchedulePermission(kitchenId) {
-    if (!kitchenId || kitchenId === "MIXED_KITCHENS") return false;
+  async function fetchKitchenSettings(kitchenId) {
+    if (!kitchenId || kitchenId === "MIXED_KITCHENS") {
+      return {
+        accept_scheduled_orders: false,
+        delivery_available: false,
+        pickup_available: false,
+      };
+    }
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("accept_scheduled_orders")
+      .select("accept_scheduled_orders, delivery_available, pickup_available")
       .eq("id", kitchenId)
       .maybeSingle();
 
-    if (error) return false;
+    if (error) {
+      return {
+        accept_scheduled_orders: false,
+        delivery_available: false,
+        pickup_available: false,
+      };
+    }
 
-    return data?.accept_scheduled_orders === true;
+    return {
+      accept_scheduled_orders: data?.accept_scheduled_orders === true,
+      delivery_available: data?.delivery_available !== false,
+      pickup_available: data?.pickup_available !== false,
+    };
+  }
+
+  async function fetchKitchenSchedulePermission(kitchenId) {
+    const settings = await fetchKitchenSettings(kitchenId);
+    return settings.accept_scheduled_orders === true;
   }
 
   function handleChange(event) {
@@ -207,6 +284,16 @@ export default function Checkout() {
   }
 
   function selectDeliveryType(deliveryType) {
+    if (deliveryType === "Doorstep delivery" && !deliveryAvailable) {
+      alert("This kitchen is not offering delivery right now.");
+      return;
+    }
+
+    if (deliveryType === "Self pickup" && !pickupAvailable) {
+      alert("This kitchen is not offering self pickup right now.");
+      return;
+    }
+
     setFormData((currentData) => ({
       ...currentData,
       deliveryType,
@@ -215,7 +302,7 @@ export default function Checkout() {
 
   function selectOrderTiming(nextTiming) {
     if (nextTiming === "scheduled") {
-      if (checkingKitchenSchedule) {
+      if (checkingKitchenSettings) {
         alert("Checking kitchen schedule availability. Please try again.");
         return;
       }
@@ -383,12 +470,59 @@ export default function Checkout() {
     setLoading(true);
 
     try {
-      if (orderTiming === "scheduled") {
-        const latestScheduleAllowed = await fetchKitchenSchedulePermission(
-          kitchenId
-        );
+      const latestKitchenSettings = await fetchKitchenSettings(kitchenId);
 
-        if (!latestScheduleAllowed) {
+      if (
+        latestKitchenSettings.delivery_available === false &&
+        latestKitchenSettings.pickup_available === false
+      ) {
+        setDeliveryAvailable(false);
+        setPickupAvailable(false);
+        throw new Error(
+          "This kitchen is currently not accepting delivery or pickup orders."
+        );
+      }
+
+      if (
+        formData.deliveryType === "Doorstep delivery" &&
+        latestKitchenSettings.delivery_available === false
+      ) {
+        setDeliveryAvailable(false);
+
+        if (latestKitchenSettings.pickup_available) {
+          setPickupAvailable(true);
+          setFormData((current) => ({
+            ...current,
+            deliveryType: "Self pickup",
+          }));
+        }
+
+        throw new Error(
+          "This kitchen has turned off delivery. Please select self pickup."
+        );
+      }
+
+      if (
+        formData.deliveryType === "Self pickup" &&
+        latestKitchenSettings.pickup_available === false
+      ) {
+        setPickupAvailable(false);
+
+        if (latestKitchenSettings.delivery_available) {
+          setDeliveryAvailable(true);
+          setFormData((current) => ({
+            ...current,
+            deliveryType: "Doorstep delivery",
+          }));
+        }
+
+        throw new Error(
+          "This kitchen has turned off self pickup. Please select delivery."
+        );
+      }
+
+      if (orderTiming === "scheduled") {
+        if (latestKitchenSettings.accept_scheduled_orders !== true) {
           setKitchenAcceptsScheduledOrders(false);
           setOrderTiming("now");
           setScheduledDate("");
@@ -559,6 +693,15 @@ export default function Checkout() {
             </div>
           )}
 
+          {checkoutBlocked && (
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+              <p className="text-red-600 text-sm font-black">
+                This kitchen is currently not accepting delivery or pickup
+                orders.
+              </p>
+            </div>
+          )}
+
           <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4">
             <p className="text-[#51615D] text-xs uppercase font-bold">
               Payment
@@ -604,11 +747,13 @@ export default function Checkout() {
             <>
               <button
                 onClick={handlePlaceOrder}
-                disabled={loading}
+                disabled={loading || checkoutBlocked}
                 className="w-full mt-3 bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-5 rounded-2xl text-lg transition-all duration-200 shadow-lg shadow-[#073B35]/15"
               >
                 {loading
                   ? "Checking live stock..."
+                  : checkoutBlocked
+                  ? "Kitchen Unavailable"
                   : orderTiming === "scheduled"
                   ? `Schedule Order • ₹${totalAmount}`
                   : `Place Order • ₹${totalAmount}`}
@@ -754,39 +899,75 @@ export default function Checkout() {
                       Delivery Option
                     </p>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => selectDeliveryType("Doorstep delivery")}
-                        className={`py-4 rounded-2xl font-black border transition-all ${
-                          formData.deliveryType === "Doorstep delivery"
-                            ? "bg-[#073B35] text-white border-[#073B35] shadow-lg shadow-[#073B35]/15"
-                            : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
+                    {checkingKitchenSettings ? (
+                      <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 text-[#51615D] font-bold">
+                        Checking kitchen delivery options...
+                      </div>
+                    ) : checkoutBlocked ? (
+                      <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+                        <p className="text-red-600 font-black">
+                          Kitchen unavailable
+                        </p>
+                        <p className="text-red-500 text-sm mt-1">
+                          This kitchen has turned off both delivery and pickup.
+                        </p>
+                      </div>
+                    ) : (
+                      <div
+                        className={`grid gap-3 ${
+                          deliveryAvailable && pickupAvailable
+                            ? "grid-cols-2"
+                            : "grid-cols-1"
                         }`}
                       >
-                        🚚 Delivery
-                      </button>
+                        {deliveryAvailable && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              selectDeliveryType("Doorstep delivery")
+                            }
+                            className={`py-4 rounded-2xl font-black border transition-all ${
+                              formData.deliveryType === "Doorstep delivery"
+                                ? "bg-[#073B35] text-white border-[#073B35] shadow-lg shadow-[#073B35]/15"
+                                : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
+                            }`}
+                          >
+                            🚚 Delivery
+                          </button>
+                        )}
 
-                      <button
-                        type="button"
-                        onClick={() => selectDeliveryType("Self pickup")}
-                        className={`py-4 rounded-2xl font-black border transition-all ${
-                          formData.deliveryType === "Self pickup"
-                            ? "bg-[#073B35] text-white border-[#073B35] shadow-lg shadow-[#073B35]/15"
-                            : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
-                        }`}
-                      >
-                        🛍️ Pickup
-                      </button>
-                    </div>
-
-                    {formData.deliveryType === "Self pickup" && (
-                      <p className="text-[#51615D] text-xs mt-3 leading-relaxed">
-                        Pickup coordination will happen after the kitchen
-                        accepts your order. Exact kitchen door details are not
-                        shown publicly.
-                      </p>
+                        {pickupAvailable && (
+                          <button
+                            type="button"
+                            onClick={() => selectDeliveryType("Self pickup")}
+                            className={`py-4 rounded-2xl font-black border transition-all ${
+                              formData.deliveryType === "Self pickup"
+                                ? "bg-[#073B35] text-white border-[#073B35] shadow-lg shadow-[#073B35]/15"
+                                : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
+                            }`}
+                          >
+                            🛍️ Pickup
+                          </button>
+                        )}
+                      </div>
                     )}
+
+                    {formData.deliveryType === "Self pickup" &&
+                      pickupAvailable && (
+                        <p className="text-[#51615D] text-xs mt-3 leading-relaxed">
+                          Pickup coordination will happen after the kitchen
+                          accepts your order. Exact kitchen door details are not
+                          shown publicly.
+                        </p>
+                      )}
+
+                    {formData.deliveryType === "Doorstep delivery" &&
+                      deliveryAvailable && (
+                        <p className="text-[#51615D] text-xs mt-3 leading-relaxed">
+                          Delivery will be coordinated by the kitchen / Nefo
+                          team after order acceptance.
+                        </p>
+                      )}
                   </div>
 
                   <textarea
@@ -834,16 +1015,18 @@ export default function Checkout() {
                       type="button"
                       onClick={() => selectOrderTiming("scheduled")}
                       disabled={
-                        checkingKitchenSchedule ||
-                        !kitchenAcceptsScheduledOrders
+                        checkingKitchenSettings ||
+                        !kitchenAcceptsScheduledOrders ||
+                        checkoutBlocked
                       }
                       className={`text-left rounded-2xl p-4 border transition-all ${
                         orderTiming === "scheduled"
                           ? "bg-[#073B35] text-white border-[#073B35] shadow-lg shadow-[#073B35]/15"
                           : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
                       } ${
-                        checkingKitchenSchedule ||
-                        !kitchenAcceptsScheduledOrders
+                        checkingKitchenSettings ||
+                        !kitchenAcceptsScheduledOrders ||
+                        checkoutBlocked
                           ? "opacity-50 cursor-not-allowed"
                           : ""
                       }`}
@@ -861,7 +1044,7 @@ export default function Checkout() {
                     </button>
                   </div>
 
-                  {!checkingKitchenSchedule &&
+                  {!checkingKitchenSettings &&
                     !kitchenAcceptsScheduledOrders && (
                       <p className="text-red-500 text-xs mt-3">
                         This kitchen is not accepting scheduled orders right
@@ -1075,11 +1258,13 @@ export default function Checkout() {
 
             <button
               onClick={handlePlaceOrder}
-              disabled={loading}
+              disabled={loading || checkoutBlocked}
               className="flex-1 bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-4 rounded-2xl transition-all shadow-lg shadow-[#073B35]/15"
             >
               {loading
                 ? "Checking..."
+                : checkoutBlocked
+                ? "Kitchen Unavailable"
                 : orderTiming === "scheduled"
                 ? "Schedule Order"
                 : "Place Order"}
