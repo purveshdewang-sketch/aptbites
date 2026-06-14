@@ -32,6 +32,7 @@ import RefundPolicy from "./pages/RefundPolicy";
 
 import { useAuth } from "./context/AuthContext";
 import { supabase } from "./lib/supabaseClient";
+import SellerHelper from "./pages/SellerHelper";
 
 function LoadingScreen() {
   return (
@@ -390,6 +391,15 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+  path="/seller-helper"
+  element={
+    <SellerOnlyRoute>
+      <SellerHelper />
+    </SellerOnlyRoute>
+  }
+/>
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

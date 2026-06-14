@@ -146,8 +146,7 @@ export default function Profile() {
       return;
     }
 
-    const nextValue =
-      name === "bank_ifsc" ? value.toUpperCase() : value;
+    const nextValue = name === "bank_ifsc" ? value.toUpperCase() : value;
 
     setFormData((currentData) => ({
       ...currentData,
@@ -735,12 +734,21 @@ export default function Profile() {
                   </p>
 
                   {isSeller ? (
-                    <Link
-                      to="/seller-dashboard"
-                      className="block mt-5 bg-[#073B35] hover:bg-[#0B5149] text-white text-center font-black py-3 rounded-2xl transition-all"
-                    >
-                      Open Seller Dashboard
-                    </Link>
+                    <>
+                      <Link
+                        to="/seller-dashboard"
+                        className="block mt-5 bg-[#073B35] hover:bg-[#0B5149] text-white text-center font-black py-3 rounded-2xl transition-all"
+                      >
+                        Open Seller Dashboard
+                      </Link>
+
+                      <Link
+                        to="/seller-helper"
+                        className="block mt-3 bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] text-center font-black py-3 rounded-2xl transition-all"
+                      >
+                        Seller Assistant
+                      </Link>
+                    </>
                   ) : (
                     <p className="text-[#51615D] text-sm mt-3 leading-relaxed">
                       To sell food, use “Apply to Sell on Nefo” from the profile
