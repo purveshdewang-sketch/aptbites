@@ -1,11 +1,9 @@
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
-export default function CustomerCare() {
-  const supportPhone = "+910000000000";
-  const displayPhone = "+91 00000 00000";
-  const supportEmail = "support@nefo.app";
+const SUPPORT_EMAIL = "nefosupport@gmail.com";
 
+export default function CustomerCare() {
   return (
     <>
       <Navbar />
@@ -28,34 +26,13 @@ export default function CustomerCare() {
               </h1>
 
               <p className="text-[#51615D] mt-4 max-w-2xl leading-relaxed text-sm sm:text-lg">
-                Contact us for live order issues, seller account help, payment
+                Contact us for order issues, seller account help, payment
                 problems, refunds, cancellations, or app support.
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
                 <a
-                  href={`tel:${supportPhone}`}
-                  className="group bg-[#FFFFF2] border border-[#D7F5EF] hover:border-[#41D3BD]/60 rounded-3xl p-5 transition-all"
-                >
-                  <div className="w-12 h-12 rounded-2xl bg-[#41D3BD]/15 flex items-center justify-center text-2xl">
-                    📞
-                  </div>
-
-                  <h2 className="text-xl font-black mt-4 text-[#073B35]">
-                    Phone / WhatsApp
-                  </h2>
-
-                  <p className="text-[#51615D] text-sm mt-2 leading-relaxed">
-                    Use this for urgent live-order issues.
-                  </p>
-
-                  <p className="mt-4 text-[#1A9F8D] group-hover:text-[#073B35] font-black">
-                    {displayPhone}
-                  </p>
-                </a>
-
-                <a
-                  href={`mailto:${supportEmail}`}
+                  href={`mailto:${SUPPORT_EMAIL}`}
                   className="group bg-[#FFFFF2] border border-[#D7F5EF] hover:border-[#41D3BD]/60 rounded-3xl p-5 transition-all"
                 >
                   <div className="w-12 h-12 rounded-2xl bg-[#41D3BD]/15 flex items-center justify-center text-2xl">
@@ -67,13 +44,36 @@ export default function CustomerCare() {
                   </h2>
 
                   <p className="text-[#51615D] text-sm mt-2 leading-relaxed">
-                    Use this for non-urgent issues and account support.
+                    Use this for orders, refunds, payment issues, account help,
+                    and seller support.
                   </p>
 
                   <p className="mt-4 text-[#1A9F8D] group-hover:text-[#073B35] font-black break-all">
-                    {supportEmail}
+                    {SUPPORT_EMAIL}
                   </p>
                 </a>
+
+                <Link
+                  to="/orders"
+                  className="group bg-[#FFFFF2] border border-[#D7F5EF] hover:border-[#41D3BD]/60 rounded-3xl p-5 transition-all"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-[#41D3BD]/15 flex items-center justify-center text-2xl">
+                    🛎️
+                  </div>
+
+                  <h2 className="text-xl font-black mt-4 text-[#073B35]">
+                    Active Orders
+                  </h2>
+
+                  <p className="text-[#51615D] text-sm mt-2 leading-relaxed">
+                    Check your live order status before raising a support
+                    request.
+                  </p>
+
+                  <p className="mt-4 text-[#1A9F8D] group-hover:text-[#073B35] font-black">
+                    View Orders
+                  </p>
+                </Link>
 
                 <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-5">
                   <div className="w-12 h-12 rounded-2xl bg-[#41D3BD]/15 flex items-center justify-center text-2xl">
@@ -157,11 +157,18 @@ export default function CustomerCare() {
                   >
                     Open Profile
                   </Link>
+
+                  <a
+                    href={`mailto:${SUPPORT_EMAIL}`}
+                    className="bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black text-center py-4 rounded-2xl transition-all break-all"
+                  >
+                    Email Support
+                  </a>
                 </div>
 
                 <p className="text-[#8AA5A0] text-xs mt-5 leading-relaxed">
-                  For urgent live-order issues, keep your order number and UPI
-                  reference ready.
+                  For faster support, keep your order number and UPI reference
+                  ready before emailing us.
                 </p>
               </div>
 
@@ -178,9 +185,16 @@ export default function CustomerCare() {
                   </h2>
 
                   <p className="text-[#D7F5EF] text-sm mt-3 leading-relaxed">
-                    For payment issues, share your order number, UPI reference,
-                    amount paid, and payment time.
+                    For payment issues, email your order number, UPI reference,
+                    amount paid, payment time, and screenshots if available.
                   </p>
+
+                  <a
+                    href={`mailto:${SUPPORT_EMAIL}`}
+                    className="inline-block mt-4 text-[#41D3BD] hover:text-[#55E4CF] font-black break-all"
+                  >
+                    {SUPPORT_EMAIL}
+                  </a>
                 </div>
               </div>
             </aside>
@@ -209,7 +223,15 @@ export default function CustomerCare() {
 
               <p className="text-[#51615D] text-sm mt-1 leading-relaxed">
                 Exact kitchen door/location should not be shown publicly.
-                Pickup and support coordination should happen through Nefo.
+                Pickup and support coordination should happen through Nefo. For
+                help, email{" "}
+                <a
+                  href={`mailto:${SUPPORT_EMAIL}`}
+                  className="text-[#073B35] font-black underline"
+                >
+                  {SUPPORT_EMAIL}
+                </a>
+                .
               </p>
             </div>
           </section>

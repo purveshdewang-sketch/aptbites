@@ -68,7 +68,7 @@ export default function FoodCard({ item }) {
   }
 
   function getAvailabilityText() {
-    if (kitchenIsClosed) return "Kitchen Closed";
+    if (kitchenIsClosed) return "Closed";
     if (fulfillmentUnavailable) return "Unavailable";
     if (isSoldOut) return "Sold Out";
     if (isLowStock) return `Only ${stock} left`;
@@ -85,7 +85,7 @@ export default function FoodCard({ item }) {
 
   function getBlockedLabel() {
     if (kitchenIsClosed) return "CLOSED";
-    if (fulfillmentUnavailable) return "UNAVAILABLE";
+    if (fulfillmentUnavailable) return "OFF";
     if (isSoldOut) return "SOLD OUT";
     return "OFF";
   }
@@ -102,7 +102,7 @@ export default function FoodCard({ item }) {
       return (
         <span
           className={`bg-red-50 text-red-600 border border-red-100 font-black rounded-full ${
-            compact ? "text-[10px] px-2.5 py-1" : "text-[11px] px-3 py-1.5"
+            compact ? "text-[9px] px-2 py-0.5" : "text-[11px] px-3 py-1.5"
           }`}
         >
           Not taking orders
@@ -115,7 +115,7 @@ export default function FoodCard({ item }) {
         {deliveryAvailable && (
           <span
             className={`bg-[#41D3BD]/12 text-[#073B35] border border-[#41D3BD]/25 font-black rounded-full ${
-              compact ? "text-[10px] px-2.5 py-1" : "text-[11px] px-3 py-1.5"
+              compact ? "text-[9px] px-2 py-0.5" : "text-[11px] px-3 py-1.5"
             }`}
           >
             🚚 Delivery
@@ -125,7 +125,7 @@ export default function FoodCard({ item }) {
         {pickupAvailable && (
           <span
             className={`bg-[#FFFFF2] text-[#073B35] border border-[#D7F5EF] font-black rounded-full ${
-              compact ? "text-[10px] px-2.5 py-1" : "text-[11px] px-3 py-1.5"
+              compact ? "text-[9px] px-2 py-0.5" : "text-[11px] px-3 py-1.5"
             }`}
           >
             🛍️ Pickup
@@ -164,16 +164,15 @@ export default function FoodCard({ item }) {
 
       <Link
         to={`/food/${item.id}`}
-        className={`group block bg-white border rounded-[1.75rem] overflow-hidden transition-all duration-300 shadow-lg shadow-[#073B35]/5 ${
+        className={`group block bg-white border rounded-[1.5rem] sm:rounded-[1.75rem] overflow-hidden transition-all duration-300 shadow-lg shadow-[#073B35]/5 ${
           kitchenIsClosed || fulfillmentUnavailable
             ? "border-red-200"
             : "border-[#D7F5EF] hover:border-[#41D3BD]/70 hover:shadow-xl hover:shadow-[#073B35]/10"
         }`}
       >
-        {/* Mobile layout */}
-        <div className="sm:hidden p-3">
+        <div className="sm:hidden p-2.5">
           <div className="flex gap-3">
-            <div className="relative w-32 h-32 shrink-0 rounded-[1.5rem] overflow-hidden bg-[#D7F5EF]">
+            <div className="relative w-28 h-28 shrink-0 rounded-[1.25rem] overflow-hidden bg-[#D7F5EF]">
               <img
                 src={item.image}
                 alt={item.name}
@@ -186,7 +185,7 @@ export default function FoodCard({ item }) {
 
               <div className="absolute top-2 left-2">
                 <span
-                  className={`text-[10px] font-black px-2.5 py-1 rounded-full shadow-sm ${
+                  className={`text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm ${
                     item.type === "Non-Veg"
                       ? "bg-red-500 text-white"
                       : "bg-[#41D3BD] text-[#073B35]"
@@ -198,7 +197,7 @@ export default function FoodCard({ item }) {
 
               {demandBadge && !kitchenIsClosed && !isSoldOut && !fulfillmentUnavailable && (
                 <div className="absolute bottom-2 left-2 right-2 bg-white/95 backdrop-blur border border-[#D7F5EF] rounded-xl px-2 py-1">
-                  <p className="text-[#1A9F8D] text-[10px] font-black truncate">
+                  <p className="text-[#1A9F8D] text-[9px] font-black truncate">
                     🔥 {demandBadge.label}
                   </p>
                 </div>
@@ -206,7 +205,7 @@ export default function FoodCard({ item }) {
 
               {isBlocked && (
                 <div className="absolute inset-0 bg-black/65 flex items-center justify-center text-center px-2">
-                  <p className="text-white text-xs font-black">
+                  <p className="text-white text-[11px] font-black">
                     {getBlockedLabel()}
                   </p>
                 </div>
@@ -214,50 +213,48 @@ export default function FoodCard({ item }) {
             </div>
 
             <div className="flex-1 min-w-0">
-              <div className="min-h-[74px]">
-                <h3
-                  className={`text-lg font-black leading-tight line-clamp-2 ${
-                    kitchenIsClosed || fulfillmentUnavailable
-                      ? "text-[#9AA7A3]"
-                      : "text-[#111827]"
-                  }`}
-                >
-                  {item.name}
-                </h3>
+              <h3
+                className={`text-base font-black leading-tight line-clamp-2 ${
+                  kitchenIsClosed || fulfillmentUnavailable
+                    ? "text-[#9AA7A3]"
+                    : "text-[#111827]"
+                }`}
+              >
+                {item.name}
+              </h3>
 
-                <p className="text-[#51615D] text-xs mt-1 truncate">
-                  Kitchen: {kitchenName}
+              <p className="text-[#51615D] text-[11px] mt-1 truncate">
+                {kitchenName}
+              </p>
+
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                <FulfillmentBadges compact />
+              </div>
+
+              <div className="flex items-center gap-1.5 mt-2">
+                <p className="text-[#51615D] text-[11px] truncate">
+                  Ready{" "}
+                  <span className="text-[#111827] font-bold">
+                    {item.time || "Soon"}
+                  </span>
                 </p>
 
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  <FulfillmentBadges compact />
-                </div>
+                <span className="text-[#B8D9D3]">•</span>
 
-                <div className="flex items-center gap-2 mt-2">
-                  <p className="text-[#51615D] text-xs">
-                    Ready{" "}
-                    <span className="text-[#111827] font-bold">
-                      {item.time || "Soon"}
-                    </span>
-                  </p>
-
-                  <span className="text-[#B8D9D3]">•</span>
-
-                  <p className={`text-xs font-black ${getAvailabilityClass()}`}>
-                    {getAvailabilityText()}
-                  </p>
-                </div>
+                <p className={`text-[11px] font-black ${getAvailabilityClass()}`}>
+                  {getAvailabilityText()}
+                </p>
               </div>
 
               {item.description && (
-                <p className="text-[#51615D] text-xs mt-2 line-clamp-2">
+                <p className="text-[#51615D] text-[11px] mt-1.5 line-clamp-1">
                   {item.description}
                 </p>
               )}
 
-              <div className="flex items-end justify-between gap-3 mt-3">
+              <div className="flex items-end justify-between gap-2 mt-2.5">
                 <p
-                  className={`font-black text-2xl ${
+                  className={`font-black text-xl ${
                     kitchenIsClosed || fulfillmentUnavailable
                       ? "text-[#9AA7A3]"
                       : "text-[#073B35]"
@@ -271,7 +268,7 @@ export default function FoodCard({ item }) {
                     type="button"
                     onClick={handleAddToCart}
                     disabled={isBlocked}
-                    className={`min-w-[82px] font-black py-2.5 px-4 rounded-2xl text-sm border transition-all ${
+                    className={`min-w-[70px] font-black py-2 px-3 rounded-2xl text-xs border transition-all ${
                       isBlocked
                         ? "bg-[#EAF7F4] text-[#9AA7A3] border-red-100 cursor-not-allowed"
                         : "bg-[#41D3BD] text-[#073B35] border-[#41D3BD] shadow-lg shadow-[#41D3BD]/20"
@@ -284,12 +281,12 @@ export default function FoodCard({ item }) {
                     <button
                       type="button"
                       onClick={handleDecrease}
-                      className="w-9 h-10 text-lg active:bg-[#0B5149]"
+                      className="w-8 h-9 text-lg active:bg-[#0B5149]"
                     >
                       −
                     </button>
 
-                    <span className="min-w-9 h-10 flex items-center justify-center text-sm bg-[#41D3BD] text-[#073B35]">
+                    <span className="min-w-8 h-9 flex items-center justify-center text-xs bg-[#41D3BD] text-[#073B35]">
                       {quantity}
                     </span>
 
@@ -297,7 +294,7 @@ export default function FoodCard({ item }) {
                       type="button"
                       onClick={handleIncrease}
                       disabled={quantity >= stock}
-                      className={`w-9 h-10 text-lg ${
+                      className={`w-8 h-9 text-lg ${
                         quantity >= stock
                           ? "opacity-40 cursor-not-allowed"
                           : "active:bg-[#0B5149]"
@@ -312,7 +309,6 @@ export default function FoodCard({ item }) {
           </div>
         </div>
 
-        {/* Desktop / tablet layout */}
         <div className="hidden sm:block">
           <div className="relative aspect-[4/3] overflow-hidden bg-[#D7F5EF]">
             <img

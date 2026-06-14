@@ -91,9 +91,7 @@ export default function FoodDetails() {
   }, [id]);
 
   async function fetchFoodDetails(showLoading = true) {
-    if (showLoading) {
-      setLoading(true);
-    }
+    if (showLoading) setLoading(true);
 
     setMessage("");
 
@@ -201,9 +199,7 @@ export default function FoodDetails() {
   }, [kitchenFoods]);
 
   const kitchenCategoryCounts = useMemo(() => {
-    const counts = {
-      All: kitchenFoods.length,
-    };
+    const counts = { All: kitchenFoods.length };
 
     KITCHEN_MENU_CATEGORIES.forEach((categoryName) => {
       counts[categoryName] = 0;
@@ -292,10 +288,14 @@ export default function FoodDetails() {
     return "+ Add to Cart";
   }
 
-  function FulfillmentBadges() {
+  function FulfillmentBadges({ compact = false }) {
     if (fulfillmentUnavailable) {
       return (
-        <span className="bg-red-50 text-red-600 border border-red-100 font-black rounded-full text-xs px-3 py-1.5">
+        <span
+          className={`bg-red-50 text-red-600 border border-red-100 font-black rounded-full ${
+            compact ? "text-[10px] px-2.5 py-1" : "text-xs px-3 py-1.5"
+          }`}
+        >
           Not taking orders
         </span>
       );
@@ -304,13 +304,21 @@ export default function FoodDetails() {
     return (
       <>
         {deliveryAvailable && (
-          <span className="bg-[#41D3BD]/12 text-[#073B35] border border-[#41D3BD]/25 font-black rounded-full text-xs px-3 py-1.5">
+          <span
+            className={`bg-[#41D3BD]/12 text-[#073B35] border border-[#41D3BD]/25 font-black rounded-full ${
+              compact ? "text-[10px] px-2.5 py-1" : "text-xs px-3 py-1.5"
+            }`}
+          >
             🚚 Delivery
           </span>
         )}
 
         {pickupAvailable && (
-          <span className="bg-[#FFFFF2] text-[#073B35] border border-[#D7F5EF] font-black rounded-full text-xs px-3 py-1.5">
+          <span
+            className={`bg-[#FFFFF2] text-[#073B35] border border-[#D7F5EF] font-black rounded-full ${
+              compact ? "text-[10px] px-2.5 py-1" : "text-xs px-3 py-1.5"
+            }`}
+          >
             🛍️ Self Pickup
           </span>
         )}
@@ -322,13 +330,11 @@ export default function FoodDetails() {
     return (
       <>
         <Navbar />
-
         <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-8 flex items-center justify-center">
           <div className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-xl shadow-[#073B35]/5">
             <div className="w-16 h-16 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-3xl">
               🍽️
             </div>
-
             <p className="text-[#51615D] font-bold mt-4">
               Loading dish details...
             </p>
@@ -342,19 +348,15 @@ export default function FoodDetails() {
     return (
       <>
         <Navbar />
-
         <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-8 flex items-center justify-center">
           <div className="max-w-md w-full bg-white/85 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-xl shadow-[#073B35]/5">
             <div className="text-5xl">🍽️</div>
-
             <h1 className="text-3xl font-black mt-4 text-[#111827]">
               Dish not found
             </h1>
-
             <p className="text-[#51615D] mt-3">
               {message || "This dish may have been removed."}
             </p>
-
             <Link
               to="/marketplace"
               className="block mt-7 bg-[#073B35] hover:bg-[#0B5149] text-white font-black py-4 rounded-2xl shadow-lg shadow-[#073B35]/15"
@@ -371,8 +373,8 @@ export default function FoodDetails() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] pb-32">
-        <section className="relative px-4 sm:px-6 py-5 sm:py-10">
+      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] pb-36 sm:pb-32">
+        <section className="relative px-3 sm:px-6 py-4 sm:py-10">
           <div className="absolute -top-24 -right-24 w-80 h-80 bg-[#41D3BD]/20 rounded-full blur-[100px]" />
           <div className="absolute top-64 -left-28 w-80 h-80 bg-[#41D3BD]/10 rounded-full blur-[120px]" />
 
@@ -380,14 +382,14 @@ export default function FoodDetails() {
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="inline-flex items-center gap-2 text-[#51615D] hover:text-[#073B35] font-black mb-4 transition-all bg-white/80 border border-[#D7F5EF] px-4 py-2 rounded-2xl shadow-sm"
+              className="inline-flex items-center gap-2 text-[#51615D] hover:text-[#073B35] font-black mb-3 sm:mb-4 transition-all bg-white/80 border border-[#D7F5EF] px-4 py-2 rounded-2xl shadow-sm text-sm"
             >
               ← Back
             </button>
 
-            <div className="grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-5 lg:gap-10">
-              <div className="relative bg-white border border-[#D7F5EF] rounded-[2rem] overflow-hidden shadow-xl shadow-[#073B35]/5">
-                <div className="relative aspect-square bg-[#D7F5EF] overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-4 lg:gap-10">
+              <div className="relative bg-white border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] overflow-hidden shadow-xl shadow-[#073B35]/5">
+                <div className="relative aspect-[4/3] sm:aspect-square bg-[#D7F5EF] overflow-hidden">
                   <img
                     src={food.image}
                     alt={food.name}
@@ -398,11 +400,11 @@ export default function FoodDetails() {
                     }`}
                   />
 
-                  <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-black/55 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-                  <div className="absolute top-3 left-3 sm:top-4 sm:left-4 flex flex-wrap gap-2">
+                  <div className="absolute top-3 left-3 flex flex-wrap gap-2 pr-20">
                     <span
-                      className={`text-xs font-black px-3 py-1.5 rounded-full shadow-sm ${
+                      className={`text-[10px] sm:text-xs font-black px-3 py-1.5 rounded-full shadow-sm ${
                         food.type === "Non-Veg"
                           ? "bg-red-500 text-white"
                           : "bg-[#41D3BD] text-[#073B35]"
@@ -411,54 +413,54 @@ export default function FoodDetails() {
                       {food.type || "Veg"}
                     </span>
 
-                    <span className="text-xs font-black px-3 py-1.5 rounded-full bg-white/95 text-[#073B35] border border-[#D7F5EF] shadow-sm">
+                    <span className="text-[10px] sm:text-xs font-black px-3 py-1.5 rounded-full bg-white/95 text-[#073B35] border border-[#D7F5EF] shadow-sm">
                       {category}
                     </span>
                   </div>
 
-                  <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
-                    {kitchenIsClosed ? (
-                      <span className="text-xs font-black px-3 py-1.5 rounded-full bg-red-600 text-white shadow-sm">
-                        CLOSED
-                      </span>
-                    ) : fulfillmentUnavailable ? (
-                      <span className="text-xs font-black px-3 py-1.5 rounded-full bg-red-600 text-white shadow-sm">
-                        OFF
-                      </span>
-                    ) : isSoldOut ? (
-                      <span className="text-xs font-black px-3 py-1.5 rounded-full bg-[#111827] text-white shadow-sm">
-                        SOLD OUT
-                      </span>
-                    ) : isLowStock ? (
-                      <span className="text-xs font-black px-3 py-1.5 rounded-full bg-red-500 text-white shadow-sm">
-                        Only {stock} left
-                      </span>
-                    ) : isSellingFast ? (
-                      <span className="text-xs font-black px-3 py-1.5 rounded-full bg-[#41D3BD] text-[#073B35] shadow-sm">
-                        Selling Fast
-                      </span>
-                    ) : (
-                      <span className="text-xs font-black px-3 py-1.5 rounded-full bg-white/95 text-[#073B35] border border-[#D7F5EF] shadow-sm">
-                        Available
-                      </span>
-                    )}
+                  <div className="absolute top-3 right-3">
+                    <span
+                      className={`text-[10px] sm:text-xs font-black px-3 py-1.5 rounded-full shadow-sm ${
+                        kitchenIsClosed || fulfillmentUnavailable
+                          ? "bg-red-600 text-white"
+                          : isSoldOut
+                          ? "bg-[#111827] text-white"
+                          : isLowStock
+                          ? "bg-red-500 text-white"
+                          : isSellingFast
+                          ? "bg-[#41D3BD] text-[#073B35]"
+                          : "bg-white/95 text-[#073B35] border border-[#D7F5EF]"
+                      }`}
+                    >
+                      {kitchenIsClosed
+                        ? "CLOSED"
+                        : fulfillmentUnavailable
+                        ? "OFF"
+                        : isSoldOut
+                        ? "SOLD OUT"
+                        : isLowStock
+                        ? `Only ${stock}`
+                        : isSellingFast
+                        ? "Fast"
+                        : "Available"}
+                    </span>
                   </div>
 
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <div className="bg-white/95 backdrop-blur border border-white/70 rounded-[1.5rem] p-4 shadow-xl">
-                      <p className="text-[#1A9F8D] text-xs font-black uppercase tracking-wide">
+                  <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4">
+                    <div className="bg-white/95 backdrop-blur border border-white/70 rounded-[1.35rem] sm:rounded-[1.5rem] p-3 sm:p-4 shadow-xl">
+                      <p className="text-[#1A9F8D] text-[10px] sm:text-xs font-black uppercase tracking-wide">
                         Fresh from kitchen
                       </p>
 
-                      <h2 className="text-[#073B35] text-xl font-black mt-1 truncate">
+                      <h2 className="text-[#073B35] text-lg sm:text-xl font-black mt-1 truncate">
                         {kitchenName}
                       </h2>
 
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        <FulfillmentBadges />
+                      <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2 sm:mt-3">
+                        <FulfillmentBadges compact />
                       </div>
 
-                      <p className="text-[#51615D] text-xs mt-3">
+                      <p className="text-[#51615D] text-[11px] sm:text-xs mt-2 sm:mt-3">
                         Exact kitchen door/location is not shown publicly.
                       </p>
                     </div>
@@ -466,7 +468,7 @@ export default function FoodDetails() {
                 </div>
               </div>
 
-              <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-8 h-fit shadow-xl shadow-[#073B35]/5">
+              <div className="bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-4 sm:p-8 h-fit shadow-xl shadow-[#073B35]/5">
                 <div
                   className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-black border ${
                     kitchenIsClosed || fulfillmentUnavailable
@@ -478,63 +480,51 @@ export default function FoodDetails() {
                   <span>{getKitchenStatusText()}</span>
                 </div>
 
-                <h1 className="text-4xl sm:text-6xl font-black mt-4 leading-[0.98] tracking-tight text-[#111827]">
+                <h1 className="text-3xl sm:text-6xl font-black mt-4 leading-[0.98] tracking-tight text-[#111827]">
                   {food.name}
                 </h1>
 
-                <div className="flex flex-wrap items-center gap-3 mt-5">
-                  <span className="bg-[#073B35] text-white font-black px-5 py-2 rounded-2xl text-2xl shadow-lg shadow-[#073B35]/15">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-4 sm:mt-5">
+                  <span className="bg-[#073B35] text-white font-black px-4 sm:px-5 py-2 rounded-2xl text-2xl shadow-lg shadow-[#073B35]/15">
                     ₹{food.price}
                   </span>
 
-                  <span className="bg-[#FFFFF2] border border-[#D7F5EF] text-[#51615D] font-bold px-4 py-2 rounded-2xl">
+                  <span className="bg-[#FFFFF2] border border-[#D7F5EF] text-[#51615D] font-bold px-4 py-2 rounded-2xl text-sm">
                     Ready {food.time || "Soon"}
-                  </span>
-
-                  <span
-                    className={`border font-bold px-4 py-2 rounded-2xl ${
-                      kitchenIsClosed || fulfillmentUnavailable
-                        ? "border-red-200 bg-red-50 text-red-500"
-                        : "border-[#41D3BD]/30 bg-[#41D3BD]/12 text-[#073B35]"
-                    }`}
-                  >
-                    {getKitchenStatusText()}
                   </span>
                 </div>
 
-                <div className="flex flex-wrap gap-2 mt-5">
+                <div className="flex flex-wrap gap-2 mt-4 sm:mt-5">
                   <FulfillmentBadges />
                 </div>
 
                 {food.description && (
-                  <p className="text-[#51615D] leading-relaxed mt-6 text-base sm:text-lg">
+                  <p className="text-[#51615D] leading-relaxed mt-5 sm:mt-6 text-sm sm:text-lg">
                     {food.description}
                   </p>
                 )}
 
-                <div className="mt-6 grid grid-cols-2 gap-3">
-                  <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4">
-                    <p className="text-[#51615D] text-xs font-bold uppercase">
+                <div className="mt-5 sm:mt-6 grid grid-cols-2 gap-3">
+                  <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl sm:rounded-3xl p-4">
+                    <p className="text-[#51615D] text-[10px] sm:text-xs font-bold uppercase">
                       Availability
                     </p>
-
-                    <p className={`font-black mt-2 ${getAvailabilityClass()}`}>
+                    <p className={`font-black mt-2 text-sm ${getAvailabilityClass()}`}>
                       {getAvailabilityText()}
                     </p>
                   </div>
 
-                  <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4">
-                    <p className="text-[#51615D] text-xs font-bold uppercase">
+                  <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl sm:rounded-3xl p-4">
+                    <p className="text-[#51615D] text-[10px] sm:text-xs font-bold uppercase">
                       Category
                     </p>
-
-                    <p className="font-black mt-2 text-[#073B35]">
+                    <p className="font-black mt-2 text-[#073B35] text-sm">
                       {category}
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-6">
+                <div className="hidden sm:block mt-6">
                   {quantity === 0 || isBlocked ? (
                     <button
                       type="button"
@@ -576,24 +566,24 @@ export default function FoodDetails() {
                       </button>
                     </div>
                   )}
-                </div>
 
-                <Link
-                  to="/cart"
-                  className="block text-center mt-4 border border-[#D7F5EF] bg-[#FFFFF2] hover:bg-[#D7F5EF] text-[#51615D] hover:text-[#073B35] font-black py-4 rounded-2xl transition-all"
-                >
-                  View Cart
-                </Link>
+                  <Link
+                    to="/cart"
+                    className="block text-center mt-4 border border-[#D7F5EF] bg-[#FFFFF2] hover:bg-[#D7F5EF] text-[#51615D] hover:text-[#073B35] font-black py-4 rounded-2xl transition-all"
+                  >
+                    View Cart
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="px-4 sm:px-6 py-4 sm:py-8">
+        <section className="px-3 sm:px-6 py-4 sm:py-8">
           <div className="max-w-7xl mx-auto">
-            <div className="flex items-end justify-between gap-4 mb-5">
+            <div className="flex items-end justify-between gap-4 mb-4 sm:mb-5">
               <div>
-                <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
+                <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-[11px] sm:text-xs">
                   More from kitchen
                 </p>
 
@@ -611,11 +601,11 @@ export default function FoodDetails() {
             </div>
 
             {kitchenFoods.length > 0 && (
-              <div className="flex gap-3 overflow-x-auto pb-3 mb-5 scrollbar-hide">
+              <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-3 mb-4 sm:mb-5 scrollbar-hide">
                 <button
                   type="button"
                   onClick={() => setSelectedKitchenCategory("All")}
-                  className={`shrink-0 px-4 py-3 rounded-2xl border font-black text-sm ${
+                  className={`shrink-0 px-4 py-2.5 sm:py-3 rounded-2xl border font-black text-xs sm:text-sm ${
                     selectedKitchenCategory === "All"
                       ? "bg-[#073B35] text-white border-[#073B35]"
                       : "bg-white/85 text-[#51615D] border-[#D7F5EF]"
@@ -631,7 +621,7 @@ export default function FoodDetails() {
                     key={categoryName}
                     type="button"
                     onClick={() => setSelectedKitchenCategory(categoryName)}
-                    className={`shrink-0 px-4 py-3 rounded-2xl border font-black text-sm ${
+                    className={`shrink-0 px-4 py-2.5 sm:py-3 rounded-2xl border font-black text-xs sm:text-sm ${
                       selectedKitchenCategory === categoryName
                         ? "bg-[#073B35] text-white border-[#073B35]"
                         : "bg-white/85 text-[#51615D] border-[#D7F5EF]"
@@ -658,14 +648,14 @@ export default function FoodDetails() {
             ) : (
               <>
                 {availableKitchenFoods.length > 0 && (
-                  <div className="mb-5">
+                  <div className="mb-4 sm:mb-5">
                     <p className="text-[#51615D] text-sm">
                       {availableKitchenFoods.length} available from this kitchen.
                     </p>
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                   {visibleKitchenFoods.map((item) => (
                     <FoodCard key={item.id} item={item} />
                   ))}
@@ -675,10 +665,72 @@ export default function FoodDetails() {
           </div>
         </section>
 
+        <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#FFFFF2]/95 backdrop-blur-xl border-t border-[#D7F5EF] px-3 py-3">
+          <div className="flex items-center gap-3">
+            <div className="shrink-0 bg-white border border-[#D7F5EF] rounded-2xl px-4 py-3 shadow-sm">
+              <p className="text-[#51615D] text-[10px] font-black uppercase">
+                Price
+              </p>
+              <p className="text-[#073B35] text-xl font-black">
+                ₹{food.price}
+              </p>
+            </div>
+
+            {quantity === 0 || isBlocked ? (
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                disabled={isBlocked}
+                className={`flex-1 font-black py-4 rounded-2xl transition-all ${
+                  isBlocked
+                    ? "bg-[#EAF7F4] text-[#8AA5A0] cursor-not-allowed border border-red-100"
+                    : "bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
+                }`}
+              >
+                {getMainButtonLabel()}
+              </button>
+            ) : (
+              <div className="flex-1 flex items-center justify-between overflow-hidden rounded-2xl bg-[#073B35] text-white font-black shadow-lg shadow-[#073B35]/15">
+                <button
+                  type="button"
+                  onClick={handleDecrease}
+                  className="flex-1 py-4 text-2xl active:bg-[#0B5149]"
+                >
+                  −
+                </button>
+
+                <span className="px-6 py-4 bg-[#41D3BD] text-[#073B35] text-lg min-w-[76px] text-center">
+                  {quantity}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={handleIncrease}
+                  disabled={quantity >= stock}
+                  className={`flex-1 py-4 text-2xl ${
+                    quantity >= stock ? "opacity-40 cursor-not-allowed" : ""
+                  }`}
+                >
+                  +
+                </button>
+              </div>
+            )}
+          </div>
+
+          {cartCount > 0 && (
+            <Link
+              to="/cart"
+              className="block text-center mt-2 bg-[#41D3BD] text-[#073B35] font-black py-3 rounded-2xl"
+            >
+              View Cart • {cartCount} {cartCount === 1 ? "item" : "items"}
+            </Link>
+          )}
+        </div>
+
         {cartCount > 0 && (
           <Link
             to="/cart"
-            className="fixed bottom-5 left-4 right-4 z-50 sm:left-auto sm:right-6 sm:w-auto bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.98] text-white font-black px-6 py-4 rounded-2xl shadow-2xl shadow-[#073B35]/25 flex items-center justify-center gap-3 transition-all"
+            className="hidden sm:flex fixed bottom-5 left-4 right-4 z-50 sm:left-auto sm:right-6 sm:w-auto bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.98] text-white font-black px-6 py-4 rounded-2xl shadow-2xl shadow-[#073B35]/25 items-center justify-center gap-3 transition-all"
           >
             <span>🛒</span>
             <span>

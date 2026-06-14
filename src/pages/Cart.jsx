@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { useCart } from "../context/CartContext";
@@ -20,6 +20,17 @@ export default function Cart() {
   const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
 
+  const totalQuantity = useMemo(() => {
+    return cartItems.reduce(
+      (sum, item) => sum + Number(item.quantity || 0),
+      0
+    );
+  }, [cartItems]);
+
+  const kitchenCount = useMemo(() => {
+    return new Set(cartItems.map((item) => getKitchenName(item))).size;
+  }, [cartItems]);
+
   useEffect(() => {
     localStorage.setItem(
       "Nefo_cart_order_timing",
@@ -39,9 +50,9 @@ export default function Cart() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-6 sm:py-10 pb-36 lg:pb-10">
+      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-3 sm:px-6 py-4 sm:py-10 pb-36 lg:pb-10">
         <div className="max-w-6xl mx-auto">
-          <section className="relative overflow-hidden bg-white/85 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-xl shadow-[#073B35]/5">
+          <section className="relative overflow-hidden bg-white/85 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2.5rem] p-4 sm:p-8 shadow-xl shadow-[#073B35]/5">
             <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[95px]" />
             <div className="absolute -bottom-28 -left-24 w-72 h-72 bg-[#41D3BD]/10 rounded-full blur-[110px]" />
 
@@ -52,11 +63,11 @@ export default function Cart() {
                   <span>Your Cart</span>
                 </div>
 
-                <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
+                <h1 className="text-3xl sm:text-6xl font-black mt-4 sm:mt-5 leading-[0.98] tracking-tight text-[#073B35]">
                   Ready to order?
                 </h1>
 
-                <p className="text-[#51615D] mt-4 text-sm sm:text-lg max-w-2xl leading-relaxed">
+                <p className="text-[#51615D] mt-3 sm:mt-4 text-sm sm:text-lg max-w-2xl leading-relaxed">
                   Review your homemade food items, choose timing, and proceed to
                   checkout.
                 </p>
@@ -64,8 +75,9 @@ export default function Cart() {
 
               {cartItems.length > 0 && (
                 <button
+                  type="button"
                   onClick={clearCart}
-                  className="shrink-0 border border-red-200 bg-red-50 text-red-500 hover:bg-red-500 hover:text-white px-4 py-2.5 rounded-2xl text-sm font-black transition-all duration-200"
+                  className="shrink-0 border border-red-200 bg-red-50 text-red-500 hover:bg-red-500 hover:text-white px-3 sm:px-4 py-2 rounded-2xl text-xs sm:text-sm font-black transition-all duration-200"
                 >
                   Clear
                 </button>
@@ -73,10 +85,10 @@ export default function Cart() {
             </div>
 
             {cartItems.length > 0 && (
-              <div className="relative mt-6 grid grid-cols-3 gap-2 sm:gap-3 max-w-xl">
+              <div className="relative mt-5 sm:mt-6 grid grid-cols-4 gap-2 sm:gap-3 max-w-2xl">
                 <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3 sm:p-4">
-                  <p className="text-[#51615D] text-[10px] sm:text-xs font-bold uppercase">
-                    Items
+                  <p className="text-[#51615D] text-[9px] sm:text-xs font-bold uppercase">
+                    Dishes
                   </p>
                   <p className="text-[#073B35] text-xl sm:text-2xl font-black mt-1">
                     {cartItems.length}
@@ -84,16 +96,25 @@ export default function Cart() {
                 </div>
 
                 <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3 sm:p-4">
-                  <p className="text-[#51615D] text-[10px] sm:text-xs font-bold uppercase">
-                    Subtotal
+                  <p className="text-[#51615D] text-[9px] sm:text-xs font-bold uppercase">
+                    Qty
                   </p>
-                  <p className="text-[#111827] text-xl sm:text-2xl font-black mt-1">
-                    ₹{cartTotal}
+                  <p className="text-[#073B35] text-xl sm:text-2xl font-black mt-1">
+                    {totalQuantity}
                   </p>
                 </div>
 
                 <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3 sm:p-4">
-                  <p className="text-[#51615D] text-[10px] sm:text-xs font-bold uppercase">
+                  <p className="text-[#51615D] text-[9px] sm:text-xs font-bold uppercase">
+                    Kitchens
+                  </p>
+                  <p className="text-[#073B35] text-xl sm:text-2xl font-black mt-1">
+                    {kitchenCount}
+                  </p>
+                </div>
+
+                <div className="bg-[#41D3BD]/12 border border-[#41D3BD]/25 rounded-2xl p-3 sm:p-4">
+                  <p className="text-[#51615D] text-[9px] sm:text-xs font-bold uppercase">
                     Total
                   </p>
                   <p className="text-[#073B35] text-xl sm:text-2xl font-black mt-1">
@@ -105,8 +126,8 @@ export default function Cart() {
           </section>
 
           {cartItems.length === 0 ? (
-            <section className="mt-8 bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-8 sm:p-10 text-center shadow-xl shadow-[#073B35]/5">
-              <div className="w-24 h-24 mx-auto bg-[#41D3BD]/12 rounded-full flex items-center justify-center text-5xl">
+            <section className="mt-6 sm:mt-8 bg-white/85 border border-[#D7F5EF] rounded-[2rem] p-8 sm:p-10 text-center shadow-xl shadow-[#073B35]/5">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto bg-[#41D3BD]/12 rounded-full flex items-center justify-center text-4xl sm:text-5xl">
                 🛒
               </div>
 
@@ -127,8 +148,8 @@ export default function Cart() {
               </Link>
             </section>
           ) : (
-            <div className="mt-8 grid lg:grid-cols-[1.1fr_0.9fr] gap-6 lg:gap-8">
-              <section className="space-y-4">
+            <div className="mt-6 sm:mt-8 grid lg:grid-cols-[1.1fr_0.9fr] gap-5 lg:gap-8">
+              <section className="space-y-3 sm:space-y-4">
                 {cartItems.map((item) => {
                   const kitchenName = getKitchenName(item);
                   const lineTotal =
@@ -137,12 +158,12 @@ export default function Cart() {
                   return (
                     <article
                       key={item.id}
-                      className="bg-white/90 border border-[#D7F5EF] hover:border-[#41D3BD]/70 rounded-[2rem] p-3 sm:p-5 transition-all duration-300 shadow-lg shadow-[#073B35]/5"
+                      className="bg-white/90 border border-[#D7F5EF] hover:border-[#41D3BD]/70 rounded-[1.5rem] sm:rounded-[2rem] p-3 sm:p-5 transition-all duration-300 shadow-lg shadow-[#073B35]/5"
                     >
                       <div className="flex gap-3 sm:gap-4">
                         <Link
                           to={`/food/${item.id}`}
-                          className="relative shrink-0 w-24 h-24 sm:w-32 sm:h-32 rounded-[1.5rem] sm:rounded-[1.75rem] overflow-hidden bg-[#D7F5EF]"
+                          className="relative shrink-0 w-20 h-20 sm:w-28 sm:h-28 rounded-[1.25rem] sm:rounded-[1.75rem] overflow-hidden bg-[#D7F5EF]"
                         >
                           <img
                             src={item.image}
@@ -152,7 +173,7 @@ export default function Cart() {
 
                           <div className="absolute top-2 left-2">
                             <span
-                              className={`text-[10px] font-black px-2.5 py-1 rounded-full shadow-sm ${
+                              className={`text-[9px] sm:text-[10px] font-black px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full shadow-sm ${
                                 item.type === "Non-Veg"
                                   ? "bg-red-500 text-white"
                                   : "bg-[#41D3BD] text-[#073B35]"
@@ -164,48 +185,48 @@ export default function Cart() {
                         </Link>
 
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start justify-between gap-2 sm:gap-3">
                             <div className="min-w-0">
                               <Link to={`/food/${item.id}`}>
-                                <h2 className="text-lg sm:text-2xl font-black leading-tight truncate text-[#111827] hover:text-[#073B35]">
+                                <h2 className="text-base sm:text-2xl font-black leading-tight truncate text-[#111827] hover:text-[#073B35]">
                                   {item.name}
                                 </h2>
                               </Link>
 
-                              <p className="text-[#51615D] text-xs sm:text-sm mt-1 truncate">
+                              <p className="text-[#51615D] text-[11px] sm:text-sm mt-1 truncate">
                                 Kitchen: {kitchenName}
                               </p>
 
-                              <p className="text-[#51615D] text-xs mt-2">
+                              <p className="text-[#51615D] text-[11px] sm:text-xs mt-1.5 sm:mt-2">
                                 ₹{item.price} each
                               </p>
                             </div>
 
                             <div className="text-right shrink-0">
-                              <p className="text-[#073B35] text-xl sm:text-3xl font-black">
+                              <p className="text-[#073B35] text-lg sm:text-3xl font-black">
                                 ₹{lineTotal}
                               </p>
                             </div>
                           </div>
 
-                          <div className="flex items-center justify-between gap-3 mt-4 sm:mt-5">
+                          <div className="flex items-center justify-between gap-2 sm:gap-3 mt-3 sm:mt-5">
                             <div className="flex items-center overflow-hidden rounded-2xl bg-[#073B35] text-white font-black shadow-lg shadow-[#073B35]/10">
                               <button
                                 type="button"
                                 onClick={() => decreaseQuantity(item.id)}
-                                className="w-10 h-11 sm:w-12 sm:h-12 text-xl hover:bg-[#0B5149] transition-all"
+                                className="w-9 h-10 sm:w-12 sm:h-12 text-lg sm:text-xl hover:bg-[#0B5149] transition-all"
                               >
                                 −
                               </button>
 
-                              <span className="w-11 h-11 sm:w-14 sm:h-12 bg-[#41D3BD] text-[#073B35] flex items-center justify-center font-black text-base sm:text-lg">
+                              <span className="w-10 h-10 sm:w-14 sm:h-12 bg-[#41D3BD] text-[#073B35] flex items-center justify-center font-black text-sm sm:text-lg">
                                 {item.quantity}
                               </span>
 
                               <button
                                 type="button"
                                 onClick={() => increaseQuantity(item.id)}
-                                className="w-10 h-11 sm:w-12 sm:h-12 text-xl hover:bg-[#0B5149] transition-all"
+                                className="w-9 h-10 sm:w-12 sm:h-12 text-lg sm:text-xl hover:bg-[#0B5149] transition-all"
                               >
                                 +
                               </button>
@@ -214,9 +235,9 @@ export default function Cart() {
                             <button
                               type="button"
                               onClick={() => removeFromCart(item.id)}
-                              className="text-red-500 hover:text-red-600 text-sm font-black"
+                              className="bg-red-50 border border-red-200 text-red-500 px-3 py-2 rounded-xl text-xs font-black"
                             >
-                              Remove
+                              🗑 Remove
                             </button>
                           </div>
                         </div>
@@ -234,7 +255,7 @@ export default function Cart() {
               </section>
 
               <aside className="space-y-5 lg:sticky lg:top-24 h-fit">
-                <section className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
+                <section className="bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-4 sm:p-6 shadow-xl shadow-[#073B35]/5">
                   <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
                     Order Timing
                   </p>
@@ -315,7 +336,7 @@ export default function Cart() {
                   )}
                 </section>
 
-                <section className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-2xl shadow-[#073B35]/5">
+                <section className="bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-4 sm:p-6 shadow-2xl shadow-[#073B35]/5">
                   <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
                     Bill Summary
                   </p>
@@ -343,7 +364,7 @@ export default function Cart() {
                       <div>
                         <p className="text-[#51615D] text-sm">Grand Total</p>
                         <p className="text-[#51615D] text-xs mt-1">
-                          Fresh homemade food
+                          Packing charge appears at checkout
                         </p>
                       </div>
 
@@ -371,10 +392,10 @@ export default function Cart() {
         </div>
 
         {cartItems.length > 0 && (
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#FFFFF2]/95 backdrop-blur-xl border-t border-[#D7F5EF] px-4 py-3">
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#FFFFF2]/95 backdrop-blur-xl border-t border-[#D7F5EF] px-3 py-3">
             <div className="max-w-6xl mx-auto flex items-center gap-3">
               <div className="shrink-0 bg-white border border-[#D7F5EF] rounded-2xl px-4 py-3 text-left shadow-sm">
-                <p className="text-[#51615D] text-[11px] font-bold uppercase">
+                <p className="text-[#51615D] text-[10px] font-black uppercase">
                   Total
                 </p>
                 <p className="text-[#073B35] text-xl font-black">
@@ -386,7 +407,7 @@ export default function Cart() {
                 to="/checkout"
                 className="flex-1 bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.99] text-white font-black py-4 rounded-2xl transition-all shadow-lg shadow-[#073B35]/15 text-center"
               >
-                Checkout
+                Checkout • ₹{finalTotal}
               </Link>
             </div>
           </div>

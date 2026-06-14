@@ -1222,20 +1222,22 @@ export default function SellerDashboard() {
         <Navbar />
 
         <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-10 flex items-center justify-center">
-          <div className="max-w-md w-full bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-8 text-center shadow-xl shadow-[#073B35]/5">
-            <div className="w-20 h-20 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-4xl">
+          <div className="max-w-md w-full bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-6 sm:p-8 text-center shadow-xl shadow-[#073B35]/5">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-3xl sm:text-4xl">
               👨‍🍳
             </div>
 
-            <h1 className="text-3xl font-black mt-6">Seller login required</h1>
+            <h1 className="text-2xl sm:text-3xl font-black mt-5">
+              Seller login required
+            </h1>
 
-            <p className="text-[#51615D] mt-4">
+            <p className="text-[#51615D] mt-3 text-sm sm:text-base">
               Please sign in before adding or managing food dishes.
             </p>
 
             <Link
               to="/seller-login"
-              className="block mt-7 bg-[#073B35] hover:bg-[#0B5149] text-white font-black py-4 rounded-2xl"
+              className="block mt-6 bg-[#073B35] hover:bg-[#0B5149] text-white font-black py-4 rounded-2xl"
             >
               Seller Sign In
             </Link>
@@ -1277,9 +1279,9 @@ export default function SellerDashboard() {
       <>
         <Navbar />
 
-        <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-8 sm:py-10">
+        <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-6 sm:py-10 pb-24">
           <div className="max-w-3xl mx-auto">
-            <section className="relative overflow-hidden bg-white/90 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 shadow-2xl shadow-[#073B35]/10">
+            <section className="relative overflow-hidden bg-white/90 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-2xl shadow-[#073B35]/10">
               <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[95px]" />
 
               <div className="relative">
@@ -1288,12 +1290,12 @@ export default function SellerDashboard() {
                   <span>Seller Setup</span>
                 </div>
 
-                <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
+                <h1 className="text-3xl sm:text-6xl font-black mt-4 sm:mt-5 leading-[0.98] tracking-tight text-[#073B35]">
                   Complete your
                   <span className="block text-[#111827]">kitchen profile</span>
                 </h1>
 
-                <p className="text-[#51615D] mt-5 leading-relaxed">
+                <p className="text-[#51615D] mt-4 sm:mt-5 leading-relaxed text-sm sm:text-base">
                   Complete this once before managing dishes and accepting
                   orders. Your exact flat is used operationally and should not
                   be shown publicly to customers.
@@ -1305,13 +1307,13 @@ export default function SellerDashboard() {
                   </div>
                 )}
 
-                <form onSubmit={saveSellerSetup} className="mt-7 space-y-4">
+                <form onSubmit={saveSellerSetup} className="mt-6 sm:mt-7 space-y-4">
                   <input
                     name="seller_kitchen_name"
                     value={sellerSetupData.seller_kitchen_name}
                     onChange={handleSellerSetupChange}
                     required
-                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD]"
+                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD]"
                     placeholder="Kitchen name e.g. Asha's Kitchen"
                   />
 
@@ -1321,7 +1323,7 @@ export default function SellerDashboard() {
                       value={sellerSetupData.flat}
                       onChange={handleSellerSetupChange}
                       required
-                      className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD]"
+                      className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD]"
                       placeholder="Tower / Flat e.g. B-1204"
                     />
 
@@ -1330,7 +1332,7 @@ export default function SellerDashboard() {
                       value={sellerSetupData.phone}
                       onChange={handleSellerSetupChange}
                       required
-                      className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD]"
+                      className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD]"
                       placeholder="Phone Number"
                     />
                   </div>
@@ -1340,7 +1342,7 @@ export default function SellerDashboard() {
                     value={sellerSetupData.seller_specialty}
                     onChange={handleSellerSetupChange}
                     required
-                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD]"
+                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD]"
                     placeholder="Specialty e.g. South Indian breakfast, sweets, tiffin"
                   />
 
@@ -1348,9 +1350,9 @@ export default function SellerDashboard() {
                     name="seller_about"
                     value={sellerSetupData.seller_about}
                     onChange={handleSellerSetupChange}
-                    rows="5"
+                    rows="4"
                     required
-                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] resize-none"
+                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD] resize-none"
                     placeholder="Tell customers about your food, cooking style, hygiene, or food story..."
                   />
 
@@ -1435,15 +1437,14 @@ export default function SellerDashboard() {
                     </label>
                   </div>
 
-                  <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-5">
+                  <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 sm:p-5">
                     <div className="flex items-center justify-between gap-4">
                       <div>
                         <p className="text-[#111827] font-black">
                           Packing charge
                         </p>
                         <p className="text-[#51615D] text-sm mt-1">
-                          This will be added to customer checkout for your
-                          orders.
+                          Added to customer checkout.
                         </p>
                       </div>
 
@@ -1490,126 +1491,200 @@ export default function SellerDashboard() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-6 sm:py-10 pb-24">
+      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-3 sm:px-6 py-4 sm:py-10 pb-24">
         <div className="max-w-7xl mx-auto">
-          <section className="relative overflow-hidden bg-white/90 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-xl shadow-[#073B35]/5">
+          <section className="relative overflow-hidden bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2.5rem] p-4 sm:p-8 shadow-xl shadow-[#073B35]/5">
             <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[95px]" />
             <div className="absolute -bottom-28 -left-24 w-72 h-72 bg-[#41D3BD]/10 rounded-full blur-[110px]" />
 
-            <div className="relative flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
-              <div>
+            <div className="relative">
+              <div className="flex items-center justify-between gap-3">
                 <div className="inline-flex items-center gap-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
                   <span>👨‍🍳</span>
-                  <span>Nefo Kitchen Panel</span>
+                  <span>Kitchen Panel</span>
                 </div>
-
-                <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
-                  Manage your
-                  <span className="block text-[#111827]">food drops</span>
-                </h1>
-
-                <p className="text-[#51615D] mt-4 text-sm sm:text-lg max-w-2xl">
-                  {sellerOnline
-                    ? "Your kitchen is online and visible for orders."
-                    : "Your kitchen is offline. Customers should not place new orders."}
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-3 lg:justify-end">
-                <button
-                  type="button"
-                  onClick={toggleSellerOnline}
-                  className={`active:scale-95 font-black px-5 py-3 rounded-2xl text-center transition-all shadow-lg ${
-                    sellerOnline
-                      ? "bg-green-500 text-white shadow-green-500/20"
-                      : "bg-red-500 text-white shadow-red-500/20"
-                  }`}
-                >
-                  {sellerOnline ? "🟢 Online" : "🔴 Offline"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={toggleAcceptScheduledOrders}
-                  className={`active:scale-95 font-black px-5 py-3 rounded-2xl text-center transition-all ${
-                    acceptScheduledOrders
-                      ? "bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
-                      : "bg-white text-[#51615D] border border-[#D7F5EF]"
-                  }`}
-                >
-                  {acceptScheduledOrders ? "🕒 Schedule ON" : "🕒 Schedule OFF"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={toggleDeliveryAvailable}
-                  className={`active:scale-95 font-black px-5 py-3 rounded-2xl text-center transition-all ${
-                    deliveryAvailable
-                      ? "bg-[#41D3BD] text-[#073B35] shadow-lg shadow-[#41D3BD]/20"
-                      : "bg-white text-[#51615D] border border-[#D7F5EF]"
-                  }`}
-                >
-                  {deliveryAvailable ? "🚚 Delivery ON" : "🚚 Delivery OFF"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={togglePickupAvailable}
-                  className={`active:scale-95 font-black px-5 py-3 rounded-2xl text-center transition-all ${
-                    pickupAvailable
-                      ? "bg-[#41D3BD] text-[#073B35] shadow-lg shadow-[#41D3BD]/20"
-                      : "bg-white text-[#51615D] border border-[#D7F5EF]"
-                  }`}
-                >
-                  {pickupAvailable ? "🛍️ Pickup ON" : "🛍️ Pickup OFF"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={toggleNotificationSound}
-                  className={`active:scale-95 font-black px-5 py-3 rounded-2xl text-center transition-all ${
-                    audioReady
-                      ? "bg-green-500 text-white"
-                      : "bg-white text-[#073B35] border border-[#41D3BD]/40"
-                  }`}
-                >
-                  {audioReady ? "🔕 Sound Off" : "🔔 Sound On"}
-                </button>
 
                 <Link
                   to="/marketplace"
-                  className="bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-95 text-[#073B35] font-black px-5 py-3 rounded-2xl text-center transition-all"
+                  className="lg:hidden bg-[#41D3BD] text-[#073B35] font-black px-4 py-2 rounded-2xl text-xs"
                 >
                   Marketplace
                 </Link>
+              </div>
+
+              <div className="mt-4 sm:mt-5 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
+                <div>
+                  <h1 className="text-3xl sm:text-6xl font-black leading-[0.98] tracking-tight text-[#073B35]">
+                    Manage your
+                    <span className="block text-[#111827]">food drops</span>
+                  </h1>
+
+                  <p className="text-[#51615D] mt-3 sm:mt-4 text-sm sm:text-lg max-w-2xl">
+                    {sellerOnline
+                      ? "Your kitchen is online and visible for orders."
+                      : "Your kitchen is offline. Customers should not place new orders."}
+                  </p>
+                </div>
+
+                <div className="hidden lg:flex flex-wrap gap-3 lg:justify-end">
+                  <button
+                    type="button"
+                    onClick={toggleSellerOnline}
+                    className={`active:scale-95 font-black px-5 py-3 rounded-2xl text-center transition-all shadow-lg ${
+                      sellerOnline
+                        ? "bg-green-500 text-white shadow-green-500/20"
+                        : "bg-red-500 text-white shadow-red-500/20"
+                    }`}
+                  >
+                    {sellerOnline ? "🟢 Online" : "🔴 Offline"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={toggleAcceptScheduledOrders}
+                    className={`active:scale-95 font-black px-5 py-3 rounded-2xl text-center transition-all ${
+                      acceptScheduledOrders
+                        ? "bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
+                        : "bg-white text-[#51615D] border border-[#D7F5EF]"
+                    }`}
+                  >
+                    {acceptScheduledOrders ? "🕒 Schedule ON" : "🕒 Schedule OFF"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={toggleDeliveryAvailable}
+                    className={`active:scale-95 font-black px-5 py-3 rounded-2xl text-center transition-all ${
+                      deliveryAvailable
+                        ? "bg-[#41D3BD] text-[#073B35] shadow-lg shadow-[#41D3BD]/20"
+                        : "bg-white text-[#51615D] border border-[#D7F5EF]"
+                    }`}
+                  >
+                    {deliveryAvailable ? "🚚 Delivery ON" : "🚚 Delivery OFF"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={togglePickupAvailable}
+                    className={`active:scale-95 font-black px-5 py-3 rounded-2xl text-center transition-all ${
+                      pickupAvailable
+                        ? "bg-[#41D3BD] text-[#073B35] shadow-lg shadow-[#41D3BD]/20"
+                        : "bg-white text-[#51615D] border border-[#D7F5EF]"
+                    }`}
+                  >
+                    {pickupAvailable ? "🛍️ Pickup ON" : "🛍️ Pickup OFF"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={toggleNotificationSound}
+                    className={`active:scale-95 font-black px-5 py-3 rounded-2xl text-center transition-all ${
+                      audioReady
+                        ? "bg-green-500 text-white"
+                        : "bg-white text-[#073B35] border border-[#41D3BD]/40"
+                    }`}
+                  >
+                    {audioReady ? "🔕 Sound Off" : "🔔 Sound On"}
+                  </button>
+
+                  <Link
+                    to="/marketplace"
+                    className="bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-95 text-[#073B35] font-black px-5 py-3 rounded-2xl text-center transition-all"
+                  >
+                    Marketplace
+                  </Link>
+                </div>
+              </div>
+
+              <div className="lg:hidden mt-5 -mx-1 overflow-x-auto pb-1">
+                <div className="flex gap-2 min-w-max px-1">
+                  <button
+                    type="button"
+                    onClick={toggleSellerOnline}
+                    className={`active:scale-95 font-black px-4 py-3 rounded-2xl text-xs transition-all shadow-sm ${
+                      sellerOnline
+                        ? "bg-green-500 text-white"
+                        : "bg-red-500 text-white"
+                    }`}
+                  >
+                    {sellerOnline ? "🟢 Online" : "🔴 Offline"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={toggleAcceptScheduledOrders}
+                    className={`active:scale-95 font-black px-4 py-3 rounded-2xl text-xs transition-all ${
+                      acceptScheduledOrders
+                        ? "bg-[#073B35] text-white"
+                        : "bg-white text-[#51615D] border border-[#D7F5EF]"
+                    }`}
+                  >
+                    {acceptScheduledOrders ? "🕒 Schedule ON" : "🕒 Schedule OFF"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={toggleDeliveryAvailable}
+                    className={`active:scale-95 font-black px-4 py-3 rounded-2xl text-xs transition-all ${
+                      deliveryAvailable
+                        ? "bg-[#41D3BD] text-[#073B35]"
+                        : "bg-white text-[#51615D] border border-[#D7F5EF]"
+                    }`}
+                  >
+                    {deliveryAvailable ? "🚚 Delivery ON" : "🚚 Delivery OFF"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={togglePickupAvailable}
+                    className={`active:scale-95 font-black px-4 py-3 rounded-2xl text-xs transition-all ${
+                      pickupAvailable
+                        ? "bg-[#41D3BD] text-[#073B35]"
+                        : "bg-white text-[#51615D] border border-[#D7F5EF]"
+                    }`}
+                  >
+                    {pickupAvailable ? "🛍️ Pickup ON" : "🛍️ Pickup OFF"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={toggleNotificationSound}
+                    className={`active:scale-95 font-black px-4 py-3 rounded-2xl text-xs transition-all ${
+                      audioReady
+                        ? "bg-green-500 text-white"
+                        : "bg-white text-[#073B35] border border-[#41D3BD]/40"
+                    }`}
+                  >
+                    {audioReady ? "🔕 Sound Off" : "🔔 Sound On"}
+                  </button>
+                </div>
               </div>
             </div>
           </section>
 
           {message && (
-            <div className="mt-5 bg-white/90 border border-[#D7F5EF] rounded-2xl p-4 text-sm font-bold text-[#073B35] shadow-sm">
+            <div className="mt-4 sm:mt-5 bg-white/90 border border-[#D7F5EF] rounded-2xl p-3 sm:p-4 text-xs sm:text-sm font-bold text-[#073B35] shadow-sm">
               {message}
             </div>
           )}
 
-          <section className="mt-6 bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <section className="mt-4 sm:mt-6 bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-4 sm:p-6 shadow-xl shadow-[#073B35]/5">
+            <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
+                <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-[11px] sm:text-xs">
                   Checkout Settings
                 </p>
 
-                <h2 className="text-2xl font-black text-[#073B35] mt-1">
+                <h2 className="text-xl sm:text-2xl font-black text-[#073B35] mt-1">
                   Packing charge
                 </h2>
 
-                <p className="text-[#51615D] text-sm mt-2">
-                  Choose a packing charge from ₹5 to ₹15. This charge will be
-                  shown on checkout for your kitchen orders.
+                <p className="text-[#51615D] text-xs sm:text-sm mt-1 sm:mt-2">
+                  Choose ₹5 to ₹15. Customers see this at checkout.
                 </p>
               </div>
 
-              <div className="bg-[#073B35] text-white font-black text-2xl px-6 py-3 rounded-2xl shadow-lg shadow-[#073B35]/15">
+              <div className="bg-[#073B35] text-white font-black text-xl sm:text-2xl px-5 py-2.5 sm:px-6 sm:py-3 rounded-2xl shadow-lg shadow-[#073B35]/15">
                 ₹{packingCharge}
               </div>
             </div>
@@ -1632,7 +1707,7 @@ export default function SellerDashboard() {
               }}
               onMouseUp={(event) => updatePackingCharge(event.target.value)}
               onTouchEnd={(event) => updatePackingCharge(event.target.value)}
-              className="w-full mt-6 accent-[#41D3BD]"
+              className="w-full mt-5 sm:mt-6 accent-[#41D3BD]"
             />
 
             <div className="flex justify-between text-xs sm:text-sm font-black text-[#51615D] mt-2">
@@ -1642,7 +1717,7 @@ export default function SellerDashboard() {
             </div>
           </section>
 
-          <section className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-5 mt-8">
+          <section className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-5 mt-5 sm:mt-8">
             {[
               ["Total Orders", totalOrdersCount],
               ["Today’s Orders", todayTotalOrders.length],
@@ -1652,21 +1727,21 @@ export default function SellerDashboard() {
             ].map(([label, value]) => (
               <div
                 key={label}
-                className="bg-white/90 border border-[#D7F5EF] rounded-3xl p-4 sm:p-5 shadow-lg shadow-[#073B35]/5"
+                className="bg-white/90 border border-[#D7F5EF] rounded-3xl p-3 sm:p-5 shadow-lg shadow-[#073B35]/5"
               >
-                <p className="text-[#51615D] text-xs sm:text-sm font-bold">
+                <p className="text-[#51615D] text-[11px] sm:text-sm font-bold leading-tight">
                   {label}
                 </p>
-                <h2 className="text-3xl sm:text-4xl font-black text-[#073B35] mt-3">
+                <h2 className="text-2xl sm:text-4xl font-black text-[#073B35] mt-2 sm:mt-3">
                   {value}
                 </h2>
               </div>
             ))}
           </section>
 
-          <section className="mt-8 grid lg:grid-cols-[1fr_0.9fr] gap-6">
-            <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
-              <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
+          <section className="mt-5 sm:mt-8 grid lg:grid-cols-[1fr_0.9fr] gap-5 sm:gap-6">
+            <div className="bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-4 sm:p-6 shadow-xl shadow-[#073B35]/5">
+              <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-[11px] sm:text-xs">
                 Incoming Orders
               </p>
 
@@ -1677,8 +1752,8 @@ export default function SellerDashboard() {
               {ordersLoading ? (
                 <p className="text-[#51615D] mt-6">Loading seller orders...</p>
               ) : activeSellerOrders.length === 0 ? (
-                <div className="mt-6 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-8 text-center">
-                  <div className="text-5xl">🛎️</div>
+                <div className="mt-5 sm:mt-6 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-6 sm:p-8 text-center">
+                  <div className="text-4xl sm:text-5xl">🛎️</div>
                   <p className="text-[#51615D] font-black mt-4">
                     No active orders right now.
                   </p>
@@ -1687,7 +1762,7 @@ export default function SellerDashboard() {
                   </p>
                 </div>
               ) : (
-                <div className="mt-6 space-y-5">
+                <div className="mt-5 sm:mt-6 space-y-4 sm:space-y-5">
                   {activeSellerOrders.map((order) => {
                     const autoStatus = getAutoStatus(order);
                     const sellerResponse = normalizeSellerResponse(
@@ -1701,21 +1776,21 @@ export default function SellerDashboard() {
                         key={order.id}
                         className="relative bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4 sm:p-5"
                       >
-                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                          <div>
-                            <p className="text-[#51615D] text-sm font-bold">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-[#51615D] text-xs sm:text-sm font-bold">
                               Order #{order.id}
                             </p>
 
-                            <h3 className="text-3xl font-black mt-1 text-[#073B35]">
+                            <h3 className="text-2xl sm:text-3xl font-black mt-1 text-[#073B35]">
                               ₹{order.total_amount}
                             </h3>
 
-                            <p className="text-[#51615D] text-sm mt-2">
+                            <p className="text-[#51615D] text-sm mt-2 truncate">
                               {order.customer_name} • {order.phone}
                             </p>
 
-                            <p className="text-[#51615D] text-sm mt-1">
+                            <p className="text-[#51615D] text-sm mt-1 truncate">
                               {order.delivery_type} • {order.flat}
                             </p>
 
@@ -1727,7 +1802,7 @@ export default function SellerDashboard() {
                           </div>
 
                           <span
-                            className={`w-fit border text-xs font-black px-3 py-1.5 rounded-full ${getStatusBadgeClass(
+                            className={`shrink-0 w-fit border text-[11px] sm:text-xs font-black px-2.5 sm:px-3 py-1.5 rounded-full ${getStatusBadgeClass(
                               autoStatus
                             )}`}
                           >
@@ -1735,22 +1810,22 @@ export default function SellerDashboard() {
                           </span>
                         </div>
 
-                        <div className="mt-4 bg-white/90 border border-[#D7F5EF] rounded-2xl p-4 space-y-3">
+                        <div className="mt-4 bg-white/90 border border-[#D7F5EF] rounded-2xl p-3 sm:p-4 space-y-3">
                           {getOrderItems(order).map((item) => (
                             <div
                               key={`${order.id}-${item.id}`}
-                              className="flex items-center justify-between gap-4"
+                              className="flex items-center justify-between gap-3"
                             >
                               <div className="min-w-0">
-                                <p className="font-black truncate">
+                                <p className="font-black truncate text-sm sm:text-base">
                                   {item.name}
                                 </p>
-                                <p className="text-[#51615D] text-sm">
+                                <p className="text-[#51615D] text-xs sm:text-sm">
                                   Qty {item.quantity} × ₹{item.price}
                                 </p>
                               </div>
 
-                              <p className="text-[#073B35] font-black shrink-0">
+                              <p className="text-[#073B35] font-black shrink-0 text-sm sm:text-base">
                                 ₹
                                 {Number(item.price || 0) *
                                   Number(item.quantity || 0)}
@@ -1760,7 +1835,7 @@ export default function SellerDashboard() {
                         </div>
 
                         {sellerResponse === "pending" && (
-                          <div className="grid grid-cols-2 gap-3 mt-5">
+                          <div className="grid grid-cols-2 gap-3 mt-4 sm:mt-5">
                             <button
                               type="button"
                               onClick={() => acceptOrder(order.id)}
@@ -1785,7 +1860,7 @@ export default function SellerDashboard() {
                             <button
                               type="button"
                               onClick={() => markReadyForPickup(order.id)}
-                              className="mt-5 w-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white font-black py-3 rounded-2xl transition-all"
+                              className="mt-4 sm:mt-5 w-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white font-black py-3 rounded-2xl transition-all"
                             >
                               Mark Ready for Pickup
                             </button>
@@ -1795,7 +1870,7 @@ export default function SellerDashboard() {
                           <button
                             type="button"
                             onClick={() => completeOrder(order.id)}
-                            className="mt-5 w-full bg-[#073B35] hover:bg-[#0B5149] active:scale-95 text-white font-black py-3 rounded-2xl transition-all"
+                            className="mt-4 sm:mt-5 w-full bg-[#073B35] hover:bg-[#0B5149] active:scale-95 text-white font-black py-3 rounded-2xl transition-all"
                           >
                             Complete Order
                           </button>
@@ -1807,9 +1882,9 @@ export default function SellerDashboard() {
               )}
             </div>
 
-            <div className="space-y-6">
-              <section className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
-                <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
+            <div className="space-y-5 sm:space-y-6">
+              <section className="bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-4 sm:p-6 shadow-xl shadow-[#073B35]/5">
+                <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-[11px] sm:text-xs">
                   Earnings
                 </p>
 
@@ -1830,12 +1905,12 @@ export default function SellerDashboard() {
                   ].map(([label, value]) => (
                     <div
                       key={label}
-                      className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4"
+                      className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-3 sm:p-4"
                     >
                       <p className="text-[#51615D] text-xs font-bold">
                         {label}
                       </p>
-                      <h3 className="text-2xl font-black text-[#073B35] mt-2">
+                      <h3 className="text-xl sm:text-2xl font-black text-[#073B35] mt-2">
                         {value}
                       </h3>
                     </div>
@@ -1843,8 +1918,8 @@ export default function SellerDashboard() {
                 </div>
               </section>
 
-              <section className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
-                <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
+              <section className="bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-4 sm:p-6 shadow-xl shadow-[#073B35]/5">
+                <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-[11px] sm:text-xs">
                   Best Sellers
                 </p>
 
@@ -1879,14 +1954,14 @@ export default function SellerDashboard() {
             </div>
           </section>
 
-          <section className="mt-8 grid lg:grid-cols-[0.9fr_1.1fr] gap-6">
+          <section className="mt-5 sm:mt-8 grid lg:grid-cols-[0.9fr_1.1fr] gap-5 sm:gap-6">
             <form
               onSubmit={handleSubmit}
-              className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5 h-fit"
+              className="bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-4 sm:p-6 shadow-xl shadow-[#073B35]/5 h-fit"
             >
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
+                  <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-[11px] sm:text-xs">
                     Menu Builder
                   </p>
 
@@ -1906,12 +1981,12 @@ export default function SellerDashboard() {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 gap-4 mt-6">
+              <div className="grid grid-cols-1 gap-3 sm:gap-4 mt-5 sm:mt-6">
                 <input
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+                  className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD]"
                   placeholder="Dish name"
                 />
 
@@ -1922,7 +1997,7 @@ export default function SellerDashboard() {
                     onChange={handleChange}
                     type="number"
                     min="1"
-                    className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+                    className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD]"
                     placeholder="Price ₹"
                   />
 
@@ -1932,7 +2007,7 @@ export default function SellerDashboard() {
                     onChange={handleChange}
                     type="number"
                     min="0"
-                    className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+                    className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD]"
                     placeholder="Qty"
                   />
                 </div>
@@ -1941,7 +2016,7 @@ export default function SellerDashboard() {
                   name="time"
                   value={formData.time}
                   onChange={handleChange}
-                  className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+                  className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD]"
                   placeholder="Ready time e.g. 7:30 PM"
                 />
 
@@ -1950,7 +2025,7 @@ export default function SellerDashboard() {
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
-                    className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+                    className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD]"
                   >
                     {FOOD_CATEGORIES.map((category) => (
                       <option key={category}>{category}</option>
@@ -1961,7 +2036,7 @@ export default function SellerDashboard() {
                     name="type"
                     value={formData.type}
                     onChange={handleChange}
-                    className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+                    className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD]"
                   >
                     <option>Veg</option>
                     <option>Non-Veg</option>
@@ -1972,7 +2047,7 @@ export default function SellerDashboard() {
                   name="seller"
                   value={formData.seller}
                   onChange={handleChange}
-                  className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD]"
+                  className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD]"
                   placeholder="Kitchen name"
                 />
 
@@ -1981,7 +2056,7 @@ export default function SellerDashboard() {
                   value={formData.description}
                   onChange={handleChange}
                   rows="4"
-                  className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] resize-none"
+                  className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD] resize-none"
                   placeholder="Short description / ingredients / hygiene note"
                 />
 
@@ -1994,9 +2069,9 @@ export default function SellerDashboard() {
                     <button
                       type="button"
                       onClick={() => uploadImageInputRef.current?.click()}
-                      className="flex flex-col items-center justify-center border-2 border-dashed border-[#D7F5EF] hover:border-[#41D3BD] bg-[#FFFFF2] rounded-3xl p-5 cursor-pointer transition-all"
+                      className="flex flex-col items-center justify-center border-2 border-dashed border-[#D7F5EF] hover:border-[#41D3BD] bg-[#FFFFF2] rounded-3xl p-4 sm:p-5 cursor-pointer transition-all"
                     >
-                      <div className="text-3xl mb-2">🖼️</div>
+                      <div className="text-2xl sm:text-3xl mb-2">🖼️</div>
                       <p className="text-[#111827] font-black text-sm">
                         Upload
                       </p>
@@ -2005,9 +2080,9 @@ export default function SellerDashboard() {
                     <button
                       type="button"
                       onClick={() => cameraImageInputRef.current?.click()}
-                      className="flex flex-col items-center justify-center border-2 border-dashed border-[#41D3BD]/50 hover:border-[#41D3BD] bg-[#41D3BD]/10 rounded-3xl p-5 cursor-pointer transition-all"
+                      className="flex flex-col items-center justify-center border-2 border-dashed border-[#41D3BD]/50 hover:border-[#41D3BD] bg-[#41D3BD]/10 rounded-3xl p-4 sm:p-5 cursor-pointer transition-all"
                     >
-                      <div className="text-3xl mb-2">📸</div>
+                      <div className="text-2xl sm:text-3xl mb-2">📸</div>
                       <p className="text-[#073B35] font-black text-sm">
                         Camera
                       </p>
@@ -2036,7 +2111,7 @@ export default function SellerDashboard() {
                       <img
                         src={imagePreview}
                         alt="Dish preview"
-                        className="w-full h-56 object-cover rounded-2xl border border-[#D7F5EF]"
+                        className="w-full h-48 sm:h-56 object-cover rounded-2xl border border-[#D7F5EF]"
                       />
 
                       <div className="grid grid-cols-2 gap-3 mt-3">
@@ -2071,9 +2146,9 @@ export default function SellerDashboard() {
             </form>
 
             <section>
-              <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center justify-between mb-4 sm:mb-5">
                 <div>
-                  <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
+                  <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-[11px] sm:text-xs">
                     Live Menu
                   </p>
 
@@ -2082,7 +2157,7 @@ export default function SellerDashboard() {
                   </h2>
                 </div>
 
-                <div className="bg-white/90 border border-[#D7F5EF] px-4 py-2 rounded-2xl text-sm font-bold text-[#51615D]">
+                <div className="bg-white/90 border border-[#D7F5EF] px-3 sm:px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold text-[#51615D]">
                   {sellerFoods.length} dishes
                 </div>
               </div>
@@ -2094,7 +2169,7 @@ export default function SellerDashboard() {
                   <p className="text-[#51615D]">No dishes added yet.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                   {sellerFoods.map((food) => (
                     <div
                       key={food.id}
@@ -2109,7 +2184,7 @@ export default function SellerDashboard() {
 
                         <div className="absolute top-3 left-3">
                           <span
-                            className={`text-xs font-black px-3 py-1.5 rounded-full shadow-sm ${
+                            className={`text-[11px] sm:text-xs font-black px-3 py-1.5 rounded-full shadow-sm ${
                               food.type === "Non-Veg"
                                 ? "bg-red-500 text-white"
                                 : "bg-[#41D3BD] text-[#073B35]"
@@ -2128,10 +2203,10 @@ export default function SellerDashboard() {
                         )}
                       </div>
 
-                      <div className="p-5">
+                      <div className="p-4 sm:p-5">
                         <div className="flex justify-between gap-3">
                           <div className="min-w-0">
-                            <h3 className="text-xl font-black truncate">
+                            <h3 className="text-lg sm:text-xl font-black truncate">
                               {food.name}
                             </h3>
                             <p className="text-[#51615D] text-sm mt-1 truncate">
@@ -2140,12 +2215,12 @@ export default function SellerDashboard() {
                           </div>
 
                           <div className="text-right shrink-0">
-                            <p className="text-[#073B35] font-black text-2xl">
+                            <p className="text-[#073B35] font-black text-xl sm:text-2xl">
                               ₹{food.price}
                             </p>
 
                             <p
-                              className={`text-sm font-black ${
+                              className={`text-xs sm:text-sm font-black ${
                                 Number(food.stock) <= 2
                                   ? "text-red-500"
                                   : Number(food.stock) <= 5
@@ -2160,11 +2235,11 @@ export default function SellerDashboard() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-2 mt-5">
+                        <div className="grid grid-cols-3 gap-2 mt-4 sm:mt-5">
                           <button
                             type="button"
                             onClick={() => startEdit(food)}
-                            className="bg-[#073B35] hover:bg-[#0B5149] text-white font-black py-2.5 rounded-xl"
+                            className="bg-[#073B35] hover:bg-[#0B5149] text-white font-black py-2.5 rounded-xl text-xs sm:text-sm"
                           >
                             Edit
                           </button>
@@ -2172,7 +2247,7 @@ export default function SellerDashboard() {
                           <button
                             type="button"
                             onClick={() => toggleStock(food)}
-                            className="border border-[#41D3BD]/60 text-[#073B35] hover:bg-[#41D3BD] font-black py-2.5 rounded-xl"
+                            className="border border-[#41D3BD]/60 text-[#073B35] hover:bg-[#41D3BD] font-black py-2.5 rounded-xl text-xs sm:text-sm"
                           >
                             {Number(food.stock) === 0 ? "In Stock" : "Sold Out"}
                           </button>
@@ -2180,7 +2255,7 @@ export default function SellerDashboard() {
                           <button
                             type="button"
                             onClick={() => deleteDish(food.id)}
-                            className="border border-red-300 text-red-500 hover:bg-red-500 hover:text-white font-black py-2.5 rounded-xl"
+                            className="border border-red-300 text-red-500 hover:bg-red-500 hover:text-white font-black py-2.5 rounded-xl text-xs sm:text-sm"
                           >
                             Delete
                           </button>

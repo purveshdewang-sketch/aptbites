@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
+const SUPPORT_EMAIL = "nefosupport@gmail.com";
+
 export default function RefundPolicy() {
   const eligibleRefunds = [
     "The order is cancelled before the kitchen starts preparation.",
@@ -174,14 +176,21 @@ export default function RefundPolicy() {
                   </p>
 
                   <h2 className="text-2xl sm:text-3xl font-black text-white mt-2">
-                    Contact Customer Care
+                    Contact Nefo Support
                   </h2>
 
                   <p className="text-[#D7F5EF] text-sm mt-3 leading-relaxed">
-                    For refund or cancellation support, contact Nefo Customer
-                    Care with your order ID, payment reference, amount, and issue
+                    For refund or cancellation support, contact Nefo support
+                    with your order ID, payment reference, amount, and issue
                     details.
                   </p>
+
+                  <a
+                    href={`mailto:${SUPPORT_EMAIL}`}
+                    className="inline-block mt-4 text-[#41D3BD] hover:text-[#55E4CF] font-black break-all"
+                  >
+                    {SUPPORT_EMAIL}
+                  </a>
 
                   <Link
                     to="/customer-care"
@@ -216,7 +225,14 @@ export default function RefundPolicy() {
 
               <p className="text-[#51615D] text-sm mt-1 leading-relaxed">
                 Share your order number, payment reference, screenshots if any,
-                and a clear description of the issue.
+                and a clear description of the issue by email at{" "}
+                <a
+                  href={`mailto:${SUPPORT_EMAIL}`}
+                  className="text-[#073B35] font-black underline"
+                >
+                  {SUPPORT_EMAIL}
+                </a>
+                .
               </p>
             </div>
           </section>

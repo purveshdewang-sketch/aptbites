@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
+const SUPPORT_EMAIL = "nefosupport@gmail.com";
+
 export default function PrivacyPolicy() {
   const sections = [
     {
@@ -40,8 +42,7 @@ export default function PrivacyPolicy() {
     },
     {
       title: "Contact",
-      text:
-        "For privacy-related questions, account concerns, or data correction requests, contact Nefo Customer Care.",
+      text: `For privacy-related questions, account concerns, or data correction requests, contact Nefo support by email at ${SUPPORT_EMAIL}.`,
     },
   ];
 
@@ -122,13 +123,20 @@ export default function PrivacyPolicy() {
                 </p>
 
                 <h2 className="text-2xl sm:text-3xl font-black text-white mt-2">
-                  Contact Nefo Customer Care
+                  Contact Nefo Support
                 </h2>
 
                 <p className="text-[#D7F5EF] text-sm mt-3 leading-relaxed max-w-2xl">
                   Contact support for privacy questions, account correction,
                   order concerns, or data-related requests.
                 </p>
+
+                <a
+                  href={`mailto:${SUPPORT_EMAIL}`}
+                  className="inline-block mt-4 text-[#41D3BD] hover:text-[#55E4CF] font-black break-all"
+                >
+                  {SUPPORT_EMAIL}
+                </a>
               </div>
 
               <Link

@@ -647,13 +647,13 @@ export default function Checkout() {
   function OrderSummaryCard({ compact = false }) {
     return (
       <section
-        className={`bg-white/90 border border-[#D7F5EF] rounded-[2rem] shadow-xl shadow-[#073B35]/5 ${
-          compact ? "p-4" : "p-5 sm:p-6 h-fit lg:sticky lg:top-24"
+        className={`bg-white/95 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] shadow-xl shadow-[#073B35]/5 ${
+          compact ? "p-4 max-h-[70vh] overflow-y-auto" : "p-5 sm:p-6 h-fit lg:sticky lg:top-24"
         }`}
       >
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
+            <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-[11px] sm:text-xs">
               Order Summary
             </p>
 
@@ -667,7 +667,7 @@ export default function Checkout() {
           </div>
         </div>
 
-        <div className="mt-5 space-y-3">
+        <div className="mt-4 sm:mt-5 space-y-3">
           {cartItems.map((item) => (
             <div
               key={item.id}
@@ -676,13 +676,13 @@ export default function Checkout() {
               <img
                 src={item.image}
                 alt={item.name}
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover bg-[#D7F5EF]"
+                className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl object-cover bg-[#D7F5EF] shrink-0"
               />
 
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-black truncate text-[#111827]">
+                    <p className="font-black truncate text-[#111827] text-sm sm:text-base">
                       {item.name}
                     </p>
 
@@ -690,12 +690,12 @@ export default function Checkout() {
                       Kitchen: {getKitchenName(item)}
                     </p>
 
-                    <p className="text-[#51615D] text-sm mt-1">
+                    <p className="text-[#51615D] text-xs sm:text-sm mt-1">
                       Qty {item.quantity}
                     </p>
                   </div>
 
-                  <p className="font-black text-[#073B35] shrink-0">
+                  <p className="font-black text-[#073B35] shrink-0 text-sm sm:text-base">
                     ₹{Number(item.price || 0) * Number(item.quantity || 1)}
                   </p>
                 </div>
@@ -704,7 +704,7 @@ export default function Checkout() {
           ))}
         </div>
 
-        <div className="mt-6 border-t border-[#D7F5EF] pt-5 space-y-4">
+        <div className="mt-5 sm:mt-6 border-t border-[#D7F5EF] pt-5 space-y-3 sm:space-y-4">
           {orderTiming === "scheduled" && formattedSchedule && (
             <div className="bg-[#41D3BD]/12 border border-[#41D3BD]/25 rounded-2xl p-4">
               <p className="text-[#073B35] text-sm font-black">
@@ -743,32 +743,34 @@ export default function Checkout() {
             )}
           </div>
 
-          <div className="flex items-center justify-between text-sm">
-            <p className="text-[#51615D]">Subtotal</p>
-            <p className="font-bold text-[#111827]">₹{subtotalAmount}</p>
-          </div>
-
-          <div className="flex items-center justify-between text-sm">
-            <p className="text-[#51615D]">Packing Charge</p>
-            <p className="font-bold text-[#111827]">₹{safePackingCharge}</p>
-          </div>
-
-          <div className="flex items-center justify-between text-sm">
-            <p className="text-[#51615D]">Platform Fee</p>
-            <p className="font-bold text-[#111827]">₹{PLATFORM_FEE}</p>
-          </div>
-
-          <div className="border-t border-[#D7F5EF] pt-5 flex items-end justify-between">
-            <div>
-              <p className="text-[#51615D] text-sm">Total Amount</p>
-              <p className="text-[#51615D] text-xs mt-1">
-                Fresh homemade food
-              </p>
+          <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <p className="text-[#51615D]">Subtotal</p>
+              <p className="font-bold text-[#111827]">₹{subtotalAmount}</p>
             </div>
 
-            <p className="text-4xl font-black text-[#073B35]">
-              ₹{totalAmount}
-            </p>
+            <div className="flex items-center justify-between text-sm">
+              <p className="text-[#51615D]">Packing Charge</p>
+              <p className="font-bold text-[#111827]">₹{safePackingCharge}</p>
+            </div>
+
+            <div className="flex items-center justify-between text-sm">
+              <p className="text-[#51615D]">Platform Fee</p>
+              <p className="font-bold text-[#111827]">₹{PLATFORM_FEE}</p>
+            </div>
+
+            <div className="border-t border-[#D7F5EF] pt-4 flex items-end justify-between">
+              <div>
+                <p className="text-[#51615D] text-sm">Total Amount</p>
+                <p className="text-[#51615D] text-xs mt-1">
+                  Fresh homemade food
+                </p>
+              </div>
+
+              <p className="text-3xl sm:text-4xl font-black text-[#073B35]">
+                ₹{totalAmount}
+              </p>
+            </div>
           </div>
 
           {!compact && (
@@ -811,8 +813,8 @@ export default function Checkout() {
         <Navbar />
 
         <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-8 flex items-center justify-center">
-          <div className="max-w-xl w-full bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-8 sm:p-10 text-center shadow-xl shadow-[#073B35]/5">
-            <div className="w-24 h-24 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-5xl">
+          <div className="max-w-xl w-full bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-7 sm:p-10 text-center shadow-xl shadow-[#073B35]/5">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-4xl sm:text-5xl">
               🎉
             </div>
 
@@ -848,60 +850,89 @@ export default function Checkout() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-6 sm:py-10 pb-36 lg:pb-10">
+      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-3 sm:px-6 py-4 sm:py-10 pb-36 lg:pb-10">
         <div className="max-w-6xl mx-auto">
-          <section className="relative overflow-hidden bg-white/85 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-xl shadow-[#073B35]/5 mb-6 lg:mb-8">
+          <section className="relative overflow-hidden bg-white/85 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2.5rem] p-4 sm:p-8 shadow-xl shadow-[#073B35]/5 mb-5 lg:mb-8">
             <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[95px]" />
             <div className="absolute -bottom-28 -left-24 w-72 h-72 bg-[#41D3BD]/10 rounded-full blur-[110px]" />
 
-            <div className="relative flex items-end justify-between gap-4">
-              <div>
+            <div className="relative">
+              <div className="flex items-center justify-between gap-3">
                 <div className="inline-flex items-center gap-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
                   <span>✅</span>
                   <span>Checkout</span>
                 </div>
 
-                <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
-                  Complete order
-                </h1>
-
-                <p className="text-[#51615D] mt-4 text-sm sm:text-lg max-w-2xl leading-relaxed">
-                  Confirm delivery details, complete UPI payment, and submit the
-                  transaction reference.
-                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowMobileSummary(!showMobileSummary)}
+                  className="lg:hidden shrink-0 bg-[#073B35] text-white font-black px-4 py-2 rounded-2xl text-xs shadow-sm"
+                >
+                  ₹{totalAmount}
+                </button>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setShowMobileSummary(!showMobileSummary)}
-                className="lg:hidden shrink-0 bg-white border border-[#D7F5EF] text-[#073B35] font-black px-4 py-3 rounded-2xl shadow-sm"
-              >
-                ₹{totalAmount}
-              </button>
+              <h1 className="text-3xl sm:text-6xl font-black mt-4 sm:mt-5 leading-[0.98] tracking-tight text-[#073B35]">
+                Complete order
+              </h1>
+
+              <p className="text-[#51615D] mt-3 sm:mt-4 text-sm sm:text-lg max-w-2xl leading-relaxed">
+                Confirm details, pay by UPI, and submit the transaction
+                reference.
+              </p>
+
+              <div className="lg:hidden mt-4 grid grid-cols-3 gap-2">
+                <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3">
+                  <p className="text-[10px] uppercase font-black text-[#51615D]">
+                    Items
+                  </p>
+                  <p className="text-[#073B35] font-black text-lg">
+                    {cartItems.length}
+                  </p>
+                </div>
+
+                <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3">
+                  <p className="text-[10px] uppercase font-black text-[#51615D]">
+                    Pack
+                  </p>
+                  <p className="text-[#073B35] font-black text-lg">
+                    ₹{safePackingCharge}
+                  </p>
+                </div>
+
+                <div className="bg-[#41D3BD]/12 border border-[#41D3BD]/25 rounded-2xl p-3">
+                  <p className="text-[10px] uppercase font-black text-[#51615D]">
+                    Total
+                  </p>
+                  <p className="text-[#073B35] font-black text-lg">
+                    ₹{totalAmount}
+                  </p>
+                </div>
+              </div>
+
+              {showMobileSummary && (
+                <div className="relative lg:hidden mt-5">
+                  <OrderSummaryCard compact />
+                </div>
+              )}
             </div>
-
-            {showMobileSummary && (
-              <div className="relative lg:hidden mt-5">
-                <OrderSummaryCard compact />
-              </div>
-            )}
           </section>
 
-          <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-6 lg:gap-8">
+          <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-5 lg:gap-8">
             <section className="space-y-5 sm:space-y-6">
-              <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
+              <div className="bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-4 sm:p-6 shadow-xl shadow-[#073B35]/5">
                 <StepHeader
                   number="1"
                   title="Delivery details"
                   subtitle="Confirm your name, phone, address and delivery option."
                 />
 
-                <div className="mt-6 space-y-4">
+                <div className="mt-5 sm:mt-6 space-y-3 sm:space-y-4">
                   <input
                     name="fullName"
                     value={formData.fullName}
                     onChange={handleChange}
-                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] transition-all"
+                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD] transition-all"
                     placeholder="Full Name"
                   />
 
@@ -910,7 +941,7 @@ export default function Checkout() {
                     value={formData.phone}
                     disabled
                     readOnly
-                    className="w-full bg-[#EAF7F4] border border-[#D7F5EF] rounded-2xl px-5 py-4 outline-none text-[#51615D] cursor-not-allowed"
+                    className="w-full bg-[#EAF7F4] border border-[#D7F5EF] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none text-[#51615D] cursor-not-allowed"
                     placeholder="Phone Number"
                   />
 
@@ -918,7 +949,7 @@ export default function Checkout() {
                     name="flat"
                     value={formData.flat}
                     onChange={handleChange}
-                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] transition-all"
+                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD] transition-all"
                     placeholder="Your tower / flat number"
                   />
 
@@ -1003,20 +1034,20 @@ export default function Checkout() {
                     value={formData.notes}
                     onChange={handleChange}
                     rows="3"
-                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] transition-all resize-none"
+                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD] transition-all resize-none"
                     placeholder="Extra spicy, less oil, call before arrival..."
                   />
                 </div>
               </div>
 
-              <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
+              <div className="bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-4 sm:p-6 shadow-xl shadow-[#073B35]/5">
                 <StepHeader
                   number="2"
                   title="Order timing"
                   subtitle="Order now or schedule for later if the kitchen allows it."
                 />
 
-                <div className="mt-6">
+                <div className="mt-5 sm:mt-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <button
                       type="button"
@@ -1088,7 +1119,7 @@ export default function Checkout() {
                         onChange={(event) =>
                           setScheduledDate(event.target.value)
                         }
-                        className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] transition-all"
+                        className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD] transition-all"
                       />
 
                       <input
@@ -1097,7 +1128,7 @@ export default function Checkout() {
                         onChange={(event) =>
                           setScheduledTime(event.target.value)
                         }
-                        className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] transition-all"
+                        className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD] transition-all"
                       />
 
                       {formattedSchedule && (
@@ -1115,11 +1146,11 @@ export default function Checkout() {
                 </div>
               </div>
 
-              <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] overflow-hidden shadow-xl shadow-[#073B35]/5">
-                <div className="bg-[#073B35] text-white p-5 sm:p-6">
+              <div className="bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] overflow-hidden shadow-xl shadow-[#073B35]/5">
+                <div className="bg-[#073B35] text-white p-4 sm:p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-sm font-black uppercase tracking-wide text-white/60">
+                      <p className="text-xs sm:text-sm font-black uppercase tracking-wide text-white/60">
                         Step 3
                       </p>
 
@@ -1128,7 +1159,7 @@ export default function Checkout() {
                       </h2>
 
                       <p className="text-white/65 text-sm mt-2">
-                        Pay first, then submit reference to confirm the order.
+                        Pay first, then submit reference.
                       </p>
                     </div>
 
@@ -1143,7 +1174,7 @@ export default function Checkout() {
                     </div>
                   </div>
 
-                  <div className="mt-5 bg-white/10 border border-white/10 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
+                  <div className="mt-5 bg-white/10 border border-white/10 rounded-2xl px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div>
                       <p className="font-black">UPI payment only</p>
                       <p className="text-white/60 text-xs mt-0.5">
@@ -1151,13 +1182,13 @@ export default function Checkout() {
                       </p>
                     </div>
 
-                    <p className="font-black text-xs sm:text-sm break-all text-right text-[#41D3BD]">
+                    <p className="font-black text-xs sm:text-sm break-all text-[#41D3BD]">
                       {Nefo_UPI_ID}
                     </p>
                   </div>
                 </div>
 
-                <div className="p-5 sm:p-6">
+                <div className="p-4 sm:p-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <a
                       href={upiPaymentLink}
@@ -1176,7 +1207,7 @@ export default function Checkout() {
                   </div>
 
                   {showQr && (
-                    <div className="mt-5 bg-[#FFFFF2] border border-[#D7F5EF] rounded-[2rem] p-5 text-center">
+                    <div className="mt-5 bg-[#FFFFF2] border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-5 text-center">
                       <p className="text-[#1A9F8D] text-sm font-black uppercase tracking-wide">
                         Scan & Pay
                       </p>
@@ -1185,7 +1216,7 @@ export default function Checkout() {
                         <img
                           src={qrCodeUrl}
                           alt="Nefo UPI QR Code"
-                          className="w-56 h-56 object-contain"
+                          className="w-52 h-52 sm:w-56 sm:h-56 object-contain"
                         />
                       </div>
 
@@ -1250,7 +1281,7 @@ export default function Checkout() {
                       onChange={(event) =>
                         setPaymentReference(event.target.value)
                       }
-                      className="w-full mt-3 bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] transition-all"
+                      className="w-full mt-3 bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD] transition-all"
                       placeholder="Enter UPI reference / transaction ID"
                     />
 
@@ -1269,14 +1300,14 @@ export default function Checkout() {
           </div>
         </div>
 
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#FFFFF2]/95 backdrop-blur-xl border-t border-[#D7F5EF] px-4 py-3">
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#FFFFF2]/95 backdrop-blur-xl border-t border-[#D7F5EF] px-3 py-3">
           <div className="max-w-6xl mx-auto flex items-center gap-3">
             <button
               type="button"
               onClick={() => setShowMobileSummary(!showMobileSummary)}
               className="shrink-0 bg-white border border-[#D7F5EF] rounded-2xl px-4 py-3 text-left shadow-sm"
             >
-              <p className="text-[#51615D] text-[11px] font-bold uppercase">
+              <p className="text-[#51615D] text-[10px] font-black uppercase">
                 Total
               </p>
               <p className="text-[#073B35] text-xl font-black">

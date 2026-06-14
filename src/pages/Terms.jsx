@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
+const SUPPORT_EMAIL = "nefosupport@gmail.com";
+
 export default function Terms() {
   const termsSections = [
     {
@@ -47,6 +49,10 @@ export default function Terms() {
       title: "Account Use",
       text:
         "Users must provide accurate account information and must not misuse the platform, create fake orders, interfere with app operations, or use Nefo for unlawful activity.",
+    },
+    {
+      title: "Support Contact",
+      text: `For questions about orders, refunds, privacy, seller accounts, or platform rules, contact Nefo support by email at ${SUPPORT_EMAIL}.`,
     },
   ];
 
@@ -174,13 +180,20 @@ export default function Terms() {
                 </p>
 
                 <h2 className="text-2xl sm:text-3xl font-black text-white mt-2">
-                  Contact Customer Care
+                  Contact Nefo Support
                 </h2>
 
                 <p className="text-[#D7F5EF] text-sm mt-3 leading-relaxed">
                   For questions about orders, refunds, privacy, seller accounts,
-                  or platform rules, contact Nefo Customer Care.
+                  or platform rules, contact Nefo support by email.
                 </p>
+
+                <a
+                  href={`mailto:${SUPPORT_EMAIL}`}
+                  className="inline-block mt-4 text-[#41D3BD] hover:text-[#55E4CF] font-black break-all"
+                >
+                  {SUPPORT_EMAIL}
+                </a>
 
                 <Link
                   to="/customer-care"
@@ -203,7 +216,14 @@ export default function Terms() {
 
             <p className="text-[#51615D] mt-4 leading-relaxed">
               These terms should be read together with Nefo’s Refund &
-              Cancellation Policy and Privacy Policy.
+              Cancellation Policy and Privacy Policy. For policy support, email{" "}
+              <a
+                href={`mailto:${SUPPORT_EMAIL}`}
+                className="text-[#073B35] font-black underline"
+              >
+                {SUPPORT_EMAIL}
+              </a>
+              .
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 mt-5">
