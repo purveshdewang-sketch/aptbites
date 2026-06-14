@@ -4,6 +4,39 @@ import Navbar from "../components/Navbar";
 const SUPPORT_EMAIL = "nefosupport@gmail.com";
 
 export default function CustomerCare() {
+  const quickActions = [
+    {
+      title: "Order Issues",
+      text: "Missing, wrong item, delayed, or not received.",
+      icon: "📦",
+    },
+    {
+      title: "Payment Issues",
+      text: "UPI reference, failed payment, or payment not showing.",
+      icon: "💳",
+    },
+    {
+      title: "Refund Request",
+      text: "Refunds, cancellations, or payment-related refunds.",
+      icon: "↩️",
+    },
+    {
+      title: "Packing & Delivery",
+      text: "Packing required, no packing, pickup, or delivery help.",
+      icon: "🛍️",
+    },
+    {
+      title: "Kitchen Help",
+      text: "Seller, food listing, or kitchen-related issue.",
+      icon: "🏪",
+    },
+    {
+      title: "Account Help",
+      text: "Login, password reset, profile, or phone-related help.",
+      icon: "👤",
+    },
+  ];
+
   return (
     <>
       <Navbar />
@@ -14,119 +47,145 @@ export default function CustomerCare() {
             <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[95px]" />
             <div className="absolute -bottom-28 -left-24 w-72 h-72 bg-[#41D3BD]/10 rounded-full blur-[110px]" />
 
-            <div className="relative">
-              <div className="inline-flex items-center gap-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
-                <span>🎧</span>
-                <span>Customer Care</span>
+            <div className="relative grid grid-cols-1 lg:grid-cols-[1fr_0.75fr] gap-8 lg:items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
+                  <span>🎧</span>
+                  <span>Nefo Support</span>
+                </div>
+
+                <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
+                  We’re here
+                  <span className="block text-[#111827]">to help</span>
+                </h1>
+
+                <p className="text-[#51615D] mt-4 max-w-2xl leading-relaxed text-sm sm:text-lg">
+                  Get support for orders, payments, refunds, cancellations,
+                  packing, delivery, seller issues, or account help.
+                </p>
+
+                <div className="mt-7 flex flex-col sm:flex-row gap-3">
+                  <Link
+                    to="/care-agent"
+                    className="bg-[#073B35] hover:bg-[#0B5149] text-white font-black px-6 py-4 rounded-2xl text-center shadow-lg shadow-[#073B35]/15 transition-all"
+                  >
+                    Chat with Us
+                  </Link>
+
+                  <a
+                    href={`mailto:${SUPPORT_EMAIL}`}
+                    className="bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black px-6 py-4 rounded-2xl text-center transition-all break-all"
+                  >
+                    Email Support
+                  </a>
+                </div>
               </div>
 
-              <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
-                Need help
-                <span className="block text-[#111827]">with Nefo?</span>
-              </h1>
+              <div className="bg-[#073B35] rounded-[2rem] p-5 sm:p-7 shadow-xl shadow-[#073B35]/15 relative overflow-hidden">
+                <div className="absolute -top-16 -right-16 w-48 h-48 bg-[#41D3BD]/20 blur-[70px] rounded-full" />
 
-              <p className="text-[#51615D] mt-4 max-w-2xl leading-relaxed text-sm sm:text-lg">
-                Contact us for order issues, seller account help, payment
-                problems, refunds, cancellations, or app support.
-              </p>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-                <Link
-                  to="/care-agent"
-                  className="group bg-[#073B35] rounded-3xl p-5 transition-all shadow-xl shadow-[#073B35]/15"
-                >
-                  <div className="w-12 h-12 rounded-2xl bg-[#41D3BD]/15 flex items-center justify-center text-2xl">
+                <div className="relative">
+                  <div className="w-14 h-14 rounded-2xl bg-[#41D3BD]/15 flex items-center justify-center text-3xl">
                     🤖
                   </div>
 
-                  <h2 className="text-xl font-black mt-4 text-white">
-                    Smart Care Agent
+                  <p className="text-[#41D3BD] font-black uppercase tracking-wide text-xs mt-5">
+                    Recommended
+                  </p>
+
+                  <h2 className="text-2xl sm:text-3xl font-black text-white mt-2">
+                    Chat with Us
                   </h2>
 
-                  <p className="text-[#D7F5EF] text-sm mt-2 leading-relaxed">
-                    Get instant help for orders, payments, refunds, packing, and
-                    food issues.
+                  <p className="text-[#D7F5EF] text-sm mt-3 leading-relaxed">
+                    Our smart support agent can attach your order details,
+                    payment status, packing choice, and issue type
+                    automatically.
                   </p>
 
-                  <p className="mt-4 text-[#41D3BD] group-hover:text-[#55E4CF] font-black">
-                    Open Agent
-                  </p>
-                </Link>
-
-                <a
-                  href={`mailto:${SUPPORT_EMAIL}`}
-                  className="group bg-[#FFFFF2] border border-[#D7F5EF] hover:border-[#41D3BD]/60 rounded-3xl p-5 transition-all"
-                >
-                  <div className="w-12 h-12 rounded-2xl bg-[#41D3BD]/15 flex items-center justify-center text-2xl">
-                    ✉️
-                  </div>
-
-                  <h2 className="text-xl font-black mt-4 text-[#073B35]">
-                    Email Support
-                  </h2>
-
-                  <p className="text-[#51615D] text-sm mt-2 leading-relaxed">
-                    Use this for non-urgent support and account help.
-                  </p>
-
-                  <p className="mt-4 text-[#1A9F8D] group-hover:text-[#073B35] font-black break-all">
-                    {SUPPORT_EMAIL}
-                  </p>
-                </a>
-
-                <Link
-                  to="/orders"
-                  className="group bg-[#FFFFF2] border border-[#D7F5EF] hover:border-[#41D3BD]/60 rounded-3xl p-5 transition-all"
-                >
-                  <div className="w-12 h-12 rounded-2xl bg-[#41D3BD]/15 flex items-center justify-center text-2xl">
-                    🛎️
-                  </div>
-
-                  <h2 className="text-xl font-black mt-4 text-[#073B35]">
-                    Active Orders
-                  </h2>
-
-                  <p className="text-[#51615D] text-sm mt-2 leading-relaxed">
-                    Check your live order status before raising a support
-                    request.
-                  </p>
-
-                  <p className="mt-4 text-[#1A9F8D] group-hover:text-[#073B35] font-black">
-                    View Orders
-                  </p>
-                </Link>
+                  <Link
+                    to="/care-agent"
+                    className="block mt-6 bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black text-center py-4 rounded-2xl transition-all"
+                  >
+                    Start Chat
+                  </Link>
+                </div>
               </div>
+            </div>
+          </section>
+
+          <section className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white/90 border border-[#D7F5EF] rounded-3xl p-5 shadow-lg shadow-[#073B35]/5">
+              <div className="w-12 h-12 rounded-2xl bg-[#41D3BD]/15 flex items-center justify-center text-2xl">
+                ⚡
+              </div>
+              <h2 className="text-xl font-black mt-4 text-[#073B35]">
+                Fast response
+              </h2>
+              <p className="text-[#51615D] text-sm mt-2 leading-relaxed">
+                Use chat for quick order, payment, refund, and packing support.
+              </p>
+            </div>
+
+            <div className="bg-white/90 border border-[#D7F5EF] rounded-3xl p-5 shadow-lg shadow-[#073B35]/5">
+              <div className="w-12 h-12 rounded-2xl bg-[#41D3BD]/15 flex items-center justify-center text-2xl">
+                🔒
+              </div>
+              <h2 className="text-xl font-black mt-4 text-[#073B35]">
+                Private support
+              </h2>
+              <p className="text-[#51615D] text-sm mt-2 leading-relaxed">
+                Your order details are used only for support and resolution.
+              </p>
+            </div>
+
+            <div className="bg-white/90 border border-[#D7F5EF] rounded-3xl p-5 shadow-lg shadow-[#073B35]/5">
+              <div className="w-12 h-12 rounded-2xl bg-[#41D3BD]/15 flex items-center justify-center text-2xl">
+                🕘
+              </div>
+              <h2 className="text-xl font-black mt-4 text-[#073B35]">
+                Support hours
+              </h2>
+              <p className="text-[#1A9F8D] text-sm mt-2 font-black">
+                9:00 AM – 9:00 PM
+              </p>
             </div>
           </section>
 
           <section className="grid grid-cols-1 lg:grid-cols-[1fr_0.8fr] gap-5 mt-6">
             <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-7 shadow-lg shadow-[#073B35]/5">
               <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                Support Topics
+                Quick Actions
               </p>
 
               <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
-                What can we help with?
+                Choose what you need
               </h2>
 
-              <div className="mt-6 space-y-3">
-                {[
-                  "Order not showing after checkout",
-                  "Kitchen did not accept or prepare the order",
-                  "Wrong item, missing item, or quantity issue",
-                  "Refund or cancellation request",
-                  "Payment reference or UPI issue",
-                  "Packing required / no packing issue",
-                  "Seller dashboard or food listing problem",
-                  "Login, password reset, or account issue",
-                ].map((item) => (
-                  <div
-                    key={item}
-                    className="flex items-start gap-3 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4"
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
+                {quickActions.map((item) => (
+                  <Link
+                    key={item.title}
+                    to="/care-agent"
+                    className="group flex items-center gap-4 bg-[#FFFFF2] border border-[#D7F5EF] hover:border-[#41D3BD]/60 rounded-2xl p-4 transition-all"
                   >
-                    <span className="mt-0.5 text-[#073B35] font-black">✓</span>
-                    <p className="text-[#51615D] font-bold">{item}</p>
-                  </div>
+                    <div className="w-12 h-12 rounded-2xl bg-[#41D3BD]/15 flex items-center justify-center text-2xl shrink-0">
+                      {item.icon}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[#073B35] font-black">
+                        {item.title}
+                      </p>
+                      <p className="text-[#51615D] text-xs mt-1 leading-relaxed">
+                        {item.text}
+                      </p>
+                    </div>
+
+                    <span className="text-[#1A9F8D] font-black group-hover:translate-x-1 transition-all">
+                      →
+                    </span>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -134,24 +193,17 @@ export default function CustomerCare() {
             <aside className="space-y-5">
               <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-7 shadow-lg shadow-[#073B35]/5 h-fit">
                 <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                  Quick Actions
+                  Resolve faster
                 </p>
 
                 <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
-                  Resolve faster
+                  Useful links
                 </h2>
 
                 <div className="grid gap-3 mt-6">
                   <Link
-                    to="/care-agent"
-                    className="bg-[#073B35] hover:bg-[#0B5149] text-white font-black text-center py-4 rounded-2xl shadow-lg shadow-[#073B35]/15 transition-all"
-                  >
-                    Open Smart Care Agent
-                  </Link>
-
-                  <Link
                     to="/orders"
-                    className="bg-[#FFFFF2] border border-[#D7F5EF] hover:bg-[#D7F5EF] text-[#073B35] font-black text-center py-4 rounded-2xl transition-all"
+                    className="bg-[#073B35] hover:bg-[#0B5149] text-white font-black text-center py-4 rounded-2xl shadow-lg shadow-[#073B35]/15 transition-all"
                   >
                     View Active Orders
                   </Link>
@@ -179,35 +231,31 @@ export default function CustomerCare() {
                 </div>
 
                 <p className="text-[#8AA5A0] text-xs mt-5 leading-relaxed">
-                  For faster support, keep your order number and UPI reference
-                  ready.
+                  Keep your order number and UPI reference ready for faster
+                  resolution.
                 </p>
               </div>
 
-              <div className="bg-[#073B35] rounded-[2rem] p-5 sm:p-7 shadow-xl shadow-[#073B35]/15 relative overflow-hidden">
-                <div className="absolute -top-16 -right-16 w-48 h-48 bg-[#41D3BD]/20 blur-[70px] rounded-full" />
-
-                <div className="relative">
-                  <p className="text-[#41D3BD] font-black uppercase tracking-wide text-xs">
-                    Smart Ticketing
-                  </p>
-
-                  <h2 className="text-2xl font-black text-white mt-2">
-                    Let the care agent create your ticket
-                  </h2>
-
-                  <p className="text-[#D7F5EF] text-sm mt-3 leading-relaxed">
-                    The Smart Care Agent can attach your order details, payment
-                    status, packing choice, and issue type automatically.
-                  </p>
-
-                  <Link
-                    to="/care-agent"
-                    className="inline-block mt-5 bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black px-5 py-3 rounded-2xl"
-                  >
-                    Start Smart Support
-                  </Link>
+              <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-7 shadow-lg shadow-[#073B35]/5">
+                <div className="w-12 h-12 rounded-2xl bg-[#41D3BD]/15 flex items-center justify-center text-2xl">
+                  ✉️
                 </div>
+
+                <h2 className="text-2xl font-black text-[#073B35] mt-4">
+                  Need email help?
+                </h2>
+
+                <p className="text-[#51615D] text-sm mt-3 leading-relaxed">
+                  For non-urgent issues, email us with order number, UPI
+                  reference, screenshots, and issue details.
+                </p>
+
+                <a
+                  href={`mailto:${SUPPORT_EMAIL}`}
+                  className="inline-block mt-4 text-[#1A9F8D] hover:text-[#073B35] font-black break-all"
+                >
+                  {SUPPORT_EMAIL}
+                </a>
               </div>
             </aside>
           </section>
@@ -251,4 +299,4 @@ export default function CustomerCare() {
       </main>
     </>
   );
-} 
+}
