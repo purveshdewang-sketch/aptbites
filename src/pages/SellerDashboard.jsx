@@ -1845,27 +1845,29 @@ export default function SellerDashboard() {
                           </div>
                         )}
 
-                        {sellerResponse === "accepted" &&
-                          orderIsSelfPickup &&
-                          !order.ready_for_pickup && (
-                            <button
-                              type="button"
-                              onClick={() => markReadyForPickup(order.id)}
-                              className="mt-4 sm:mt-5 w-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white font-black py-3 rounded-2xl transition-all"
-                            >
-                              Mark Ready for Pickup
-                            </button>
-                          )}
-
                         {sellerResponse === "accepted" && (
-                          <button
-                            type="button"
-                            onClick={() => completeOrder(order.id)}
-                            className="mt-4 sm:mt-5 w-full bg-[#073B35] hover:bg-[#0B5149] active:scale-95 text-white font-black py-3 rounded-2xl transition-all"
-                          >
-                            Complete Order
-                          </button>
-                        )}
+  <div className="mt-4 space-y-3">
+
+    {orderIsSelfPickup && !order.ready_for_pickup && (
+      <button
+        type="button"
+        onClick={() => markReadyForPickup(order.id)}
+        className="w-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white font-black py-3 rounded-2xl transition-all"
+      >
+        📦 Ready for Pickup
+      </button>
+    )}
+
+    <button
+      type="button"
+      onClick={() => completeOrder(order.id)}
+      className="w-full bg-[#073B35] hover:bg-[#0B5149] active:scale-95 text-white font-black py-3 rounded-2xl transition-all"
+    >
+      ✅ Complete Order
+    </button>
+
+  </div>
+)}
                       </article>
                     );
                   })}
