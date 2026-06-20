@@ -351,7 +351,7 @@ export default function Orders() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-6 sm:py-10 pb-24">
+      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-6 sm:py-10 pb-28">
         <div className="max-w-5xl mx-auto">
           <section className="relative overflow-hidden bg-white/85 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-xl shadow-[#073B35]/5">
             <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[95px]" />
@@ -370,7 +370,8 @@ export default function Orders() {
 
               <p className="text-[#51615D] mt-4 max-w-2xl leading-relaxed text-sm sm:text-lg">
                 Track your Nefo orders from kitchen confirmation to final
-                completion.
+                completion. For item changes or quick updates, chat directly
+                with the kitchen for that order.
               </p>
             </div>
           </section>
@@ -508,6 +509,31 @@ export default function Orders() {
                     </div>
 
                     <OrderStatusBar order={order} />
+
+                    <Link
+                      to={`/order-chat/${order.id}`}
+                      className="mt-5 flex items-center justify-between gap-4 w-full bg-[#EFFFFB] border border-[#41D3BD]/50 hover:bg-[#D7F5EF] active:scale-[0.99] transition-all rounded-3xl p-4 shadow-sm"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-12 h-12 rounded-2xl bg-[#41D3BD]/20 text-[#073B35] flex items-center justify-center text-2xl shrink-0">
+                          💬
+                        </div>
+
+                        <div className="min-w-0 text-left">
+                          <p className="font-black text-[#073B35] truncate">
+                            Chat with the kitchen
+                          </p>
+
+                          <p className="text-xs text-[#51615D] mt-0.5 leading-relaxed">
+                            Ask about this order or reply to item updates.
+                          </p>
+                        </div>
+                      </div>
+
+                      <span className="text-[#073B35] text-2xl font-black shrink-0">
+                        ›
+                      </span>
+                    </Link>
 
                     <div className="mt-5 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4 space-y-3">
                       {orderItems.map((item) => (

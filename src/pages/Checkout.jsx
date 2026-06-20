@@ -5,7 +5,7 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabaseClient";
 
-const PLATFORM_FEE = 10;
+const PLATFORM_FEE = 8;
 const Nefo_UPI_ID = "cropg1agroresearch@sbi";
 const Nefo_PAYEE_NAME = "Nefo";
 

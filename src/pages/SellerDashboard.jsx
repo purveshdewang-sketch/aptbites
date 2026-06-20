@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../context/AuthContext";
@@ -16,6 +16,7 @@ const FOOD_CATEGORIES = [
 
 export default function SellerDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const audioContextRef = useRef(null);
   const previousOrderIdsRef = useRef([]);
@@ -46,6 +47,7 @@ export default function SellerDashboard() {
   });
 
   const [sellerProfileComplete, setSellerProfileComplete] = useState(false);
+  const [bankDetailsCompleted, setBankDetailsCompleted] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileSaving, setProfileSaving] = useState(false);
 
@@ -163,7 +165,7 @@ export default function SellerDashboard() {
     const { data, error } = await supabase
       .from("profiles")
       .select(
-        "role, is_seller, seller_online, accept_scheduled_orders, delivery_available, pickup_available, packing_charge, seller_kitchen_name, flat, phone, seller_specialty, seller_about"
+        "role, is_seller, seller_online, accept_scheduled_orders, delivery_available, pickup_available, packing_charge, seller_kitchen_name, flat, phone, seller_specialty, seller_about, bank_details_completed"
       )
       .eq("id", user.id)
       .maybeSingle();
@@ -191,7 +193,8 @@ export default function SellerDashboard() {
     }
 
     const safePackingCharge = getSafePackingCharge(data?.packing_charge || 5);
-
+    const bankComplete = data?.bank_details_completed === true;
+setBankDetailsCompleted(bankComplete);
     setSellerOnline(data?.seller_online !== false);
     setAcceptScheduledOrders(data?.accept_scheduled_orders !== false);
     setDeliveryAvailable(data?.delivery_available !== false);
@@ -1273,6 +1276,45 @@ export default function SellerDashboard() {
       </>
     );
   }
+
+  if (!bankDetailsCompleted) {
+  return (
+    <>
+      <Navbar />
+
+      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-10 flex items-center justify-center">
+        <div className="max-w-md w-full bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-6 sm:p-8 text-center shadow-xl shadow-[#073B35]/5">
+          <div className="w-20 h-20 mx-auto rounded-full bg-yellow-50 border border-yellow-200 flex items-center justify-center text-4xl">
+            🏦
+          </div>
+
+          <h1 className="text-3xl font-black mt-6 text-[#111827]">
+            Complete bank details
+          </h1>
+
+          <p className="text-[#51615D] mt-3 leading-relaxed">
+            Your seller account is approved, but payout bank details are required before opening Seller Dashboard.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => navigate("/profile")}
+            className="w-full mt-7 bg-[#073B35] hover:bg-[#0B5149] text-white font-black py-4 rounded-2xl shadow-lg shadow-[#073B35]/15"
+          >
+            Complete Profile
+          </button>
+
+          <Link
+            to="/seller-helper"
+            className="block mt-3 border border-[#D7F5EF] bg-[#FFFFF2] hover:bg-[#D7F5EF] text-[#073B35] font-black py-3 rounded-2xl"
+          >
+            Need Help?
+          </Link>
+        </div>
+      </main>
+    </>
+  );
+}
 
   if (!sellerProfileComplete) {
     return (

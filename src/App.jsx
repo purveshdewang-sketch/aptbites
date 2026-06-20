@@ -29,10 +29,12 @@ import CustomerCareAgent from "./pages/CustomerCareAgent";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import RefundPolicy from "./pages/RefundPolicy";
+import SellerHelper from "./pages/SellerHelper";
+import OrderChat from "./pages/OrderChat";
+import ScrollToTop from "./components/ScrollToTop";
 
 import { useAuth } from "./context/AuthContext";
 import { supabase } from "./lib/supabaseClient";
-import SellerHelper from "./pages/SellerHelper";
 
 function LoadingScreen() {
   return (
@@ -51,9 +53,14 @@ function FloatingHelpButton() {
     "/reset-password",
     "/care-agent",
     "/seller-helper",
+    "/order-chat",
   ];
 
-  if (hiddenRoutes.includes(location.pathname)) return null;
+  const shouldHide = hiddenRoutes.some((route) =>
+    location.pathname.startsWith(route)
+  );
+
+  if (shouldHide) return null;
 
   const needsHigherPosition =
     location.pathname === "/cart" ||
@@ -242,6 +249,8 @@ function AdminOnlyRoute({ children }) {
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
+
       <Routes>
         <Route path="/customer-login" element={<CustomerLogin />} />
         <Route path="/seller-login" element={<SellerLogin />} />
@@ -347,6 +356,15 @@ export default function App() {
         />
 
         <Route
+          path="/seller-helper"
+          element={
+            <SellerOnlyRoute>
+              <SellerHelper />
+            </SellerOnlyRoute>
+          }
+        />
+
+        <Route
           path="/owner-dashboard"
           element={
             <AdminOnlyRoute>
@@ -401,6 +419,15 @@ export default function App() {
         />
 
         <Route
+          path="/order-chat/:orderId"
+          element={
+            <ProtectedRoute>
+              <OrderChat />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/order-history"
           element={
             <ProtectedRoute>
@@ -408,15 +435,6 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-
-        <Route
-  path="/seller-helper"
-  element={
-    <SellerOnlyRoute>
-      <SellerHelper />
-    </SellerOnlyRoute>
-  }
-/>
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

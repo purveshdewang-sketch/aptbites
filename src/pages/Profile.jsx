@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabaseClient";
 
 export default function Profile() {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     full_name: "",
@@ -28,6 +29,7 @@ export default function Profile() {
 
   const [role, setRole] = useState("customer");
   const [isSeller, setIsSeller] = useState(false);
+  const [bankDetailsCompleted, setBankDetailsCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
@@ -36,6 +38,30 @@ export default function Profile() {
   const profileChanged =
     originalFormData &&
     JSON.stringify(formData) !== JSON.stringify(originalFormData);
+
+  const currentBankDetailsComplete = Boolean(
+    formData.bank_account_holder?.trim() &&
+      formData.bank_name?.trim() &&
+      formData.bank_account_number?.trim() &&
+      formData.bank_ifsc?.trim()
+  );
+
+  const sellerOnboardingComplete =
+    isSeller && bankDetailsCompleted && currentBankDetailsComplete;
+
+  const sellerProgress = isSeller
+    ? Math.round(
+        ([
+          true,
+          currentBankDetailsComplete,
+          Boolean(formData.seller_kitchen_name?.trim()),
+          Boolean(formData.seller_specialty?.trim()),
+          Boolean(formData.seller_about?.trim()),
+        ].filter(Boolean).length /
+          5) *
+          100
+      )
+    : 0;
 
   useEffect(() => {
     fetchProfile();
@@ -70,7 +96,7 @@ export default function Profile() {
     const { data, error } = await supabase
       .from("profiles")
       .select(
-        "role, is_seller, full_name, phone, flat, seller_kitchen_name, seller_specialty, seller_about, accept_scheduled_orders, delivery_available, pickup_available, seller_application_status, bank_account_holder, bank_name, bank_account_number, bank_ifsc, bank_upi_id"
+        "role, is_seller, full_name, phone, flat, seller_kitchen_name, seller_specialty, seller_about, accept_scheduled_orders, delivery_available, pickup_available, seller_application_status, bank_account_holder, bank_name, bank_account_number, bank_ifsc, bank_upi_id, bank_details_completed"
       )
       .eq("id", user.id)
       .maybeSingle();
@@ -99,6 +125,7 @@ export default function Profile() {
 
     setRole(profileRole || "customer");
     setIsSeller(sellerAllowed);
+    setBankDetailsCompleted(data?.bank_details_completed === true);
 
     const loadedProfile = {
       full_name: data?.full_name || user?.user_metadata?.full_name || "",
@@ -159,7 +186,7 @@ export default function Profile() {
 
     if (!user) return;
 
-    if (!profileChanged) {
+    if (!profileChanged && bankDetailsCompleted === currentBankDetailsComplete) {
       setMessage("No profile changes to save.");
       return;
     }
@@ -173,8 +200,17 @@ export default function Profile() {
       return;
     }
 
+    if (isSeller && !currentBankDetailsComplete) {
+      setMessage(
+        "Please complete Account Holder Name, Bank Name, Account Number, and IFSC Code to start selling."
+      );
+      return;
+    }
+
     setSaving(true);
     setMessage("");
+
+    const nextBankDetailsCompleted = isSeller ? currentBankDetailsComplete : false;
 
     const profilePayload = {
       id: user.id,
@@ -184,11 +220,12 @@ export default function Profile() {
       flat: formData.flat,
       role,
       is_seller: isSeller,
-      bank_account_holder: formData.bank_account_holder,
-      bank_name: formData.bank_name,
-      bank_account_number: formData.bank_account_number,
-      bank_ifsc: formData.bank_ifsc,
-      bank_upi_id: formData.bank_upi_id,
+      bank_account_holder: formData.bank_account_holder.trim(),
+      bank_name: formData.bank_name.trim(),
+      bank_account_number: formData.bank_account_number.trim(),
+      bank_ifsc: formData.bank_ifsc.trim().toUpperCase(),
+      bank_upi_id: formData.bank_upi_id.trim(),
+      bank_details_completed: nextBankDetailsCompleted,
     };
 
     if (isSeller) {
@@ -227,16 +264,29 @@ export default function Profile() {
       accept_scheduled_orders: formData.accept_scheduled_orders,
       delivery_available: formData.delivery_available,
       pickup_available: formData.pickup_available,
-      bank_account_holder: formData.bank_account_holder,
-      bank_name: formData.bank_name,
-      bank_account_number: formData.bank_account_number,
-      bank_ifsc: formData.bank_ifsc,
-      bank_upi_id: formData.bank_upi_id,
+      bank_account_holder: formData.bank_account_holder.trim(),
+      bank_name: formData.bank_name.trim(),
+      bank_account_number: formData.bank_account_number.trim(),
+      bank_ifsc: formData.bank_ifsc.trim().toUpperCase(),
+      bank_upi_id: formData.bank_upi_id.trim(),
     };
 
+    setFormData(savedProfile);
     setOriginalFormData(savedProfile);
-    setMessage("Profile updated successfully.");
+    setBankDetailsCompleted(nextBankDetailsCompleted);
     setSaving(false);
+
+    if (isSeller && nextBankDetailsCompleted) {
+      setMessage("Bank details saved. Redirecting to Seller Dashboard...");
+
+      setTimeout(() => {
+        navigate("/seller-dashboard");
+      }, 900);
+
+      return;
+    }
+
+    setMessage("Profile updated successfully.");
   }
 
   async function handlePasswordReset() {
@@ -273,6 +323,11 @@ export default function Profile() {
     if (formData.full_name) return formData.full_name.charAt(0).toUpperCase();
     if (user?.email) return user.email.charAt(0).toUpperCase();
     return "N";
+  }
+
+  function scrollToBankDetails() {
+    const bankSection = document.getElementById("seller-bank-details");
+    bankSection?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   if (!user) {
@@ -346,6 +401,46 @@ export default function Profile() {
             </div>
           </section>
 
+          {isSeller && !sellerOnboardingComplete && !loading && (
+            <section className="mt-5 bg-[#073B35] text-white rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/15">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
+                <div className="flex-1">
+                  <p className="text-[#41D3BD] font-black uppercase tracking-wide text-xs">
+                    Seller onboarding required
+                  </p>
+
+                  <h2 className="text-2xl sm:text-3xl font-black mt-2">
+                    Complete bank details to start selling
+                  </h2>
+
+                  <p className="text-[#D7F5EF] text-sm mt-2 leading-relaxed">
+                    Your seller account is approved. Add payout details once, then
+                    you can access Seller Dashboard.
+                  </p>
+
+                  <div className="mt-4 bg-white/10 rounded-full h-3 overflow-hidden">
+                    <div
+                      className="bg-[#41D3BD] h-full rounded-full transition-all"
+                      style={{ width: `${sellerProgress}%` }}
+                    />
+                  </div>
+
+                  <p className="text-[#D7F5EF] text-xs font-bold mt-2">
+                    Setup progress: {sellerProgress}%
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={scrollToBankDetails}
+                  className="bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black px-5 py-4 rounded-2xl active:scale-95 transition-all"
+                >
+                  Add Bank Details
+                </button>
+              </div>
+            </section>
+          )}
+
           {message && (
             <div className="mt-5 bg-white/90 border border-[#D7F5EF] rounded-2xl p-4 text-sm font-bold text-[#073B35] shadow-sm">
               {message}
@@ -377,7 +472,9 @@ export default function Profile() {
                       <div className="mt-2 inline-flex items-center rounded-full bg-[#41D3BD]/12 border border-[#41D3BD]/25 px-3 py-1">
                         <span className="text-[#073B35] text-xs font-black capitalize">
                           {isSeller
-                            ? "Seller access enabled"
+                            ? sellerOnboardingComplete
+                              ? "Seller ready"
+                              : "Seller setup required"
                             : "Customer account"}
                         </span>
                       </div>
@@ -463,9 +560,12 @@ export default function Profile() {
                   </div>
 
                   {isSeller && (
-                    <div className="mt-8 border-t border-[#D7F5EF] pt-6">
+                    <div
+                      id="seller-bank-details"
+                      className="mt-8 border-t border-[#D7F5EF] pt-6 scroll-mt-28"
+                    >
                       <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                        Payout Details
+                        Required for Seller Payout
                       </p>
 
                       <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
@@ -473,20 +573,53 @@ export default function Profile() {
                       </h2>
 
                       <p className="text-[#51615D] text-sm mt-2">
-                        These details are used only for seller payouts and
-                        settlements.
+                        Complete these payout details before using Seller
+                        Dashboard.
                       </p>
+
+                      <div
+                        className={`mt-4 rounded-2xl p-4 border ${
+                          currentBankDetailsComplete
+                            ? "bg-green-50 border-green-200"
+                            : "bg-yellow-50 border-yellow-200"
+                        }`}
+                      >
+                        <p
+                          className={`font-black text-sm ${
+                            currentBankDetailsComplete
+                              ? "text-green-700"
+                              : "text-yellow-700"
+                          }`}
+                        >
+                          {currentBankDetailsComplete
+                            ? "Bank details complete"
+                            : "Bank details required"}
+                        </p>
+
+                        <p
+                          className={`text-xs mt-1 leading-relaxed ${
+                            currentBankDetailsComplete
+                              ? "text-green-700"
+                              : "text-yellow-700"
+                          }`}
+                        >
+                          {currentBankDetailsComplete
+                            ? "Save profile to unlock Seller Dashboard."
+                            : "Account Holder Name, Bank Name, Account Number, and IFSC Code are mandatory."}
+                        </p>
+                      </div>
 
                       <div className="mt-6 space-y-4">
                         <div>
                           <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
-                            Account Holder Name
+                            Account Holder Name *
                           </label>
 
                           <input
                             name="bank_account_holder"
                             value={formData.bank_account_holder}
                             onChange={handleChange}
+                            required={isSeller}
                             className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] text-[#111827] text-base"
                             placeholder="Account Holder Name"
                           />
@@ -494,13 +627,14 @@ export default function Profile() {
 
                         <div>
                           <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
-                            Bank Name
+                            Bank Name *
                           </label>
 
                           <input
                             name="bank_name"
                             value={formData.bank_name}
                             onChange={handleChange}
+                            required={isSeller}
                             className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] text-[#111827] text-base"
                             placeholder="Bank Name"
                           />
@@ -508,13 +642,14 @@ export default function Profile() {
 
                         <div>
                           <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
-                            Account Number
+                            Account Number *
                           </label>
 
                           <input
                             name="bank_account_number"
                             value={formData.bank_account_number}
                             onChange={handleChange}
+                            required={isSeller}
                             inputMode="numeric"
                             className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] text-[#111827] text-base"
                             placeholder="Account Number"
@@ -523,13 +658,14 @@ export default function Profile() {
 
                         <div>
                           <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
-                            IFSC Code
+                            IFSC Code *
                           </label>
 
                           <input
                             name="bank_ifsc"
                             value={formData.bank_ifsc}
                             onChange={handleChange}
+                            required={isSeller}
                             className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] text-[#111827] text-base uppercase"
                             placeholder="IFSC Code"
                           />
@@ -701,17 +837,25 @@ export default function Profile() {
 
                   <button
                     type="submit"
-                    disabled={saving || !profileChanged}
+                    disabled={
+                      saving ||
+                      (!profileChanged &&
+                        bankDetailsCompleted === currentBankDetailsComplete)
+                    }
                     className={`hidden sm:block mt-7 w-full font-black py-4 rounded-2xl transition-all ${
-                      profileChanged
+                      profileChanged ||
+                      bankDetailsCompleted !== currentBankDetailsComplete
                         ? "bg-[#073B35] hover:bg-[#0B5149] text-white shadow-lg shadow-[#073B35]/15"
                         : "bg-[#D7F5EF] text-[#8AA5A0] cursor-not-allowed"
                     } disabled:opacity-60`}
                   >
                     {saving
                       ? "Saving..."
-                      : profileChanged
-                      ? "Save Profile"
+                      : profileChanged ||
+                        bankDetailsCompleted !== currentBankDetailsComplete
+                      ? isSeller && currentBankDetailsComplete
+                        ? "Save & Open Seller Dashboard"
+                        : "Save Profile"
                       : "No Changes"}
                   </button>
                 </form>
@@ -729,18 +873,34 @@ export default function Profile() {
 
                   <p className="text-[#51615D] text-sm mt-3 leading-relaxed">
                     {isSeller
-                      ? "You have seller dashboard access."
+                      ? sellerOnboardingComplete
+                        ? "You have seller dashboard access."
+                        : "Complete bank details to unlock Seller Dashboard."
                       : "You are using a customer account."}
                   </p>
 
                   {isSeller ? (
                     <>
-                      <Link
-                        to="/seller-dashboard"
-                        className="block mt-5 bg-[#073B35] hover:bg-[#0B5149] text-white text-center font-black py-3 rounded-2xl transition-all"
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (sellerOnboardingComplete) {
+                            navigate("/seller-dashboard");
+                            return;
+                          }
+
+                          scrollToBankDetails();
+                        }}
+                        className={`block mt-5 w-full text-center font-black py-3 rounded-2xl transition-all ${
+                          sellerOnboardingComplete
+                            ? "bg-[#073B35] hover:bg-[#0B5149] text-white"
+                            : "bg-yellow-50 border border-yellow-200 text-yellow-700"
+                        }`}
                       >
-                        Open Seller Dashboard
-                      </Link>
+                        {sellerOnboardingComplete
+                          ? "Open Seller Dashboard"
+                          : "Complete Bank Details"}
+                      </button>
 
                       <Link
                         to="/seller-helper"
@@ -760,6 +920,45 @@ export default function Profile() {
                 {isSeller && (
                   <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
                     <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
+                      Seller Setup
+                    </p>
+
+                    <h2 className="text-2xl font-black mt-2 text-[#111827]">
+                      {sellerProgress}% complete
+                    </h2>
+
+                    <div className="mt-4 bg-[#D7F5EF] rounded-full h-3 overflow-hidden">
+                      <div
+                        className="bg-[#41D3BD] h-full rounded-full transition-all"
+                        style={{ width: `${sellerProgress}%` }}
+                      />
+                    </div>
+
+                    <div className="mt-4 space-y-2 text-sm font-bold">
+                      <SetupRow label="Approval" done />
+                      <SetupRow
+                        label="Bank Details"
+                        done={currentBankDetailsComplete}
+                      />
+                      <SetupRow
+                        label="Kitchen Name"
+                        done={Boolean(formData.seller_kitchen_name)}
+                      />
+                      <SetupRow
+                        label="Specialty"
+                        done={Boolean(formData.seller_specialty)}
+                      />
+                      <SetupRow
+                        label="Kitchen About"
+                        done={Boolean(formData.seller_about)}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {isSeller && (
+                  <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
+                    <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
                       Payout Status
                     </p>
 
@@ -768,33 +967,22 @@ export default function Profile() {
                     </h2>
 
                     <div className="mt-4 space-y-3 text-sm font-bold">
-                      <div className="flex items-center justify-between bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3 gap-3">
-                        <span className="text-[#51615D]">Account Holder</span>
-                        <span className="text-[#073B35] text-right truncate max-w-[150px]">
-                          {formData.bank_account_holder || "Not added"}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3 gap-3">
-                        <span className="text-[#51615D]">Bank</span>
-                        <span className="text-[#073B35] text-right truncate max-w-[150px]">
-                          {formData.bank_name || "Not added"}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3 gap-3">
-                        <span className="text-[#51615D]">IFSC</span>
-                        <span className="text-[#073B35] text-right truncate max-w-[150px]">
-                          {formData.bank_ifsc || "Not added"}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3 gap-3">
-                        <span className="text-[#51615D]">UPI</span>
-                        <span className="text-[#073B35] text-right truncate max-w-[150px]">
-                          {formData.bank_upi_id || "Optional"}
-                        </span>
-                      </div>
+                      <PayoutRow
+                        label="Account Holder"
+                        value={formData.bank_account_holder || "Not added"}
+                      />
+                      <PayoutRow
+                        label="Bank"
+                        value={formData.bank_name || "Not added"}
+                      />
+                      <PayoutRow
+                        label="IFSC"
+                        value={formData.bank_ifsc || "Not added"}
+                      />
+                      <PayoutRow
+                        label="UPI"
+                        value={formData.bank_upi_id || "Optional"}
+                      />
                     </div>
                   </div>
                 )}
@@ -810,44 +998,18 @@ export default function Profile() {
                     </h2>
 
                     <div className="mt-4 space-y-3 text-sm font-bold">
-                      <div className="flex items-center justify-between bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3">
-                        <span className="text-[#51615D]">Delivery</span>
-                        <span
-                          className={
-                            formData.delivery_available
-                              ? "text-green-600"
-                              : "text-red-500"
-                          }
-                        >
-                          {formData.delivery_available ? "ON" : "OFF"}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3">
-                        <span className="text-[#51615D]">Self Pickup</span>
-                        <span
-                          className={
-                            formData.pickup_available
-                              ? "text-green-600"
-                              : "text-red-500"
-                          }
-                        >
-                          {formData.pickup_available ? "ON" : "OFF"}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3">
-                        <span className="text-[#51615D]">Scheduled Orders</span>
-                        <span
-                          className={
-                            formData.accept_scheduled_orders
-                              ? "text-green-600"
-                              : "text-red-500"
-                          }
-                        >
-                          {formData.accept_scheduled_orders ? "ON" : "OFF"}
-                        </span>
-                      </div>
+                      <StatusRow
+                        label="Delivery"
+                        active={formData.delivery_available}
+                      />
+                      <StatusRow
+                        label="Self Pickup"
+                        active={formData.pickup_available}
+                      />
+                      <StatusRow
+                        label="Scheduled Orders"
+                        active={formData.accept_scheduled_orders}
+                      />
                     </div>
                   </div>
                 )}
@@ -944,22 +1106,61 @@ export default function Profile() {
             <button
               type="submit"
               form="profile-form"
-              disabled={saving || !profileChanged}
+              disabled={
+                saving ||
+                (!profileChanged &&
+                  bankDetailsCompleted === currentBankDetailsComplete)
+              }
               className={`w-full active:scale-[0.98] disabled:opacity-60 font-black py-4 rounded-2xl transition-all ${
-                profileChanged
+                profileChanged || bankDetailsCompleted !== currentBankDetailsComplete
                   ? "bg-[#073B35] text-white shadow-xl shadow-[#073B35]/15"
                   : "bg-[#D7F5EF] text-[#8AA5A0] cursor-not-allowed"
               }`}
             >
               {saving
                 ? "Saving..."
-                : profileChanged
-                ? "Save Profile"
+                : profileChanged || bankDetailsCompleted !== currentBankDetailsComplete
+                ? isSeller && currentBankDetailsComplete
+                  ? "Save & Open Dashboard"
+                  : "Save Profile"
                 : "No Changes"}
             </button>
           </div>
         )}
       </main>
     </>
+  );
+}
+
+function SetupRow({ label, done }) {
+  return (
+    <div className="flex items-center justify-between bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3">
+      <span className="text-[#51615D]">{label}</span>
+      <span className={done ? "text-green-600" : "text-yellow-600"}>
+        {done ? "Done" : "Pending"}
+      </span>
+    </div>
+  );
+}
+
+function PayoutRow({ label, value }) {
+  return (
+    <div className="flex items-center justify-between bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3 gap-3">
+      <span className="text-[#51615D]">{label}</span>
+      <span className="text-[#073B35] text-right truncate max-w-[150px]">
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function StatusRow({ label, active }) {
+  return (
+    <div className="flex items-center justify-between bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3">
+      <span className="text-[#51615D]">{label}</span>
+      <span className={active ? "text-green-600" : "text-red-500"}>
+        {active ? "ON" : "OFF"}
+      </span>
+    </div>
   );
 }
