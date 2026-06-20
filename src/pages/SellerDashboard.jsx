@@ -84,7 +84,7 @@ export default function SellerDashboard() {
     fetchSellerFoods();
     fetchSellerOrders();
 
-    const channel = supabase
+    const orderChannel = supabase
       .channel(`seller-orders-${user.id}`)
       .on(
         "postgres_changes",
@@ -100,8 +100,27 @@ export default function SellerDashboard() {
       )
       .subscribe();
 
+    const messageChannel = supabase
+      .channel(`seller-order-messages-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "order_messages",
+        },
+        (payload) => {
+          if (payload?.new?.sender_id !== user.id) {
+            fetchSellerOrders(false);
+            setMessage("💬 New customer message received.");
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(orderChannel);
+      supabase.removeChannel(messageChannel);
     };
   }, [user]);
 
@@ -194,7 +213,8 @@ export default function SellerDashboard() {
 
     const safePackingCharge = getSafePackingCharge(data?.packing_charge || 5);
     const bankComplete = data?.bank_details_completed === true;
-setBankDetailsCompleted(bankComplete);
+
+    setBankDetailsCompleted(bankComplete);
     setSellerOnline(data?.seller_online !== false);
     setAcceptScheduledOrders(data?.accept_scheduled_orders !== false);
     setDeliveryAvailable(data?.delivery_available !== false);
@@ -1278,43 +1298,44 @@ setBankDetailsCompleted(bankComplete);
   }
 
   if (!bankDetailsCompleted) {
-  return (
-    <>
-      <Navbar />
+    return (
+      <>
+        <Navbar />
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-10 flex items-center justify-center">
-        <div className="max-w-md w-full bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-6 sm:p-8 text-center shadow-xl shadow-[#073B35]/5">
-          <div className="w-20 h-20 mx-auto rounded-full bg-yellow-50 border border-yellow-200 flex items-center justify-center text-4xl">
-            🏦
+        <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-10 flex items-center justify-center">
+          <div className="max-w-md w-full bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-6 sm:p-8 text-center shadow-xl shadow-[#073B35]/5">
+            <div className="w-20 h-20 mx-auto rounded-full bg-yellow-50 border border-yellow-200 flex items-center justify-center text-4xl">
+              🏦
+            </div>
+
+            <h1 className="text-3xl font-black mt-6 text-[#111827]">
+              Complete bank details
+            </h1>
+
+            <p className="text-[#51615D] mt-3 leading-relaxed">
+              Your seller account is approved, but payout bank details are
+              required before opening Seller Dashboard.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => navigate("/profile")}
+              className="w-full mt-7 bg-[#073B35] hover:bg-[#0B5149] text-white font-black py-4 rounded-2xl shadow-lg shadow-[#073B35]/15"
+            >
+              Complete Profile
+            </button>
+
+            <Link
+              to="/seller-helper"
+              className="block mt-3 border border-[#D7F5EF] bg-[#FFFFF2] hover:bg-[#D7F5EF] text-[#073B35] font-black py-3 rounded-2xl"
+            >
+              Need Help?
+            </Link>
           </div>
-
-          <h1 className="text-3xl font-black mt-6 text-[#111827]">
-            Complete bank details
-          </h1>
-
-          <p className="text-[#51615D] mt-3 leading-relaxed">
-            Your seller account is approved, but payout bank details are required before opening Seller Dashboard.
-          </p>
-
-          <button
-            type="button"
-            onClick={() => navigate("/profile")}
-            className="w-full mt-7 bg-[#073B35] hover:bg-[#0B5149] text-white font-black py-4 rounded-2xl shadow-lg shadow-[#073B35]/15"
-          >
-            Complete Profile
-          </button>
-
-          <Link
-            to="/seller-helper"
-            className="block mt-3 border border-[#D7F5EF] bg-[#FFFFF2] hover:bg-[#D7F5EF] text-[#073B35] font-black py-3 rounded-2xl"
-          >
-            Need Help?
-          </Link>
-        </div>
-      </main>
-    </>
-  );
-}
+        </main>
+      </>
+    );
+  }
 
   if (!sellerProfileComplete) {
     return (
@@ -1569,72 +1590,10 @@ setBankDetailsCompleted(bankComplete);
                 </div>
 
                 <div className="lg:hidden mt-5 grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={toggleSellerOnline}
-                  className={`active:scale-95 font-black px-3 py-3 rounded-2xl text-xs transition-all shadow-sm ${
-                    sellerOnline ? "bg-green-500 text-white" : "bg-red-500 text-white"
-                  }`}
-                >
-                  {sellerOnline ? "🟢 Online" : "🔴 Offline"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={toggleAcceptScheduledOrders}
-                  className={`active:scale-95 font-black px-3 py-3 rounded-2xl text-xs transition-all ${
-                    acceptScheduledOrders
-                      ? "bg-[#073B35] text-white"
-                      : "bg-white text-[#51615D] border border-[#D7F5EF]"
-                  }`}
-                >
-                  {acceptScheduledOrders ? "🕒 Schedule ON" : "🕒 Schedule OFF"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={toggleDeliveryAvailable}
-                  className={`active:scale-95 font-black px-3 py-3 rounded-2xl text-xs transition-all ${
-                    deliveryAvailable
-                      ? "bg-[#41D3BD] text-[#073B35]"
-                      : "bg-white text-[#51615D] border border-[#D7F5EF]"
-                  }`}
-                >
-                  {deliveryAvailable ? "🚚 Delivery ON" : "🚚 Delivery OFF"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={togglePickupAvailable}
-                  className={`active:scale-95 font-black px-3 py-3 rounded-2xl text-xs transition-all ${
-                    pickupAvailable
-                      ? "bg-[#41D3BD] text-[#073B35]"
-                      : "bg-white text-[#51615D] border border-[#D7F5EF]"
-                  }`}
-                >
-                  {pickupAvailable ? "🛍️ Pickup ON" : "🛍️ Pickup OFF"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={toggleNotificationSound}
-                  className={`col-span-2 active:scale-95 font-black px-3 py-3 rounded-2xl text-xs transition-all ${
-                    audioReady
-                      ? "bg-green-500 text-white"
-                      : "bg-white text-[#073B35] border border-[#41D3BD]/40"
-                  }`}
-                >
-                  {audioReady ? "🔕 Sound Off" : "🔔 Sound On"}
-                </button>
-              </div>
-              </div>
-
-              <div className="lg:hidden mt-5 -mx-1 overflow-x-auto pb-1">
-                <div className="flex gap-2 min-w-max px-1">
                   <button
                     type="button"
                     onClick={toggleSellerOnline}
-                    className={`active:scale-95 font-black px-4 py-3 rounded-2xl text-xs transition-all shadow-sm ${
+                    className={`active:scale-95 font-black px-3 py-3 rounded-2xl text-xs transition-all shadow-sm ${
                       sellerOnline
                         ? "bg-green-500 text-white"
                         : "bg-red-500 text-white"
@@ -1646,7 +1605,7 @@ setBankDetailsCompleted(bankComplete);
                   <button
                     type="button"
                     onClick={toggleAcceptScheduledOrders}
-                    className={`active:scale-95 font-black px-4 py-3 rounded-2xl text-xs transition-all ${
+                    className={`active:scale-95 font-black px-3 py-3 rounded-2xl text-xs transition-all ${
                       acceptScheduledOrders
                         ? "bg-[#073B35] text-white"
                         : "bg-white text-[#51615D] border border-[#D7F5EF]"
@@ -1658,7 +1617,7 @@ setBankDetailsCompleted(bankComplete);
                   <button
                     type="button"
                     onClick={toggleDeliveryAvailable}
-                    className={`active:scale-95 font-black px-4 py-3 rounded-2xl text-xs transition-all ${
+                    className={`active:scale-95 font-black px-3 py-3 rounded-2xl text-xs transition-all ${
                       deliveryAvailable
                         ? "bg-[#41D3BD] text-[#073B35]"
                         : "bg-white text-[#51615D] border border-[#D7F5EF]"
@@ -1670,7 +1629,7 @@ setBankDetailsCompleted(bankComplete);
                   <button
                     type="button"
                     onClick={togglePickupAvailable}
-                    className={`active:scale-95 font-black px-4 py-3 rounded-2xl text-xs transition-all ${
+                    className={`active:scale-95 font-black px-3 py-3 rounded-2xl text-xs transition-all ${
                       pickupAvailable
                         ? "bg-[#41D3BD] text-[#073B35]"
                         : "bg-white text-[#51615D] border border-[#D7F5EF]"
@@ -1682,7 +1641,7 @@ setBankDetailsCompleted(bankComplete);
                   <button
                     type="button"
                     onClick={toggleNotificationSound}
-                    className={`active:scale-95 font-black px-4 py-3 rounded-2xl text-xs transition-all ${
+                    className={`col-span-2 active:scale-95 font-black px-3 py-3 rounded-2xl text-xs transition-all ${
                       audioReady
                         ? "bg-green-500 text-white"
                         : "bg-white text-[#073B35] border border-[#41D3BD]/40"
@@ -1843,6 +1802,31 @@ setBankDetailsCompleted(bankComplete);
                           </span>
                         </div>
 
+                        <Link
+                          to={`/order-chat/${order.id}`}
+                          className="mt-4 flex items-center justify-between gap-3 w-full bg-[#EFFFFB] border border-[#41D3BD]/50 hover:bg-[#D7F5EF] active:scale-[0.99] transition-all rounded-3xl p-4 shadow-sm"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-12 h-12 rounded-2xl bg-[#41D3BD]/20 text-[#073B35] flex items-center justify-center text-2xl shrink-0">
+                              💬
+                            </div>
+
+                            <div className="min-w-0 text-left">
+                              <p className="font-black text-[#073B35] truncate">
+                                Chat with customer
+                              </p>
+
+                              <p className="text-xs text-[#51615D] mt-0.5 leading-relaxed">
+                                Confirm item changes, timing, or pickup updates.
+                              </p>
+                            </div>
+                          </div>
+
+                          <span className="text-[#073B35] text-2xl font-black shrink-0">
+                            ›
+                          </span>
+                        </Link>
+
                         <div className="mt-4 bg-white/90 border border-[#D7F5EF] rounded-2xl p-3 sm:p-4 space-y-3">
                           {getOrderItems(order).map((item) => (
                             <div
@@ -1888,28 +1872,26 @@ setBankDetailsCompleted(bankComplete);
                         )}
 
                         {sellerResponse === "accepted" && (
-  <div className="mt-4 space-y-3">
+                          <div className="mt-4 space-y-3">
+                            {orderIsSelfPickup && !order.ready_for_pickup && (
+                              <button
+                                type="button"
+                                onClick={() => markReadyForPickup(order.id)}
+                                className="w-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white font-black py-3 rounded-2xl transition-all"
+                              >
+                                📦 Ready for Pickup
+                              </button>
+                            )}
 
-    {orderIsSelfPickup && !order.ready_for_pickup && (
-      <button
-        type="button"
-        onClick={() => markReadyForPickup(order.id)}
-        className="w-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white font-black py-3 rounded-2xl transition-all"
-      >
-        📦 Ready for Pickup
-      </button>
-    )}
-
-    <button
-      type="button"
-      onClick={() => completeOrder(order.id)}
-      className="w-full bg-[#073B35] hover:bg-[#0B5149] active:scale-95 text-white font-black py-3 rounded-2xl transition-all"
-    >
-      ✅ Complete Order
-    </button>
-
-  </div>
-)}
+                            <button
+                              type="button"
+                              onClick={() => completeOrder(order.id)}
+                              className="w-full bg-[#073B35] hover:bg-[#0B5149] active:scale-95 text-white font-black py-3 rounded-2xl transition-all"
+                            >
+                              ✅ Complete Order
+                            </button>
+                          </div>
+                        )}
                       </article>
                     );
                   })}
