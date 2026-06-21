@@ -34,14 +34,8 @@ export default function Marketplace() {
       .channel("foods-realtime-channel")
       .on(
         "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "foods",
-        },
-        () => {
-          fetchMarketplaceData(false);
-        }
+        { event: "*", schema: "public", table: "foods" },
+        () => fetchMarketplaceData(false)
       )
       .subscribe();
 
@@ -49,14 +43,8 @@ export default function Marketplace() {
       .channel("kitchen-status-realtime-channel")
       .on(
         "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "profiles",
-        },
-        () => {
-          fetchMarketplaceData(false);
-        }
+        { event: "*", schema: "public", table: "profiles" },
+        () => fetchMarketplaceData(false)
       )
       .subscribe();
 
@@ -64,14 +52,8 @@ export default function Marketplace() {
       .channel("orders-sales-realtime-channel")
       .on(
         "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "orders",
-        },
-        () => {
-          fetchMarketplaceData(false);
-        }
+        { event: "*", schema: "public", table: "orders" },
+        () => fetchMarketplaceData(false)
       )
       .subscribe();
 
@@ -83,9 +65,7 @@ export default function Marketplace() {
   }, []);
 
   async function fetchMarketplaceData(showLoading = true) {
-    if (showLoading) {
-      setLoading(true);
-    }
+    if (showLoading) setLoading(true);
 
     setErrorMessage("");
 
@@ -146,11 +126,7 @@ export default function Marketplace() {
     const parsedOrderItems = [];
 
     (orderData || []).forEach((order) => {
-      const items = getOrderItems(order);
-
-      items.forEach((item) => {
-        parsedOrderItems.push(item);
-      });
+      getOrderItems(order).forEach((item) => parsedOrderItems.push(item));
     });
 
     const salesMap = buildSalesMap(parsedOrderItems);
@@ -200,13 +176,9 @@ export default function Marketplace() {
 
     items.forEach((item) => {
       const itemId = item.id;
-
       if (!itemId) return;
 
-      if (!map[String(itemId)]) {
-        map[String(itemId)] = 0;
-      }
-
+      if (!map[String(itemId)]) map[String(itemId)] = 0;
       map[String(itemId)] += Number(item.quantity || 1);
     });
 
@@ -215,31 +187,19 @@ export default function Marketplace() {
 
   function getDemandBadge(soldCount) {
     if (soldCount >= 10) {
-      return {
-        label: "Best Seller",
-        sublabel: "Loved by customers",
-      };
+      return { label: "Best Seller", sublabel: "Loved by customers" };
     }
 
     if (soldCount >= 6) {
-      return {
-        label: "High Demand",
-        sublabel: "Popular today",
-      };
+      return { label: "High Demand", sublabel: "Popular today" };
     }
 
     if (soldCount >= 3) {
-      return {
-        label: "Trending",
-        sublabel: "People are ordering",
-      };
+      return { label: "Trending", sublabel: "People are ordering" };
     }
 
     if (soldCount >= 1) {
-      return {
-        label: "Popular Choice",
-        sublabel: "Customer favourite",
-      };
+      return { label: "Popular Choice", sublabel: "Customer favourite" };
     }
 
     return null;
@@ -298,7 +258,6 @@ export default function Marketplace() {
         foodCategory.toLowerCase().includes(searchValue);
 
       const matchesType = selectedType === "All" || item.type === selectedType;
-
       const matchesCategory =
         selectedCategory === "All" || foodCategory === selectedCategory;
 
@@ -357,24 +316,16 @@ export default function Marketplace() {
     if (searchTerm || selectedType !== "All" || selectedCategory !== "All") {
       const parts = [];
 
-      if (selectedCategory !== "All") {
-        parts.push(selectedCategory);
-      }
-
-      if (selectedType !== "All") {
-        parts.push(selectedType);
-      }
-
-      if (searchTerm) {
-        parts.push(`"${searchTerm}"`);
-      }
+      if (selectedCategory !== "All") parts.push(selectedCategory);
+      if (selectedType !== "All") parts.push(selectedType);
+      if (searchTerm) parts.push(`"${searchTerm}"`);
 
       return `Showing ${filteredFoods.length} result${
         filteredFoods.length === 1 ? "" : "s"
       } for ${parts.join(" • ")}`;
     }
 
-    return "Homemade dishes available from trusted kitchens in your community.";
+    return "Fresh homemade food from kitchens around your neighbourhood.";
   }
 
   const hasActiveFilters =
@@ -384,133 +335,99 @@ export default function Marketplace() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] overflow-hidden pb-28">
-        <section className="relative px-4 sm:px-6 pt-4 sm:pt-8 pb-4 sm:pb-8">
-          <div className="absolute -top-24 -right-24 w-80 h-80 bg-[#41D3BD]/20 rounded-full blur-[100px]" />
-          <div className="absolute top-36 -left-28 w-80 h-80 bg-[#41D3BD]/10 rounded-full blur-[120px]" />
-
-          <div className="relative max-w-7xl mx-auto">
-            <div className="bg-white/85 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-xl shadow-[#073B35]/5 overflow-hidden">
-              <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-6 lg:gap-10 items-center">
-                <div>
-                  <div className="inline-flex items-center gap-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
+      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] pb-28">
+        <section className="px-4 pt-4 pb-3">
+          <div className="max-w-7xl mx-auto">
+            <div className="bg-white border border-[#E8F4F1] rounded-3xl p-4 sm:p-6 shadow-sm">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="inline-flex items-center gap-2 bg-[#EFFFFB] border border-[#41D3BD]/35 text-[#073B35] px-3 py-1 rounded-full text-xs font-black">
                     <span>🌿</span>
-                    <span>Homemade. Nearby. Fresh.</span>
+                    <span>Homemade nearby</span>
                   </div>
 
-                  <h1 className="text-3xl sm:text-5xl lg:text-6xlfont-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
+                  <h1 className="text-3xl sm:text-5xl font-black mt-4 leading-tight tracking-tight text-[#073B35]">
                     What would you like
                     <span className="block text-[#111827]">to eat today?</span>
                   </h1>
 
-                  <p className="text-[#51615D] text-sm sm:text-lg mt-5 max-w-2xl leading-relaxed">
-                    Order fresh homemade meals, snacks, sweets, tiffins and
-                    special food drops from kitchens inside your community.
+                  <p className="text-[#51615D] text-sm sm:text-base mt-3 max-w-2xl leading-relaxed">
+                    Fresh meals, snacks, sweets, tiffins and food drops from
+                    kitchens inside your community.
                   </p>
-
-                  <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3 max-w-xl">
-                    <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3 sm:p-4">
-                      <p className="text-[#51615D] text-[10px] sm:text-xs font-bold uppercase">
-                        Available
-                      </p>
-                      <p className="text-[#073B35] text-xl sm:text-2xl font-black mt-1">
-                        {availableFoods.length}
-                      </p>
-                    </div>
-
-                    <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3 sm:p-4">
-                      <p className="text-[#51615D] text-[10px] sm:text-xs font-bold uppercase">
-                        Food Drops
-                      </p>
-                      <p className="text-[#111827] text-xl sm:text-2xl font-black mt-1">
-                        {foods.length}
-                      </p>
-                    </div>
-
-                    <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3 sm:p-4">
-                      <p className="text-[#51615D] text-[10px] sm:text-xs font-bold uppercase">
-                        Closed
-                      </p>
-                      <p className="text-[#9AA7A3] text-xl sm:text-2xl font-black mt-1">
-                        {closedOrSoldOutCount}
-                      </p>
-                    </div>
-                  </div>
                 </div>
 
-                <div className="hidden lg:block">
-                  {highestSellingFood ? (
-                    <Link
-                      to={`/food/${highestSellingFood.id}`}
-                      className="group block bg-[#073B35] text-white rounded-[2rem] p-4 shadow-2xl shadow-[#073B35]/20 overflow-hidden"
-                    >
-                      <div className="relative aspect-[4/3] rounded-[1.5rem] overflow-hidden bg-[#D7F5EF]">
-                        <img
-                          src={highestSellingFood.image}
-                          alt={highestSellingFood.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
-                        />
+                {highestSellingFood && (
+                  <Link
+                    to={`/food/${highestSellingFood.id}`}
+                    className="hidden lg:block w-72 shrink-0 rounded-3xl overflow-hidden bg-[#073B35] text-white shadow-sm"
+                  >
+                    <div className="h-36 bg-[#D7F5EF]">
+                      <img
+                        src={highestSellingFood.image}
+                        alt={highestSellingFood.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
 
-                        <div className="absolute top-3 left-3 bg-[#41D3BD] text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
-                          🔥 Popular Today
-                        </div>
+                    <div className="p-4">
+                      <p className="text-[#41D3BD] text-xs font-black">
+                        🔥 Popular Today
+                      </p>
 
-                        <div className="absolute bottom-3 left-3 right-3 flex flex-wrap gap-2">
-                          {highestSellingFood.delivery_available !== false && (
-                            <span className="bg-white/95 text-[#073B35] px-3 py-1 rounded-full text-[11px] font-black">
-                              🚚 Delivery
-                            </span>
-                          )}
+                      <h2 className="font-black text-lg truncate mt-1">
+                        {highestSellingFood.name}
+                      </h2>
 
-                          {highestSellingFood.pickup_available !== false && (
-                            <span className="bg-white/95 text-[#073B35] px-3 py-1 rounded-full text-[11px] font-black">
-                              🛍️ Pickup
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="p-2 pt-4">
-                        <p className="text-white/65 text-xs font-bold uppercase">
-                          Customer favourite
+                      <div className="flex items-center justify-between mt-2">
+                        <p className="text-white/70 text-xs">
+                          {getFulfillmentText(highestSellingFood)}
                         </p>
 
-                        <h2 className="text-2xl font-black mt-1 truncate">
-                          {highestSellingFood.name}
-                        </h2>
-
-                        <div className="flex items-center justify-between mt-3">
-                          <p className="text-white/70 text-sm">
-                            {getFulfillmentText(highestSellingFood)}
-                          </p>
-
-                          <p className="text-[#41D3BD] font-black text-2xl">
-                            ₹{highestSellingFood.price}
-                          </p>
-                        </div>
+                        <p className="text-[#41D3BD] font-black">
+                          ₹{highestSellingFood.price}
+                        </p>
                       </div>
-                    </Link>
-                  ) : (
-                    <div className="bg-[#073B35] text-white rounded-[2rem] p-8 shadow-2xl shadow-[#073B35]/20">
-                      <div className="text-5xl">🍽️</div>
-                      <h2 className="text-3xl font-black mt-5">
-                        Fresh drops are loading
-                      </h2>
-                      <p className="text-white/70 mt-3">
-                        Popular dishes will appear here once customers start
-                        ordering.
-                      </p>
                     </div>
-                  )}
+                  </Link>
+                )}
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 mt-5">
+                <div className="bg-[#FFFFF2] border border-[#E8F4F1] rounded-2xl p-3">
+                  <p className="text-[#7A8A86] text-[10px] font-black uppercase">
+                    Available
+                  </p>
+                  <p className="text-[#073B35] text-2xl font-black mt-1">
+                    {availableFoods.length}
+                  </p>
+                </div>
+
+                <div className="bg-[#FFFFF2] border border-[#E8F4F1] rounded-2xl p-3">
+                  <p className="text-[#7A8A86] text-[10px] font-black uppercase">
+                    Food Drops
+                  </p>
+                  <p className="text-[#111827] text-2xl font-black mt-1">
+                    {foods.length}
+                  </p>
+                </div>
+
+                <div className="bg-[#FFFFF2] border border-[#E8F4F1] rounded-2xl p-3">
+                  <p className="text-[#7A8A86] text-[10px] font-black uppercase">
+                    Closed
+                  </p>
+                  <p className="text-[#9AA7A3] text-2xl font-black mt-1">
+                    {closedOrSoldOutCount}
+                  </p>
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 sm:mt-6 sticky top-[92px] z-40 bg-[#FFFFF2]/95 backdrop-blur-xl py-3 -mx-4 px-4 sm:static sm:bg-transparent sm:backdrop-blur-0 sm:mx-0 sm:px-0 sm:py-0">
-              <div className="bg-white/90 border border-[#D7F5EF] rounded-[1.5rem] sm:rounded-[2rem] p-3 sm:p-4 shadow-lg shadow-[#073B35]/5">
-                <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_auto] gap-3">
+            <div className="sticky top-[92px] z-40 bg-[#FFFFF2]/95 backdrop-blur-xl py-3">
+              <div className="bg-white border border-[#E8F4F1] rounded-3xl p-3 shadow-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-[1fr_180px_auto] gap-2">
                   <div className="relative">
-                    <span className="absolute left-5 top-1/2 -translate-y-1/2 text-[#1A9F8D]">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2">
                       🔎
                     </span>
 
@@ -519,7 +436,7 @@ export default function Marketplace() {
                       value={searchTerm}
                       onChange={(event) => setSearchTerm(event.target.value)}
                       placeholder="Search dishes or kitchens..."
-                      className="bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] placeholder:text-[#9AA7A3] rounded-2xl pl-12 pr-5 py-4 w-full outline-none focus:border-[#41D3BD] transition-all duration-200 text-base"
+                      className="w-full h-12 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl pl-11 pr-4 outline-none focus:border-[#41D3BD] text-sm"
                     />
                   </div>
 
@@ -527,19 +444,16 @@ export default function Marketplace() {
                     <button
                       type="button"
                       onClick={() => setTypeDropdownOpen(!typeDropdownOpen)}
-                      className="w-full lg:w-48 bg-[#FFFFF2] border border-[#D7F5EF] hover:border-[#41D3BD] text-[#111827] rounded-2xl px-5 py-4 flex items-center justify-between transition-all duration-200"
+                      className="w-full h-12 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 flex items-center justify-between font-black text-sm"
                     >
-                      <span className="font-black">
-                        {getTypeLabel(selectedType)}
-                      </span>
-
-                      <span className="text-[#1A9F8D] text-xs">
+                      <span>{getTypeLabel(selectedType)}</span>
+                      <span className="text-[#1A9F8D]">
                         {typeDropdownOpen ? "▲" : "▼"}
                       </span>
                     </button>
 
                     {typeDropdownOpen && (
-                      <div className="absolute z-50 mt-3 w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl shadow-2xl shadow-[#073B35]/15 overflow-hidden">
+                      <div className="absolute z-50 mt-2 w-full bg-white border border-[#E8F4F1] rounded-2xl shadow-lg overflow-hidden">
                         {["All", "Veg", "Non-Veg"].map((type) => (
                           <button
                             key={type}
@@ -548,10 +462,10 @@ export default function Marketplace() {
                               setSelectedType(type);
                               setTypeDropdownOpen(false);
                             }}
-                            className={`w-full text-left px-5 py-4 font-semibold transition-all duration-200 ${
+                            className={`w-full text-left px-4 py-3 font-black text-sm ${
                               selectedType === type
                                 ? "bg-[#41D3BD] text-[#073B35]"
-                                : "text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D]"
+                                : "text-[#51615D] hover:bg-[#EFFFFB]"
                             }`}
                           >
                             {getTypeLabel(type)}
@@ -564,10 +478,10 @@ export default function Marketplace() {
                   <button
                     type="button"
                     onClick={hasActiveFilters ? clearFilters : undefined}
-                    className={`font-black px-6 py-4 rounded-2xl transition-all duration-200 shadow-lg ${
+                    className={`h-12 px-5 rounded-2xl font-black active:scale-95 ${
                       hasActiveFilters
-                        ? "border border-[#41D3BD] text-[#1A9F8D] hover:bg-[#D7F5EF] hover:text-[#073B35] bg-white shadow-[#41D3BD]/10"
-                        : "bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] shadow-[#41D3BD]/25"
+                        ? "bg-white border border-[#41D3BD]/45 text-[#073B35]"
+                        : "bg-[#41D3BD] text-[#073B35]"
                     }`}
                   >
                     {hasActiveFilters ? "Clear" : "Search"}
@@ -575,12 +489,8 @@ export default function Marketplace() {
                 </div>
               </div>
             </div>
-          </div>
-        </section>
 
-        <section className="px-4 sm:px-6 pt-2 pb-3 bg-[#FFFFF2] sticky top-[76px] sm:top-0 z-30">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-hide">
               {FOOD_CATEGORIES.map((category) => {
                 const isActive = selectedCategory === category.label;
                 const count = categoryCounts[category.label] || 0;
@@ -590,24 +500,24 @@ export default function Marketplace() {
                     key={category.label}
                     type="button"
                     onClick={() => setSelectedCategory(category.label)}
-                    className={`shrink-0 min-w-[92px] sm:min-w-[118px] rounded-[1.4rem] border px-3 sm:px-4 py-3 transition-all duration-200 ${
+                    className={`shrink-0 min-w-[88px] rounded-2xl border px-3 py-3 active:scale-95 transition-all ${
                       isActive
-                        ? "bg-[#073B35] text-white border-[#073B35] shadow-lg shadow-[#073B35]/15"
-                        : "bg-white/90 text-[#51615D] border-[#D7F5EF] hover:border-[#41D3BD]/70 hover:text-[#073B35]"
+                        ? "bg-[#073B35] text-white border-[#073B35]"
+                        : "bg-white text-[#51615D] border-[#E8F4F1]"
                     }`}
                   >
-                    <div className="text-xl sm:text-2xl">{category.emoji}</div>
+                    <div className="text-xl">{category.emoji}</div>
 
-                    <div className="font-black text-xs sm:text-sm mt-1">
+                    <div className="font-black text-xs mt-1">
                       {category.label}
                     </div>
 
                     <div
-                      className={`text-[11px] sm:text-xs mt-0.5 ${
+                      className={`text-[10px] mt-0.5 ${
                         isActive ? "text-white/70" : "text-[#9AA7A3]"
                       }`}
                     >
-                      {count} item{count === 1 ? "" : "s"}
+                      {count}
                     </div>
                   </button>
                 );
@@ -617,71 +527,56 @@ export default function Marketplace() {
         </section>
 
         {featuredFoods.length > 0 && selectedCategory === "All" && !searchTerm && (
-          <section className="px-4 sm:px-6 pt-3 pb-2">
+          <section className="px-4 pb-4">
             <div className="max-w-7xl mx-auto">
-              <div className="flex items-end justify-between gap-4 mb-4">
+              <div className="flex items-end justify-between mb-3">
                 <div>
-                  <p className="text-[#1A9F8D] text-xs font-black uppercase tracking-wide">
+                  <p className="text-[#1A9F8D] text-xs font-black uppercase">
                     Recommended
                   </p>
 
-                  <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
+                  <h2 className="text-xl font-black text-[#111827]">
                     Popular today
                   </h2>
                 </div>
               </div>
 
-              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                 {featuredFoods.map((food) => (
                   <Link
                     key={food.id}
                     to={`/food/${food.id}`}
-                    className="shrink-0 w-[260px] sm:w-[300px] bg-white border border-[#D7F5EF] rounded-[1.75rem] overflow-hidden shadow-lg shadow-[#073B35]/5"
+                    className="shrink-0 w-[235px] sm:w-[280px] bg-white border border-[#E8F4F1] rounded-3xl overflow-hidden shadow-sm active:scale-[0.99]"
                   >
-                    <div className="relative h-36 sm:h-44 bg-[#D7F5EF] overflow-hidden">
+                    <div className="relative h-32 sm:h-40 bg-[#D7F5EF] overflow-hidden">
                       <img
                         src={food.image}
                         alt={food.name}
                         className="w-full h-full object-cover"
                       />
 
-                      <div className="absolute top-3 left-3 bg-[#41D3BD] text-[#073B35] text-xs font-black px-3 py-1 rounded-full">
+                      <div className="absolute top-3 left-3 bg-[#41D3BD] text-[#073B35] text-[11px] font-black px-3 py-1 rounded-full">
                         {food.demand_badge?.label || "Fresh Drop"}
                       </div>
                     </div>
 
-                    <div className="p-4">
+                    <div className="p-3">
                       <h3 className="text-[#111827] font-black truncate">
                         {food.name}
                       </h3>
 
                       <p className="text-[#51615D] text-xs mt-1 truncate">
-                        Kitchen:{" "}
                         {food.seller_kitchen_name ||
                           food.seller ||
                           "Home Kitchen"}
                       </p>
 
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        {food.delivery_available !== false && (
-                          <span className="bg-[#41D3BD]/12 text-[#073B35] border border-[#41D3BD]/25 text-[11px] font-black px-2.5 py-1 rounded-full">
-                            🚚 Delivery
-                          </span>
-                        )}
-
-                        {food.pickup_available !== false && (
-                          <span className="bg-[#FFFFF2] text-[#073B35] border border-[#D7F5EF] text-[11px] font-black px-2.5 py-1 rounded-full">
-                            🛍️ Pickup
-                          </span>
-                        )}
-                      </div>
-
                       <div className="flex items-center justify-between mt-3">
-                        <p className="text-[#073B35] text-xl font-black">
+                        <p className="text-[#073B35] text-lg font-black">
                           ₹{food.price}
                         </p>
 
-                        <span className="bg-[#41D3BD]/12 text-[#073B35] border border-[#41D3BD]/25 text-xs font-black px-3 py-1 rounded-full">
+                        <span className="bg-[#EFFFFB] text-[#073B35] border border-[#41D3BD]/30 text-xs font-black px-3 py-1 rounded-full">
                           View
                         </span>
                       </div>
@@ -693,19 +588,19 @@ export default function Marketplace() {
           </section>
         )}
 
-        <section className="px-4 sm:px-6 py-6 sm:py-10">
+        <section className="px-4 py-4">
           <div className="max-w-7xl mx-auto">
-            <div className="flex items-end justify-between gap-4 mb-5 sm:mb-8">
+            <div className="flex items-end justify-between gap-4 mb-4">
               <div>
-                <p className="text-[#1A9F8D] text-xs font-black uppercase tracking-wide">
+                <p className="text-[#1A9F8D] text-xs font-black uppercase">
                   Explore
                 </p>
 
-                <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
+                <h2 className="text-2xl font-black text-[#111827]">
                   {getCategoryHeading()}
                 </h2>
 
-                <p className="text-[#51615D] mt-2 text-sm sm:text-base max-w-2xl">
+                <p className="text-[#51615D] mt-1 text-sm max-w-2xl">
                   {getCategorySubheading()}
                 </p>
               </div>
@@ -714,7 +609,7 @@ export default function Marketplace() {
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="hidden sm:block border border-[#41D3BD] text-[#1A9F8D] hover:bg-[#D7F5EF] hover:text-[#073B35] bg-white px-5 py-3 rounded-2xl font-black transition-all duration-200"
+                  className="hidden sm:block bg-white border border-[#41D3BD]/45 text-[#073B35] px-4 py-2 rounded-2xl font-black"
                 >
                   View All
                 </button>
@@ -722,8 +617,8 @@ export default function Marketplace() {
             </div>
 
             {loading && (
-              <div className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-lg shadow-[#073B35]/5">
-                <div className="w-14 h-14 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-2xl">
+              <div className="bg-white border border-[#E8F4F1] rounded-3xl p-8 text-center shadow-sm">
+                <div className="w-14 h-14 mx-auto rounded-full bg-[#EFFFFB] flex items-center justify-center text-2xl">
                   🍽️
                 </div>
 
@@ -743,7 +638,7 @@ export default function Marketplace() {
             )}
 
             {!loading && !errorMessage && filteredFoods.length === 0 && (
-              <div className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-lg shadow-[#073B35]/5">
+              <div className="bg-white border border-[#E8F4F1] rounded-3xl p-8 text-center shadow-sm">
                 <div className="text-5xl">🍽️</div>
 
                 <p className="text-[#111827] font-black mt-4">
@@ -758,7 +653,7 @@ export default function Marketplace() {
                   <button
                     type="button"
                     onClick={clearFilters}
-                    className="mt-5 bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black px-6 py-3 rounded-2xl"
+                    className="mt-5 bg-[#41D3BD] text-[#073B35] font-black px-6 py-3 rounded-2xl"
                   >
                     View All Food
                   </button>
@@ -767,7 +662,7 @@ export default function Marketplace() {
             )}
 
             {!loading && !errorMessage && filteredFoods.length > 0 && (
-              <div className="grid grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+              <div className="grid grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredFoods.map((item) => (
                   <FoodCard key={item.id} item={item} />
                 ))}
@@ -779,7 +674,7 @@ export default function Marketplace() {
         {cartCount > 0 && (
           <Link
             to="/cart"
-            className="fixed bottom-20 left-4 right-4 z-50 sm:left-auto sm:right-6 sm:w-auto bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.98] text-white font-black px-6 py-4 rounded-2xl shadow-2xl shadow-[#073B35]/25 flex items-center justify-center gap-3 transition-all"
+            className="fixed bottom-20 left-4 right-4 z-50 sm:left-auto sm:right-6 sm:w-auto bg-[#073B35] active:scale-[0.98] text-white font-black px-6 py-4 rounded-2xl shadow-lg shadow-[#073B35]/20 flex items-center justify-center gap-3"
           >
             <span>🛒</span>
             <span>
