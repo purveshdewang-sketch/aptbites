@@ -226,70 +226,86 @@ export default function CustomerCareAgent() {
   }
 
   async function askNefoAi(customPrompt = "") {
-    if (!user) {
-      alert("Please login before using Nefo AI.");
-      return;
-    }
-
-    const prompt = String(customPrompt || messageText || "").trim();
-
-    if (!prompt) {
-      alert("Please type your question first.");
-      return;
-    }
-
-    setErrorMessage("");
-    setAiThinking(true);
-
-    if (!customPrompt) {
-      addMessage("user", prompt);
-      setMessageText("");
-    }
-
-    try {
-      const { data, error } = await supabase.functions.invoke("nefo-ai-agent", {
-        body: {
-          role: "customer",
-          message: prompt,
-          order_id: selectedOrderId ? Number(selectedOrderId) : null,
-          issue_type: selectedIssueType || null,
-          history: getAiHistory(),
-        },
-      });
-
-      if (error) {
-        const message =
-          error.message ||
-          "Nefo AI is not available right now. Please try again.";
-        addMessage("agent", message);
-        setErrorMessage(message);
-        setAiThinking(false);
-        return;
-      }
-
-      if (data?.error) {
-        const message =
-          data.details || data.error || "Nefo AI returned an error.";
-        addMessage("agent", String(message));
-        setErrorMessage(String(message));
-        setAiThinking(false);
-        return;
-      }
-
-      addMessage(
-        "agent",
-        data?.reply ||
-          "I could not generate a clear answer. Please ask again with more details."
-      );
-    } catch (error) {
-      const message =
-        error?.message || "Could not connect to Nefo AI. Please try again.";
-      addMessage("agent", message);
-      setErrorMessage(message);
-    }
-
-    setAiThinking(false);
+  if (!user) {
+    alert("Please login before using Nefo AI.");
+    return;
   }
+
+  const prompt = String(customPrompt || messageText || "").trim();
+
+  if (!prompt) {
+    alert("Please type your question first.");
+    return;
+  }
+
+  setErrorMessage("");
+  setAiThinking(true);
+
+  if (!customPrompt) {
+    addMessage("user", prompt);
+    setMessageText("");
+  }
+
+  try {
+    const { data, error } = await supabase.functions.invoke("nefo-ai-agent", {
+      body: {
+        role: "customer",
+        message: prompt,
+        order_id: selectedOrderId ? Number(selectedOrderId) : null,
+        issue_type: selectedIssueType || null,
+        history: getAiHistory(),
+      },
+    });
+
+    if (error) {
+      let detailedMessage =
+        error.message ||
+        "Nefo AI is not available right now. Please try again.";
+
+      try {
+        if (error.context) {
+          const errorBody = await error.context.json();
+          detailedMessage =
+            errorBody?.details ||
+            errorBody?.error ||
+            errorBody?.message ||
+            detailedMessage;
+        }
+      } catch {
+        // Keep default error message.
+      }
+
+      addMessage("agent", detailedMessage);
+      setErrorMessage(detailedMessage);
+      setAiThinking(false);
+      return;
+    }
+
+    if (data?.error) {
+      const detailedMessage =
+        data.details || data.error || "Nefo AI returned an error.";
+
+      addMessage("agent", String(detailedMessage));
+      setErrorMessage(String(detailedMessage));
+      setAiThinking(false);
+      return;
+    }
+
+    addMessage(
+      "agent",
+      data?.reply ||
+        "I could not generate a clear answer. Please ask again with more details."
+    );
+  } catch (error) {
+    const detailedMessage =
+      error?.message || "Could not connect to Nefo AI. Please try again.";
+
+    addMessage("agent", detailedMessage);
+    setErrorMessage(detailedMessage);
+  }
+
+  setAiThinking(false);
+}
 
   function normalizeStatus(status) {
     const value = String(status || "confirmed").toLowerCase();
