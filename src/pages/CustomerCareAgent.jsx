@@ -10,6 +10,8 @@ const QUICK_ACTIONS = [
     short: "Live status",
     icon: "📍",
     issueType: "order_tracking",
+    aiPrompt:
+      "Please check my latest order status and explain what is happening now.",
   },
   {
     key: "payment_issue",
@@ -17,6 +19,8 @@ const QUICK_ACTIONS = [
     short: "UPI / ref",
     icon: "💳",
     issueType: "payment_issue",
+    aiPrompt:
+      "I have a payment issue. Please check my order payment status and tell me what to do next.",
   },
   {
     key: "refund_request",
@@ -24,6 +28,8 @@ const QUICK_ACTIONS = [
     short: "Cancel / refund",
     icon: "↩️",
     issueType: "refund_request",
+    aiPrompt:
+      "I want help with refund eligibility. Please check my order details and explain the next step.",
   },
   {
     key: "missing_item",
@@ -31,6 +37,8 @@ const QUICK_ACTIONS = [
     short: "Missing / wrong",
     icon: "🍱",
     issueType: "food_issue",
+    aiPrompt:
+      "I received a wrong or missing food item. Please guide me based on my order.",
   },
   {
     key: "packing_issue",
@@ -38,6 +46,8 @@ const QUICK_ACTIONS = [
     short: "Container / pack",
     icon: "🥡",
     issueType: "packing_issue",
+    aiPrompt:
+      "I have a packing issue. Please check whether packing was selected for my order and guide me.",
   },
   {
     key: "account_help",
@@ -45,6 +55,8 @@ const QUICK_ACTIONS = [
     short: "Login / profile",
     icon: "👤",
     issueType: "account_help",
+    aiPrompt:
+      "I need account help in Nefo. Please explain what I should do inside the app.",
   },
 ];
 
@@ -74,13 +86,14 @@ export default function CustomerCareAgent() {
     {
       sender: "agent",
       text:
-        "Hi 👋 I’m Nefo Care. Select an issue below and I’ll help you with order status, payment, refund, packing, or food complaints.",
+        "Hi 👋 I’m Nefo AI Care. I can check your orders, payment status, packing, refund questions, and support tickets. Ask me anything about your Nefo order.",
     },
   ]);
 
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [loadingTickets, setLoadingTickets] = useState(true);
   const [creatingTicket, setCreatingTicket] = useState(false);
+  const [aiThinking, setAiThinking] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
@@ -129,7 +142,7 @@ export default function CustomerCareAgent() {
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages]);
+  }, [chatMessages, aiThinking]);
 
   const selectedOrder = useMemo(() => {
     if (!selectedOrderId) return null;
@@ -200,6 +213,82 @@ export default function CustomerCareAgent() {
 
   function addMessage(sender, text) {
     setChatMessages((current) => [...current, { sender, text }]);
+  }
+
+  function getAiHistory() {
+    return chatMessages
+      .slice(-8)
+      .map((message) => ({
+        role: message.sender === "agent" ? "assistant" : "user",
+        content: message.text,
+      }))
+      .filter((message) => message.content?.trim());
+  }
+
+  async function askNefoAi(customPrompt = "") {
+    if (!user) {
+      alert("Please login before using Nefo AI.");
+      return;
+    }
+
+    const prompt = String(customPrompt || messageText || "").trim();
+
+    if (!prompt) {
+      alert("Please type your question first.");
+      return;
+    }
+
+    setErrorMessage("");
+    setAiThinking(true);
+
+    if (!customPrompt) {
+      addMessage("user", prompt);
+      setMessageText("");
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke("nefo-ai-agent", {
+        body: {
+          role: "customer",
+          message: prompt,
+          order_id: selectedOrderId ? Number(selectedOrderId) : null,
+          issue_type: selectedIssueType || null,
+          history: getAiHistory(),
+        },
+      });
+
+      if (error) {
+        const message =
+          error.message ||
+          "Nefo AI is not available right now. Please try again.";
+        addMessage("agent", message);
+        setErrorMessage(message);
+        setAiThinking(false);
+        return;
+      }
+
+      if (data?.error) {
+        const message =
+          data.details || data.error || "Nefo AI returned an error.";
+        addMessage("agent", String(message));
+        setErrorMessage(String(message));
+        setAiThinking(false);
+        return;
+      }
+
+      addMessage(
+        "agent",
+        data?.reply ||
+          "I could not generate a clear answer. Please ask again with more details."
+      );
+    } catch (error) {
+      const message =
+        error?.message || "Could not connect to Nefo AI. Please try again.";
+      addMessage("agent", message);
+      setErrorMessage(message);
+    }
+
+    setAiThinking(false);
   }
 
   function normalizeStatus(status) {
@@ -374,16 +463,12 @@ export default function CustomerCareAgent() {
   function handleQuickAction(action) {
     setSelectedIssueType(action.issueType);
     addMessage("user", action.label);
-    addMessage("agent", getAgentReplyForAction(action.key, selectedOrder));
 
-    if (action.key !== "track_order") {
-      setTimeout(() => {
-        addMessage(
-          "agent",
-          "Type the details below and tap Create Ticket if you want Nefo support to review it."
-        );
-      }, 250);
+    if (action.key === "track_order" && selectedOrder) {
+      addMessage("agent", getAgentReplyForAction(action.key, selectedOrder));
     }
+
+    askNefoAi(action.aiPrompt);
   }
 
   async function createSupportTicket() {
@@ -493,7 +578,7 @@ export default function CustomerCareAgent() {
             </h1>
 
             <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
-              Sign in to attach orders and create support tickets.
+              Sign in to attach orders, ask Nefo AI, and create support tickets.
             </p>
 
             <Link
@@ -523,17 +608,17 @@ export default function CustomerCareAgent() {
 
           <div className="min-w-0 flex-1">
             <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
-              Chat with Us
+              Nefo AI Care
             </p>
 
             <h1 className="mt-1 text-3xl font-black leading-tight text-[#073B35]">
-              How can we
-              <span className="block text-[#111827]">help today?</span>
+              Ask anything
+              <span className="block text-[#111827]">about your order.</span>
             </h1>
 
             <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
-              Select an issue, attach an order if needed, and create a support
-              ticket.
+              AI can check your order context, explain payment status, and help
+              you create a support ticket.
             </p>
           </div>
         </header>
@@ -566,12 +651,19 @@ export default function CustomerCareAgent() {
               {latestActiveOrder.total_amount}
             </p>
 
-            <Link
-              to="/orders"
-              className="mt-4 block rounded-2xl border border-[#073B35] bg-[#073B35] py-3 text-center text-sm font-black text-white active:scale-95"
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedOrderId(String(latestActiveOrder.id));
+                askNefoAi(
+                  `Please explain the current status of Order #${latestActiveOrder.id}.`
+                );
+              }}
+              disabled={aiThinking}
+              className="mt-4 w-full rounded-2xl border border-[#073B35] bg-[#073B35] py-3 text-center text-sm font-black text-white active:scale-95 disabled:opacity-50"
             >
-              Track Order
-            </Link>
+              Ask AI About This Order
+            </button>
           </section>
         ) : null}
 
@@ -600,7 +692,8 @@ export default function CustomerCareAgent() {
                 key={action.key}
                 type="button"
                 onClick={() => handleQuickAction(action)}
-                className={`rounded-2xl border p-4 text-left transition-all active:scale-[0.98] ${
+                disabled={aiThinking}
+                className={`rounded-2xl border p-4 text-left transition-all active:scale-[0.98] disabled:opacity-60 ${
                   selectedIssueType === action.issueType
                     ? "border-[#073B35] bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
                     : "border-[#BDEFE6] bg-[#FFFFF2] text-[#51615D]"
@@ -644,7 +737,7 @@ export default function CustomerCareAgent() {
               <p className="font-black text-[#073B35]">No orders yet</p>
 
               <p className="mt-1 text-sm font-semibold text-[#51615D]">
-                You can still create a general support ticket.
+                You can still ask a general app question.
               </p>
 
               <Link
@@ -719,13 +812,13 @@ export default function CustomerCareAgent() {
           <div className="border-b border-[#174E47] bg-[#073B35] p-4 text-white">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#41D3BD] bg-[#41D3BD] text-2xl text-[#073B35]">
-                💬
+                🤖
               </div>
 
               <div>
-                <p className="text-xl font-black">Chat with Us</p>
+                <p className="text-xl font-black">Nefo AI Care</p>
                 <p className="mt-0.5 text-xs font-semibold text-[#D7F5EF]">
-                  Smart support for Nefo orders
+                  Smart support with live order context
                 </p>
               </div>
             </div>
@@ -764,7 +857,7 @@ export default function CustomerCareAgent() {
           ) : null}
 
           <div className="bg-[#FFFFF2] p-4">
-            <div className="h-[330px] space-y-3 overflow-y-auto rounded-3xl border border-[#BDEFE6] bg-white p-3">
+            <div className="h-[360px] space-y-3 overflow-y-auto rounded-3xl border border-[#BDEFE6] bg-white p-3">
               {chatMessages.map((message, index) => (
                 <div
                   key={`${message.sender}-${index}`}
@@ -784,12 +877,20 @@ export default function CustomerCareAgent() {
                 </div>
               ))}
 
+              {aiThinking ? (
+                <div className="flex justify-start">
+                  <div className="rounded-2xl rounded-bl-md border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-3 text-sm font-black text-[#073B35]">
+                    Nefo AI is checking...
+                  </div>
+                </div>
+              ) : null}
+
               <div ref={chatEndRef} />
             </div>
 
             <div className="mt-4">
               <p className="mb-2 text-xs font-black uppercase tracking-wide text-[#0B8F80]">
-                Step 3 • Describe issue
+                Step 3 • Ask AI or create ticket
               </p>
 
               <textarea
@@ -799,15 +900,24 @@ export default function CustomerCareAgent() {
                 className={`${INPUT} min-h-28 resize-none`}
                 placeholder={
                   selectedIssueType
-                    ? "Write issue details, UPI reference, missing item, or refund reason..."
-                    : "Select an issue first..."
+                    ? "Ask Nefo AI, write UPI reference, missing item, or refund reason..."
+                    : "Ask anything about your order or select an issue first..."
                 }
               />
 
               <button
                 type="button"
+                onClick={() => askNefoAi()}
+                disabled={aiThinking || !messageText.trim()}
+                className="mt-3 w-full rounded-2xl border border-[#41D3BD] bg-[#41D3BD] py-4 font-black text-[#073B35] shadow-lg shadow-[#41D3BD]/20 transition-all active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {aiThinking ? "Nefo AI Thinking..." : "Ask Nefo AI"}
+              </button>
+
+              <button
+                type="button"
                 onClick={createSupportTicket}
-                disabled={creatingTicket || !selectedIssueType}
+                disabled={creatingTicket || !selectedIssueType || !messageText.trim()}
                 className="mt-3 w-full rounded-2xl border border-[#073B35] bg-[#073B35] py-4 font-black text-white shadow-lg shadow-[#073B35]/15 transition-all active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {creatingTicket
