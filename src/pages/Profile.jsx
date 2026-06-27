@@ -1,18 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Navbar from "../components/Navbar";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabaseClient";
 
 export default function Profile() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const editSectionRef = useRef(null);
+
+  const [editMode, setEditMode] = useState(false);
 
   const [formData, setFormData] = useState({
     full_name: "",
     phone: "",
+    apartment_name: "",
+    block: "",
+    flat_no: "",
     flat: "",
     seller_kitchen_name: "",
+    seller_door_no: "",
     seller_specialty: "",
     seller_about: "",
     accept_scheduled_orders: true,
@@ -26,7 +32,6 @@ export default function Profile() {
   });
 
   const [originalFormData, setOriginalFormData] = useState(null);
-
   const [role, setRole] = useState("customer");
   const [isSeller, setIsSeller] = useState(false);
   const [bankDetailsCompleted, setBankDetailsCompleted] = useState(false);
@@ -63,6 +68,36 @@ export default function Profile() {
       )
     : 0;
 
+  const displayName = useMemo(() => {
+    return (
+      formData.full_name?.trim() ||
+      user?.user_metadata?.full_name ||
+      user?.email?.split("@")[0] ||
+      "Nefo User"
+    );
+  }, [formData.full_name, user]);
+
+  const displayEmail = user?.email || "";
+
+  const displayPhone = useMemo(() => {
+    return formData.phone?.trim() || user?.phone || user?.user_metadata?.phone || "";
+  }, [formData.phone, user]);
+
+  const addressLines = useMemo(() => {
+    const apartment = formData.apartment_name?.trim();
+    const block = formData.block?.trim();
+    const flatNo = formData.flat_no?.trim();
+    const flat = formData.flat?.trim();
+
+    const lineOne = apartment || "No address added";
+    const lineTwo = [block, flatNo ? `Flat ${flatNo}` : flat].filter(Boolean).join(", ");
+
+    return {
+      lineOne,
+      lineTwo,
+    };
+  }, [formData]);
+
   useEffect(() => {
     fetchProfile();
   }, [user]);
@@ -79,8 +114,12 @@ export default function Profile() {
     const defaultProfile = {
       full_name: user?.user_metadata?.full_name || "",
       phone: user?.phone || user?.user_metadata?.phone || "",
+      apartment_name: user?.user_metadata?.apartment_name || "",
+      block: user?.user_metadata?.block || "",
+      flat_no: user?.user_metadata?.flat_no || "",
       flat: user?.user_metadata?.flat || "",
       seller_kitchen_name: "",
+      seller_door_no: "",
       seller_specialty: "",
       seller_about: "",
       accept_scheduled_orders: true,
@@ -96,7 +135,7 @@ export default function Profile() {
     const { data, error } = await supabase
       .from("profiles")
       .select(
-        "role, is_seller, full_name, phone, flat, seller_kitchen_name, seller_specialty, seller_about, accept_scheduled_orders, delivery_available, pickup_available, seller_application_status, bank_account_holder, bank_name, bank_account_number, bank_ifsc, bank_upi_id, bank_details_completed"
+        "role, is_seller, full_name, phone, apartment_name, block, flat_no, flat, seller_kitchen_name, seller_door_no, seller_specialty, seller_about, accept_scheduled_orders, delivery_available, pickup_available, seller_application_status, bank_account_holder, bank_name, bank_account_number, bank_ifsc, bank_upi_id, bank_details_completed"
       )
       .eq("id", user.id)
       .maybeSingle();
@@ -130,8 +169,13 @@ export default function Profile() {
     const loadedProfile = {
       full_name: data?.full_name || user?.user_metadata?.full_name || "",
       phone: data?.phone || user?.phone || user?.user_metadata?.phone || "",
+      apartment_name:
+        data?.apartment_name || user?.user_metadata?.apartment_name || "",
+      block: data?.block || user?.user_metadata?.block || "",
+      flat_no: data?.flat_no || user?.user_metadata?.flat_no || "",
       flat: data?.flat || user?.user_metadata?.flat || "",
       seller_kitchen_name: data?.seller_kitchen_name || "",
+      seller_door_no: data?.seller_door_no || "",
       seller_specialty: data?.seller_specialty || "",
       seller_about: data?.seller_about || "",
       accept_scheduled_orders: data?.accept_scheduled_orders !== false,
@@ -146,7 +190,6 @@ export default function Profile() {
 
     setFormData(loadedProfile);
     setOriginalFormData(loadedProfile);
-
     setLoading(false);
   }
 
@@ -204,6 +247,7 @@ export default function Profile() {
       setMessage(
         "Please complete Account Holder Name, Bank Name, Account Number, and IFSC Code to start selling."
       );
+      openEditSection();
       return;
     }
 
@@ -215,9 +259,12 @@ export default function Profile() {
     const profilePayload = {
       id: user.id,
       email: user.email,
-      full_name: formData.full_name,
-      phone: formData.phone,
-      flat: formData.flat,
+      full_name: formData.full_name.trim(),
+      phone: formData.phone.trim(),
+      apartment_name: formData.apartment_name.trim(),
+      block: formData.block.trim(),
+      flat_no: formData.flat_no.trim(),
+      flat: formData.flat.trim(),
       role,
       is_seller: isSeller,
       bank_account_holder: formData.bank_account_holder.trim(),
@@ -229,9 +276,10 @@ export default function Profile() {
     };
 
     if (isSeller) {
-      profilePayload.seller_kitchen_name = formData.seller_kitchen_name;
-      profilePayload.seller_specialty = formData.seller_specialty;
-      profilePayload.seller_about = formData.seller_about;
+      profilePayload.seller_kitchen_name = formData.seller_kitchen_name.trim();
+      profilePayload.seller_door_no = formData.seller_door_no.trim();
+      profilePayload.seller_specialty = formData.seller_specialty.trim();
+      profilePayload.seller_about = formData.seller_about.trim();
       profilePayload.accept_scheduled_orders = formData.accept_scheduled_orders;
       profilePayload.delivery_available = formData.delivery_available;
       profilePayload.pickup_available = formData.pickup_available;
@@ -247,20 +295,27 @@ export default function Profile() {
 
     await supabase.auth.updateUser({
       data: {
-        full_name: formData.full_name,
-        phone: formData.phone,
-        flat: formData.flat,
+        full_name: formData.full_name.trim(),
+        phone: formData.phone.trim(),
+        apartment_name: formData.apartment_name.trim(),
+        block: formData.block.trim(),
+        flat_no: formData.flat_no.trim(),
+        flat: formData.flat.trim(),
         role,
       },
     });
 
     const savedProfile = {
-      full_name: formData.full_name,
-      phone: formData.phone,
-      flat: formData.flat,
-      seller_kitchen_name: formData.seller_kitchen_name,
-      seller_specialty: formData.seller_specialty,
-      seller_about: formData.seller_about,
+      full_name: formData.full_name.trim(),
+      phone: formData.phone.trim(),
+      apartment_name: formData.apartment_name.trim(),
+      block: formData.block.trim(),
+      flat_no: formData.flat_no.trim(),
+      flat: formData.flat.trim(),
+      seller_kitchen_name: formData.seller_kitchen_name.trim(),
+      seller_door_no: formData.seller_door_no.trim(),
+      seller_specialty: formData.seller_specialty.trim(),
+      seller_about: formData.seller_about.trim(),
       accept_scheduled_orders: formData.accept_scheduled_orders,
       delivery_available: formData.delivery_available,
       pickup_available: formData.pickup_available,
@@ -275,18 +330,13 @@ export default function Profile() {
     setOriginalFormData(savedProfile);
     setBankDetailsCompleted(nextBankDetailsCompleted);
     setSaving(false);
+    setMessage("Profile updated successfully.");
 
     if (isSeller && nextBankDetailsCompleted) {
-      setMessage("Bank details saved. Redirecting to Seller Dashboard...");
-
       setTimeout(() => {
         navigate("/seller-dashboard");
       }, 900);
-
-      return;
     }
-
-    setMessage("Profile updated successfully.");
   }
 
   async function handlePasswordReset() {
@@ -319,432 +369,412 @@ export default function Profile() {
     window.location.href = "/";
   }
 
-  function getInitial() {
-    if (formData.full_name) return formData.full_name.charAt(0).toUpperCase();
+  function getInitials() {
+    const name = displayName.trim();
+    const parts = name.split(" ").filter(Boolean);
+
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+
+    if (name) return name.charAt(0).toUpperCase();
     if (user?.email) return user.email.charAt(0).toUpperCase();
+
     return "N";
   }
 
+  function openEditSection() {
+    setEditMode(true);
+
+    setTimeout(() => {
+      editSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 80);
+  }
+
   function scrollToBankDetails() {
-    const bankSection = document.getElementById("seller-bank-details");
-    bankSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setEditMode(true);
+
+    setTimeout(() => {
+      const bankSection = document.getElementById("seller-bank-details");
+      bankSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
   }
 
   if (!user) {
     return (
-      <>
-        <Navbar />
-
-        <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-10 flex items-center justify-center">
-          <div className="max-w-md w-full bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-8 text-center shadow-xl shadow-[#073B35]/5">
-            <div className="w-24 h-24 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-5xl">
-              👤
+      <main className="min-h-screen bg-[#FFFFF2] px-4 py-8 pb-28 text-[#111827]">
+        <div className="mx-auto flex min-h-[70vh] max-w-md items-center justify-center">
+          <div className="w-full rounded-[2rem] border border-[#E8F4F1] bg-white/90 p-7 text-center shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.9)]">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#41D3BD] text-3xl font-black text-white">
+              N
             </div>
 
-            <h1 className="text-3xl font-black mt-6 text-[#111827]">
+            <h1 className="mt-5 text-2xl font-black text-[#111827]">
               Sign in required
             </h1>
 
-            <p className="text-[#51615D] mt-3">
+            <p className="mt-2 text-sm font-semibold text-[#51615D]">
               Please sign in to view your profile.
             </p>
 
             <Link
               to="/customer-login"
-              className="block mt-7 bg-[#073B35] hover:bg-[#0B5149] text-white font-black py-4 rounded-2xl shadow-lg shadow-[#073B35]/15"
+              className="mt-6 block rounded-2xl bg-[#073B35] py-4 text-center text-sm font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.98]"
             >
               Sign In
             </Link>
           </div>
-        </main>
-      </>
+        </div>
+      </main>
     );
   }
 
   return (
-    <>
-      <Navbar />
+    <main className="min-h-screen bg-[#FFFFF2] px-4 py-5 pb-28 text-[#111827]">
+      <div className="mx-auto max-w-md">
+        <h1 className="mb-4 text-xl font-black tracking-tight text-[#111827]">
+          My Profile
+        </h1>
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-6 sm:py-10 pb-36 sm:pb-24">
-        <div className="max-w-6xl mx-auto">
-          <section className="relative overflow-hidden bg-white/90 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-xl shadow-[#073B35]/5">
-            <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[95px]" />
-            <div className="absolute -bottom-28 -left-24 w-72 h-72 bg-[#41D3BD]/10 rounded-full blur-[110px]" />
+        {message ? (
+          <div className="mb-4 rounded-2xl border border-[#D7F5EF] bg-white/90 px-4 py-3 text-sm font-bold text-[#073B35] shadow-sm">
+            {message}
+          </div>
+        ) : null}
 
-            <div className="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5">
-              <div>
-                <div className="inline-flex items-center gap-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
-                  <span>👤</span>
-                  <span>My Profile</span>
+        {loading ? (
+          <ProfileLoading />
+        ) : (
+          <>
+            <section className="rounded-[26px] border border-[#E8F4F1] bg-white/90 p-4 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+              <div className="flex items-center gap-4">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#41D3BD] text-xl font-black text-white shadow-inner">
+                  {getInitials()}
                 </div>
 
-                <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
-                  Account
-                  <span className="block text-[#111827]">details</span>
-                </h1>
-
-                <p className="text-[#51615D] mt-4 text-sm sm:text-lg max-w-2xl leading-relaxed">
-                  Manage your contact details, address, password, seller
-                  profile, and payout details.
-                </p>
-              </div>
-
-              <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4 min-w-[180px]">
-                <p className="text-[#51615D] text-xs font-bold uppercase">
-                  Account Type
-                </p>
-
-                <p className="text-[#073B35] text-2xl font-black mt-1 capitalize">
-                  {role || "customer"}
-                </p>
-              </div>
-            </div>
-          </section>
-
-          {isSeller && !sellerOnboardingComplete && !loading && (
-            <section className="mt-5 bg-[#073B35] text-white rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/15">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
-                <div className="flex-1">
-                  <p className="text-[#41D3BD] font-black uppercase tracking-wide text-xs">
-                    Seller onboarding required
-                  </p>
-
-                  <h2 className="text-2xl sm:text-3xl font-black mt-2">
-                    Complete bank details to start selling
+                <div className="min-w-0 flex-1">
+                  <h2 className="truncate text-base font-black text-[#073B35]">
+                    {displayName}
                   </h2>
 
-                  <p className="text-[#D7F5EF] text-sm mt-2 leading-relaxed">
-                    Your seller account is approved. Add payout details once, then
-                    you can access Seller Dashboard.
+                  <p className="truncate text-xs font-semibold text-[#51615D]">
+                    {displayEmail}
                   </p>
 
-                  <div className="mt-4 bg-white/10 rounded-full h-3 overflow-hidden">
-                    <div
-                      className="bg-[#41D3BD] h-full rounded-full transition-all"
-                      style={{ width: `${sellerProgress}%` }}
-                    />
-                  </div>
-
-                  <p className="text-[#D7F5EF] text-xs font-bold mt-2">
-                    Setup progress: {sellerProgress}%
-                  </p>
+                  {displayPhone ? (
+                    <p className="mt-1 text-xs font-bold text-[#51615D]">
+                      {displayPhone}
+                    </p>
+                  ) : null}
                 </div>
+              </div>
+            </section>
+
+            <section className="mt-4 rounded-[24px] border border-[#E8F4F1] bg-white/90 p-4 shadow-[8px_8px_22px_rgba(7,59,53,0.06),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+              <div className="mb-2 flex items-start justify-between gap-3">
+                <h3 className="text-sm font-black text-[#111827]">
+                  My Address
+                </h3>
 
                 <button
                   type="button"
-                  onClick={scrollToBankDetails}
-                  className="bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black px-5 py-4 rounded-2xl active:scale-95 transition-all"
+                  onClick={openEditSection}
+                  className="text-xs font-black text-[#0B8F80] active:scale-95"
                 >
-                  Add Bank Details
+                  Edit
                 </button>
               </div>
+
+              <div className="space-y-1 text-xs font-semibold leading-relaxed text-[#51615D]">
+                <p>{addressLines.lineOne}</p>
+                {addressLines.lineTwo ? <p>{addressLines.lineTwo}</p> : null}
+              </div>
             </section>
-          )}
 
-          {message && (
-            <div className="mt-5 bg-white/90 border border-[#D7F5EF] rounded-2xl p-4 text-sm font-bold text-[#073B35] shadow-sm">
-              {message}
-            </div>
-          )}
+            {isSeller && !sellerOnboardingComplete ? (
+              <section className="mt-4 rounded-[24px] bg-[#073B35] p-4 text-white shadow-lg shadow-[#073B35]/15">
+                <p className="text-xs font-black uppercase tracking-wide text-[#41D3BD]">
+                  Seller setup required
+                </p>
 
-          {loading ? (
-            <div className="mt-6 bg-white/90 border border-[#D7F5EF] rounded-3xl p-8 shadow-lg shadow-[#073B35]/5">
-              <p className="text-[#51615D] font-bold">Loading profile...</p>
-            </div>
-          ) : (
-            <div className="grid lg:grid-cols-[1fr_0.75fr] gap-5 sm:gap-6 mt-6">
-              <section className="space-y-5">
-                <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-3xl bg-[#073B35] text-white font-black text-2xl flex items-center justify-center shadow-lg shadow-[#073B35]/15">
-                      {getInitial()}
-                    </div>
+                <h2 className="mt-1 text-lg font-black">
+                  Complete bank details
+                </h2>
 
-                    <div className="min-w-0">
-                      <p className="text-[#111827] font-black text-xl truncate">
-                        {formData.full_name || "Nefo User"}
-                      </p>
-
-                      <p className="text-[#51615D] text-sm truncate mt-1">
-                        {user.email}
-                      </p>
-
-                      <div className="mt-2 inline-flex items-center rounded-full bg-[#41D3BD]/12 border border-[#41D3BD]/25 px-3 py-1">
-                        <span className="text-[#073B35] text-xs font-black capitalize">
-                          {isSeller
-                            ? sellerOnboardingComplete
-                              ? "Seller ready"
-                              : "Seller setup required"
-                            : "Customer account"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/15">
+                  <div
+                    className="h-full rounded-full bg-[#41D3BD]"
+                    style={{ width: `${sellerProgress}%` }}
+                  />
                 </div>
 
-                <form
-                  id="profile-form"
-                  onSubmit={handleSaveProfile}
-                  className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-7 shadow-lg shadow-[#073B35]/5"
-                >
+                <div className="mt-3 flex items-center justify-between">
+                  <p className="text-xs font-bold text-[#D7F5EF]">
+                    {sellerProgress}% complete
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={scrollToBankDetails}
+                    className="rounded-full bg-[#41D3BD] px-4 py-2 text-xs font-black text-[#073B35]"
+                  >
+                    Add Details
+                  </button>
+                </div>
+              </section>
+            ) : null}
+
+            <section className="mt-4 overflow-hidden rounded-[24px] border border-[#E8F4F1] bg-white/90 px-4 py-1 shadow-[8px_8px_22px_rgba(7,59,53,0.06),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+              <ProfileRow icon={<OrdersIcon />} label="My Orders" to="/orders" />
+              <Divider />
+              <ProfileRow
+                icon={<HeartIcon />}
+                label="Saved Kitchens"
+                to="/saved-kitchens"
+              />
+              <Divider />
+              <ProfileRow
+                icon={<CardIcon />}
+                label="Payment Methods"
+                to="/payment-methods"
+              />
+              <Divider />
+              <ProfileRow
+                icon={<HelpIcon />}
+                label="Help & Support"
+                to="/customer-care"
+              />
+              <Divider />
+              <ProfileRow icon={<LogoutIcon />} label="Logout" onClick={handleLogout} />
+            </section>
+
+            {isSeller ? (
+              <section className="mt-4 overflow-hidden rounded-[24px] border border-[#E8F4F1] bg-white/90 px-4 py-1 shadow-[8px_8px_22px_rgba(7,59,53,0.06),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+                <ProfileRow
+                  icon={<KitchenIcon />}
+                  label={
+                    sellerOnboardingComplete
+                      ? "Seller Dashboard"
+                      : "Complete Seller Setup"
+                  }
+                  onClick={() => {
+                    if (sellerOnboardingComplete) {
+                      navigate("/seller-dashboard");
+                    } else {
+                      scrollToBankDetails();
+                    }
+                  }}
+                />
+                <Divider />
+                <ProfileRow
+                  icon={<HelpIcon />}
+                  label="Seller Assistant"
+                  to="/seller-helper"
+                />
+              </section>
+            ) : null}
+
+            {editMode ? (
+              <section
+                ref={editSectionRef}
+                className="mt-5 scroll-mt-5 rounded-[28px] border border-[#E8F4F1] bg-white/90 p-4 shadow-[8px_8px_22px_rgba(7,59,53,0.07),-8px_-8px_22px_rgba(255,255,255,0.95)]"
+              >
+                <div className="mb-5 flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                      Basic Details
+                    <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                      Edit Profile
                     </p>
-
-                    <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
-                      Personal information
+                    <h2 className="mt-1 text-xl font-black text-[#111827]">
+                      Account details
                     </h2>
-
-                    <p className="text-[#51615D] text-sm mt-2">
-                      These details are used for order coordination.
-                    </p>
                   </div>
 
-                  <div className="mt-6 space-y-4">
-                    <div>
-                      <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
-                        Full Name
-                      </label>
+                  <button
+                    type="button"
+                    onClick={() => setEditMode(false)}
+                    className="rounded-full bg-[#F4FFFC] px-3 py-2 text-xs font-black text-[#073B35]"
+                  >
+                    Close
+                  </button>
+                </div>
 
-                      <input
-                        name="full_name"
-                        value={formData.full_name}
-                        onChange={handleChange}
-                        className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] text-[#111827] text-base"
-                        placeholder="Full Name"
-                      />
-                    </div>
+                <form id="profile-form" onSubmit={handleSaveProfile}>
+                  <FormSection title="Personal Information">
+                    <InputField
+                      label="Full Name"
+                      name="full_name"
+                      value={formData.full_name}
+                      onChange={handleChange}
+                      placeholder="Full Name"
+                    />
 
-                    <div>
-                      <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
-                        Email
-                      </label>
+                    <InputField
+                      label="Email"
+                      value={user.email || ""}
+                      disabled
+                      readOnly
+                      placeholder="Email"
+                    />
 
-                      <input
-                        value={user.email || ""}
-                        disabled
-                        readOnly
-                        className="w-full bg-[#EAF7F4] border border-[#D7F5EF] rounded-2xl px-5 py-4 outline-none text-[#51615D] cursor-not-allowed text-base"
-                        placeholder="Email"
-                      />
-                    </div>
+                    <InputField
+                      label="Phone Number"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="Phone Number"
+                    />
+                  </FormSection>
 
-                    <div>
-                      <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
-                        Phone Number
-                      </label>
+                  <FormSection title="Address">
+                    <InputField
+                      label="Apartment / Society Name"
+                      name="apartment_name"
+                      value={formData.apartment_name}
+                      onChange={handleChange}
+                      placeholder="Green Park View"
+                    />
 
-                      <input
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] text-[#111827] text-base"
-                        placeholder="Phone Number"
-                      />
-                    </div>
+                    <InputField
+                      label="Block"
+                      name="block"
+                      value={formData.block}
+                      onChange={handleChange}
+                      placeholder="Block B"
+                    />
 
-                    <div>
-                      <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
-                        Tower / Flat
-                      </label>
+                    <InputField
+                      label="Flat No."
+                      name="flat_no"
+                      value={formData.flat_no}
+                      onChange={handleChange}
+                      placeholder="1204"
+                    />
 
-                      <input
-                        name="flat"
-                        value={formData.flat}
-                        onChange={handleChange}
-                        className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] text-[#111827] text-base"
-                        placeholder="Tower / Flat e.g. B-1204"
-                      />
-                    </div>
-                  </div>
+                    <InputField
+                      label="Tower / Flat Display"
+                      name="flat"
+                      value={formData.flat}
+                      onChange={handleChange}
+                      placeholder="B-1204"
+                    />
+                  </FormSection>
 
-                  {isSeller && (
-                    <div
-                      id="seller-bank-details"
-                      className="mt-8 border-t border-[#D7F5EF] pt-6 scroll-mt-28"
-                    >
-                      <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                        Required for Seller Payout
-                      </p>
-
-                      <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
-                        Bank account
-                      </h2>
-
-                      <p className="text-[#51615D] text-sm mt-2">
-                        Complete these payout details before using Seller
-                        Dashboard.
-                      </p>
-
+                  {isSeller ? (
+                    <>
                       <div
-                        className={`mt-4 rounded-2xl p-4 border ${
-                          currentBankDetailsComplete
-                            ? "bg-green-50 border-green-200"
-                            : "bg-yellow-50 border-yellow-200"
-                        }`}
-                      >
-                        <p
-                          className={`font-black text-sm ${
+                        id="seller-bank-details"
+                        className="scroll-mt-6"
+                      />
+
+                      <FormSection title="Seller Bank Details">
+                        <div
+                          className={`rounded-2xl border p-4 ${
                             currentBankDetailsComplete
-                              ? "text-green-700"
-                              : "text-yellow-700"
+                              ? "border-green-200 bg-green-50"
+                              : "border-yellow-200 bg-yellow-50"
                           }`}
                         >
-                          {currentBankDetailsComplete
-                            ? "Bank details complete"
-                            : "Bank details required"}
-                        </p>
-
-                        <p
-                          className={`text-xs mt-1 leading-relaxed ${
-                            currentBankDetailsComplete
-                              ? "text-green-700"
-                              : "text-yellow-700"
-                          }`}
-                        >
-                          {currentBankDetailsComplete
-                            ? "Save profile to unlock Seller Dashboard."
-                            : "Account Holder Name, Bank Name, Account Number, and IFSC Code are mandatory."}
-                        </p>
-                      </div>
-
-                      <div className="mt-6 space-y-4">
-                        <div>
-                          <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
-                            Account Holder Name *
-                          </label>
-
-                          <input
-                            name="bank_account_holder"
-                            value={formData.bank_account_holder}
-                            onChange={handleChange}
-                            required={isSeller}
-                            className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] text-[#111827] text-base"
-                            placeholder="Account Holder Name"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
-                            Bank Name *
-                          </label>
-
-                          <input
-                            name="bank_name"
-                            value={formData.bank_name}
-                            onChange={handleChange}
-                            required={isSeller}
-                            className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] text-[#111827] text-base"
-                            placeholder="Bank Name"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
-                            Account Number *
-                          </label>
-
-                          <input
-                            name="bank_account_number"
-                            value={formData.bank_account_number}
-                            onChange={handleChange}
-                            required={isSeller}
-                            inputMode="numeric"
-                            className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] text-[#111827] text-base"
-                            placeholder="Account Number"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
-                            IFSC Code *
-                          </label>
-
-                          <input
-                            name="bank_ifsc"
-                            value={formData.bank_ifsc}
-                            onChange={handleChange}
-                            required={isSeller}
-                            className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] text-[#111827] text-base uppercase"
-                            placeholder="IFSC Code"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
-                            UPI ID Optional
-                          </label>
-
-                          <input
-                            name="bank_upi_id"
-                            value={formData.bank_upi_id}
-                            onChange={handleChange}
-                            className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] text-[#111827] text-base"
-                            placeholder="yourupi@bank"
-                          />
-                        </div>
-
-                        <div className="bg-[#41D3BD]/12 border border-[#41D3BD]/25 rounded-2xl p-4">
-                          <p className="text-[#073B35] font-black text-sm">
-                            Secure information
+                          <p
+                            className={`text-sm font-black ${
+                              currentBankDetailsComplete
+                                ? "text-green-700"
+                                : "text-yellow-700"
+                            }`}
+                          >
+                            {currentBankDetailsComplete
+                              ? "Bank details complete"
+                              : "Bank details required"}
                           </p>
 
-                          <p className="text-[#51615D] text-xs mt-1 leading-relaxed">
-                            Bank details are never shown to customers. They are
-                            used only for seller payouts by Nefo admin or
-                            accounting.
+                          <p
+                            className={`mt-1 text-xs font-semibold leading-relaxed ${
+                              currentBankDetailsComplete
+                                ? "text-green-700"
+                                : "text-yellow-700"
+                            }`}
+                          >
+                            Account Holder Name, Bank Name, Account Number, and
+                            IFSC Code are mandatory for seller payout.
                           </p>
                         </div>
-                      </div>
-                    </div>
-                  )}
 
-                  {isSeller && (
-                    <div className="mt-8 border-t border-[#D7F5EF] pt-6">
-                      <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                        Seller Details
-                      </p>
+                        <InputField
+                          label="Account Holder Name *"
+                          name="bank_account_holder"
+                          value={formData.bank_account_holder}
+                          onChange={handleChange}
+                          required={isSeller}
+                          placeholder="Account Holder Name"
+                        />
 
-                      <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
-                        Kitchen profile
-                      </h2>
+                        <InputField
+                          label="Bank Name *"
+                          name="bank_name"
+                          value={formData.bank_name}
+                          onChange={handleChange}
+                          required={isSeller}
+                          placeholder="Bank Name"
+                        />
 
-                      <p className="text-[#51615D] text-sm mt-2">
-                        These details help customers understand your kitchen.
-                      </p>
+                        <InputField
+                          label="Account Number *"
+                          name="bank_account_number"
+                          value={formData.bank_account_number}
+                          onChange={handleChange}
+                          required={isSeller}
+                          inputMode="numeric"
+                          placeholder="Account Number"
+                        />
 
-                      <div className="mt-6 space-y-4">
+                        <InputField
+                          label="IFSC Code *"
+                          name="bank_ifsc"
+                          value={formData.bank_ifsc}
+                          onChange={handleChange}
+                          required={isSeller}
+                          placeholder="IFSC Code"
+                          className="uppercase"
+                        />
+
+                        <InputField
+                          label="UPI ID Optional"
+                          name="bank_upi_id"
+                          value={formData.bank_upi_id}
+                          onChange={handleChange}
+                          placeholder="yourupi@bank"
+                        />
+                      </FormSection>
+
+                      <FormSection title="Kitchen Profile">
+                        <InputField
+                          label="Kitchen / Seller Name"
+                          name="seller_kitchen_name"
+                          value={formData.seller_kitchen_name}
+                          onChange={handleChange}
+                          placeholder="Kitchen / Seller Name"
+                        />
+
+                        <InputField
+                          label="Seller Door No."
+                          name="seller_door_no"
+                          value={formData.seller_door_no}
+                          onChange={handleChange}
+                          placeholder="Door No."
+                        />
+
+                        <InputField
+                          label="Food Specialty"
+                          name="seller_specialty"
+                          value={formData.seller_specialty}
+                          onChange={handleChange}
+                          placeholder="Food Specialty"
+                        />
+
                         <div>
-                          <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
-                            Kitchen / Seller Name
-                          </label>
-
-                          <input
-                            name="seller_kitchen_name"
-                            value={formData.seller_kitchen_name}
-                            onChange={handleChange}
-                            className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] text-[#111827] text-base"
-                            placeholder="Kitchen / Seller Name"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
-                            Food Specialty
-                          </label>
-
-                          <input
-                            name="seller_specialty"
-                            value={formData.seller_specialty}
-                            onChange={handleChange}
-                            className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] text-[#111827] text-base"
-                            placeholder="Food Specialty"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[#51615D] text-xs font-black uppercase tracking-wide mb-2">
+                          <label className="mb-2 block text-xs font-black uppercase tracking-wide text-[#51615D]">
                             About Your Kitchen
                           </label>
 
@@ -753,87 +783,53 @@ export default function Profile() {
                             value={formData.seller_about}
                             onChange={handleChange}
                             rows="4"
-                            className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] resize-none text-[#111827] text-base"
+                            className="w-full resize-none rounded-2xl border border-[#D7F5EF] bg-[#FFFFF2] px-4 py-4 text-base text-[#111827] outline-none focus:border-[#41D3BD]"
                             placeholder="Tell customers about your kitchen..."
                           />
                         </div>
 
-                        <label className="flex items-start gap-3 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            name="accept_scheduled_orders"
-                            checked={formData.accept_scheduled_orders}
-                            onChange={handleChange}
-                            className="mt-1 accent-[#41D3BD]"
-                          />
+                        <CheckField
+                          name="accept_scheduled_orders"
+                          checked={formData.accept_scheduled_orders}
+                          onChange={handleChange}
+                          title="Accept scheduled orders"
+                          text="Customers can choose date and time for later orders."
+                        />
 
-                          <div>
-                            <p className="text-[#111827] font-black">
-                              Accept scheduled orders
-                            </p>
+                        <CheckField
+                          name="delivery_available"
+                          checked={formData.delivery_available}
+                          onChange={handleChange}
+                          title="Delivery available"
+                          text="Customers can choose doorstep delivery."
+                        />
 
-                            <p className="text-[#51615D] text-sm mt-1">
-                              Customers can choose date and time for later
-                              orders.
-                            </p>
-                          </div>
-                        </label>
+                        <CheckField
+                          name="pickup_available"
+                          checked={formData.pickup_available}
+                          onChange={handleChange}
+                          title="Self pickup available"
+                          text="Customers can choose self pickup."
+                        />
+                      </FormSection>
+                    </>
+                  ) : null}
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <label className="flex items-start gap-3 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              name="delivery_available"
-                              checked={formData.delivery_available}
-                              onChange={handleChange}
-                              className="mt-1 accent-[#41D3BD]"
-                            />
+                  <FormSection title="Password">
+                    <p className="text-sm font-semibold leading-relaxed text-[#51615D]">
+                      We will send a secure password reset link to your registered
+                      email.
+                    </p>
 
-                            <div>
-                              <p className="text-[#111827] font-black">
-                                Delivery available
-                              </p>
-
-                              <p className="text-[#51615D] text-sm mt-1">
-                                Customers can choose doorstep delivery.
-                              </p>
-                            </div>
-                          </label>
-
-                          <label className="flex items-start gap-3 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              name="pickup_available"
-                              checked={formData.pickup_available}
-                              onChange={handleChange}
-                              className="mt-1 accent-[#41D3BD]"
-                            />
-
-                            <div>
-                              <p className="text-[#111827] font-black">
-                                Self pickup available
-                              </p>
-
-                              <p className="text-[#51615D] text-sm mt-1">
-                                Customers can choose self pickup.
-                              </p>
-                            </div>
-                          </label>
-                        </div>
-
-                        <div className="bg-[#41D3BD]/12 border border-[#41D3BD]/25 rounded-2xl p-4">
-                          <p className="text-[#073B35] font-black text-sm">
-                            Privacy note
-                          </p>
-
-                          <p className="text-[#51615D] text-xs mt-1 leading-relaxed">
-                            Exact kitchen door/location should not be shown
-                            publicly to customers.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                    <button
+                      type="button"
+                      onClick={handlePasswordReset}
+                      disabled={resettingPassword}
+                      className="w-full rounded-2xl border border-[#41D3BD]/60 py-4 text-sm font-black text-[#073B35] transition-all active:scale-[0.98] disabled:opacity-50"
+                    >
+                      {resettingPassword ? "Sending..." : "Send Reset Link"}
+                    </button>
+                  </FormSection>
 
                   <button
                     type="submit"
@@ -842,12 +838,12 @@ export default function Profile() {
                       (!profileChanged &&
                         bankDetailsCompleted === currentBankDetailsComplete)
                     }
-                    className={`hidden sm:block mt-7 w-full font-black py-4 rounded-2xl transition-all ${
+                    className={`mt-5 w-full rounded-2xl py-4 text-sm font-black transition-all active:scale-[0.98] disabled:opacity-60 ${
                       profileChanged ||
                       bankDetailsCompleted !== currentBankDetailsComplete
-                        ? "bg-[#073B35] hover:bg-[#0B5149] text-white shadow-lg shadow-[#073B35]/15"
-                        : "bg-[#D7F5EF] text-[#8AA5A0] cursor-not-allowed"
-                    } disabled:opacity-60`}
+                        ? "bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
+                        : "cursor-not-allowed bg-[#D7F5EF] text-[#8AA5A0]"
+                    }`}
                   >
                     {saving
                       ? "Saving..."
@@ -860,307 +856,227 @@ export default function Profile() {
                   </button>
                 </form>
               </section>
+            ) : null}
+          </>
+        )}
+      </div>
+    </main>
+  );
+}
 
-              <aside className="space-y-5">
-                <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
-                  <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                    Account Type
-                  </p>
+function ProfileLoading() {
+  return (
+    <div className="space-y-4">
+      <div className="h-24 animate-pulse rounded-[26px] bg-white/90 shadow-sm" />
+      <div className="h-24 animate-pulse rounded-[24px] bg-white/90 shadow-sm" />
+      <div className="h-64 animate-pulse rounded-[24px] bg-white/90 shadow-sm" />
+    </div>
+  );
+}
 
-                  <h2 className="text-2xl font-black mt-2 capitalize text-[#111827]">
-                    {role || "customer"}
-                  </h2>
-
-                  <p className="text-[#51615D] text-sm mt-3 leading-relaxed">
-                    {isSeller
-                      ? sellerOnboardingComplete
-                        ? "You have seller dashboard access."
-                        : "Complete bank details to unlock Seller Dashboard."
-                      : "You are using a customer account."}
-                  </p>
-
-                  {isSeller ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (sellerOnboardingComplete) {
-                            navigate("/seller-dashboard");
-                            return;
-                          }
-
-                          scrollToBankDetails();
-                        }}
-                        className={`block mt-5 w-full text-center font-black py-3 rounded-2xl transition-all ${
-                          sellerOnboardingComplete
-                            ? "bg-[#073B35] hover:bg-[#0B5149] text-white"
-                            : "bg-yellow-50 border border-yellow-200 text-yellow-700"
-                        }`}
-                      >
-                        {sellerOnboardingComplete
-                          ? "Open Seller Dashboard"
-                          : "Complete Bank Details"}
-                      </button>
-
-                      <Link
-                        to="/seller-helper"
-                        className="block mt-3 bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] text-center font-black py-3 rounded-2xl transition-all"
-                      >
-                        Seller Assistant
-                      </Link>
-                    </>
-                  ) : (
-                    <p className="text-[#51615D] text-sm mt-3 leading-relaxed">
-                      To sell food, use “Apply to Sell on Nefo” from the profile
-                      menu.
-                    </p>
-                  )}
-                </div>
-
-                {isSeller && (
-                  <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
-                    <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                      Seller Setup
-                    </p>
-
-                    <h2 className="text-2xl font-black mt-2 text-[#111827]">
-                      {sellerProgress}% complete
-                    </h2>
-
-                    <div className="mt-4 bg-[#D7F5EF] rounded-full h-3 overflow-hidden">
-                      <div
-                        className="bg-[#41D3BD] h-full rounded-full transition-all"
-                        style={{ width: `${sellerProgress}%` }}
-                      />
-                    </div>
-
-                    <div className="mt-4 space-y-2 text-sm font-bold">
-                      <SetupRow label="Approval" done />
-                      <SetupRow
-                        label="Bank Details"
-                        done={currentBankDetailsComplete}
-                      />
-                      <SetupRow
-                        label="Kitchen Name"
-                        done={Boolean(formData.seller_kitchen_name)}
-                      />
-                      <SetupRow
-                        label="Specialty"
-                        done={Boolean(formData.seller_specialty)}
-                      />
-                      <SetupRow
-                        label="Kitchen About"
-                        done={Boolean(formData.seller_about)}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {isSeller && (
-                  <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
-                    <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                      Payout Status
-                    </p>
-
-                    <h2 className="text-2xl font-black mt-2 text-[#111827]">
-                      Bank details
-                    </h2>
-
-                    <div className="mt-4 space-y-3 text-sm font-bold">
-                      <PayoutRow
-                        label="Account Holder"
-                        value={formData.bank_account_holder || "Not added"}
-                      />
-                      <PayoutRow
-                        label="Bank"
-                        value={formData.bank_name || "Not added"}
-                      />
-                      <PayoutRow
-                        label="IFSC"
-                        value={formData.bank_ifsc || "Not added"}
-                      />
-                      <PayoutRow
-                        label="UPI"
-                        value={formData.bank_upi_id || "Optional"}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {isSeller && (
-                  <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
-                    <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                      Seller Settings
-                    </p>
-
-                    <h2 className="text-2xl font-black mt-2 text-[#111827]">
-                      Order options
-                    </h2>
-
-                    <div className="mt-4 space-y-3 text-sm font-bold">
-                      <StatusRow
-                        label="Delivery"
-                        active={formData.delivery_available}
-                      />
-                      <StatusRow
-                        label="Self Pickup"
-                        active={formData.pickup_available}
-                      />
-                      <StatusRow
-                        label="Scheduled Orders"
-                        active={formData.accept_scheduled_orders}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
-                  <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                    Password
-                  </p>
-
-                  <h2 className="text-2xl font-black mt-2 text-[#111827]">
-                    Reset password
-                  </h2>
-
-                  <p className="text-[#51615D] text-sm mt-3 leading-relaxed">
-                    We will send a secure password reset link to your registered
-                    email.
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={handlePasswordReset}
-                    disabled={resettingPassword}
-                    className="mt-5 w-full border border-[#41D3BD]/60 text-[#073B35] hover:bg-[#41D3BD] disabled:opacity-50 font-black py-4 rounded-2xl transition-all"
-                  >
-                    {resettingPassword ? "Sending..." : "Send Reset Link"}
-                  </button>
-                </div>
-
-                <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
-                  <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                    Legal & Support
-                  </p>
-
-                  <h2 className="text-2xl font-black mt-2 text-[#111827]">
-                    Help and policies
-                  </h2>
-
-                  <p className="text-[#51615D] text-sm mt-3 leading-relaxed">
-                    Access Nefo support, refund rules, privacy details, and user
-                    terms.
-                  </p>
-
-                  <div className="grid gap-3 mt-5">
-                    <Link
-                      to="/customer-care"
-                      className="bg-[#073B35] hover:bg-[#0B5149] text-white font-black text-center py-3 rounded-2xl transition-all"
-                    >
-                      Customer Care
-                    </Link>
-
-                    <Link
-                      to="/refund-policy"
-                      className="bg-[#FFFFF2] border border-[#D7F5EF] hover:bg-[#D7F5EF] text-[#073B35] font-black text-center py-3 rounded-2xl transition-all"
-                    >
-                      Refund Policy
-                    </Link>
-
-                    <Link
-                      to="/privacy-policy"
-                      className="bg-[#FFFFF2] border border-[#D7F5EF] hover:bg-[#D7F5EF] text-[#073B35] font-black text-center py-3 rounded-2xl transition-all"
-                    >
-                      Privacy Policy
-                    </Link>
-
-                    <Link
-                      to="/terms"
-                      className="bg-[#FFFFF2] border border-[#D7F5EF] hover:bg-[#D7F5EF] text-[#073B35] font-black text-center py-3 rounded-2xl transition-all"
-                    >
-                      Terms & Conditions
-                    </Link>
-                  </div>
-                </div>
-
-                <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-lg shadow-[#073B35]/5">
-                  <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                    Session
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="mt-4 w-full bg-red-50 border border-red-200 text-red-500 hover:bg-red-500 hover:text-white font-black py-4 rounded-2xl transition-all"
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              </aside>
-            </div>
-          )}
+function ProfileRow({ icon, label, to, onClick }) {
+  const row = (
+    <div className="flex items-center justify-between py-3">
+      <div className="flex items-center gap-3">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#F4FFFC] text-[#073B35]">
+          {icon}
         </div>
 
-        {!loading && (
-          <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#FFFFF2]/95 backdrop-blur-xl border-t border-[#D7F5EF] px-4 py-3">
-            <button
-              type="submit"
-              form="profile-form"
-              disabled={
-                saving ||
-                (!profileChanged &&
-                  bankDetailsCompleted === currentBankDetailsComplete)
-              }
-              className={`w-full active:scale-[0.98] disabled:opacity-60 font-black py-4 rounded-2xl transition-all ${
-                profileChanged || bankDetailsCompleted !== currentBankDetailsComplete
-                  ? "bg-[#073B35] text-white shadow-xl shadow-[#073B35]/15"
-                  : "bg-[#D7F5EF] text-[#8AA5A0] cursor-not-allowed"
-              }`}
-            >
-              {saving
-                ? "Saving..."
-                : profileChanged || bankDetailsCompleted !== currentBankDetailsComplete
-                ? isSeller && currentBankDetailsComplete
-                  ? "Save & Open Dashboard"
-                  : "Save Profile"
-                : "No Changes"}
-            </button>
-          </div>
-        )}
-      </main>
-    </>
+        <span className="text-sm font-bold text-[#111827]">{label}</span>
+      </div>
+
+      <ChevronIcon />
+    </div>
+  );
+
+  if (to) {
+    return (
+      <Link to={to} className="block active:scale-[0.99]">
+        {row}
+      </Link>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="block w-full text-left active:scale-[0.99]"
+    >
+      {row}
+    </button>
   );
 }
 
-function SetupRow({ label, done }) {
+function Divider() {
+  return <div className="border-t border-[#E8F4F1]" />;
+}
+
+function FormSection({ title, children }) {
   return (
-    <div className="flex items-center justify-between bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3">
-      <span className="text-[#51615D]">{label}</span>
-      <span className={done ? "text-green-600" : "text-yellow-600"}>
-        {done ? "Done" : "Pending"}
-      </span>
+    <section className="mt-5 border-t border-[#E8F4F1] pt-5 first:mt-0 first:border-t-0 first:pt-0">
+      <h3 className="mb-4 text-base font-black text-[#111827]">{title}</h3>
+      <div className="space-y-4">{children}</div>
+    </section>
+  );
+}
+
+function InputField({
+  label,
+  className = "",
+  value,
+  onChange,
+  disabled,
+  readOnly,
+  ...props
+}) {
+  return (
+    <div>
+      <label className="mb-2 block text-xs font-black uppercase tracking-wide text-[#51615D]">
+        {label}
+      </label>
+
+      <input
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        readOnly={readOnly}
+        className={`w-full rounded-2xl border border-[#D7F5EF] px-4 py-4 text-base outline-none focus:border-[#41D3BD] ${
+          disabled
+            ? "cursor-not-allowed bg-[#EAF7F4] text-[#51615D]"
+            : "bg-[#FFFFF2] text-[#111827]"
+        } ${className}`}
+        {...props}
+      />
     </div>
   );
 }
 
-function PayoutRow({ label, value }) {
+function CheckField({ name, checked, onChange, title, text }) {
   return (
-    <div className="flex items-center justify-between bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3 gap-3">
-      <span className="text-[#51615D]">{label}</span>
-      <span className="text-[#073B35] text-right truncate max-w-[150px]">
-        {value}
-      </span>
-    </div>
+    <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#D7F5EF] bg-[#FFFFF2] p-4">
+      <input
+        type="checkbox"
+        name={name}
+        checked={checked}
+        onChange={onChange}
+        className="mt-1 accent-[#41D3BD]"
+      />
+
+      <div>
+        <p className="text-sm font-black text-[#111827]">{title}</p>
+        <p className="mt-1 text-xs font-semibold leading-relaxed text-[#51615D]">
+          {text}
+        </p>
+      </div>
+    </label>
   );
 }
 
-function StatusRow({ label, active }) {
+function ChevronIcon() {
   return (
-    <div className="flex items-center justify-between bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3">
-      <span className="text-[#51615D]">{label}</span>
-      <span className={active ? "text-green-600" : "text-red-500"}>
-        {active ? "ON" : "OFF"}
-      </span>
-    </div>
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4 text-[#7A8783]"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+    >
+      <path d="M9 18l6-6-6-6" />
+    </svg>
+  );
+}
+
+function OrdersIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M7 3h10l1 4H6l1-4z" />
+      <path d="M6 7h12v14H6z" />
+      <path d="M9 12h6" />
+      <path d="M9 16h6" />
+    </svg>
+  );
+}
+
+function HeartIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" />
+    </svg>
+  );
+}
+
+function CardIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3 10h18" />
+    </svg>
+  );
+}
+
+function HelpIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.8-2.5 2-2.5 4" />
+      <path d="M12 17h.01" />
+    </svg>
+  );
+}
+
+function LogoutIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M10 17l5-5-5-5" />
+      <path d="M15 12H3" />
+      <path d="M21 3v18" />
+    </svg>
+  );
+}
+
+function KitchenIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M4 10h16" />
+      <path d="M5 10l1 10h12l1-10" />
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+    </svg>
   );
 }

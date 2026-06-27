@@ -314,25 +314,36 @@ export default function Cart() {
                   </div>
 
                   {orderTiming === "scheduled" && (
-                    <div className="grid grid-cols-1 gap-3 mt-4">
-                      <input
-                        type="date"
-                        value={scheduledDate}
-                        onChange={(event) =>
-                          setScheduledDate(event.target.value)
-                        }
-                        className="bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD]"
-                      />
+                    <div className="grid gap-3 mt-4">
 
-                      <input
-                        type="time"
-                        value={scheduledTime}
-                        onChange={(event) =>
-                          setScheduledTime(event.target.value)
-                        }
-                        className="bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD]"
-                      />
-                    </div>
+  <label className="block">
+    <span className="block text-xs font-bold text-[#51615D] mb-2">
+      📅 Select Date
+    </span>
+
+    <input
+      type="date"
+      value={scheduledDate}
+      min={new Date().toISOString().split("T")[0]}
+      onChange={(e) => setScheduledDate(e.target.value)}
+      className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-5 py-4 text-[#111827] font-semibold outline-none focus:border-[#41D3BD]"
+    />
+  </label>
+
+        <label className="block">
+          <span className="block text-xs font-bold text-[#51615D] mb-2">
+            🕒 Select Time
+          </span>
+
+          <input
+            type="time"
+            value={scheduledTime}
+            onChange={(e) => setScheduledTime(e.target.value)}
+            className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-5 py-4 text-[#111827] font-semibold outline-none focus:border-[#41D3BD]"
+          />
+        </label>
+
+      </div>
                   )}
                 </section>
 

@@ -5,6 +5,7 @@ import {
   Route,
   Navigate,
   Link,
+  NavLink,
   useLocation,
 } from "react-router-dom";
 
@@ -44,6 +45,85 @@ function LoadingScreen() {
   );
 }
 
+function shouldShowCustomerBottomNav(pathname) {
+  const hiddenRoutes = [
+    "/customer-login",
+    "/seller-login",
+    "/reset-password",
+    "/seller-dashboard",
+    "/seller-helper",
+    "/owner-dashboard",
+    "/owner-accounting",
+    "/owner-seller-applications",
+    "/care-agent",
+    "/order-chat",
+    "/food",
+  ];
+
+  return !hiddenRoutes.some((route) => pathname.startsWith(route));
+}
+
+function BottomNav() {
+  const navItems = [
+    {
+      label: "Home",
+      path: "/",
+      icon: <HomeIcon />,
+    },
+    {
+      label: "Search",
+      path: "/marketplace",
+      icon: <SearchIcon />,
+    },
+    {
+      label: "Orders",
+      path: "/orders",
+      icon: <OrdersIcon />,
+    },
+    {
+      label: "Profile",
+      path: "/profile",
+      icon: <ProfileIcon />,
+    },
+  ];
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-[900] border-t border-[#E8F4F1] bg-[#FFFFF2]/95 backdrop-blur-xl">
+      <div className="mx-auto grid h-[70px] max-w-md grid-cols-4 px-2 pb-[env(safe-area-inset-bottom)]">
+        {navItems.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            end={item.path === "/"}
+            className={({ isActive }) =>
+              `flex flex-col items-center justify-center gap-1 rounded-2xl text-[10px] font-black transition-all ${
+                isActive
+                  ? "text-[#073B35]"
+                  : "text-[#7A8783] hover:text-[#073B35]"
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-2xl transition-all ${
+                    isActive
+                      ? "bg-[#D7F5EF] shadow-[4px_4px_10px_rgba(7,59,53,0.08),-4px_-4px_10px_rgba(255,255,255,0.9)]"
+                      : ""
+                  }`}
+                >
+                  {item.icon}
+                </div>
+                <span>{item.label}</span>
+              </>
+            )}
+          </NavLink>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
 function FloatingHelpButton() {
   const location = useLocation();
 
@@ -63,7 +143,10 @@ function FloatingHelpButton() {
 
   if (shouldHide) return null;
 
+  const bottomNavVisible = shouldShowCustomerBottomNav(location.pathname);
+
   const needsHigherPosition =
+    bottomNavVisible ||
     location.pathname === "/cart" ||
     location.pathname === "/checkout" ||
     location.pathname.startsWith("/food/");
@@ -247,200 +330,328 @@ function AdminOnlyRoute({ children }) {
   return children;
 }
 
+function ComingSoonPage({ title, description }) {
+  return (
+    <main className="min-h-screen bg-[#FFFFF2] px-4 py-6 pb-28 text-[#111827]">
+      <div className="mx-auto max-w-md">
+        <h1 className="text-2xl font-black text-[#111827]">{title}</h1>
+
+        <div className="mt-5 rounded-[28px] border border-[#E8F4F1] bg-white/90 p-6 shadow-[8px_8px_22px_rgba(7,59,53,0.07),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+          <p className="text-sm font-semibold leading-relaxed text-[#51615D]">
+            {description}
+          </p>
+
+          <Link
+            to="/profile"
+            className="mt-6 block rounded-2xl bg-[#073B35] py-4 text-center text-sm font-black text-white active:scale-[0.98]"
+          >
+            Back to Profile
+          </Link>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/customer-login" element={<CustomerLogin />} />
+      <Route path="/seller-login" element={<SellerLogin />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+
+      <Route
+        path="/seller-registration"
+        element={
+          <ProtectedRoute>
+            <SellerRegistration />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/privacy-policy"
+        element={
+          <ProtectedRoute>
+            <PrivacyPolicy />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/terms"
+        element={
+          <ProtectedRoute>
+            <Terms />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/refund-policy"
+        element={
+          <ProtectedRoute>
+            <RefundPolicy />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <Home />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/marketplace"
+        element={
+          <ProtectedRoute>
+            <Marketplace />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/food/:id"
+        element={
+          <ProtectedRoute>
+            <FoodDetails />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/saved-kitchens"
+        element={
+          <ProtectedRoute>
+            <ComingSoonPage
+              title="Saved Kitchens"
+              description="Saved kitchens will appear here after the favourite kitchen feature is connected."
+            />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/payment-methods"
+        element={
+          <ProtectedRoute>
+            <ComingSoonPage
+              title="Payment Methods"
+              description="Payment methods will appear here after the payment wallet or saved payment feature is connected."
+            />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/customer-care"
+        element={
+          <ProtectedRoute>
+            <CustomerCare />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/care-agent"
+        element={
+          <ProtectedRoute>
+            <CustomerCareAgent />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/seller-dashboard"
+        element={
+          <SellerOnlyRoute>
+            <SellerDashboard />
+          </SellerOnlyRoute>
+        }
+      />
+
+      <Route
+        path="/seller-helper"
+        element={
+          <SellerOnlyRoute>
+            <SellerHelper />
+          </SellerOnlyRoute>
+        }
+      />
+
+      <Route
+        path="/owner-dashboard"
+        element={
+          <AdminOnlyRoute>
+            <OwnerDashboard />
+          </AdminOnlyRoute>
+        }
+      />
+
+      <Route
+        path="/owner-accounting"
+        element={
+          <AdminOnlyRoute>
+            <OwnerAccounting />
+          </AdminOnlyRoute>
+        }
+      />
+
+      <Route
+        path="/owner-seller-applications"
+        element={
+          <AdminOnlyRoute>
+            <OwnerSellerApplications />
+          </AdminOnlyRoute>
+        }
+      />
+
+      <Route
+        path="/cart"
+        element={
+          <ProtectedRoute>
+            <Cart />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/checkout"
+        element={
+          <ProtectedRoute>
+            <Checkout />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/orders"
+        element={
+          <ProtectedRoute>
+            <Orders />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/order-chat/:orderId"
+        element={
+          <ProtectedRoute>
+            <OrderChat />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/order-history"
+        element={
+          <ProtectedRoute>
+            <OrderHistory />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+function AppShell() {
+  const location = useLocation();
+  const showBottomNav = shouldShowCustomerBottomNav(location.pathname);
+
+  return (
+    <>
+      <ScrollToTop />
+
+      <AppRoutes />
+
+      <FloatingHelpButton />
+
+      {showBottomNav ? <BottomNav /> : null}
+    </>
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter>
-      <ScrollToTop />
-
-      <Routes>
-        <Route path="/customer-login" element={<CustomerLogin />} />
-        <Route path="/seller-login" element={<SellerLogin />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-
-        <Route
-          path="/seller-registration"
-          element={
-            <ProtectedRoute>
-              <SellerRegistration />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/privacy-policy"
-          element={
-            <ProtectedRoute>
-              <PrivacyPolicy />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/terms"
-          element={
-            <ProtectedRoute>
-              <Terms />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/refund-policy"
-          element={
-            <ProtectedRoute>
-              <RefundPolicy />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/marketplace"
-          element={
-            <ProtectedRoute>
-              <Marketplace />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/food/:id"
-          element={
-            <ProtectedRoute>
-              <FoodDetails />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/customer-care"
-          element={
-            <ProtectedRoute>
-              <CustomerCare />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/care-agent"
-          element={
-            <ProtectedRoute>
-              <CustomerCareAgent />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/seller-dashboard"
-          element={
-            <SellerOnlyRoute>
-              <SellerDashboard />
-            </SellerOnlyRoute>
-          }
-        />
-
-        <Route
-          path="/seller-helper"
-          element={
-            <SellerOnlyRoute>
-              <SellerHelper />
-            </SellerOnlyRoute>
-          }
-        />
-
-        <Route
-          path="/owner-dashboard"
-          element={
-            <AdminOnlyRoute>
-              <OwnerDashboard />
-            </AdminOnlyRoute>
-          }
-        />
-
-        <Route
-          path="/owner-accounting"
-          element={
-            <AdminOnlyRoute>
-              <OwnerAccounting />
-            </AdminOnlyRoute>
-          }
-        />
-
-        <Route
-          path="/owner-seller-applications"
-          element={
-            <AdminOnlyRoute>
-              <OwnerSellerApplications />
-            </AdminOnlyRoute>
-          }
-        />
-
-        <Route
-          path="/cart"
-          element={
-            <ProtectedRoute>
-              <Cart />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/checkout"
-          element={
-            <ProtectedRoute>
-              <Checkout />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/orders"
-          element={
-            <ProtectedRoute>
-              <Orders />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/order-chat/:orderId"
-          element={
-            <ProtectedRoute>
-              <OrderChat />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/order-history"
-          element={
-            <ProtectedRoute>
-              <OrderHistory />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-
-      <FloatingHelpButton />
+      <AppShell />
     </BrowserRouter>
+  );
+}
+
+function HomeIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M3 10.5L12 3l9 7.5" />
+      <path d="M5 10v10h14V10" />
+    </svg>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="M20 20l-3.5-3.5" />
+    </svg>
+  );
+}
+
+function OrdersIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M7 3h10l1 4H6l1-4z" />
+      <path d="M6 7h12v14H6z" />
+      <path d="M9 12h6" />
+      <path d="M9 16h6" />
+    </svg>
+  );
+}
+
+function ProfileIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21c1.8-4 5-6 8-6s6.2 2 8 6" />
+    </svg>
   );
 }

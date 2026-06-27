@@ -22,6 +22,27 @@ export default function CustomerLogin() {
   const [loading, setLoading] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
   const [message, setMessage] = useState("");
+  const [errors, setErrors] = useState({
+    email: "",
+    password: "",
+    fullName: "",
+    phone: "",
+    apartmentName: "",
+    flatNo: "",
+    general: "",
+  });
+
+  function clearErrors() {
+    setErrors({
+      email: "",
+      password: "",
+      fullName: "",
+      phone: "",
+      apartmentName: "",
+      flatNo: "",
+      general: "",
+    });
+  }
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -30,6 +51,14 @@ export default function CustomerLogin() {
       ...currentData,
       [name]: value,
     }));
+
+    setErrors((currentErrors) => ({
+      ...currentErrors,
+      [name]: "",
+      general: "",
+    }));
+
+    setMessage("");
   }
 
   function cleanPhone(phone) {
@@ -46,11 +75,86 @@ export default function CustomerLogin() {
       .join(" ");
   }
 
+  function setLoginError(errorMessage) {
+    const cleanMessage = String(errorMessage || "").toLowerCase();
+
+    if (
+      cleanMessage.includes("invalid login credentials") ||
+      cleanMessage.includes("invalid")
+    ) {
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        password: "Invalid email or password.",
+      }));
+      return;
+    }
+
+    if (cleanMessage.includes("email")) {
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        email: errorMessage,
+      }));
+      return;
+    }
+
+    setErrors((currentErrors) => ({
+      ...currentErrors,
+      general: errorMessage || "Something went wrong. Please try again.",
+    }));
+  }
+
+  function validateSignUpFields() {
+    const nextErrors = {
+      email: "",
+      password: "",
+      fullName: "",
+      phone: "",
+      apartmentName: "",
+      flatNo: "",
+      general: "",
+    };
+
+    if (!formData.fullName.trim()) {
+      nextErrors.fullName = "Full name is required.";
+    }
+
+    if (!formData.phone.trim()) {
+      nextErrors.phone = "Phone number is required.";
+    } else if (cleanPhone(formData.phone).length < 10) {
+      nextErrors.phone = "Please enter a valid phone number.";
+    }
+
+    if (!formData.apartmentName.trim()) {
+      nextErrors.apartmentName = "Apartment name is required.";
+    }
+
+    if (!formData.flatNo.trim()) {
+      nextErrors.flatNo = "Flat number is required.";
+    }
+
+    if (!formData.email.trim()) {
+      nextErrors.email = "Email address is required.";
+    }
+
+    if (!formData.password.trim()) {
+      nextErrors.password = "Password is required.";
+    }
+
+    setErrors(nextErrors);
+
+    return !Object.values(nextErrors).some(Boolean);
+  }
+
   async function handleForgotPassword() {
+    clearErrors();
+
     const email = formData.email.trim();
 
     if (!email) {
-      setMessage("Please enter your email first, then click Forgot Password.");
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        email: "Enter your email first, then tap Forgot Password.",
+      }));
       return;
     }
 
@@ -64,7 +168,10 @@ export default function CustomerLogin() {
     });
 
     if (error) {
-      setMessage(`Password reset failed: ${error.message}`);
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        email: `Password reset failed: ${error.message}`,
+      }));
       setResettingPassword(false);
       return;
     }
@@ -78,30 +185,16 @@ export default function CustomerLogin() {
 
     setLoading(true);
     setMessage("");
+    clearErrors();
 
     try {
       if (isSignUp) {
-        if (
-          !formData.fullName.trim() ||
-          !formData.phone.trim() ||
-          !formData.apartmentName.trim() ||
-          !formData.flatNo.trim()
-        ) {
-          setMessage(
-            "Please fill your name, phone, apartment name, and flat number."
-          );
+        if (!validateSignUpFields()) {
           setLoading(false);
           return;
         }
 
         const cleanedPhone = cleanPhone(formData.phone);
-
-        if (cleanedPhone.length < 10) {
-          setMessage("Please enter a valid phone number.");
-          setLoading(false);
-          return;
-        }
-
         const flatAddress = buildFlatAddress();
 
         const { data, error } = await supabase.auth.signUp({
@@ -121,7 +214,7 @@ export default function CustomerLogin() {
         });
 
         if (error) {
-          setMessage(error.message);
+          setLoginError(error.message);
           setLoading(false);
           return;
         }
@@ -145,21 +238,44 @@ export default function CustomerLogin() {
             });
 
           if (profileError) {
-            setMessage(`Profile save failed: ${profileError.message}`);
+            setErrors((currentErrors) => ({
+              ...currentErrors,
+              general: `Profile save failed: ${profileError.message}`,
+            }));
             setLoading(false);
             return;
           }
         }
 
-        navigate(selectedRole === "seller" ? "/seller-dashboard" : "/marketplace");
+        navigate(
+          selectedRole === "seller" ? "/seller-dashboard" : "/marketplace"
+        );
       } else {
+        if (!formData.email.trim()) {
+          setErrors((currentErrors) => ({
+            ...currentErrors,
+            email: "Email address is required.",
+          }));
+          setLoading(false);
+          return;
+        }
+
+        if (!formData.password.trim()) {
+          setErrors((currentErrors) => ({
+            ...currentErrors,
+            password: "Password is required.",
+          }));
+          setLoading(false);
+          return;
+        }
+
         const { data, error } = await supabase.auth.signInWithPassword({
           email: formData.email.trim(),
           password: formData.password,
         });
 
         if (error) {
-          setMessage(error.message);
+          setLoginError(error.message);
           setLoading(false);
           return;
         }
@@ -167,7 +283,10 @@ export default function CustomerLogin() {
         const user = data?.user;
 
         if (!user) {
-          setMessage("Login failed.");
+          setErrors((currentErrors) => ({
+            ...currentErrors,
+            general: "Login failed.",
+          }));
           setLoading(false);
           return;
         }
@@ -185,13 +304,30 @@ export default function CustomerLogin() {
           profileRole === "admin" ||
           profile?.is_seller === true;
 
-        navigate(isSeller || selectedRole === "seller" ? "/seller-dashboard" : "/marketplace");
+        navigate(
+          isSeller || selectedRole === "seller"
+            ? "/seller-dashboard"
+            : "/marketplace"
+        );
       }
     } catch (error) {
-      setMessage(error.message);
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        general: error.message || "Something went wrong. Please try again.",
+      }));
     }
 
     setLoading(false);
+  }
+
+  function FieldError({ message }) {
+    if (!message) return null;
+
+    return (
+      <p className="mb-2 text-sm font-black text-red-600">
+        {message}
+      </p>
+    );
   }
 
   return (
@@ -307,6 +443,7 @@ export default function CustomerLogin() {
                 onClick={() => {
                   setSelectedRole("customer");
                   setMessage("");
+                  clearErrors();
                 }}
                 className={`py-3 rounded-2xl font-black transition-all ${
                   selectedRole === "customer"
@@ -322,6 +459,7 @@ export default function CustomerLogin() {
                 onClick={() => {
                   setSelectedRole("seller");
                   setMessage("");
+                  clearErrors();
                 }}
                 className={`py-3 rounded-2xl font-black transition-all ${
                   selectedRole === "seller"
@@ -355,63 +493,93 @@ export default function CustomerLogin() {
               </p>
             </div>
 
+            {errors.general && (
+              <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4">
+                <p className="text-sm font-black text-red-700">
+                  {errors.general}
+                </p>
+              </div>
+            )}
+
             {message && (
-              <div className="mt-5 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 text-sm font-bold text-[#073B35]">
-                {message}
+              <div className="mt-5 rounded-2xl border border-[#D7F5EF] bg-[#FFFFF2] p-4">
+                <p className="text-sm font-black text-[#073B35]">
+                  {message}
+                </p>
               </div>
             )}
 
             <form onSubmit={handleAuth} className="mt-7 space-y-4">
               {isSignUp && (
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <input
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleChange}
-                    required
-                    placeholder="Full name"
-                    className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
-                  />
+                  <div>
+                    <FieldError message={errors.fullName} />
+                    <input
+                      name="fullName"
+                      value={formData.fullName}
+                      onChange={handleChange}
+                      required
+                      placeholder="Full name"
+                      className={`bg-[#FFFFF2] border rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827] w-full ${
+                        errors.fullName ? "border-red-300" : "border-[#D7F5EF]"
+                      }`}
+                    />
+                  </div>
 
-                  <input
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    required
-                    placeholder="Phone number"
-                    className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
-                  />
+                  <div>
+                    <FieldError message={errors.phone} />
+                    <input
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      required
+                      placeholder="Phone number"
+                      className={`bg-[#FFFFF2] border rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827] w-full ${
+                        errors.phone ? "border-red-300" : "border-[#D7F5EF]"
+                      }`}
+                    />
+                  </div>
                 </div>
               )}
 
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                placeholder="Email address"
-                className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
-              />
-
-              <div className="relative">
+              <div>
+                <FieldError message={errors.email} />
                 <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={formData.password}
+                  type="email"
+                  name="email"
+                  value={formData.email}
                   onChange={handleChange}
                   required
-                  placeholder="Password"
-                  className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 pr-20 outline-none focus:border-[#41D3BD] text-[#111827]"
+                  placeholder="Email address"
+                  className={`w-full bg-[#FFFFF2] border rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827] ${
+                    errors.email ? "border-red-300" : "border-[#D7F5EF]"
+                  }`}
                 />
+              </div>
 
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1A9F8D] text-sm font-black"
-                >
-                  {showPassword ? "Hide" : "Show"}
-                </button>
+              <div>
+                <FieldError message={errors.password} />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                    placeholder="Password"
+                    className={`w-full bg-[#FFFFF2] border rounded-2xl px-4 py-4 pr-20 outline-none focus:border-[#41D3BD] text-[#111827] ${
+                      errors.password ? "border-red-300" : "border-[#D7F5EF]"
+                    }`}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1A9F8D] text-sm font-black"
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
               </div>
 
               {!isSignUp && (
@@ -436,14 +604,21 @@ export default function CustomerLogin() {
                   </p>
 
                   <div className="space-y-4">
-                    <input
-                      name="apartmentName"
-                      value={formData.apartmentName}
-                      onChange={handleChange}
-                      required
-                      placeholder="Apartment name"
-                      className="w-full bg-white/80 border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
-                    />
+                    <div>
+                      <FieldError message={errors.apartmentName} />
+                      <input
+                        name="apartmentName"
+                        value={formData.apartmentName}
+                        onChange={handleChange}
+                        required
+                        placeholder="Apartment name"
+                        className={`w-full bg-white/80 border rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827] ${
+                          errors.apartmentName
+                            ? "border-red-300"
+                            : "border-[#D7F5EF]"
+                        }`}
+                      />
+                    </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <input
@@ -454,14 +629,21 @@ export default function CustomerLogin() {
                         className="bg-white/80 border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
                       />
 
-                      <input
-                        name="flatNo"
-                        value={formData.flatNo}
-                        onChange={handleChange}
-                        required
-                        placeholder="Flat No."
-                        className="bg-white/80 border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
-                      />
+                      <div>
+                        <FieldError message={errors.flatNo} />
+                        <input
+                          name="flatNo"
+                          value={formData.flatNo}
+                          onChange={handleChange}
+                          required
+                          placeholder="Flat No."
+                          className={`w-full bg-white/80 border rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827] ${
+                            errors.flatNo
+                              ? "border-red-300"
+                              : "border-[#D7F5EF]"
+                          }`}
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -490,6 +672,7 @@ export default function CustomerLogin() {
               onClick={() => {
                 setIsSignUp(!isSignUp);
                 setMessage("");
+                clearErrors();
               }}
               className="w-full mt-5 text-sm text-[#1A9F8D] font-black"
             >
