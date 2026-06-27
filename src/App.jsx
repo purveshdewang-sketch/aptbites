@@ -128,6 +128,7 @@ function FloatingHelpButton() {
   const location = useLocation();
 
   const hiddenRoutes = [
+    "/seller-dashboard",
     "/food",
     "/customer-login",
     "/seller-login",
@@ -145,11 +146,14 @@ function FloatingHelpButton() {
 
   const bottomNavVisible = shouldShowCustomerBottomNav(location.pathname);
 
-  const needsHigherPosition =
-    bottomNavVisible ||
-    location.pathname === "/cart" ||
-    location.pathname === "/checkout" ||
-    location.pathname.startsWith("/food/");
+  const sellerDashboardPage = location.pathname.startsWith("/seller-dashboard");
+
+const needsHigherPosition =
+  bottomNavVisible ||
+  sellerDashboardPage ||
+  location.pathname === "/cart" ||
+  location.pathname === "/checkout" ||
+  location.pathname.startsWith("/food/");
 
   const sellerPages = [
     "/seller-dashboard",
@@ -167,7 +171,7 @@ function FloatingHelpButton() {
     <Link
       to={isSellerPage ? "/seller-helper" : "/care-agent"}
       className={`fixed right-4 z-[999] font-black px-4 py-3 rounded-full shadow-2xl active:scale-95 transition-all ${
-        needsHigherPosition ? "bottom-24" : "bottom-5"
+        sellerDashboardPage ? "bottom-28" : needsHigherPosition ? "bottom-24" : "bottom-5"
       } ${
         isSellerPage
           ? "bg-[#FFB703] hover:bg-[#FFC533] text-[#111827]"

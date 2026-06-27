@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Navbar from "../components/Navbar";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../context/AuthContext";
 
@@ -13,6 +12,15 @@ const FOOD_CATEGORIES = [
   "Tiffin",
   "Specials",
 ];
+
+const CARD =
+  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+
+const SOFT_CARD =
+  "rounded-[24px] border border-[#E8F4F1] bg-white/90 shadow-[6px_6px_16px_rgba(7,59,53,0.06),-6px_-6px_16px_rgba(255,255,255,0.95)]";
+
+const INPUT =
+  "w-full rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-4 text-base font-semibold text-[#111827] outline-none placeholder:text-[#8AA5A0] focus:border-[#41D3BD] focus:bg-white";
 
 export default function SellerDashboard() {
   const { user } = useAuth();
@@ -1237,253 +1245,217 @@ export default function SellerDashboard() {
 
   if (!user) {
     return (
-      <>
-        <Navbar />
-        <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 py-10 flex items-center justify-center">
-          <div className="max-w-md w-full nefo-neo-white p-7 text-center">
-            <div className="w-16 h-16 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-3xl">
-              👨‍🍳
-            </div>
-            <h1 className="text-2xl font-black mt-5">
-              Seller login required
-            </h1>
-            <p className="text-[#51615D] mt-3">
-              Please sign in before managing food dishes.
-            </p>
-            <Link
-              to="/seller-login"
-              className="block mt-6 bg-[#073B35] text-white font-black py-4 rounded-2xl"
-            >
-              Seller Sign In
-            </Link>
+      <main className="flex min-h-screen items-center justify-center bg-[#FFFFF2] px-4 py-10 text-[#111827]">
+        <div className={`w-full max-w-md p-7 text-center ${CARD}`}>
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#41D3BD]/12 text-3xl">
+            👨‍🍳
           </div>
-        </main>
-      </>
+
+          <h1 className="mt-5 text-2xl font-black">Seller login required</h1>
+
+          <p className="mt-3 text-[#51615D]">
+            Please sign in before managing food dishes.
+          </p>
+
+          <Link
+            to="/seller-login"
+            className="mt-6 block rounded-2xl bg-[#073B35] py-4 font-black text-white"
+          >
+            Seller Sign In
+          </Link>
+        </div>
+      </main>
     );
   }
 
   if (profileLoading) {
     return (
-      <>
-        <Navbar />
-        <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 py-10 flex items-center justify-center">
-          <div className="max-w-md w-full nefo-neo-white p-8 text-center">
-            <div className="w-16 h-16 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-3xl">
-              👨‍🍳
-            </div>
-            <p className="text-[#51615D] font-bold mt-4">
-              Loading kitchen profile...
-            </p>
+      <main className="flex min-h-screen items-center justify-center bg-[#FFFFF2] px-4 py-10 text-[#111827]">
+        <div className={`w-full max-w-md p-8 text-center ${CARD}`}>
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#41D3BD]/12 text-3xl">
+            👨‍🍳
           </div>
-        </main>
-      </>
+
+          <p className="mt-4 font-bold text-[#51615D]">
+            Loading kitchen profile...
+          </p>
+        </div>
+      </main>
     );
   }
 
   if (!bankDetailsCompleted) {
     return (
-      <>
-        <Navbar />
-        <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 py-10 flex items-center justify-center">
-          <div className="max-w-md w-full nefo-neo-white p-7 text-center">
-            <div className="w-20 h-20 mx-auto rounded-full bg-yellow-50 border border-yellow-200 flex items-center justify-center text-4xl">
-              🏦
-            </div>
-            <h1 className="text-3xl font-black mt-6">
-              Complete bank details
-            </h1>
-            <p className="text-[#51615D] mt-3 leading-relaxed">
-              Payout bank details are required before opening Seller Dashboard.
-            </p>
-            <button
-              type="button"
-              onClick={() => navigate("/profile")}
-              className="w-full mt-7 bg-[#073B35] text-white font-black py-4 rounded-2xl"
-            >
-              Complete Profile
-            </button>
+      <main className="flex min-h-screen items-center justify-center bg-[#FFFFF2] px-4 py-10 text-[#111827]">
+        <div className={`w-full max-w-md p-7 text-center ${CARD}`}>
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-yellow-200 bg-yellow-50 text-4xl">
+            🏦
           </div>
-        </main>
-      </>
+
+          <h1 className="mt-6 text-3xl font-black">Complete bank details</h1>
+
+          <p className="mt-3 leading-relaxed text-[#51615D]">
+            Payout bank details are required before opening Seller Dashboard.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => navigate("/profile")}
+            className="mt-7 w-full rounded-2xl bg-[#073B35] py-4 font-black text-white"
+          >
+            Complete Profile
+          </button>
+        </div>
+      </main>
     );
   }
 
   if (!sellerProfileComplete) {
     return (
-      <>
-        <Navbar />
-        <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 py-6 pb-20">
-          <div className="max-w-3xl mx-auto">
-            <section className="nefo-neo-white p-5 sm:p-8">
-              <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                Seller Setup
-              </p>
-              <h1 className="text-3xl sm:text-5xl font-black mt-3 text-[#073B35] leading-tight">
-                Complete your kitchen profile
-              </h1>
+      <main className="min-h-screen bg-[#FFFFF2] px-4 py-6 pb-28 text-[#111827]">
+        <div className="mx-auto max-w-md">
+          <section className={`p-5 ${CARD}`}>
+            <p className="text-xs font-black uppercase tracking-wide text-[#1A9F8D]">
+              Seller Setup
+            </p>
 
-              {message && (
-                <div className="mt-5 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 text-sm font-bold text-[#073B35]">
-                  {message}
-                </div>
-              )}
+            <h1 className="mt-2 text-3xl font-black leading-tight text-[#073B35]">
+              Complete your kitchen profile
+            </h1>
 
-              <form onSubmit={saveSellerSetup} className="mt-6 space-y-4">
+            {message ? <MessageBox message={message} /> : null}
+
+            <form onSubmit={saveSellerSetup} className="mt-6 space-y-4">
+              <Field label="Kitchen name">
                 <input
                   name="seller_kitchen_name"
                   value={sellerSetupData.seller_kitchen_name}
                   onChange={handleSellerSetupChange}
                   required
-                  className="nefo-neo-input"
+                  className={INPUT}
                   placeholder="Kitchen name"
                 />
+              </Field>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
+                <Field label="Tower / Flat">
                   <input
                     name="flat"
                     value={sellerSetupData.flat}
                     onChange={handleSellerSetupChange}
                     required
-                    className="nefo-neo-input"
+                    className={INPUT}
                     placeholder="Tower / Flat"
                   />
+                </Field>
 
+                <Field label="Phone number">
                   <input
                     name="phone"
                     value={sellerSetupData.phone}
                     onChange={handleSellerSetupChange}
                     required
-                    className="nefo-neo-input"
+                    className={INPUT}
                     placeholder="Phone Number"
                   />
-                </div>
+                </Field>
+              </div>
 
+              <Field label="Specialty">
                 <input
                   name="seller_specialty"
                   value={sellerSetupData.seller_specialty}
                   onChange={handleSellerSetupChange}
                   required
-                  className="nefo-neo-input"
+                  className={INPUT}
                   placeholder="Specialty"
                 />
+              </Field>
 
+              <Field label="About kitchen">
                 <textarea
                   name="seller_about"
                   value={sellerSetupData.seller_about}
                   onChange={handleSellerSetupChange}
                   rows="4"
                   required
-                  className="w-full nefo-neo-input h-32 py-4 resize-none"
+                  className={`${INPUT} min-h-32 resize-none`}
                   placeholder="Tell customers about your kitchen"
                 />
+              </Field>
 
-                <label className="flex items-start gap-3 nefo-neo-tile p-4 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="accept_scheduled_orders"
-                    checked={sellerSetupData.accept_scheduled_orders}
-                    onChange={handleSellerSetupChange}
-                    className="mt-1 accent-[#41D3BD]"
-                  />
+              <CheckTile
+                title="Accept scheduled orders"
+                text="Customers can choose date and time."
+                name="accept_scheduled_orders"
+                checked={sellerSetupData.accept_scheduled_orders}
+                onChange={handleSellerSetupChange}
+              />
+
+              <CheckTile
+                title="Delivery available"
+                text="Customers can choose delivery."
+                name="delivery_available"
+                checked={sellerSetupData.delivery_available}
+                onChange={handleSellerSetupChange}
+              />
+
+              <CheckTile
+                title="Self pickup available"
+                text="Customers can choose pickup."
+                name="pickup_available"
+                checked={sellerSetupData.pickup_available}
+                onChange={handleSellerSetupChange}
+              />
+
+              <div className={`p-4 ${SOFT_CARD}`}>
+                <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="font-black">Accept scheduled orders</p>
-                    <p className="text-[#51615D] text-sm mt-1">
-                      Customers can choose date and time.
+                    <p className="font-black">Packing charge</p>
+                    <p className="mt-1 text-sm text-[#51615D]">
+                      Added at checkout.
                     </p>
                   </div>
-                </label>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <label className="flex items-start gap-3 nefo-neo-tile p-4 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      name="delivery_available"
-                      checked={sellerSetupData.delivery_available}
-                      onChange={handleSellerSetupChange}
-                      className="mt-1 accent-[#41D3BD]"
-                    />
-                    <div>
-                      <p className="font-black">Delivery available</p>
-                      <p className="text-[#51615D] text-sm mt-1">
-                        Customers can choose delivery.
-                      </p>
-                    </div>
-                  </label>
-
-                  <label className="flex items-start gap-3 nefo-neo-tile p-4 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      name="pickup_available"
-                      checked={sellerSetupData.pickup_available}
-                      onChange={handleSellerSetupChange}
-                      className="mt-1 accent-[#41D3BD]"
-                    />
-                    <div>
-                      <p className="font-black">Self pickup available</p>
-                      <p className="text-[#51615D] text-sm mt-1">
-                        Customers can choose pickup.
-                      </p>
-                    </div>
-                  </label>
-                </div>
-
-                <div className="nefo-neo-tile p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-black">Packing charge</p>
-                      <p className="text-[#51615D] text-sm mt-1">
-                        Added at checkout.
-                      </p>
-                    </div>
-                    <div className="bg-[#073B35] text-white font-black px-4 py-2 rounded-2xl">
-                      ₹{sellerSetupData.packing_charge}
-                    </div>
+                  <div className="rounded-2xl bg-[#073B35] px-4 py-2 font-black text-white">
+                    ₹{sellerSetupData.packing_charge}
                   </div>
-
-                  <input
-                    type="range"
-                    name="packing_charge"
-                    min="5"
-                    max="15"
-                    step="1"
-                    value={sellerSetupData.packing_charge}
-                    onChange={handleSellerSetupChange}
-                    className="w-full mt-5 accent-[#41D3BD]"
-                  />
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={profileSaving}
-                  className="w-full bg-[#073B35] disabled:opacity-50 text-white font-black py-4 rounded-2xl"
-                >
-                  {profileSaving ? "Saving..." : "Save and Continue"}
-                </button>
-              </form>
-            </section>
-          </div>
-        </main>
-      </>
-    );
-  }
+                <input
+                  type="range"
+                  name="packing_charge"
+                  min="5"
+                  max="15"
+                  step="1"
+                  value={sellerSetupData.packing_charge}
+                  onChange={handleSellerSetupChange}
+                  className="mt-5 w-full accent-[#41D3BD]"
+                />
+              </div>
 
-  function StatCard({ label, value }) {
-    return (
-      <div className="nefo-neo-tile p-4">
-        <p className="text-[11px] font-bold text-[#51615D]">{label}</p>
-        <p className="text-2xl font-black text-[#111827] mt-2">{value}</p>
-      </div>
+              <button
+                type="submit"
+                disabled={profileSaving}
+                className="w-full rounded-2xl bg-[#073B35] py-4 font-black text-white disabled:opacity-50"
+              >
+                {profileSaving ? "Saving..." : "Save and Continue"}
+              </button>
+            </form>
+          </section>
+        </div>
+      </main>
     );
   }
 
   function MiniSparkline() {
     return (
-      <svg viewBox="0 0 260 80" className="w-full h-20 mt-2">
+      <svg viewBox="0 0 260 80" className="mt-3 h-24 w-full">
         <path
           d="M4 62 C 28 58, 30 44, 52 50 S 82 64, 104 54 S 132 34, 156 44 S 184 62, 206 38 S 238 32, 256 10"
           fill="none"
           stroke="#41D3BD"
-          strokeWidth="5"
+          strokeWidth="6"
           strokeLinecap="round"
         />
       </svg>
@@ -1494,17 +1466,17 @@ export default function SellerDashboard() {
     const status = getAutoStatus(order);
 
     return (
-      <div className="flex items-center justify-between gap-3 py-3 border-b border-[#E8F4F1] last:border-b-0">
+      <div className="flex items-center justify-between gap-3 border-b border-[#E8F4F1] py-3 last:border-b-0">
         <div className="min-w-0">
-          <p className="text-xs font-black text-[#111827] truncate">
+          <p className="truncate text-xs font-black text-[#111827]">
             #{order.id}
           </p>
-          <p className="text-[11px] text-[#51615D] truncate">
+          <p className="truncate text-[11px] text-[#51615D]">
             {order.customer_name || "Customer"}
           </p>
         </div>
 
-        <p className="text-xs font-black text-[#111827] shrink-0">
+        <p className="shrink-0 text-xs font-black text-[#111827]">
           ₹{order.total_amount || order.subtotal_amount || 0}
         </p>
 
@@ -1524,24 +1496,31 @@ export default function SellerDashboard() {
 
     return (
       <div className="space-y-4">
-        <div className="flex items-center justify-between nefo-neo-tile p-3">
-          <p className="text-sm font-black text-[#073B35]">
-            {sellerOnline ? "Online" : "Offline"}
-          </p>
+        <div className={`p-4 ${CARD}`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-base font-black text-[#073B35]">
+                {sellerOnline ? "Online" : "Offline"}
+              </p>
+              <p className="mt-1 text-xs font-semibold text-[#51615D]">
+                Customers can {sellerOnline ? "order now" : "not order now"}.
+              </p>
+            </div>
 
-          <button
-            type="button"
-            onClick={toggleSellerOnline}
-            className={`relative w-14 h-8 rounded-full transition-all ${
-              sellerOnline ? "bg-[#41D3BD]" : "bg-[#D7F5EF]"
-            }`}
-          >
-            <span
-              className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-md transition-all ${
-                sellerOnline ? "right-1" : "left-1"
+            <button
+              type="button"
+              onClick={toggleSellerOnline}
+              className={`relative h-9 w-16 rounded-full transition-all ${
+                sellerOnline ? "bg-[#41D3BD]" : "bg-[#D7F5EF]"
               }`}
-            />
-          </button>
+            >
+              <span
+                className={`absolute top-1 h-7 w-7 rounded-full bg-white shadow-md transition-all ${
+                  sellerOnline ? "right-1" : "left-1"
+                }`}
+              />
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -1551,26 +1530,30 @@ export default function SellerDashboard() {
           <StatCard label="Completed" value={completedOrdersCount} />
         </div>
 
-        <section className="nefo-neo-tile p-4">
-          <p className="text-xs font-black text-[#51615D]">
-            Today’s Revenue
-          </p>
-          <h2 className="text-3xl font-black text-[#111827] mt-1">
+        <section className={`p-5 ${CARD}`}>
+          <p className="text-sm font-black text-[#51615D]">Today’s Revenue</p>
+
+          <h2 className="mt-2 text-4xl font-black text-[#111827]">
             ₹{todayEarnings}
           </h2>
-          <p className="text-xs font-black text-[#1A9F8D] mt-1">
+
+          <p className="mt-2 text-sm font-black text-[#1A9F8D]">
             +18% vs yesterday
           </p>
+
           <MiniSparkline />
         </section>
 
-        <section className="nefo-neo-tile p-4">
+        <section className={`p-4 ${CARD}`}>
           <div className="flex items-center justify-between">
-            <h2 className="font-black text-[#111827]">Recent Orders</h2>
+            <h2 className="text-lg font-black text-[#111827]">
+              Recent Orders
+            </h2>
+
             <button
               type="button"
               onClick={() => setActiveTab("orders")}
-              className="text-xs font-black text-[#1A9F8D]"
+              className="text-sm font-black text-[#1A9F8D]"
             >
               See All
             </button>
@@ -1578,9 +1561,9 @@ export default function SellerDashboard() {
 
           <div className="mt-2">
             {ordersLoading ? (
-              <p className="text-sm text-[#51615D] py-4">Loading orders...</p>
+              <p className="py-4 text-sm text-[#51615D]">Loading orders...</p>
             ) : recentOrders.length === 0 ? (
-              <p className="text-sm text-[#51615D] py-4">No orders yet.</p>
+              <p className="py-4 text-sm text-[#51615D]">No orders yet.</p>
             ) : (
               recentOrders.map((order) => (
                 <RecentOrderRow key={order.id} order={order} />
@@ -1593,8 +1576,8 @@ export default function SellerDashboard() {
           <button
             type="button"
             onClick={toggleAcceptScheduledOrders}
-            className={`nefo-neo-soft-button py-4 text-sm ${
-              acceptScheduledOrders ? "text-[#073B35]" : "opacity-60"
+            className={`rounded-[22px] border border-[#E8F4F1] bg-white/90 py-4 text-sm font-black shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] ${
+              acceptScheduledOrders ? "text-[#073B35]" : "text-[#8AA5A0]"
             }`}
           >
             {acceptScheduledOrders ? "🕒 Schedule ON" : "🕒 Schedule OFF"}
@@ -1603,8 +1586,8 @@ export default function SellerDashboard() {
           <button
             type="button"
             onClick={toggleNotificationSound}
-            className={`nefo-neo-soft-button py-4 text-sm ${
-              audioReady ? "text-[#073B35]" : "opacity-80"
+            className={`rounded-[22px] border border-[#E8F4F1] bg-white/90 py-4 text-sm font-black shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] ${
+              audioReady ? "text-[#073B35]" : "text-[#8AA5A0]"
             }`}
           >
             {audioReady ? "🔔 Sound ON" : "🔕 Sound OFF"}
@@ -1617,21 +1600,24 @@ export default function SellerDashboard() {
   function OrdersView() {
     return (
       <section className="space-y-4">
-        <div>
-          <h2 className="text-2xl font-black text-[#111827]">Orders</h2>
-          <p className="text-[#51615D] text-sm mt-1">
+        <div className={`p-5 ${CARD}`}>
+          <p className="text-xs font-black uppercase tracking-wide text-[#1A9F8D]">
+            Kitchen Orders
+          </p>
+          <h2 className="mt-1 text-2xl font-black text-[#111827]">Orders</h2>
+          <p className="mt-1 text-sm text-[#51615D]">
             Accept, chat, prepare, and complete orders.
           </p>
         </div>
 
         {ordersLoading ? (
-          <div className="nefo-neo-tile p-6 text-[#51615D]">
+          <div className={`p-6 text-[#51615D] ${SOFT_CARD}`}>
             Loading orders...
           </div>
         ) : activeSellerOrders.length === 0 ? (
-          <div className="nefo-neo-tile p-8 text-center">
+          <div className={`p-8 text-center ${SOFT_CARD}`}>
             <div className="text-4xl">🛎️</div>
-            <p className="font-black text-[#51615D] mt-3">
+            <p className="mt-3 font-black text-[#51615D]">
               No active orders right now.
             </p>
           </div>
@@ -1645,27 +1631,30 @@ export default function SellerDashboard() {
             const scheduled = isScheduledOrder(order);
 
             return (
-              <article key={order.id} className="nefo-neo-tile p-4">
+              <article key={order.id} className={`p-4 ${CARD}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-xs text-[#51615D] font-bold">
+                    <p className="text-xs font-bold text-[#51615D]">
                       Order #{order.id}
                     </p>
-                    <h3 className="text-2xl font-black text-[#073B35] mt-1">
+
+                    <h3 className="mt-1 text-2xl font-black text-[#073B35]">
                       ₹{order.total_amount}
                     </h3>
-                    <p className="text-[#51615D] text-sm mt-2 truncate">
+
+                    <p className="mt-2 truncate text-sm text-[#51615D]">
                       {order.customer_name} • {order.phone}
                     </p>
-                    <p className="text-[#51615D] text-sm mt-1 truncate">
+
+                    <p className="mt-1 truncate text-sm text-[#51615D]">
                       {order.delivery_type} • {order.flat}
                     </p>
 
-                    {scheduled && (
-                      <p className="text-[#073B35] text-xs font-black mt-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 rounded-full px-3 py-1 w-fit">
+                    {scheduled ? (
+                      <p className="mt-2 w-fit rounded-full border border-[#41D3BD]/25 bg-[#41D3BD]/12 px-3 py-1 text-xs font-black text-[#073B35]">
                         🕒 {formatScheduledDateTime(order.scheduled_for)}
                       </p>
-                    )}
+                    ) : null}
                   </div>
 
                   <span
@@ -1679,47 +1668,47 @@ export default function SellerDashboard() {
 
                 <Link
                   to={`/order-chat/${order.id}`}
-                  className="mt-4 flex items-center justify-between bg-[#EFFFFB] border border-[#41D3BD]/50 rounded-2xl p-4"
+                  className="mt-4 flex items-center justify-between rounded-2xl border border-[#41D3BD]/50 bg-[#EFFFFB] p-4"
                 >
                   <div>
                     <p className="font-black text-[#073B35]">
                       Chat with customer
                     </p>
-                    <p className="text-xs text-[#51615D] mt-1">
+                    <p className="mt-1 text-xs text-[#51615D]">
                       Confirm item changes, timing, or pickup.
                     </p>
                   </div>
-                  <span className="font-black text-2xl">›</span>
+                  <span className="text-2xl font-black">›</span>
                 </Link>
 
-                <div className="mt-4 bg-white/70 border border-[#D7F5EF] rounded-2xl p-3 space-y-3">
+                <div className="mt-4 space-y-3 rounded-2xl border border-[#D7F5EF] bg-[#FFFFF2] p-3">
                   {getOrderItems(order).map((item) => (
                     <div
-                      key={`${order.id}-${item.id}`}
+                      key={`${order.id}-${item.id || item.name}`}
                       className="flex items-center justify-between gap-3"
                     >
                       <div className="min-w-0">
-                        <p className="font-black truncate text-sm">
+                        <p className="truncate text-sm font-black">
                           {item.name}
                         </p>
-                        <p className="text-[#51615D] text-xs">
+                        <p className="text-xs text-[#51615D]">
                           Qty {item.quantity} × ₹{item.price}
                         </p>
                       </div>
 
-                      <p className="text-[#073B35] font-black shrink-0 text-sm">
+                      <p className="shrink-0 text-sm font-black text-[#073B35]">
                         ₹{Number(item.price || 0) * Number(item.quantity || 0)}
                       </p>
                     </div>
                   ))}
                 </div>
 
-                {sellerResponse === "pending" && (
-                  <div className="grid grid-cols-2 gap-3 mt-4">
+                {sellerResponse === "pending" ? (
+                  <div className="mt-4 grid grid-cols-2 gap-3">
                     <button
                       type="button"
                       onClick={() => acceptOrder(order.id)}
-                      className="bg-green-500 text-white font-black py-3 rounded-2xl"
+                      className="rounded-2xl bg-green-500 py-3 font-black text-white"
                     >
                       Accept
                     </button>
@@ -1727,34 +1716,34 @@ export default function SellerDashboard() {
                     <button
                       type="button"
                       onClick={() => rejectOrder(order.id)}
-                      className="bg-red-500 text-white font-black py-3 rounded-2xl"
+                      className="rounded-2xl bg-red-500 py-3 font-black text-white"
                     >
                       Reject
                     </button>
                   </div>
-                )}
+                ) : null}
 
-                {sellerResponse === "accepted" && (
+                {sellerResponse === "accepted" ? (
                   <div className="mt-4 space-y-3">
-                    {orderIsSelfPickup && !order.ready_for_pickup && (
+                    {orderIsSelfPickup && !order.ready_for_pickup ? (
                       <button
                         type="button"
                         onClick={() => markReadyForPickup(order.id)}
-                        className="w-full bg-emerald-500 text-white font-black py-3 rounded-2xl"
+                        className="w-full rounded-2xl bg-emerald-500 py-3 font-black text-white"
                       >
                         📦 Ready for Pickup
                       </button>
-                    )}
+                    ) : null}
 
                     <button
                       type="button"
                       onClick={() => completeOrder(order.id)}
-                      className="w-full bg-[#073B35] text-white font-black py-3 rounded-2xl"
+                      className="w-full rounded-2xl bg-[#073B35] py-3 font-black text-white"
                     >
                       ✅ Complete Order
                     </button>
                   </div>
-                )}
+                ) : null}
               </article>
             );
           })
@@ -1766,117 +1755,142 @@ export default function SellerDashboard() {
   function MenuView() {
     return (
       <section className="space-y-5">
-        <form onSubmit={handleSubmit} className="nefo-neo-tile p-4">
-          <div className="flex items-center justify-between gap-4">
+        <form onSubmit={handleSubmit} className={`p-5 ${CARD}`}>
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-[11px]">
+              <p className="text-xs font-black uppercase tracking-wide text-[#1A9F8D]">
                 Menu Builder
               </p>
-              <h2 className="text-2xl font-black text-[#073B35] mt-1">
+
+              <h2 className="mt-1 text-3xl font-black leading-tight text-[#073B35]">
                 {editingFood ? "Edit dish" : "Add new dish"}
               </h2>
+
+              <p className="mt-2 text-sm font-semibold text-[#51615D]">
+                Add clear dish details so customers can order confidently.
+              </p>
             </div>
 
-            {editingFood && (
+            {editingFood ? (
               <button
                 type="button"
                 onClick={resetForm}
-                className="text-sm text-[#51615D] font-black"
+                className="rounded-full bg-[#FFFFF2] px-4 py-2 text-xs font-black text-[#51615D]"
               >
                 Cancel
               </button>
-            )}
+            ) : null}
           </div>
 
-          <div className="grid grid-cols-1 gap-3 mt-5">
-            <input
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              className="nefo-neo-input"
-              placeholder="Dish name"
-            />
+          <div className="mt-6 space-y-5">
+            <Field label="Dish name">
+              <input
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                className={INPUT}
+                placeholder="Dish name"
+              />
+            </Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <input
-                name="price"
-                value={formData.price}
-                onChange={handleChange}
-                type="number"
-                min="1"
-                className="nefo-neo-input"
-                placeholder="Price ₹"
-              />
+              <Field label="Price">
+                <input
+                  name="price"
+                  value={formData.price}
+                  onChange={handleChange}
+                  type="number"
+                  min="1"
+                  className={INPUT}
+                  placeholder="₹"
+                />
+              </Field>
 
-              <input
-                name="stock"
-                value={formData.stock}
-                onChange={handleChange}
-                type="number"
-                min="0"
-                className="nefo-neo-input"
-                placeholder="Qty"
-              />
+              <Field label="Qty">
+                <input
+                  name="stock"
+                  value={formData.stock}
+                  onChange={handleChange}
+                  type="number"
+                  min="0"
+                  className={INPUT}
+                  placeholder="Qty"
+                />
+              </Field>
             </div>
 
-            <input
-              name="time"
-              value={formData.time}
-              onChange={handleChange}
-              className="nefo-neo-input"
-              placeholder="Ready time e.g. 7:30 PM"
-            />
+            <Field label="Ready time">
+              <input
+                name="time"
+                value={formData.time}
+                onChange={handleChange}
+                className={INPUT}
+                placeholder="Ready time e.g. 7:30 PM"
+              />
+            </Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="nefo-neo-input"
-              >
-                {FOOD_CATEGORIES.map((category) => (
-                  <option key={category}>{category}</option>
-                ))}
-              </select>
+              <Field label="Category">
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  className={INPUT}
+                >
+                  {FOOD_CATEGORIES.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </Field>
 
-              <select
-                name="type"
-                value={formData.type}
-                onChange={handleChange}
-                className="nefo-neo-input"
-              >
-                <option>Veg</option>
-                <option>Non-Veg</option>
-              </select>
+              <Field label="Food type">
+                <select
+                  name="type"
+                  value={formData.type}
+                  onChange={handleChange}
+                  className={INPUT}
+                >
+                  <option value="Veg">Veg</option>
+                  <option value="Non-Veg">Non-Veg</option>
+                </select>
+              </Field>
             </div>
 
-            <input
-              name="seller"
-              value={formData.seller}
-              onChange={handleChange}
-              className="nefo-neo-input"
-              placeholder="Kitchen name"
-            />
+            <Field label="Kitchen name">
+              <input
+                name="seller"
+                value={formData.seller}
+                onChange={handleChange}
+                className={INPUT}
+                placeholder="Kitchen name"
+              />
+            </Field>
 
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows="4"
-              className="w-full nefo-neo-input h-28 py-4 resize-none"
-              placeholder="Short description / ingredients"
-            />
+            <Field label="Short description / ingredients">
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                rows="4"
+                className={`${INPUT} min-h-32 resize-none`}
+                placeholder="Short description / ingredients"
+              />
+            </Field>
 
-            <div>
-              <p className="text-sm text-[#51615D] font-bold mb-3">
-                Dish Image
+            <div className={`p-4 ${SOFT_CARD}`}>
+              <p className="text-sm font-black text-[#111827]">Dish Image</p>
+
+              <p className="mt-1 text-xs font-semibold text-[#51615D]">
+                Upload a clear food image. Camera works better on phone.
               </p>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="mt-4 grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => uploadImageInputRef.current?.click()}
-                  className="nefo-neo-soft-button py-5 text-sm"
+                  className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] py-4 text-sm font-black text-[#073B35] active:scale-95"
                 >
                   🖼️ Upload
                 </button>
@@ -1884,7 +1898,7 @@ export default function SellerDashboard() {
                 <button
                   type="button"
                   onClick={() => cameraImageInputRef.current?.click()}
-                  className="nefo-neo-soft-button py-5 text-sm"
+                  className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] py-4 text-sm font-black text-[#073B35] active:scale-95"
                 >
                   📸 Camera
                 </button>
@@ -1907,19 +1921,19 @@ export default function SellerDashboard() {
                 onChange={handleImageChange}
               />
 
-              {imagePreview && (
-                <div className="mt-4 nefo-neo-inset p-3">
+              {imagePreview ? (
+                <div className="mt-4 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-3">
                   <img
                     src={imagePreview}
                     alt="Dish preview"
-                    className="w-full h-48 object-cover rounded-2xl border border-[#D7F5EF]"
+                    className="h-48 w-full rounded-2xl border border-[#D7F5EF] object-cover"
                   />
 
-                  <div className="grid grid-cols-2 gap-3 mt-3">
+                  <div className="mt-3 grid grid-cols-2 gap-3">
                     <button
                       type="button"
                       onClick={() => uploadImageInputRef.current?.click()}
-                      className="border border-[#41D3BD]/60 text-[#073B35] font-black py-3 rounded-2xl"
+                      className="rounded-2xl border border-[#41D3BD]/60 py-3 font-black text-[#073B35]"
                     >
                       Change
                     </button>
@@ -1927,57 +1941,59 @@ export default function SellerDashboard() {
                     <button
                       type="button"
                       onClick={removeSelectedImage}
-                      className="border border-red-300 text-red-500 font-black py-3 rounded-2xl"
+                      className="rounded-2xl border border-red-300 py-3 font-black text-red-500"
                     >
                       Remove
                     </button>
                   </div>
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="mt-5 w-full bg-[#073B35] disabled:opacity-50 text-white font-black px-6 py-4 rounded-2xl"
+            className="mt-6 w-full rounded-2xl bg-[#073B35] px-6 py-4 font-black text-white shadow-lg shadow-[#073B35]/15 disabled:opacity-50"
           >
             {loading ? "Saving..." : editingFood ? "Update Dish" : "Add Dish"}
           </button>
         </form>
 
         <section>
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4 flex items-center justify-between">
             <div>
-              <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-[11px]">
+              <p className="text-xs font-black uppercase tracking-wide text-[#1A9F8D]">
                 Live Menu
               </p>
-              <h2 className="text-2xl font-black mt-1">Your dishes</h2>
+              <h2 className="mt-1 text-3xl font-black">Your dishes</h2>
             </div>
 
-            <div className="nefo-neo-chip">{sellerFoods.length} dishes</div>
+            <div className="rounded-full border border-[#E8F4F1] bg-white/90 px-4 py-2 text-sm font-black text-[#073B35]">
+              {sellerFoods.length} dishes
+            </div>
           </div>
 
           {foodsLoading ? (
             <p className="text-[#51615D]">Loading your dishes...</p>
           ) : sellerFoods.length === 0 ? (
-            <div className="nefo-neo-tile p-8 text-center">
+            <div className={`p-8 text-center ${SOFT_CARD}`}>
               <p className="text-[#51615D]">No dishes added yet.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {sellerFoods.map((food) => (
-                <div key={food.id} className="nefo-neo-tile overflow-hidden">
+                <div key={food.id} className={`overflow-hidden ${CARD}`}>
                   <div className="relative aspect-[4/3] bg-[#D7F5EF]">
                     <img
                       src={food.image}
                       alt={food.name}
-                      className="w-full h-full object-cover"
+                      className="h-full w-full object-cover"
                     />
 
-                    <div className="absolute top-3 left-3">
+                    <div className="absolute left-3 top-3">
                       <span
-                        className={`text-[11px] font-black px-3 py-1.5 rounded-full shadow-sm ${
+                        className={`rounded-full px-3 py-1.5 text-[11px] font-black shadow-sm ${
                           food.type === "Non-Veg"
                             ? "bg-red-500 text-white"
                             : "bg-[#41D3BD] text-[#073B35]"
@@ -1987,30 +2003,32 @@ export default function SellerDashboard() {
                       </span>
                     </div>
 
-                    {Number(food.stock) === 0 && (
-                      <div className="absolute inset-0 bg-black/65 flex items-center justify-center">
-                        <span className="bg-white text-[#073B35] font-black px-4 py-2 rounded-2xl">
+                    {Number(food.stock) === 0 ? (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/65">
+                        <span className="rounded-2xl bg-white px-4 py-2 font-black text-[#073B35]">
                           Sold Out
                         </span>
                       </div>
-                    )}
+                    ) : null}
                   </div>
 
                   <div className="p-4">
                     <div className="flex justify-between gap-3">
                       <div className="min-w-0">
-                        <h3 className="text-lg font-black truncate">
+                        <h3 className="truncate text-lg font-black">
                           {food.name}
                         </h3>
-                        <p className="text-[#51615D] text-sm mt-1 truncate">
+
+                        <p className="mt-1 truncate text-sm text-[#51615D]">
                           {food.category || "Meals"} • {food.time || "Soon"}
                         </p>
                       </div>
 
-                      <div className="text-right shrink-0">
-                        <p className="text-[#073B35] font-black text-xl">
+                      <div className="shrink-0 text-right">
+                        <p className="text-xl font-black text-[#073B35]">
                           ₹{food.price}
                         </p>
+
                         <p
                           className={`text-xs font-black ${
                             Number(food.stock) <= 2
@@ -2027,11 +2045,11 @@ export default function SellerDashboard() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2 mt-4">
+                    <div className="mt-4 grid grid-cols-3 gap-2">
                       <button
                         type="button"
                         onClick={() => startEdit(food)}
-                        className="bg-[#073B35] text-white font-black py-2.5 rounded-xl text-xs"
+                        className="rounded-xl bg-[#073B35] py-2.5 text-xs font-black text-white"
                       >
                         Edit
                       </button>
@@ -2039,7 +2057,7 @@ export default function SellerDashboard() {
                       <button
                         type="button"
                         onClick={() => toggleStock(food)}
-                        className="border border-[#41D3BD]/60 text-[#073B35] font-black py-2.5 rounded-xl text-xs"
+                        className="rounded-xl border border-[#41D3BD]/60 py-2.5 text-xs font-black text-[#073B35]"
                       >
                         {Number(food.stock) === 0 ? "In Stock" : "Sold Out"}
                       </button>
@@ -2047,7 +2065,7 @@ export default function SellerDashboard() {
                       <button
                         type="button"
                         onClick={() => deleteDish(food.id)}
-                        className="border border-red-300 text-red-500 font-black py-2.5 rounded-xl text-xs"
+                        className="rounded-xl border border-red-300 py-2.5 text-xs font-black text-red-500"
                       >
                         Delete
                       </button>
@@ -2065,17 +2083,18 @@ export default function SellerDashboard() {
   function MoreView() {
     return (
       <section className="space-y-4">
-        <section className="nefo-neo-tile p-4">
-          <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-[11px]">
+        <section className={`p-5 ${CARD}`}>
+          <p className="text-xs font-black uppercase tracking-wide text-[#1A9F8D]">
             Settings
           </p>
-          <h2 className="text-2xl font-black mt-1">Kitchen controls</h2>
 
-          <div className="grid grid-cols-1 gap-3 mt-5">
+          <h2 className="mt-1 text-2xl font-black">Kitchen controls</h2>
+
+          <div className="mt-5 grid grid-cols-1 gap-3">
             <button
               type="button"
               onClick={toggleDeliveryAvailable}
-              className="nefo-neo-soft-button py-4"
+              className="rounded-2xl border border-[#E8F4F1] bg-[#FFFFF2] py-4 font-black text-[#073B35]"
             >
               {deliveryAvailable ? "🚚 Delivery ON" : "🚚 Delivery OFF"}
             </button>
@@ -2083,7 +2102,7 @@ export default function SellerDashboard() {
             <button
               type="button"
               onClick={togglePickupAvailable}
-              className="nefo-neo-soft-button py-4"
+              className="rounded-2xl border border-[#E8F4F1] bg-[#FFFFF2] py-4 font-black text-[#073B35]"
             >
               {pickupAvailable ? "🛍️ Pickup ON" : "🛍️ Pickup OFF"}
             </button>
@@ -2091,23 +2110,21 @@ export default function SellerDashboard() {
             <button
               type="button"
               onClick={toggleAcceptScheduledOrders}
-              className="nefo-neo-soft-button py-4"
+              className="rounded-2xl border border-[#E8F4F1] bg-[#FFFFF2] py-4 font-black text-[#073B35]"
             >
               {acceptScheduledOrders ? "🕒 Schedule ON" : "🕒 Schedule OFF"}
             </button>
           </div>
         </section>
 
-        <section className="nefo-neo-tile p-4">
+        <section className={`p-5 ${CARD}`}>
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="font-black">Packing charge</p>
-              <p className="text-[#51615D] text-sm mt-1">
-                Choose ₹5 to ₹15.
-              </p>
+              <p className="mt-1 text-sm text-[#51615D]">Choose ₹5 to ₹15.</p>
             </div>
 
-            <div className="bg-[#073B35] text-white font-black text-xl px-5 py-2.5 rounded-2xl">
+            <div className="rounded-2xl bg-[#073B35] px-5 py-2.5 text-xl font-black text-white">
               ₹{packingCharge}
             </div>
           </div>
@@ -2128,41 +2145,71 @@ export default function SellerDashboard() {
             }}
             onMouseUp={(event) => updatePackingCharge(event.target.value)}
             onTouchEnd={(event) => updatePackingCharge(event.target.value)}
-            className="w-full mt-5 accent-[#41D3BD]"
+            className="mt-5 w-full accent-[#41D3BD]"
           />
         </section>
 
-        <section className="nefo-neo-tile p-4">
+        <section className={`p-5 ${CARD}`}>
           <p className="font-black">Seller Analytics</p>
-          <div className="grid grid-cols-2 gap-3 mt-4">
+
+          <div className="mt-4 grid grid-cols-2 gap-3">
             <StatCard label="Gross" value={`₹${grossEarnings}`} />
             <StatCard label="Avg Order" value={`₹${averageOrderValue}`} />
             <StatCard label="Active Dishes" value={activeDishesCount} />
             <StatCard label="Total Orders" value={totalOrdersCount} />
           </div>
         </section>
+
+        {bestSellingItems.length > 0 ? (
+          <section className={`p-5 ${CARD}`}>
+            <p className="font-black">Best selling items</p>
+
+            <div className="mt-4 space-y-3">
+              {bestSellingItems.map((item) => (
+                <div
+                  key={item.name}
+                  className="flex items-center justify-between rounded-2xl border border-[#E8F4F1] bg-[#FFFFF2] p-3"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black text-[#111827]">
+                      {item.name}
+                    </p>
+                    <p className="text-xs text-[#51615D]">
+                      Qty sold: {item.quantity}
+                    </p>
+                  </div>
+
+                  <p className="shrink-0 font-black text-[#073B35]">
+                    ₹{item.revenue}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
       </section>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 py-4 pb-24">
-      <div className="max-w-md mx-auto">
-        <header className="flex items-center justify-between pt-2 pb-4">
-          <div>
-            <h1 className="text-2xl font-black text-[#111827]">
+    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-32 text-[#111827]">
+      <div className="mx-auto max-w-md">
+        <header className="flex items-center justify-between pb-5 pt-2">
+          <div className="min-w-0">
+            <h1 className="truncate text-3xl font-black leading-tight text-[#111827]">
               Seller Dashboard
             </h1>
-            <p className="text-xs text-[#51615D] font-bold mt-1">
+
+            <p className="mt-1 truncate text-sm font-bold text-[#51615D]">
               {sellerSetupData.seller_kitchen_name || "Kitchen"}
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3">
             <button
               type="button"
               onClick={toggleNotificationSound}
-              className="w-10 h-10 rounded-2xl nefo-neo-soft-button flex items-center justify-center"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-[#E8F4F1] bg-white/90 text-lg shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]"
             >
               🔔
             </button>
@@ -2170,18 +2217,14 @@ export default function SellerDashboard() {
             <button
               type="button"
               onClick={() => navigate("/profile")}
-              className="w-11 h-11 rounded-full bg-[#41D3BD] text-[#073B35] font-black flex items-center justify-center shadow-lg shadow-[#073B35]/10"
+              className="flex h-12 w-12 items-center justify-center rounded-full bg-[#41D3BD] text-lg font-black text-[#073B35] shadow-lg shadow-[#073B35]/10"
             >
               {user?.email?.charAt(0)?.toUpperCase() || "S"}
             </button>
           </div>
         </header>
 
-        {message && (
-          <div className="mb-4 rounded-2xl border border-[#D7F5EF] bg-white/80 p-3 text-xs font-bold text-[#073B35]">
-            {message}
-          </div>
-        )}
+        {message ? <MessageBox message={message} /> : null}
 
         {activeTab === "dashboard" && <DashboardView />}
         {activeTab === "menu" && <MenuView />}
@@ -2189,8 +2232,8 @@ export default function SellerDashboard() {
         {activeTab === "more" && <MoreView />}
       </div>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#FFFFF2]/95 backdrop-blur-xl border-t border-[#D7F5EF] px-4 py-2">
-        <div className="max-w-md mx-auto grid grid-cols-4 gap-1">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#D7F5EF] bg-[#FFFFF2]/95 px-4 py-2 backdrop-blur-xl">
+        <div className="mx-auto grid max-w-md grid-cols-4 gap-1">
           {[
             ["dashboard", "🏠", "Dashboard"],
             ["menu", "🍽️", "Menu"],
@@ -2201,8 +2244,10 @@ export default function SellerDashboard() {
               key={key}
               type="button"
               onClick={() => setActiveTab(key)}
-              className={`rounded-2xl py-2 text-[11px] font-black ${
-                activeTab === key ? "text-[#073B35]" : "text-[#51615D]"
+              className={`rounded-2xl py-2 text-[11px] font-black transition-all ${
+                activeTab === key
+                  ? "bg-[#D7F5EF] text-[#073B35]"
+                  : "text-[#51615D]"
               }`}
             >
               <div className="text-lg leading-none">{icon}</div>
@@ -2212,5 +2257,52 @@ export default function SellerDashboard() {
         </div>
       </nav>
     </main>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-xs font-black uppercase tracking-wide text-[#51615D]">
+        {label}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+function CheckTile({ title, text, name, checked, onChange }) {
+  return (
+    <label className={`flex cursor-pointer items-start gap-3 p-4 ${SOFT_CARD}`}>
+      <input
+        type="checkbox"
+        name={name}
+        checked={checked}
+        onChange={onChange}
+        className="mt-1 accent-[#41D3BD]"
+      />
+
+      <div>
+        <p className="font-black text-[#111827]">{title}</p>
+        <p className="mt-1 text-sm text-[#51615D]">{text}</p>
+      </div>
+    </label>
+  );
+}
+
+function MessageBox({ message }) {
+  return (
+    <div className="mb-4 rounded-2xl border border-[#D7F5EF] bg-white/90 p-3 text-xs font-bold text-[#073B35] shadow-sm">
+      {message}
+    </div>
+  );
+}
+
+function StatCard({ label, value }) {
+  return (
+    <div className={`p-4 ${SOFT_CARD}`}>
+      <p className="text-[11px] font-black text-[#51615D]">{label}</p>
+      <p className="mt-3 text-3xl font-black text-[#111827]">{value}</p>
+    </div>
   );
 }
