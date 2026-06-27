@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import FoodCard from "../components/FoodCard";
-import Navbar from "../components/Navbar";
 import { supabase } from "../lib/supabaseClient";
 import { useCart } from "../context/CartContext";
 
@@ -30,6 +29,8 @@ export default function FoodDetails() {
   const [selectedKitchenCategory, setSelectedKitchenCategory] = useState("All");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [liked, setLiked] = useState(false);
+  const [showShareToast, setShowShareToast] = useState(false);
 
   const cartItem = cartItems.find(
     (cartItem) => String(cartItem.id) === String(id)
@@ -37,10 +38,20 @@ export default function FoodDetails() {
 
   const quantity = cartItem ? cartItem.quantity : 0;
 
+  const computedCartCount = useMemo(() => {
+    if (typeof cartCount === "number") return cartCount;
+
+    return cartItems.reduce(
+      (total, item) => total + Number(item.quantity || 0),
+      0
+    );
+  }, [cartCount, cartItems]);
+
   const stock = Number(food?.stock || 0);
   const category = food?.category || "Meals";
   const kitchenName =
     food?.seller_kitchen_name || food?.seller || "Home Kitchen";
+  const sellerDoorNo = food?.seller_door_no || "";
 
   const kitchenIsClosed =
     kitchenOnline === false || food?.seller_online === false;
@@ -50,6 +61,12 @@ export default function FoodDetails() {
   const isLowStock = stock > 0 && stock <= 2;
   const isSellingFast = stock > 2 && stock <= 5;
   const isBlocked = kitchenIsClosed || fulfillmentUnavailable || isSoldOut;
+
+  const deliveryTime = food?.time || food?.delivery_time || "30-40 min";
+  const distanceText =
+    food?.distance_text ||
+    food?.distance ||
+    (food?.distance_km ? `${food.distance_km} km` : "4.2 km");
 
   useEffect(() => {
     fetchFoodDetails();
@@ -78,6 +95,58 @@ export default function FoodDetails() {
     };
   }, [id]);
 
+  async function fetchKitchenProfile(kitchenId) {
+    if (!kitchenId) {
+      return {
+        seller_online: true,
+        seller_kitchen_name: "",
+        seller_door_no: "",
+        seller_about: "",
+        seller_specialty: "",
+        delivery_available: true,
+        pickup_available: true,
+      };
+    }
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select(
+        "id, seller_online, seller_kitchen_name, seller_door_no, seller_about, seller_specialty, delivery_available, pickup_available"
+      )
+      .eq("id", kitchenId)
+      .maybeSingle();
+
+    if (!error) {
+      return {
+        seller_online: data?.seller_online !== false,
+        seller_kitchen_name: data?.seller_kitchen_name || "",
+        seller_door_no: data?.seller_door_no || "",
+        seller_about: data?.seller_about || "",
+        seller_specialty: data?.seller_specialty || "",
+        delivery_available: data?.delivery_available !== false,
+        pickup_available: data?.pickup_available !== false,
+      };
+    }
+
+    const { data: fallbackData } = await supabase
+      .from("profiles")
+      .select(
+        "id, seller_online, seller_kitchen_name, seller_about, seller_specialty, delivery_available, pickup_available"
+      )
+      .eq("id", kitchenId)
+      .maybeSingle();
+
+    return {
+      seller_online: fallbackData?.seller_online !== false,
+      seller_kitchen_name: fallbackData?.seller_kitchen_name || "",
+      seller_door_no: "",
+      seller_about: fallbackData?.seller_about || "",
+      seller_specialty: fallbackData?.seller_specialty || "",
+      delivery_available: fallbackData?.delivery_available !== false,
+      pickup_available: fallbackData?.pickup_available !== false,
+    };
+  }
+
   async function fetchFoodDetails(showLoading = true) {
     if (showLoading) setLoading(true);
 
@@ -105,30 +174,7 @@ export default function FoodDetails() {
     }
 
     const kitchenId = foodData.user_id || foodData.seller_id;
-
-    let kitchenProfile = {
-      seller_online: true,
-      seller_kitchen_name: "",
-      delivery_available: true,
-      pickup_available: true,
-    };
-
-    if (kitchenId) {
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select(
-          "id, seller_online, seller_kitchen_name, delivery_available, pickup_available"
-        )
-        .eq("id", kitchenId)
-        .maybeSingle();
-
-      kitchenProfile = {
-        seller_online: profileData?.seller_online !== false,
-        seller_kitchen_name: profileData?.seller_kitchen_name || "",
-        delivery_available: profileData?.delivery_available !== false,
-        pickup_available: profileData?.pickup_available !== false,
-      };
-    }
+    const kitchenProfile = await fetchKitchenProfile(kitchenId);
 
     const finalKitchenName =
       kitchenProfile.seller_kitchen_name ||
@@ -141,6 +187,10 @@ export default function FoodDetails() {
       seller_id: kitchenId,
       seller_online: kitchenProfile.seller_online,
       seller_kitchen_name: finalKitchenName,
+      seller_door_no: kitchenProfile.seller_door_no || foodData.seller_door_no || "",
+      seller_about: kitchenProfile.seller_about || foodData.seller_about || "",
+      seller_specialty:
+        kitchenProfile.seller_specialty || foodData.seller_specialty || "",
       delivery_available: kitchenProfile.delivery_available,
       pickup_available: kitchenProfile.pickup_available,
     };
@@ -174,7 +224,9 @@ export default function FoodDetails() {
           .map((name) => String(name).trim().toLowerCase());
 
         const sameKitchenId =
-          kitchenId && itemKitchenId && String(itemKitchenId) === String(kitchenId);
+          kitchenId &&
+          itemKitchenId &&
+          String(itemKitchenId) === String(kitchenId);
 
         const sameKitchenName = itemNames.some((name) =>
           currentSellerNames.includes(name)
@@ -191,6 +243,7 @@ export default function FoodDetails() {
           item.seller_kitchen_name ||
           item.seller ||
           finalKitchenName,
+        seller_door_no: kitchenProfile.seller_door_no || item.seller_door_no || "",
         delivery_available: kitchenProfile.delivery_available,
         pickup_available: kitchenProfile.pickup_available,
       }));
@@ -268,6 +321,32 @@ export default function FoodDetails() {
     decreaseQuantity(food.id);
   }
 
+  async function handleShare() {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: food?.name || "Nefo food",
+          text: `Check out ${food?.name || "this dish"} on Nefo`,
+          url: window.location.href,
+        });
+        return;
+      }
+
+      await navigator.clipboard.writeText(window.location.href);
+      setShowShareToast(true);
+
+      setTimeout(() => {
+        setShowShareToast(false);
+      }, 1400);
+    } catch {
+      setShowShareToast(true);
+
+      setTimeout(() => {
+        setShowShareToast(false);
+      }, 1400);
+    }
+  }
+
   function getAvailabilityText() {
     if (kitchenIsClosed) return "Ordering temporarily unavailable";
     if (fulfillmentUnavailable) return "Kitchen is not taking orders right now";
@@ -282,13 +361,13 @@ export default function FoodDetails() {
       return "text-red-500";
     }
 
-    return "text-[#073B35]";
+    return "text-[#0B8F80]";
   }
 
   function getKitchenStatusText() {
     if (kitchenIsClosed) return "Kitchen Closed";
     if (fulfillmentUnavailable) return "Not Taking Orders";
-    return "Kitchen Open";
+    return "Open now";
   }
 
   function getMainButtonLabel() {
@@ -298,334 +377,267 @@ export default function FoodDetails() {
     return "Add to Cart";
   }
 
-  function FulfillmentBadges({ compact = false }) {
-    if (fulfillmentUnavailable) {
-      return (
-        <span
-          className={`bg-red-50 text-red-600 border border-red-100 font-black rounded-full ${
-            compact ? "text-[10px] px-2.5 py-1" : "text-xs px-3 py-1.5"
-          }`}
-        >
-          Not taking orders
-        </span>
-      );
-    }
-
-    return (
-      <>
-        {deliveryAvailable && (
-          <span
-            className={`bg-[#41D3BD]/12 text-[#073B35] border border-[#41D3BD]/25 font-black rounded-full ${
-              compact ? "text-[10px] px-2.5 py-1" : "text-xs px-3 py-1.5"
-            }`}
-          >
-            🚚 Delivery
-          </span>
-        )}
-
-        {pickupAvailable && (
-          <span
-            className={`bg-[#FFFFF2] text-[#073B35] border border-[#D7F5EF] font-black rounded-full ${
-              compact ? "text-[10px] px-2.5 py-1" : "text-xs px-3 py-1.5"
-            }`}
-          >
-            🛍️ Pickup
-          </span>
-        )}
-      </>
-    );
+  function getTypeLabel() {
+    return food?.type || "Veg";
   }
 
   if (loading) {
     return (
-      <>
-        <Navbar />
-        <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 py-8 flex items-center justify-center">
-          <div className="bg-white border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-sm">
-            <div className="w-16 h-16 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-3xl">
+      <main className="min-h-screen bg-[#FFFFF2] px-4 py-8 text-[#111827]">
+        <div className="mx-auto flex min-h-[70vh] max-w-md items-center justify-center">
+          <div className="w-full rounded-[28px] border border-[#E8F4F1] bg-white/90 p-8 text-center shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#41D3BD]/12 text-3xl">
               🍽️
             </div>
-            <p className="text-[#51615D] font-bold mt-4">
+            <p className="mt-4 font-bold text-[#51615D]">
               Loading dish details...
             </p>
           </div>
-        </main>
-      </>
+        </div>
+      </main>
     );
   }
 
   if (!food) {
     return (
-      <>
-        <Navbar />
-        <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 py-8 flex items-center justify-center">
-          <div className="max-w-md w-full bg-white border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-sm">
+      <main className="min-h-screen bg-[#FFFFF2] px-4 py-8 text-[#111827]">
+        <div className="mx-auto flex min-h-[70vh] max-w-md items-center justify-center">
+          <div className="w-full rounded-[28px] border border-[#E8F4F1] bg-white/90 p-8 text-center shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
             <div className="text-5xl">🍽️</div>
-            <h1 className="text-3xl font-black mt-4 text-[#111827]">
+
+            <h1 className="mt-4 text-3xl font-black text-[#111827]">
               Dish not found
             </h1>
-            <p className="text-[#51615D] mt-3">
+
+            <p className="mt-3 text-[#51615D]">
               {message || "This dish may have been removed."}
             </p>
+
             <Link
               to="/marketplace"
-              className="block mt-7 bg-[#073B35] text-white font-black py-4 rounded-2xl shadow-lg shadow-[#073B35]/15"
+              className="mt-7 block rounded-2xl bg-[#073B35] py-4 font-black text-white shadow-lg shadow-[#073B35]/15"
             >
               Back to Marketplace
             </Link>
           </div>
-        </main>
-      </>
+        </div>
+      </main>
     );
   }
 
   return (
-    <>
-      <Navbar />
+    <main className="min-h-screen bg-[#FFFFF2] pb-32 text-[#111827]">
+      {showShareToast ? (
+        <div className="fixed left-4 right-4 top-5 z-[999] mx-auto max-w-md rounded-[22px] border border-[#E8F4F1] bg-white/95 px-4 py-3 text-center text-sm font-black text-[#073B35] shadow-2xl shadow-[#073B35]/15">
+          Link copied
+        </div>
+      ) : null}
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] pb-36 sm:pb-32">
-        <section className="px-3 pt-3 sm:px-6 sm:py-8">
-          <div className="max-w-7xl mx-auto">
+      <section className="mx-auto max-w-md px-4 pb-6 pt-3">
+        <div className="relative overflow-hidden rounded-[30px] bg-[#D7F5EF] shadow-[8px_8px_22px_rgba(7,59,53,0.1),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+          <div className="absolute left-3 right-3 top-3 z-20 flex items-center justify-between">
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="inline-flex items-center gap-2 text-[#51615D] font-black mb-3 bg-white border border-[#D7F5EF] px-4 py-2 rounded-2xl shadow-sm text-sm active:scale-95"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[#073B35] shadow-lg shadow-black/10 backdrop-blur active:scale-95"
+              aria-label="Go back"
             >
-              ← Back
+              <BackIcon />
             </button>
 
-            <div className="grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-4 lg:gap-8">
-              <div className="relative bg-white border border-[#D7F5EF] rounded-3xl overflow-hidden shadow-sm">
-                <div className="relative h-[360px] sm:h-[520px] lg:h-[620px] bg-[#D7F5EF] overflow-hidden">
-                  <img
-                    src={food.image}
-                    alt={food.name}
-                    className={`w-full h-full object-cover ${
-                      kitchenIsClosed || fulfillmentUnavailable
-                        ? "grayscale opacity-60"
-                        : ""
-                    }`}
-                  />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setLiked((current) => !current)}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[#073B35] shadow-lg shadow-black/10 backdrop-blur active:scale-95"
+                aria-label="Save dish"
+              >
+                <HeartIcon filled={liked} />
+              </button>
 
-                  <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-
-                  <div className="absolute top-3 left-3 flex flex-wrap gap-2 pr-24">
-                    <span
-                      className={`text-[10px] font-black px-3 py-1.5 rounded-full shadow-sm ${
-                        food.type === "Non-Veg"
-                          ? "bg-red-500 text-white"
-                          : "bg-[#41D3BD] text-[#073B35]"
-                      }`}
-                    >
-                      {food.type || "Veg"}
-                    </span>
-
-                    <span className="text-[10px] font-black px-3 py-1.5 rounded-full bg-white/95 text-[#073B35] border border-[#D7F5EF] shadow-sm">
-                      {category}
-                    </span>
-                  </div>
-
-                  <div className="absolute top-3 right-3">
-                    <span
-                      className={`text-[10px] font-black px-3 py-1.5 rounded-full shadow-sm ${
-                        kitchenIsClosed || fulfillmentUnavailable
-                          ? "bg-red-600 text-white"
-                          : isSoldOut
-                          ? "bg-[#111827] text-white"
-                          : isLowStock
-                          ? "bg-red-500 text-white"
-                          : isSellingFast
-                          ? "bg-[#41D3BD] text-[#073B35]"
-                          : "bg-white/95 text-[#073B35] border border-[#D7F5EF]"
-                      }`}
-                    >
-                      {kitchenIsClosed
-                        ? "CLOSED"
-                        : fulfillmentUnavailable
-                        ? "OFF"
-                        : isSoldOut
-                        ? "SOLD OUT"
-                        : isLowStock
-                        ? `Only ${stock}`
-                        : isSellingFast
-                        ? "Fast"
-                        : "Available"}
-                    </span>
-                  </div>
-
-                  <div className="absolute bottom-3 left-3 right-3">
-                    <div className="bg-white/95 backdrop-blur border border-white/70 rounded-3xl p-3 shadow-lg">
-                      <p className="text-[#1A9F8D] text-[10px] font-black uppercase tracking-wide">
-                        Fresh from kitchen
-                      </p>
-
-                      <h2 className="text-[#073B35] text-lg font-black mt-1 truncate">
-                        {kitchenName}
-                      </h2>
-
-                      <div className="flex flex-wrap gap-1.5 mt-2">
-                        <FulfillmentBadges compact />
-                      </div>
-
-                      <p className="text-[#51615D] text-[11px] mt-2">
-                        Exact kitchen door/location is not shown publicly.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white border border-[#D7F5EF] rounded-3xl p-4 sm:p-6 lg:p-8 h-fit shadow-sm">
-                <div
-                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-black border ${
-                    kitchenIsClosed || fulfillmentUnavailable
-                      ? "bg-red-50 border-red-100 text-red-600"
-                      : "bg-[#41D3BD]/12 border-[#41D3BD]/25 text-[#073B35]"
-                  }`}
-                >
-                  <span>🌿</span>
-                  <span>{getKitchenStatusText()}</span>
-                </div>
-
-                <h1 className="text-3xl sm:text-5xl font-black mt-4 leading-tight tracking-tight text-[#111827]">
-                  {food.name}
-                </h1>
-
-                <div className="flex flex-wrap items-center gap-2 mt-4">
-                  <span className="bg-[#073B35] text-white font-black px-4 py-2 rounded-2xl text-2xl shadow-lg shadow-[#073B35]/15">
-                    ₹{food.price}
-                  </span>
-
-                  <span className="bg-[#FFFFF2] border border-[#D7F5EF] text-[#51615D] font-bold px-4 py-2 rounded-2xl text-sm">
-                    Ready {food.time || "Soon"}
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap gap-2 mt-4">
-                  <FulfillmentBadges />
-                </div>
-
-                {food.description && (
-                  <p className="text-[#51615D] leading-relaxed mt-5 text-sm sm:text-base">
-                    {food.description}
-                  </p>
-                )}
-
-                <div className="mt-5 grid grid-cols-2 gap-3">
-                  <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4">
-                    <p className="text-[#51615D] text-[10px] font-bold uppercase">
-                      Availability
-                    </p>
-                    <p
-                      className={`font-black mt-2 text-sm ${getAvailabilityClass()}`}
-                    >
-                      {getAvailabilityText()}
-                    </p>
-                  </div>
-
-                  <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4">
-                    <p className="text-[#51615D] text-[10px] font-bold uppercase">
-                      Category
-                    </p>
-                    <p className="font-black mt-2 text-[#073B35] text-sm">
-                      {category}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="hidden sm:block mt-6">
-                  {quantity === 0 || isBlocked ? (
-                    <button
-                      type="button"
-                      onClick={handleAddToCart}
-                      disabled={isBlocked}
-                      className={`w-full font-black py-5 rounded-2xl transition-all duration-200 shadow-lg text-lg ${
-                        isBlocked
-                          ? "bg-[#EAF7F4] text-[#8AA5A0] cursor-not-allowed border border-red-100"
-                          : "bg-[#073B35] active:scale-[0.98] text-white shadow-[#073B35]/15"
-                      }`}
-                    >
-                      {getMainButtonLabel()}
-                    </button>
-                  ) : (
-                    <div className="h-16 grid grid-cols-3 overflow-hidden rounded-2xl bg-[#073B35] text-white font-black shadow-lg shadow-[#073B35]/15">
-                      <button
-                        type="button"
-                        onClick={handleDecrease}
-                        className="text-2xl active:bg-[#0B5149]"
-                      >
-                        −
-                      </button>
-
-                      <span className="bg-[#41D3BD] text-[#073B35] flex items-center justify-center text-xl font-black">
-                        {quantity}
-                      </span>
-
-                      <button
-                        type="button"
-                        onClick={handleIncrease}
-                        disabled={quantity >= stock}
-                        className={`text-2xl ${
-                          quantity >= stock
-                            ? "opacity-40 cursor-not-allowed"
-                            : "active:bg-[#0B5149]"
-                        }`}
-                      >
-                        +
-                      </button>
-                    </div>
-                  )}
-
-                  <Link
-                    to="/cart"
-                    className="block text-center mt-4 border border-[#D7F5EF] bg-[#FFFFF2] text-[#51615D] font-black py-4 rounded-2xl"
-                  >
-                    View Cart
-                  </Link>
-                </div>
-              </div>
+              <button
+                type="button"
+                onClick={handleShare}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[#073B35] shadow-lg shadow-black/10 backdrop-blur active:scale-95"
+                aria-label="Share dish"
+              >
+                <ShareIcon />
+              </button>
             </div>
           </div>
-        </section>
 
-        <section className="px-3 sm:px-6 py-4 sm:py-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-end justify-between gap-4 mb-4">
-              <div className="min-w-0">
-                <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-[11px]">
-                  More from kitchen
+          <div className="h-[295px] w-full overflow-hidden">
+            {food.image ? (
+              <img
+                src={food.image}
+                alt={food.name}
+                className={`h-full w-full object-cover ${
+                  kitchenIsClosed || fulfillmentUnavailable
+                    ? "grayscale opacity-60"
+                    : ""
+                }`}
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-6xl">
+                🍽️
+              </div>
+            )}
+          </div>
+
+          {isBlocked ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/45 px-5 text-center">
+              <div className="rounded-3xl bg-white/95 px-5 py-4 shadow-xl">
+                <p className="text-lg font-black text-[#073B35]">
+                  {getMainButtonLabel()}
                 </p>
-
-                <h2 className="text-2xl sm:text-3xl font-black mt-1 text-[#111827] truncate">
-                  {kitchenName} menu
-                </h2>
-
-                <p className="text-[#51615D] text-sm mt-1">
-                  {kitchenFoods.length > 0
-                    ? `${kitchenFoods.length} more item${
-                        kitchenFoods.length === 1 ? "" : "s"
-                      } from this kitchen`
-                    : "This kitchen has no other active items right now."}
+                <p className="mt-1 text-xs font-semibold text-[#51615D]">
+                  Ordering is temporarily unavailable.
                 </p>
               </div>
+            </div>
+          ) : null}
+        </div>
 
-              <Link
-                to="/marketplace"
-                className="hidden sm:block text-[#1A9F8D] font-black"
-              >
-                Marketplace →
-              </Link>
+        <section className="mt-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl font-black leading-tight tracking-tight text-[#111827]">
+                {food.name}
+              </h1>
+
+              <div className="mt-2 flex min-w-0 items-center gap-2">
+                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#41D3BD] text-[10px] font-black text-white">
+                  {kitchenName.charAt(0).toUpperCase()}
+                </div>
+
+                <p className="truncate text-xs font-bold text-[#51615D]">
+                  {kitchenName}
+                </p>
+              </div>
             </div>
 
-            {kitchenFoods.length > 0 && (
-              <div className="flex gap-2 overflow-x-auto pb-3 mb-4 scrollbar-hide">
+            <div className="shrink-0 pt-1 text-right">
+              <div className="flex items-center justify-end gap-1 text-xs font-black text-[#111827]">
+                <span className="text-[#F59E0B]">★</span>
+                <span>4.8</span>
+                <span className="font-bold text-[#51615D]">(120+)</span>
+              </div>
+
+              <p className={`mt-1 text-[10px] font-black ${getAvailabilityClass()}`}>
+                {getKitchenStatusText()}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <p className="text-2xl font-black text-[#111827]">₹{food.price}</p>
+
+            <span
+              className={`rounded-full px-3 py-1 text-[10px] font-black ${
+                food.type === "Non-Veg"
+                  ? "bg-red-50 text-red-600"
+                  : "bg-[#41D3BD]/15 text-[#073B35]"
+              }`}
+            >
+              {getTypeLabel()}
+            </span>
+          </div>
+
+          {food.description ? (
+            <p className="mt-4 text-sm font-semibold leading-relaxed text-[#51615D]">
+              {food.description}
+            </p>
+          ) : (
+            <p className="mt-4 text-sm font-semibold leading-relaxed text-[#51615D]">
+              Fresh homemade food prepared by {kitchenName}.
+            </p>
+          )}
+
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <InfoCard
+              value={deliveryTime}
+              label={
+                deliveryAvailable
+                  ? "Delivery time"
+                  : pickupAvailable
+                  ? "Pickup time"
+                  : "Time"
+              }
+            />
+
+            <InfoCard value={distanceText} label="Distance" />
+          </div>
+
+          <div className="mt-4 rounded-[24px] border border-[#E8F4F1] bg-white/90 p-4 shadow-[6px_6px_16px_rgba(7,59,53,0.06),-6px_-6px_16px_rgba(255,255,255,0.95)]">
+            <h2 className="text-base font-black text-[#111827]">
+              About Kitchen
+            </h2>
+
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+              {food.seller_about ||
+                `${kitchenName} serves fresh homemade food prepared with care.`}
+            </p>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {food.seller_specialty ? (
+                <span className="rounded-full bg-[#41D3BD]/12 px-3 py-1.5 text-[10px] font-black text-[#073B35]">
+                  {food.seller_specialty}
+                </span>
+              ) : null}
+
+              {sellerDoorNo ? (
+                <span className="rounded-full bg-[#FFFFF2] px-3 py-1.5 text-[10px] font-black text-[#073B35]">
+                  Door No. {sellerDoorNo}
+                </span>
+              ) : null}
+
+              <span
+                className={`rounded-full px-3 py-1.5 text-[10px] font-black ${
+                  kitchenIsClosed
+                    ? "bg-red-50 text-red-600"
+                    : "bg-green-50 text-green-700"
+                }`}
+              >
+                {getKitchenStatusText()}
+              </span>
+            </div>
+          </div>
+
+          <p className={`mt-3 text-xs font-black ${getAvailabilityClass()}`}>
+            {getAvailabilityText()}
+          </p>
+        </section>
+
+        <section className="mt-7">
+          <div className="mb-3 flex items-end justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-black uppercase tracking-wide text-[#0B8F80]">
+                More from kitchen
+              </p>
+
+              <h2 className="mt-1 truncate text-xl font-black text-[#111827]">
+                {kitchenName} menu
+              </h2>
+            </div>
+
+            <Link
+              to="/marketplace"
+              className="shrink-0 text-xs font-black text-[#0B8F80]"
+            >
+              See All
+            </Link>
+          </div>
+
+          {kitchenFoods.length > 0 ? (
+            <div className="-mx-4 overflow-x-auto px-4 pb-2 scrollbar-hide">
+              <div className="flex min-w-max gap-2">
                 <button
                   type="button"
                   onClick={() => setSelectedKitchenCategory("All")}
-                  className={`shrink-0 px-4 py-2.5 rounded-2xl border font-black text-xs ${
+                  className={`shrink-0 rounded-full px-4 py-2 text-[11px] font-black ${
                     selectedKitchenCategory === "All"
-                      ? "bg-[#073B35] text-white border-[#073B35]"
-                      : "bg-white text-[#51615D] border-[#D7F5EF]"
+                      ? "bg-[#073B35] text-white"
+                      : "bg-white/90 text-[#51615D]"
                   }`}
                 >
                   All ({kitchenCategoryCounts.All || 0})
@@ -638,137 +650,176 @@ export default function FoodDetails() {
                     key={categoryName}
                     type="button"
                     onClick={() => setSelectedKitchenCategory(categoryName)}
-                    className={`shrink-0 px-4 py-2.5 rounded-2xl border font-black text-xs ${
+                    className={`shrink-0 rounded-full px-4 py-2 text-[11px] font-black ${
                       selectedKitchenCategory === categoryName
-                        ? "bg-[#073B35] text-white border-[#073B35]"
-                        : "bg-white text-[#51615D] border-[#D7F5EF]"
+                        ? "bg-[#073B35] text-white"
+                        : "bg-white/90 text-[#51615D]"
                     }`}
                   >
                     {categoryName} ({kitchenCategoryCounts[categoryName]})
                   </button>
                 ))}
               </div>
-            )}
+            </div>
+          ) : null}
 
-            {kitchenFoods.length === 0 ? (
-              <div className="bg-white border border-[#D7F5EF] rounded-3xl p-6 text-center shadow-sm">
-                <div className="w-16 h-16 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-3xl">
-                  🍽️
-                </div>
+          {kitchenFoods.length === 0 ? (
+            <div className="rounded-[24px] border border-[#E8F4F1] bg-white/90 p-5 text-center shadow-[6px_6px_16px_rgba(7,59,53,0.06),-6px_-6px_16px_rgba(255,255,255,0.95)]">
+              <div className="text-3xl">🍽️</div>
 
-                <p className="text-[#111827] font-black mt-4">
-                  No other dishes from this kitchen.
-                </p>
-
-                <p className="text-[#51615D] text-sm mt-2">
-                  Explore other nearby kitchens in the marketplace.
-                </p>
-
-                <Link
-                  to="/marketplace"
-                  className="inline-block mt-5 bg-[#073B35] text-white font-black px-5 py-3 rounded-2xl"
-                >
-                  Explore Marketplace
-                </Link>
-              </div>
-            ) : visibleKitchenFoods.length === 0 ? (
-              <div className="bg-white border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-sm">
-                <p className="text-[#51615D]">
-                  No dishes in this category right now.
-                </p>
-              </div>
-            ) : (
-              <>
-                {availableKitchenFoods.length > 0 && (
-                  <p className="text-[#51615D] text-sm mb-4">
-                    {availableKitchenFoods.length} available from this kitchen.
-                  </p>
-                )}
-
-                <div className="grid grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {visibleKitchenFoods.map((item) => (
-                    <FoodCard key={item.id} item={item} />
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        </section>
-
-        <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#FFFFF2]/95 backdrop-blur-xl border-t border-[#D7F5EF] px-3 pt-3 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-16 shrink-0 bg-white border border-[#D7F5EF] rounded-2xl px-3 py-2 shadow-sm">
-              <p className="text-[#51615D] text-[9px] font-black uppercase">
-                Price
+              <p className="mt-3 font-black text-[#111827]">
+                No other dishes from this kitchen.
               </p>
-              <p className="text-[#073B35] text-lg font-black">
-                ₹{food.price}
+
+              <p className="mt-1 text-sm font-semibold text-[#51615D]">
+                Explore other nearby kitchens in the marketplace.
               </p>
             </div>
+          ) : visibleKitchenFoods.length === 0 ? (
+            <div className="rounded-[24px] border border-[#E8F4F1] bg-white/90 p-5 text-center shadow-sm">
+              <p className="text-sm font-semibold text-[#51615D]">
+                No dishes in this category right now.
+              </p>
+            </div>
+          ) : (
+            <>
+              {availableKitchenFoods.length > 0 ? (
+                <p className="mb-3 text-xs font-bold text-[#51615D]">
+                  {availableKitchenFoods.length} available from this kitchen.
+                </p>
+              ) : null}
 
-            {quantity === 0 || isBlocked ? (
-              <button
-                type="button"
-                onClick={handleAddToCart}
-                disabled={isBlocked}
-                className={`flex-1 h-14 font-black rounded-2xl transition-all ${
-                  isBlocked
-                    ? "bg-[#EAF7F4] text-[#8AA5A0] cursor-not-allowed border border-red-100"
-                    : "bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.98]"
-                }`}
-              >
-                {getMainButtonLabel()}
-              </button>
-            ) : (
-              <div className="flex-1 h-14 grid grid-cols-3 overflow-hidden rounded-2xl bg-[#073B35] text-white font-black shadow-lg shadow-[#073B35]/15">
-                <button
-                  type="button"
-                  onClick={handleDecrease}
-                  className="text-xl active:bg-[#0B5149]"
-                >
-                  −
-                </button>
-
-                <span className="bg-[#41D3BD] text-[#073B35] flex items-center justify-center text-lg font-black">
-                  {quantity}
-                </span>
-
-                <button
-                  type="button"
-                  onClick={handleIncrease}
-                  disabled={quantity >= stock}
-                  className={`text-xl ${
-                    quantity >= stock ? "opacity-40 cursor-not-allowed" : ""
-                  }`}
-                >
-                  +
-                </button>
+              <div className="space-y-3">
+                {visibleKitchenFoods.map((item) => (
+                  <FoodCard key={item.id} item={item} />
+                ))}
               </div>
-            )}
+            </>
+          )}
+        </section>
+      </section>
+
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#E8F4F1] bg-[#FFFFF2]/95 px-4 pb-4 pt-3 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-md items-center gap-3">
+          <div className="flex h-14 shrink-0 items-center overflow-hidden rounded-2xl border border-[#E8F4F1] bg-white/90 shadow-[4px_4px_12px_rgba(7,59,53,0.06),-4px_-4px_12px_rgba(255,255,255,0.95)]">
+            <button
+              type="button"
+              onClick={handleDecrease}
+              disabled={quantity <= 0}
+              className={`flex h-14 w-12 items-center justify-center text-xl font-black ${
+                quantity <= 0
+                  ? "cursor-not-allowed text-[#B8C9C5]"
+                  : "text-[#073B35] active:bg-[#E8F4F1]"
+              }`}
+            >
+              −
+            </button>
+
+            <span className="flex h-14 min-w-10 items-center justify-center text-sm font-black text-[#073B35]">
+              {quantity || 1}
+            </span>
+
+            <button
+              type="button"
+              onClick={quantity === 0 ? handleAddToCart : handleIncrease}
+              disabled={isBlocked || quantity >= stock}
+              className={`flex h-14 w-12 items-center justify-center text-xl font-black ${
+                isBlocked || quantity >= stock
+                  ? "cursor-not-allowed text-[#B8C9C5]"
+                  : "text-[#073B35] active:bg-[#E8F4F1]"
+              }`}
+            >
+              +
+            </button>
           </div>
 
-          {cartCount > 0 && (
+          {quantity === 0 || isBlocked ? (
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              disabled={isBlocked}
+              className={`h-14 flex-1 rounded-2xl text-sm font-black transition-all active:scale-[0.98] ${
+                isBlocked
+                  ? "cursor-not-allowed border border-red-100 bg-[#EAF7F4] text-[#8AA5A0]"
+                  : "bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
+              }`}
+            >
+              <span className="block">{getMainButtonLabel()}</span>
+              {!isBlocked ? (
+                <span className="block text-[10px] font-bold opacity-80">
+                  ₹{food.price}
+                </span>
+              ) : null}
+            </button>
+          ) : (
             <Link
               to="/cart"
-              className="block text-center mt-2 bg-[#41D3BD] text-[#073B35] font-black py-3 rounded-2xl"
+              className="flex h-14 flex-1 flex-col items-center justify-center rounded-2xl bg-[#073B35] text-sm font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.98]"
             >
-              View Cart • {cartCount} {cartCount === 1 ? "item" : "items"}
+              <span>Go to Cart</span>
+              <span className="text-[10px] font-bold opacity-80">
+                {computedCartCount} {computedCartCount === 1 ? "item" : "items"}
+              </span>
             </Link>
           )}
         </div>
+      </div>
+    </main>
+  );
+}
 
-        {cartCount > 0 && (
-          <Link
-            to="/cart"
-            className="hidden sm:flex fixed bottom-5 left-4 right-4 z-50 sm:left-auto sm:right-6 sm:w-auto bg-[#073B35] active:scale-[0.98] text-white font-black px-6 py-4 rounded-2xl shadow-lg shadow-[#073B35]/20 items-center justify-center gap-3"
-          >
-            <span>🛒</span>
-            <span>
-              View Cart • {cartCount} {cartCount === 1 ? "item" : "items"}
-            </span>
-          </Link>
-        )}
-      </main>
-    </>
+function InfoCard({ value, label }) {
+  return (
+    <div className="rounded-[20px] border border-[#E8F4F1] bg-white/90 p-4 text-center shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
+      <p className="text-sm font-black text-[#111827]">{value}</p>
+      <p className="mt-1 text-[10px] font-bold text-[#51615D]">{label}</p>
+    </div>
+  );
+}
+
+function BackIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+    >
+      <path d="M19 12H5" />
+      <path d="M12 19l-7-7 7-7" />
+    </svg>
+  );
+}
+
+function HeartIcon({ filled }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth="2.2"
+    >
+      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" />
+    </svg>
+  );
+}
+
+function ShareIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+    >
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path d="M8.6 10.8l6.8-4.6" />
+      <path d="M8.6 13.2l6.8 4.6" />
+    </svg>
   );
 }
