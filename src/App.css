@@ -142,3 +142,52 @@ body {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+.nefo-liquid-bg {
+  position: relative;
+  overflow: hidden;
+}
+
+.nefo-liquid-bg::before {
+  content: "";
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  top: -90px;
+  right: -90px;
+  background: rgba(65, 211, 189, 0.22);
+  border-radius: 999px;
+  filter: blur(42px);
+  pointer-events: none;
+}
+
+.nefo-glass {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(215, 245, 239, 0.9);
+}
+
+.nefo-liquid-card {
+  background:
+    radial-gradient(circle at top right, rgba(65, 211, 189, 0.18), transparent 38%),
+    #ffffff;
+  border: 1px solid #e8f4f1;
+  border-radius: 1.5rem;
+  box-shadow: 0 8px 24px rgba(7, 59, 53, 0.06);
+}
+
+.nefo-liquid-button {
+  background:
+    linear-gradient(135deg, #073b35 0%, #0b5149 55%, #41d3bd 160%);
+  color: white;
+  border-radius: 1rem;
+  font-weight: 900;
+  box-shadow: 0 10px 24px rgba(7, 59, 53, 0.18);
+}
+
+.nefo-liquid-chip-active {
+  background:
+    linear-gradient(135deg, #073b35 0%, #0b5149 70%);
+  color: white;
+  border: 1px solid #073b35;
+}

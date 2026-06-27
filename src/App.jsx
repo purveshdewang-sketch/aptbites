@@ -48,6 +48,7 @@ function FloatingHelpButton() {
   const location = useLocation();
 
   const hiddenRoutes = [
+    "/food",
     "/customer-login",
     "/seller-login",
     "/reset-password",

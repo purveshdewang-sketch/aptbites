@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { useCart } from "../context/CartContext";
@@ -12,8 +12,8 @@ const Nefo_PAYEE_NAME = "Nefo";
 export default function Checkout() {
   const { cartItems, cartTotal, clearCart } = useCart();
   const { user } = useAuth();
-
   const navigate = useNavigate();
+  const paymentProofInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -36,6 +36,8 @@ export default function Checkout() {
   const [checkingKitchenSettings, setCheckingKitchenSettings] = useState(true);
 
   const [paymentReference, setPaymentReference] = useState("");
+  const [paymentProofFile, setPaymentProofFile] = useState(null);
+  const [paymentProofPreview, setPaymentProofPreview] = useState("");
   const [paymentMessage, setPaymentMessage] = useState("");
   const [showQr, setShowQr] = useState(false);
   const [showMobileSummary, setShowMobileSummary] = useState(false);
@@ -379,6 +381,69 @@ export default function Checkout() {
     });
   }
 
+  function formatDateValue(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
+
+  function getDateOptions() {
+    const options = [];
+
+    for (let index = 0; index < 7; index += 1) {
+      const date = new Date();
+      date.setDate(date.getDate() + index);
+
+      options.push({
+        value: formatDateValue(date),
+        day:
+          index === 0
+            ? "Today"
+            : index === 1
+            ? "Tomorrow"
+            : date.toLocaleDateString([], { weekday: "short" }),
+        date: date.toLocaleDateString([], {
+          day: "2-digit",
+          month: "short",
+        }),
+      });
+    }
+
+    return options;
+  }
+
+  function getTimeOptions() {
+    const options = [];
+    const now = new Date();
+    const todayValue = formatDateValue(now);
+
+    for (let hour = 7; hour <= 22; hour += 1) {
+      for (const minute of [0, 30]) {
+        const value = `${String(hour).padStart(2, "0")}:${String(
+          minute
+        ).padStart(2, "0")}`;
+
+        if (scheduledDate === todayValue) {
+          const slot = new Date(`${scheduledDate}T${value}`);
+          const minimum = new Date(Date.now() + 20 * 60 * 1000);
+
+          if (slot.getTime() <= minimum.getTime()) continue;
+        }
+
+        const label = new Date(`2000-01-01T${value}`).toLocaleTimeString([], {
+          hour: "numeric",
+          minute: "2-digit",
+        });
+
+        options.push({ value, label });
+      }
+    }
+
+    return options;
+  }
+
   function getKitchenName(item) {
     return item.seller || item.seller_kitchen_name || "Home Kitchen";
   }
@@ -392,6 +457,61 @@ export default function Checkout() {
       setPaymentMessage(`Could not copy ${label.toLowerCase()}.`);
       setTimeout(() => setPaymentMessage(""), 1800);
     }
+  }
+
+  function handlePaymentProofChange(event) {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+
+    if (!allowedTypes.includes(file.type)) {
+      alert("Please upload JPG, PNG, or WEBP payment screenshot.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Payment screenshot must be below 5 MB.");
+      return;
+    }
+
+    setPaymentProofFile(file);
+    setPaymentProofPreview(URL.createObjectURL(file));
+    setPaymentMessage("Payment screenshot selected.");
+  }
+
+  function removePaymentProof() {
+    setPaymentProofFile(null);
+    setPaymentProofPreview("");
+
+    if (paymentProofInputRef.current) {
+      paymentProofInputRef.current.value = "";
+    }
+  }
+
+  async function uploadPaymentProof() {
+    if (!paymentProofFile || !user) return "";
+
+    const fileExtension = paymentProofFile.name.split(".").pop() || "jpg";
+    const filePath = `${user.id}/${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}.${fileExtension}`;
+
+    const { error } = await supabase.storage
+      .from("payment-proofs")
+      .upload(filePath, paymentProofFile, {
+        cacheControl: "3600",
+        upsert: false,
+      });
+
+    if (error) throw new Error(`Payment proof upload failed: ${error.message}`);
+
+    const { data } = supabase.storage
+      .from("payment-proofs")
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
   }
 
   async function validateLiveStockBeforeOrder() {
@@ -413,7 +533,9 @@ export default function Checkout() {
     for (const cartItem of cartItems) {
       const latestFood = latestFoodMap.get(cartItem.id);
 
-      if (!latestFood) throw new Error(`${cartItem.name} is no longer available.`);
+      if (!latestFood) {
+        throw new Error(`${cartItem.name} is no longer available.`);
+      }
 
       const liveStock = Number(latestFood.stock || 0);
       const requestedQty = Number(cartItem.quantity || 0);
@@ -460,9 +582,9 @@ export default function Checkout() {
       return;
     }
 
-    if (!paymentReference.trim()) {
+    if (!paymentProofFile && !paymentReference.trim()) {
       alert(
-        "Please complete UPI payment and enter the transaction reference before placing the order."
+        "Please upload payment screenshot or enter UPI transaction reference."
       );
       return;
     }
@@ -546,6 +668,8 @@ export default function Checkout() {
 
       await validateLiveStockBeforeOrder();
 
+      const paymentProofUrl = await uploadPaymentProof();
+
       const latestTotalAmount =
         subtotalAmount + latestEffectivePackingCharge + PLATFORM_FEE;
 
@@ -567,8 +691,11 @@ export default function Checkout() {
         scheduled_order: orderTiming === "scheduled",
         scheduled_for: scheduledFor,
         payment_method: paymentMethod,
-        payment_status: "reference_submitted",
+        payment_status: paymentProofUrl
+          ? "proof_submitted"
+          : "reference_submitted",
         payment_reference: paymentReference.trim(),
+        payment_proof_url: paymentProofUrl,
       };
 
       const { error: stockError } = await supabase.rpc("decrement_food_stock", {
@@ -604,7 +731,11 @@ export default function Checkout() {
         navigate("/orders");
       }, 1500);
     } catch (error) {
-      alert(`Could not place order: ${error.message}`);
+      console.error("ORDER PLACE ERROR:", error);
+      setPaymentMessage(
+        `Could not place order: ${error.message || "Unknown error"}`
+      );
+      alert(error.message || "Could not place order. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -732,13 +863,17 @@ export default function Checkout() {
 
             <p className="text-[#111827] font-black mt-1">UPI Payment Only</p>
 
-            {paymentReference ? (
+            {paymentProofFile ? (
+              <p className="text-[#1A9F8D] text-xs font-bold mt-2 truncate">
+                Screenshot selected
+              </p>
+            ) : paymentReference ? (
               <p className="text-[#1A9F8D] text-xs font-bold mt-2 truncate">
                 Ref: {paymentReference}
               </p>
             ) : (
               <p className="text-[#073B35] text-xs font-bold mt-2">
-                Payment reference required
+                Screenshot or reference required
               </p>
             )}
           </div>
@@ -785,7 +920,7 @@ export default function Checkout() {
               <button
                 onClick={handlePlaceOrder}
                 disabled={loading || checkoutBlocked}
-                className="w-full mt-3 bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-5 rounded-2xl text-lg transition-all duration-200 shadow-lg shadow-[#073B35]/15"
+                className="w-full mt-3 bg-[#073B35] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-5 rounded-2xl text-lg transition-all duration-200 shadow-lg shadow-[#073B35]/15"
               >
                 {loading
                   ? "Checking live stock..."
@@ -798,7 +933,7 @@ export default function Checkout() {
 
               <Link
                 to="/cart"
-                className="block text-center mt-3 border border-[#D7F5EF] bg-[#FFFFF2] hover:bg-[#D7F5EF] text-[#51615D] hover:text-[#073B35] font-black py-3 rounded-2xl transition-all"
+                className="block text-center mt-3 border border-[#D7F5EF] bg-[#FFFFF2] text-[#51615D] font-black py-3 rounded-2xl"
               >
                 Back to Cart
               </Link>
@@ -843,7 +978,7 @@ export default function Checkout() {
 
             <Link
               to="/orders"
-              className="block mt-8 bg-[#073B35] hover:bg-[#0B5149] active:scale-95 text-white font-black py-4 rounded-2xl transition-all duration-200"
+              className="block mt-8 bg-[#073B35] active:scale-95 text-white font-black py-4 rounded-2xl"
             >
               Track My Order
             </Link>
@@ -884,8 +1019,7 @@ export default function Checkout() {
               </h1>
 
               <p className="text-[#51615D] mt-3 sm:mt-4 text-sm sm:text-lg max-w-2xl leading-relaxed">
-                Confirm details, select packing, pay by UPI, and submit the
-                transaction reference.
+                Confirm details, pay by UPI, and upload payment screenshot.
               </p>
 
               <div className="lg:hidden mt-4 grid grid-cols-3 gap-2">
@@ -939,7 +1073,7 @@ export default function Checkout() {
                     name="fullName"
                     value={formData.fullName}
                     onChange={handleChange}
-                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD] transition-all"
+                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD]"
                     placeholder="Full Name"
                   />
 
@@ -956,7 +1090,7 @@ export default function Checkout() {
                     name="flat"
                     value={formData.flat}
                     onChange={handleChange}
-                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD] transition-all"
+                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD]"
                     placeholder="Your tower / flat number"
                   />
 
@@ -992,9 +1126,9 @@ export default function Checkout() {
                             onClick={() =>
                               selectDeliveryType("Doorstep delivery")
                             }
-                            className={`py-4 rounded-2xl font-black border transition-all ${
+                            className={`py-4 rounded-2xl font-black border ${
                               formData.deliveryType === "Doorstep delivery"
-                                ? "bg-[#073B35] text-white border-[#073B35] shadow-lg shadow-[#073B35]/15"
+                                ? "bg-[#073B35] text-white border-[#073B35]"
                                 : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
                             }`}
                           >
@@ -1006,9 +1140,9 @@ export default function Checkout() {
                           <button
                             type="button"
                             onClick={() => selectDeliveryType("Self pickup")}
-                            className={`py-4 rounded-2xl font-black border transition-all ${
+                            className={`py-4 rounded-2xl font-black border ${
                               formData.deliveryType === "Self pickup"
-                                ? "bg-[#073B35] text-white border-[#073B35] shadow-lg shadow-[#073B35]/15"
+                                ? "bg-[#073B35] text-white border-[#073B35]"
                                 : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
                             }`}
                           >
@@ -1024,7 +1158,7 @@ export default function Checkout() {
                     value={formData.notes}
                     onChange={handleChange}
                     rows="3"
-                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD] transition-all resize-none"
+                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD] resize-none"
                     placeholder="Extra spicy, less oil, call before arrival..."
                   />
                 </div>
@@ -1041,9 +1175,9 @@ export default function Checkout() {
                   <button
                     type="button"
                     onClick={() => setPackingRequired(true)}
-                    className={`text-left rounded-2xl p-4 border transition-all ${
+                    className={`text-left rounded-2xl p-4 border ${
                       packingRequired
-                        ? "bg-[#073B35] text-white border-[#073B35] shadow-lg shadow-[#073B35]/15"
+                        ? "bg-[#073B35] text-white border-[#073B35]"
                         : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
                     }`}
                   >
@@ -1060,9 +1194,9 @@ export default function Checkout() {
                   <button
                     type="button"
                     onClick={() => setPackingRequired(false)}
-                    className={`text-left rounded-2xl p-4 border transition-all ${
+                    className={`text-left rounded-2xl p-4 border ${
                       !packingRequired
-                        ? "bg-[#073B35] text-white border-[#073B35] shadow-lg shadow-[#073B35]/15"
+                        ? "bg-[#073B35] text-white border-[#073B35]"
                         : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
                     }`}
                   >
@@ -1098,13 +1232,13 @@ export default function Checkout() {
                     <button
                       type="button"
                       onClick={() => selectOrderTiming("now")}
-                      className={`text-left rounded-2xl p-4 border transition-all ${
+                      className={`text-left rounded-2xl p-4 border ${
                         orderTiming === "now"
-                          ? "bg-[#073B35] text-white border-[#073B35] shadow-lg shadow-[#073B35]/15"
+                          ? "bg-[#073B35] text-white border-[#073B35]"
                           : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
                       }`}
                     >
-                      <p className="font-black text-lg">⚡ Now</p>
+                      <p className="font-black text-lg">⚡ Order Now</p>
                       <p
                         className={`text-sm mt-1 ${
                           orderTiming === "now"
@@ -1124,9 +1258,9 @@ export default function Checkout() {
                         !kitchenAcceptsScheduledOrders ||
                         checkoutBlocked
                       }
-                      className={`text-left rounded-2xl p-4 border transition-all ${
+                      className={`text-left rounded-2xl p-4 border ${
                         orderTiming === "scheduled"
-                          ? "bg-[#073B35] text-white border-[#073B35] shadow-lg shadow-[#073B35]/15"
+                          ? "bg-[#073B35] text-white border-[#073B35]"
                           : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
                       } ${
                         checkingKitchenSettings ||
@@ -1136,7 +1270,7 @@ export default function Checkout() {
                           : ""
                       }`}
                     >
-                      <p className="font-black text-lg">🕒 Schedule</p>
+                      <p className="font-black text-lg">🕒 Schedule Later</p>
                       <p
                         className={`text-sm mt-1 ${
                           orderTiming === "scheduled"
@@ -1152,30 +1286,89 @@ export default function Checkout() {
                   {!checkingKitchenSettings &&
                     !kitchenAcceptsScheduledOrders && (
                       <p className="text-red-500 text-xs mt-3">
-                        This kitchen is not accepting scheduled orders right
-                        now.
+                        This kitchen is not accepting scheduled orders right now.
                       </p>
                     )}
 
                   {orderTiming === "scheduled" && (
-                    <div className="space-y-3 mt-4">
-                      <input
-                        type="date"
-                        value={scheduledDate}
-                        onChange={(event) =>
-                          setScheduledDate(event.target.value)
-                        }
-                        className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD] transition-all"
-                      />
+                    <div className="mt-5 space-y-5">
+                      <div>
+                        <p className="text-[#51615D] text-xs font-black uppercase mb-3">
+                          Select date
+                        </p>
 
-                      <input
-                        type="time"
-                        value={scheduledTime}
-                        onChange={(event) =>
-                          setScheduledTime(event.target.value)
-                        }
-                        className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD] transition-all"
-                      />
+                        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                          {getDateOptions().map((option) => {
+                            const active = scheduledDate === option.value;
+
+                            return (
+                              <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => {
+                                  setScheduledDate(option.value);
+                                  setScheduledTime("");
+                                }}
+                                className={`shrink-0 min-w-[92px] rounded-2xl border px-3 py-3 text-left ${
+                                  active
+                                    ? "bg-[#073B35] text-white border-[#073B35]"
+                                    : "bg-[#FFFFF2] text-[#073B35] border-[#D7F5EF]"
+                                }`}
+                              >
+                                <p className="text-xs font-black">
+                                  {option.day}
+                                </p>
+                                <p
+                                  className={`text-sm font-bold mt-1 ${
+                                    active ? "text-white/75" : "text-[#51615D]"
+                                  }`}
+                                >
+                                  {option.date}
+                                </p>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-[#51615D] text-xs font-black uppercase mb-3">
+                          Select time
+                        </p>
+
+                        {!scheduledDate ? (
+                          <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 text-[#51615D] font-bold text-sm">
+                            Select date first.
+                          </div>
+                        ) : getTimeOptions().length === 0 ? (
+                          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-red-600 font-bold text-sm">
+                            No time slots available today. Choose another date.
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-3 gap-2">
+                            {getTimeOptions().map((option) => {
+                              const active = scheduledTime === option.value;
+
+                              return (
+                                <button
+                                  key={option.value}
+                                  type="button"
+                                  onClick={() =>
+                                    setScheduledTime(option.value)
+                                  }
+                                  className={`h-12 rounded-2xl border text-sm font-black ${
+                                    active
+                                      ? "bg-[#41D3BD] text-[#073B35] border-[#41D3BD]"
+                                      : "bg-[#FFFFF2] text-[#073B35] border-[#D7F5EF]"
+                                  }`}
+                                >
+                                  {option.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
 
                       {formattedSchedule && (
                         <div className="bg-[#41D3BD]/12 border border-[#41D3BD]/25 rounded-2xl p-4">
@@ -1205,7 +1398,7 @@ export default function Checkout() {
                       </h2>
 
                       <p className="text-white/65 text-sm mt-2">
-                        Pay first, then submit reference.
+                        Pay first, then upload screenshot.
                       </p>
                     </div>
 
@@ -1238,7 +1431,7 @@ export default function Checkout() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <a
                       href={upiPaymentLink}
-                      className="block text-center w-full bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.98] text-white font-black py-4 rounded-2xl transition-all shadow-lg shadow-[#073B35]/15"
+                      className="block text-center w-full bg-[#073B35] active:scale-[0.98] text-white font-black py-4 rounded-2xl shadow-lg shadow-[#073B35]/15"
                     >
                       Pay via UPI App
                     </a>
@@ -1246,7 +1439,7 @@ export default function Checkout() {
                     <button
                       type="button"
                       onClick={() => setShowQr((current) => !current)}
-                      className="block text-center w-full bg-[#FFFFF2] border border-[#41D3BD]/40 hover:bg-[#D7F5EF] text-[#073B35] font-black py-4 rounded-2xl transition-all"
+                      className="block text-center w-full bg-[#FFFFF2] border border-[#41D3BD]/40 text-[#073B35] font-black py-4 rounded-2xl"
                     >
                       {showQr ? "Hide QR" : "Scan QR"}
                     </button>
@@ -1281,7 +1474,7 @@ export default function Checkout() {
                       <a
                         key={app}
                         href={upiPaymentLink}
-                        className="text-center bg-[#FFFFF2] border border-[#D7F5EF] hover:border-[#41D3BD]/60 rounded-2xl py-4 font-black transition-all text-[#073B35]"
+                        className="text-center bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl py-4 font-black text-[#073B35]"
                       >
                         {app}
                       </a>
@@ -1292,7 +1485,7 @@ export default function Checkout() {
                     <button
                       type="button"
                       onClick={() => copyToClipboard(Nefo_UPI_ID, "UPI ID")}
-                      className="bg-[#FFFFF2] border border-[#D7F5EF] hover:border-[#41D3BD]/60 rounded-2xl py-4 font-black transition-all text-[#073B35]"
+                      className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl py-4 font-black text-[#073B35]"
                     >
                       Copy UPI ID
                     </button>
@@ -1300,7 +1493,7 @@ export default function Checkout() {
                     <button
                       type="button"
                       onClick={() => copyToClipboard(totalAmount, "Amount")}
-                      className="bg-[#FFFFF2] border border-[#D7F5EF] hover:border-[#41D3BD]/60 rounded-2xl py-4 font-black transition-all text-[#073B35]"
+                      className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl py-4 font-black text-[#073B35]"
                     >
                       Copy Amount
                     </button>
@@ -1314,21 +1507,73 @@ export default function Checkout() {
 
                   <div className="mt-5 border-t border-[#D7F5EF] pt-5">
                     <p className="text-[#1A9F8D] text-sm font-black uppercase tracking-wide">
-                      I have paid
+                      Payment proof
                     </p>
+
+                    <input
+                      ref={paymentProofInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/*"
+                      className="hidden"
+                      onChange={handlePaymentProofChange}
+                    />
+
+                    {!paymentProofPreview ? (
+                      <button
+                        type="button"
+                        onClick={() => paymentProofInputRef.current?.click()}
+                        className="mt-3 w-full min-h-[120px] bg-[#FFFFF2] border-2 border-dashed border-[#41D3BD]/45 rounded-3xl flex flex-col items-center justify-center text-[#073B35] active:scale-[0.99]"
+                      >
+                        <span className="text-4xl">📷</span>
+                        <span className="font-black mt-3">
+                          Upload Payment Screenshot
+                        </span>
+                        <span className="text-xs text-[#51615D] mt-1">
+                          JPG, PNG, WEBP up to 5 MB
+                        </span>
+                      </button>
+                    ) : (
+                      <div className="mt-3 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-3">
+                        <img
+                          src={paymentProofPreview}
+                          alt="Payment proof preview"
+                          className="w-full max-h-72 object-contain rounded-2xl bg-white border border-[#D7F5EF]"
+                        />
+
+                        <div className="grid grid-cols-2 gap-3 mt-3">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              paymentProofInputRef.current?.click()
+                            }
+                            className="bg-[#073B35] text-white font-black py-3 rounded-2xl"
+                          >
+                            Replace
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={removePaymentProof}
+                            className="bg-red-50 border border-red-200 text-red-500 font-black py-3 rounded-2xl"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                     <input
                       value={paymentReference}
                       onChange={(event) =>
                         setPaymentReference(event.target.value)
                       }
-                      className="w-full mt-3 bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD] transition-all"
-                      placeholder="Enter UPI reference / transaction ID"
+                      className="w-full mt-4 bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD]"
+                      placeholder="UPI transaction ID / reference number optional"
                     />
 
                     <p className="text-[#51615D] text-xs mt-3 leading-relaxed">
-                      This reference is required. Orders cannot be placed
-                      without UPI payment reference.
+                      Upload screenshot after payment. Transaction reference is
+                      optional but useful for verification.
                     </p>
                   </div>
                 </div>
@@ -1359,7 +1604,7 @@ export default function Checkout() {
             <button
               onClick={handlePlaceOrder}
               disabled={loading || checkoutBlocked}
-              className="flex-1 bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-4 rounded-2xl transition-all shadow-lg shadow-[#073B35]/15"
+              className="flex-1 bg-[#073B35] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-4 rounded-2xl shadow-lg shadow-[#073B35]/15"
             >
               {loading
                 ? "Checking..."

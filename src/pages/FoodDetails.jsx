@@ -319,7 +319,7 @@ export default function FoodDetails() {
       <>
         <Navbar />
         <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 py-8 flex items-center justify-center">
-          <div className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-xl shadow-[#073B35]/5">
+          <div className="bg-white border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-sm">
             <div className="w-16 h-16 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-3xl">
               🍽️
             </div>
@@ -337,7 +337,7 @@ export default function FoodDetails() {
       <>
         <Navbar />
         <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 py-8 flex items-center justify-center">
-          <div className="max-w-md w-full bg-white/85 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-xl shadow-[#073B35]/5">
+          <div className="max-w-md w-full bg-white border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-sm">
             <div className="text-5xl">🍽️</div>
             <h1 className="text-3xl font-black mt-4 text-[#111827]">
               Dish not found
@@ -347,7 +347,7 @@ export default function FoodDetails() {
             </p>
             <Link
               to="/marketplace"
-              className="block mt-7 bg-[#073B35] hover:bg-[#0B5149] text-white font-black py-4 rounded-2xl shadow-lg shadow-[#073B35]/15"
+              className="block mt-7 bg-[#073B35] text-white font-black py-4 rounded-2xl shadow-lg shadow-[#073B35]/15"
             >
               Back to Marketplace
             </Link>
@@ -361,23 +361,20 @@ export default function FoodDetails() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] pb-44 sm:pb-32">
-        <section className="relative px-3 sm:px-6 py-3 sm:py-10">
-          <div className="absolute -top-24 -right-24 w-80 h-80 bg-[#41D3BD]/20 rounded-full blur-[100px]" />
-          <div className="absolute top-64 -left-28 w-80 h-80 bg-[#41D3BD]/10 rounded-full blur-[120px]" />
-
-          <div className="relative max-w-7xl mx-auto">
+      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] pb-36 sm:pb-32">
+        <section className="px-3 pt-3 sm:px-6 sm:py-8">
+          <div className="max-w-7xl mx-auto">
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="inline-flex items-center gap-2 text-[#51615D] hover:text-[#073B35] font-black mb-3 transition-all bg-white/80 border border-[#D7F5EF] px-4 py-2 rounded-2xl shadow-sm text-sm"
+              className="inline-flex items-center gap-2 text-[#51615D] font-black mb-3 bg-white border border-[#D7F5EF] px-4 py-2 rounded-2xl shadow-sm text-sm active:scale-95"
             >
               ← Back
             </button>
 
-            <div className="grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-4 lg:gap-10">
-              <div className="relative bg-white border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] overflow-hidden shadow-xl shadow-[#073B35]/5">
-                <div className="relative aspect-[1.05/1] sm:aspect-square bg-[#D7F5EF] overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-4 lg:gap-8">
+              <div className="relative bg-white border border-[#D7F5EF] rounded-3xl overflow-hidden shadow-sm">
+                <div className="relative h-[360px] sm:h-[520px] lg:h-[620px] bg-[#D7F5EF] overflow-hidden">
                   <img
                     src={food.image}
                     alt={food.name}
@@ -388,11 +385,11 @@ export default function FoodDetails() {
                     }`}
                   />
 
-                  <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
-                  <div className="absolute top-3 left-3 flex flex-wrap gap-2 pr-20">
+                  <div className="absolute top-3 left-3 flex flex-wrap gap-2 pr-24">
                     <span
-                      className={`text-[10px] sm:text-xs font-black px-3 py-1.5 rounded-full shadow-sm ${
+                      className={`text-[10px] font-black px-3 py-1.5 rounded-full shadow-sm ${
                         food.type === "Non-Veg"
                           ? "bg-red-500 text-white"
                           : "bg-[#41D3BD] text-[#073B35]"
@@ -401,14 +398,14 @@ export default function FoodDetails() {
                       {food.type || "Veg"}
                     </span>
 
-                    <span className="text-[10px] sm:text-xs font-black px-3 py-1.5 rounded-full bg-white/95 text-[#073B35] border border-[#D7F5EF] shadow-sm">
+                    <span className="text-[10px] font-black px-3 py-1.5 rounded-full bg-white/95 text-[#073B35] border border-[#D7F5EF] shadow-sm">
                       {category}
                     </span>
                   </div>
 
                   <div className="absolute top-3 right-3">
                     <span
-                      className={`text-[10px] sm:text-xs font-black px-3 py-1.5 rounded-full shadow-sm ${
+                      className={`text-[10px] font-black px-3 py-1.5 rounded-full shadow-sm ${
                         kitchenIsClosed || fulfillmentUnavailable
                           ? "bg-red-600 text-white"
                           : isSoldOut
@@ -434,21 +431,21 @@ export default function FoodDetails() {
                     </span>
                   </div>
 
-                  <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4">
-                    <div className="bg-white/95 backdrop-blur border border-white/70 rounded-[1.35rem] sm:rounded-[1.5rem] p-3 sm:p-4 shadow-xl">
-                      <p className="text-[#1A9F8D] text-[10px] sm:text-xs font-black uppercase tracking-wide">
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <div className="bg-white/95 backdrop-blur border border-white/70 rounded-3xl p-3 shadow-lg">
+                      <p className="text-[#1A9F8D] text-[10px] font-black uppercase tracking-wide">
                         Fresh from kitchen
                       </p>
 
-                      <h2 className="text-[#073B35] text-lg sm:text-xl font-black mt-1 truncate">
+                      <h2 className="text-[#073B35] text-lg font-black mt-1 truncate">
                         {kitchenName}
                       </h2>
 
-                      <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2 sm:mt-3">
+                      <div className="flex flex-wrap gap-1.5 mt-2">
                         <FulfillmentBadges compact />
                       </div>
 
-                      <p className="text-[#51615D] text-[11px] sm:text-xs mt-2 sm:mt-3">
+                      <p className="text-[#51615D] text-[11px] mt-2">
                         Exact kitchen door/location is not shown publicly.
                       </p>
                     </div>
@@ -456,7 +453,7 @@ export default function FoodDetails() {
                 </div>
               </div>
 
-              <div className="bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-4 sm:p-8 h-fit shadow-xl shadow-[#073B35]/5">
+              <div className="bg-white border border-[#D7F5EF] rounded-3xl p-4 sm:p-6 lg:p-8 h-fit shadow-sm">
                 <div
                   className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-black border ${
                     kitchenIsClosed || fulfillmentUnavailable
@@ -468,12 +465,12 @@ export default function FoodDetails() {
                   <span>{getKitchenStatusText()}</span>
                 </div>
 
-                <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black mt-4 leading-[0.98] tracking-tight text-[#111827]">
+                <h1 className="text-3xl sm:text-5xl font-black mt-4 leading-tight tracking-tight text-[#111827]">
                   {food.name}
                 </h1>
 
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-4 sm:mt-5">
-                  <span className="bg-[#073B35] text-white font-black px-4 sm:px-5 py-2 rounded-2xl text-2xl shadow-lg shadow-[#073B35]/15">
+                <div className="flex flex-wrap items-center gap-2 mt-4">
+                  <span className="bg-[#073B35] text-white font-black px-4 py-2 rounded-2xl text-2xl shadow-lg shadow-[#073B35]/15">
                     ₹{food.price}
                   </span>
 
@@ -482,19 +479,19 @@ export default function FoodDetails() {
                   </span>
                 </div>
 
-                <div className="flex flex-wrap gap-2 mt-4 sm:mt-5">
+                <div className="flex flex-wrap gap-2 mt-4">
                   <FulfillmentBadges />
                 </div>
 
                 {food.description && (
-                  <p className="text-[#51615D] leading-relaxed mt-5 sm:mt-6 text-sm sm:text-lg">
+                  <p className="text-[#51615D] leading-relaxed mt-5 text-sm sm:text-base">
                     {food.description}
                   </p>
                 )}
 
-                <div className="mt-5 sm:mt-6 grid grid-cols-2 gap-3">
-                  <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl sm:rounded-3xl p-4">
-                    <p className="text-[#51615D] text-[10px] sm:text-xs font-bold uppercase">
+                <div className="mt-5 grid grid-cols-2 gap-3">
+                  <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4">
+                    <p className="text-[#51615D] text-[10px] font-bold uppercase">
                       Availability
                     </p>
                     <p className={`font-black mt-2 text-sm ${getAvailabilityClass()}`}>
@@ -502,8 +499,8 @@ export default function FoodDetails() {
                     </p>
                   </div>
 
-                  <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl sm:rounded-3xl p-4">
-                    <p className="text-[#51615D] text-[10px] sm:text-xs font-bold uppercase">
+                  <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4">
+                    <p className="text-[#51615D] text-[10px] font-bold uppercase">
                       Category
                     </p>
                     <p className="font-black mt-2 text-[#073B35] text-sm">
@@ -521,22 +518,22 @@ export default function FoodDetails() {
                       className={`w-full font-black py-5 rounded-2xl transition-all duration-200 shadow-lg text-lg ${
                         isBlocked
                           ? "bg-[#EAF7F4] text-[#8AA5A0] cursor-not-allowed border border-red-100"
-                          : "bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.98] text-white shadow-[#073B35]/15"
+                          : "bg-[#073B35] active:scale-[0.98] text-white shadow-[#073B35]/15"
                       }`}
                     >
                       {getMainButtonLabel()}
                     </button>
                   ) : (
-                    <div className="flex items-center justify-between overflow-hidden rounded-2xl bg-[#073B35] text-white font-black shadow-lg shadow-[#073B35]/15">
+                    <div className="h-16 grid grid-cols-3 overflow-hidden rounded-2xl bg-[#073B35] text-white font-black shadow-lg shadow-[#073B35]/15">
                       <button
                         type="button"
                         onClick={handleDecrease}
-                        className="flex-1 py-5 text-2xl hover:bg-[#0B5149] active:scale-95 transition-all duration-200"
+                        className="text-2xl active:bg-[#0B5149]"
                       >
                         −
                       </button>
 
-                      <span className="px-6 py-5 bg-[#41D3BD] text-[#073B35] text-xl min-w-[90px] text-center">
+                      <span className="bg-[#41D3BD] text-[#073B35] flex items-center justify-center text-xl font-black">
                         {quantity}
                       </span>
 
@@ -544,10 +541,10 @@ export default function FoodDetails() {
                         type="button"
                         onClick={handleIncrease}
                         disabled={quantity >= stock}
-                        className={`flex-1 py-5 text-2xl transition-all duration-200 ${
+                        className={`text-2xl ${
                           quantity >= stock
                             ? "opacity-40 cursor-not-allowed"
-                            : "hover:bg-[#0B5149] active:scale-95"
+                            : "active:bg-[#0B5149]"
                         }`}
                       >
                         +
@@ -557,7 +554,7 @@ export default function FoodDetails() {
 
                   <Link
                     to="/cart"
-                    className="block text-center mt-4 border border-[#D7F5EF] bg-[#FFFFF2] hover:bg-[#D7F5EF] text-[#51615D] hover:text-[#073B35] font-black py-4 rounded-2xl transition-all"
+                    className="block text-center mt-4 border border-[#D7F5EF] bg-[#FFFFF2] text-[#51615D] font-black py-4 rounded-2xl"
                   >
                     View Cart
                   </Link>
@@ -569,34 +566,34 @@ export default function FoodDetails() {
 
         <section className="px-3 sm:px-6 py-4 sm:py-8">
           <div className="max-w-7xl mx-auto">
-            <div className="flex items-end justify-between gap-4 mb-4 sm:mb-5">
-              <div>
-                <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-[11px] sm:text-xs">
+            <div className="flex items-end justify-between gap-4 mb-4">
+              <div className="min-w-0">
+                <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-[11px]">
                   More from kitchen
                 </p>
 
-                <h2 className="text-2xl sm:text-3xl font-black mt-1 text-[#111827]">
+                <h2 className="text-2xl sm:text-3xl font-black mt-1 text-[#111827] truncate">
                   {kitchenName} menu
                 </h2>
               </div>
 
               <Link
                 to="/marketplace"
-                className="hidden sm:block text-[#1A9F8D] hover:text-[#073B35] font-black transition-all"
+                className="hidden sm:block text-[#1A9F8D] font-black"
               >
-                View Marketplace →
+                Marketplace →
               </Link>
             </div>
 
             {kitchenFoods.length > 0 && (
-              <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-3 mb-4 sm:mb-5 scrollbar-hide">
+              <div className="flex gap-2 overflow-x-auto pb-3 mb-4 scrollbar-hide">
                 <button
                   type="button"
                   onClick={() => setSelectedKitchenCategory("All")}
-                  className={`shrink-0 px-4 py-2.5 sm:py-3 rounded-2xl border font-black text-xs sm:text-sm ${
+                  className={`shrink-0 px-4 py-2.5 rounded-2xl border font-black text-xs ${
                     selectedKitchenCategory === "All"
                       ? "bg-[#073B35] text-white border-[#073B35]"
-                      : "bg-white/85 text-[#51615D] border-[#D7F5EF]"
+                      : "bg-white text-[#51615D] border-[#D7F5EF]"
                   }`}
                 >
                   All ({kitchenCategoryCounts.All || 0})
@@ -609,10 +606,10 @@ export default function FoodDetails() {
                     key={categoryName}
                     type="button"
                     onClick={() => setSelectedKitchenCategory(categoryName)}
-                    className={`shrink-0 px-4 py-2.5 sm:py-3 rounded-2xl border font-black text-xs sm:text-sm ${
+                    className={`shrink-0 px-4 py-2.5 rounded-2xl border font-black text-xs ${
                       selectedKitchenCategory === categoryName
                         ? "bg-[#073B35] text-white border-[#073B35]"
-                        : "bg-white/85 text-[#51615D] border-[#D7F5EF]"
+                        : "bg-white text-[#51615D] border-[#D7F5EF]"
                     }`}
                   >
                     {categoryName} ({kitchenCategoryCounts[categoryName]})
@@ -622,13 +619,13 @@ export default function FoodDetails() {
             )}
 
             {kitchenFoods.length === 0 ? (
-              <div className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-lg shadow-[#073B35]/5">
+              <div className="bg-white border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-sm">
                 <p className="text-[#51615D]">
                   No other dishes from this kitchen right now.
                 </p>
               </div>
             ) : visibleKitchenFoods.length === 0 ? (
-              <div className="bg-white/85 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-lg shadow-[#073B35]/5">
+              <div className="bg-white border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-sm">
                 <p className="text-[#51615D]">
                   No dishes in this category right now.
                 </p>
@@ -636,14 +633,12 @@ export default function FoodDetails() {
             ) : (
               <>
                 {availableKitchenFoods.length > 0 && (
-                  <div className="mb-4 sm:mb-5">
-                    <p className="text-[#51615D] text-sm">
-                      {availableKitchenFoods.length} available from this kitchen.
-                    </p>
-                  </div>
+                  <p className="text-[#51615D] text-sm mb-4">
+                    {availableKitchenFoods.length} available from this kitchen.
+                  </p>
                 )}
 
-                <div className="grid grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+                <div className="grid grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {visibleKitchenFoods.map((item) => (
                     <FoodCard key={item.id} item={item} />
                   ))}
@@ -653,13 +648,13 @@ export default function FoodDetails() {
           </div>
         </section>
 
-        <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#FFFFF2]/95 backdrop-blur-xl border-t border-[#D7F5EF] px-3 py-3">
-          <div className="flex items-center gap-3">
-            <div className="shrink-0 bg-white border border-[#D7F5EF] rounded-2xl px-4 py-3 shadow-sm">
-              <p className="text-[#51615D] text-[10px] font-black uppercase">
+        <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#FFFFF2]/95 backdrop-blur-xl border-t border-[#D7F5EF] px-3 pt-3 pb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-16 shrink-0 bg-white border border-[#D7F5EF] rounded-2xl px-3 py-2 shadow-sm">
+              <p className="text-[#51615D] text-[9px] font-black uppercase">
                 Price
               </p>
-              <p className="text-[#073B35] text-xl font-black">
+              <p className="text-[#073B35] text-lg font-black">
                 ₹{food.price}
               </p>
             </div>
@@ -669,7 +664,7 @@ export default function FoodDetails() {
                 type="button"
                 onClick={handleAddToCart}
                 disabled={isBlocked}
-                className={`flex-1 font-black py-4 rounded-2xl transition-all ${
+                className={`flex-1 h-14 font-black rounded-2xl transition-all ${
                   isBlocked
                     ? "bg-[#EAF7F4] text-[#8AA5A0] cursor-not-allowed border border-red-100"
                     : "bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.98]"
@@ -678,16 +673,16 @@ export default function FoodDetails() {
                 {getMainButtonLabel()}
               </button>
             ) : (
-              <div className="flex-1 flex items-center justify-between overflow-hidden rounded-2xl bg-[#073B35] text-white font-black shadow-lg shadow-[#073B35]/15">
+              <div className="flex-1 h-14 grid grid-cols-3 overflow-hidden rounded-2xl bg-[#073B35] text-white font-black shadow-lg shadow-[#073B35]/15">
                 <button
                   type="button"
                   onClick={handleDecrease}
-                  className="flex-1 py-4 text-2xl active:bg-[#0B5149]"
+                  className="text-xl active:bg-[#0B5149]"
                 >
                   −
                 </button>
 
-                <span className="px-6 py-4 bg-[#41D3BD] text-[#073B35] text-lg min-w-[76px] text-center">
+                <span className="bg-[#41D3BD] text-[#073B35] flex items-center justify-center text-lg font-black">
                   {quantity}
                 </span>
 
@@ -695,7 +690,7 @@ export default function FoodDetails() {
                   type="button"
                   onClick={handleIncrease}
                   disabled={quantity >= stock}
-                  className={`flex-1 py-4 text-2xl ${
+                  className={`text-xl ${
                     quantity >= stock ? "opacity-40 cursor-not-allowed" : ""
                   }`}
                 >
@@ -718,7 +713,7 @@ export default function FoodDetails() {
         {cartCount > 0 && (
           <Link
             to="/cart"
-            className="hidden sm:flex fixed bottom-5 left-4 right-4 z-50 sm:left-auto sm:right-6 sm:w-auto bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.98] text-white font-black px-6 py-4 rounded-2xl shadow-2xl shadow-[#073B35]/25 items-center justify-center gap-3 transition-all"
+            className="hidden sm:flex fixed bottom-5 left-4 right-4 z-50 sm:left-auto sm:right-6 sm:w-auto bg-[#073B35] active:scale-[0.98] text-white font-black px-6 py-4 rounded-2xl shadow-lg shadow-[#073B35]/20 items-center justify-center gap-3"
           >
             <span>🛒</span>
             <span>
