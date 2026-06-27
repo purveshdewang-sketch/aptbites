@@ -10,12 +10,14 @@ export default function SellerLogin() {
     password: "",
     kitchenName: "",
     flat: "",
+    doorNo: "",
     phone: "",
     specialty: "",
     about: "",
     acceptScheduledOrders: true,
   });
 
+  const [showPassword, setShowPassword] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [sellerVerified, setSellerVerified] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
@@ -56,7 +58,6 @@ export default function SellerLogin() {
     setCurrentUser(loggedInUser);
     setSellerVerified(true);
     fillSellerForm(loggedInUser, profileResult.profile);
-
     setMessage("Review your seller details and continue to dashboard.");
     setCheckingSession(false);
   }
@@ -65,7 +66,7 @@ export default function SellerLogin() {
     const { data: profile, error } = await supabase
       .from("profiles")
       .select(
-        "role, is_seller, seller_application_status, full_name, phone, flat, seller_kitchen_name, seller_specialty, seller_about, accept_scheduled_orders"
+        "role, is_seller, seller_application_status, full_name, phone, flat, seller_door_no, seller_kitchen_name, seller_specialty, seller_about, accept_scheduled_orders"
       )
       .eq("id", userId)
       .maybeSingle();
@@ -122,6 +123,7 @@ export default function SellerLogin() {
       password: "",
       kitchenName: profile?.seller_kitchen_name || profile?.full_name || "",
       flat: profile?.flat || "",
+      doorNo: profile?.seller_door_no || "",
       phone: profile?.phone || "",
       specialty: profile?.seller_specialty || "",
       about: profile?.seller_about || "",
@@ -142,6 +144,7 @@ export default function SellerLogin() {
     return Boolean(
       formData.kitchenName.trim() &&
         formData.flat.trim() &&
+        formData.doorNo.trim() &&
         formData.phone.trim() &&
         formData.specialty.trim()
     );
@@ -150,7 +153,7 @@ export default function SellerLogin() {
   async function saveSellerDetails(user, existingProfile = null) {
     if (!sellerSetupFieldsAreValid()) {
       throw new Error(
-        "Please fill kitchen name, flat, phone number, and food specialty."
+        "Please fill kitchen name, tower/flat, door number, phone number, and food specialty."
       );
     }
 
@@ -167,15 +170,14 @@ export default function SellerLogin() {
       accept_scheduled_orders: formData.acceptScheduledOrders,
       full_name: formData.kitchenName.trim(),
       flat: formData.flat.trim(),
+      seller_door_no: formData.doorNo.trim(),
       phone: formData.phone.trim(),
       seller_kitchen_name: formData.kitchenName.trim(),
       seller_specialty: formData.specialty.trim(),
       seller_about: formData.about.trim(),
     };
 
-    const { error } = await supabase
-      .from("profiles")
-      .upsert(sellerProfilePayload);
+    const { error } = await supabase.from("profiles").upsert(sellerProfilePayload);
 
     if (error) {
       throw new Error(`Seller details could not be saved: ${error.message}`);
@@ -306,6 +308,7 @@ export default function SellerLogin() {
       password: "",
       kitchenName: "",
       flat: "",
+      doorNo: "",
       phone: "",
       specialty: "",
       about: "",
@@ -319,7 +322,7 @@ export default function SellerLogin() {
         <div className="fixed top-0 right-0 w-80 h-80 bg-[#41D3BD]/20 blur-[110px] rounded-full pointer-events-none" />
         <div className="fixed bottom-0 left-0 w-80 h-80 bg-[#41D3BD]/10 blur-[120px] rounded-full pointer-events-none" />
 
-        <div className="relative bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-8 shadow-xl shadow-[#073B35]/5 text-center">
+        <div className="relative bg-white/95 border border-[#D7F5EF] rounded-[2rem] p-8 shadow-xl shadow-[#073B35]/5 text-center">
           <div className="w-16 h-16 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-3xl">
             👨‍🍳
           </div>
@@ -333,11 +336,11 @@ export default function SellerLogin() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-8 sm:py-10 overflow-hidden">
+    <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 py-6 overflow-hidden">
       <div className="fixed top-0 right-0 w-80 h-80 bg-[#41D3BD]/20 blur-[110px] rounded-full pointer-events-none" />
       <div className="fixed bottom-0 left-0 w-80 h-80 bg-[#41D3BD]/10 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="relative max-w-6xl mx-auto min-h-[calc(100vh-5rem)] grid lg:grid-cols-[0.95fr_1.05fr] gap-6 lg:gap-8 items-center">
+      <div className="relative max-w-6xl mx-auto min-h-[calc(100vh-3rem)] grid lg:grid-cols-[0.95fr_1.05fr] gap-6 lg:gap-8 items-center">
         <section className="hidden lg:block">
           <div className="relative overflow-hidden bg-[#073B35] rounded-[2.5rem] p-10 min-h-[720px] shadow-2xl shadow-[#073B35]/25">
             <div className="absolute -top-28 -right-28 w-96 h-96 bg-[#41D3BD]/25 rounded-full blur-[110px]" />
@@ -347,7 +350,7 @@ export default function SellerLogin() {
               <div>
                 <Link
                   to="/"
-                  className="inline-flex items-center gap-3 bg-white/10 border border-white/10 rounded-3xl px-4 py-3 hover:bg-white/15 transition-all"
+                  className="inline-flex items-center gap-3 bg-white/10 border border-white/10 rounded-3xl px-4 py-3"
                 >
                   <div className="w-12 h-12 rounded-2xl bg-[#FFFFF2] flex items-center justify-center overflow-hidden">
                     <img
@@ -379,9 +382,8 @@ export default function SellerLogin() {
                   </h1>
 
                   <p className="text-[#D7F5EF] text-lg mt-6 leading-relaxed max-w-xl">
-                    Sign in as an approved seller, manage dishes, control stock,
-                    accept orders, and serve fresh homemade food to your
-                    community.
+                    Sign in as an approved seller, manage dishes, stock, accept
+                    orders, and serve fresh homemade food to your community.
                   </p>
                 </div>
               </div>
@@ -410,7 +412,7 @@ export default function SellerLogin() {
         </section>
 
         <section className="w-full max-w-xl mx-auto lg:max-w-none">
-          <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-2xl shadow-[#073B35]/10">
+          <div className="bg-white/95 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-8 shadow-2xl shadow-[#073B35]/10">
             <div className="flex items-center justify-between gap-4 mb-6">
               <Link to="/" className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-[#FFFFF2] border border-[#D7F5EF] flex items-center justify-center overflow-hidden shadow-sm">
@@ -429,10 +431,7 @@ export default function SellerLogin() {
                 </div>
               </Link>
 
-              <Link
-                to="/"
-                className="text-[#51615D] hover:text-[#073B35] text-sm font-black"
-              >
+              <Link to="/" className="text-[#51615D] text-sm font-black">
                 Home
               </Link>
             </div>
@@ -442,8 +441,8 @@ export default function SellerLogin() {
                 Seller access
               </p>
 
-              <h1 className="text-3xl sm:text-4xl font-black mt-2 text-[#111827] leading-tight">
-                {currentUser ? "Review seller details" : "Welcome back"}
+              <h1 className="text-4xl sm:text-5xl font-black mt-2 text-[#111827] leading-tight">
+                {currentUser ? "Review details" : "Welcome"}
               </h1>
 
               <p className="text-[#51615D] mt-3 leading-relaxed">
@@ -463,14 +462,14 @@ export default function SellerLogin() {
               <div className="mt-4 flex flex-col sm:flex-row gap-3">
                 <Link
                   to="/seller-registration"
-                  className="flex-1 text-center bg-[#41D3BD]/15 border border-[#41D3BD]/30 hover:bg-[#41D3BD]/25 text-[#073B35] font-black px-4 py-3 rounded-2xl transition-all"
+                  className="flex-1 text-center bg-[#41D3BD]/15 border border-[#41D3BD]/30 text-[#073B35] font-black px-4 py-3 rounded-2xl"
                 >
                   Open Seller Registration
                 </Link>
 
                 <Link
                   to="/customer-login"
-                  className="flex-1 text-center bg-white border border-[#D7F5EF] hover:bg-[#FFFFF2] text-[#51615D] font-black px-4 py-3 rounded-2xl transition-all"
+                  className="flex-1 text-center bg-white border border-[#D7F5EF] text-[#51615D] font-black px-4 py-3 rounded-2xl"
                 >
                   Customer Login
                 </Link>
@@ -486,26 +485,36 @@ export default function SellerLogin() {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all text-[#111827]"
+                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
                     placeholder="Seller email"
                   />
 
-                  <input
-                    type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all text-[#111827]"
-                    placeholder="Password"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      required
+                      className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 pr-20 outline-none focus:border-[#41D3BD] text-[#111827]"
+                      placeholder="Password"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1A9F8D] text-sm font-black"
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
 
                   <div className="flex items-center justify-between gap-3">
                     <button
                       type="button"
                       onClick={handleForgotPassword}
                       disabled={resettingPassword}
-                      className="text-[#1A9F8D] hover:text-[#073B35] text-sm font-black transition-all disabled:opacity-50"
+                      className="text-[#1A9F8D] text-sm font-black disabled:opacity-50"
                     >
                       {resettingPassword
                         ? "Sending reset link..."
@@ -514,7 +523,7 @@ export default function SellerLogin() {
 
                     <Link
                       to="/customer-login"
-                      className="text-[#51615D] hover:text-[#073B35] text-sm font-bold"
+                      className="text-[#51615D] text-sm font-bold"
                     >
                       Customer login
                     </Link>
@@ -536,7 +545,7 @@ export default function SellerLogin() {
                     <button
                       type="button"
                       onClick={handleUseAnotherAccount}
-                      className="mt-3 text-[#1A9F8D] hover:text-[#073B35] text-sm font-black"
+                      className="mt-3 text-[#1A9F8D] text-sm font-black"
                     >
                       Use another account
                     </button>
@@ -549,7 +558,7 @@ export default function SellerLogin() {
                       value={formData.kitchenName}
                       onChange={handleChange}
                       required
-                      className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all text-[#111827]"
+                      className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
                       placeholder="Kitchen name e.g. Asha's Kitchen"
                     />
 
@@ -560,20 +569,30 @@ export default function SellerLogin() {
                         value={formData.flat}
                         onChange={handleChange}
                         required
-                        className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all text-[#111827]"
-                        placeholder="Tower / Flat e.g. B-1204"
+                        className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
+                        placeholder="Tower / Flat e.g. Block B"
                       />
 
                       <input
-                        type="tel"
-                        name="phone"
-                        value={formData.phone}
+                        type="text"
+                        name="doorNo"
+                        value={formData.doorNo}
                         onChange={handleChange}
                         required
-                        className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all text-[#111827]"
-                        placeholder="Phone Number"
+                        className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
+                        placeholder="Door No. e.g. 1204"
                       />
                     </div>
+
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      required
+                      className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
+                      placeholder="Phone Number"
+                    />
 
                     <input
                       type="text"
@@ -581,8 +600,8 @@ export default function SellerLogin() {
                       value={formData.specialty}
                       onChange={handleChange}
                       required
-                      className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all text-[#111827]"
-                      placeholder="Food specialty e.g. South Indian breakfast, sweets, tiffin"
+                      className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
+                      placeholder="Food specialty e.g. South Indian breakfast"
                     />
 
                     <textarea
@@ -590,8 +609,8 @@ export default function SellerLogin() {
                       value={formData.about}
                       onChange={handleChange}
                       rows="4"
-                      className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] transition-all resize-none text-[#111827]"
-                      placeholder="Tell customers about your cooking style, hygiene, or food story..."
+                      className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] resize-none text-[#111827]"
+                      placeholder="Tell customers about your cooking style..."
                     />
 
                     <label className="flex items-start gap-3 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 cursor-pointer">
@@ -616,13 +635,13 @@ export default function SellerLogin() {
 
                     <div className="bg-[#41D3BD]/12 border border-[#41D3BD]/25 rounded-2xl p-4">
                       <p className="text-[#073B35] font-black text-sm">
-                        Privacy note
+                        Location shown to customers
                       </p>
 
                       <p className="text-[#51615D] text-xs mt-1 leading-relaxed">
-                        Your flat is used for operational coordination. Exact
-                        kitchen door/location should not be shown publicly to
-                        customers.
+                        Your tower/flat and door number may be shown on food
+                        cards and food details so customers can identify the
+                        seller kitchen.
                       </p>
                     </div>
                   </div>
@@ -632,7 +651,7 @@ export default function SellerLogin() {
               <button
                 type="submit"
                 disabled={loading}
-                className="block w-full mt-2 bg-[#073B35] hover:bg-[#0B5149] disabled:opacity-50 text-white font-black py-4 rounded-2xl text-center transition-all duration-200 shadow-lg shadow-[#073B35]/15"
+                className="block w-full mt-2 bg-[#073B35] disabled:opacity-50 text-white font-black py-4 rounded-2xl text-center shadow-lg shadow-[#073B35]/15 active:scale-[0.99]"
               >
                 {loading
                   ? "Please wait..."

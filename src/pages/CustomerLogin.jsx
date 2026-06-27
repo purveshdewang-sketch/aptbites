@@ -7,6 +7,7 @@ export default function CustomerLogin() {
 
   const [isSignUp, setIsSignUp] = useState(false);
   const [selectedRole, setSelectedRole] = useState("customer");
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -89,7 +90,6 @@ export default function CustomerLogin() {
           setMessage(
             "Please fill your name, phone, apartment name, and flat number."
           );
-
           setLoading(false);
           return;
         }
@@ -151,11 +151,7 @@ export default function CustomerLogin() {
           }
         }
 
-        if (selectedRole === "seller") {
-          navigate("/seller-dashboard");
-        } else {
-          navigate("/marketplace");
-        }
+        navigate(selectedRole === "seller" ? "/seller-dashboard" : "/marketplace");
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
           email: formData.email.trim(),
@@ -189,11 +185,7 @@ export default function CustomerLogin() {
           profileRole === "admin" ||
           profile?.is_seller === true;
 
-        if (isSeller || selectedRole === "seller") {
-          navigate("/seller-dashboard");
-        } else {
-          navigate("/marketplace");
-        }
+        navigate(isSeller || selectedRole === "seller" ? "/seller-dashboard" : "/marketplace");
       }
     } catch (error) {
       setMessage(error.message);
@@ -203,11 +195,11 @@ export default function CustomerLogin() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-8 sm:py-10 overflow-hidden">
+    <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 py-6 overflow-hidden">
       <div className="fixed top-0 right-0 w-80 h-80 bg-[#41D3BD]/20 blur-[110px] rounded-full pointer-events-none" />
       <div className="fixed bottom-0 left-0 w-80 h-80 bg-[#41D3BD]/10 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="relative max-w-6xl mx-auto min-h-[calc(100vh-5rem)] grid lg:grid-cols-[0.95fr_1.05fr] gap-6 lg:gap-8 items-center">
+      <div className="relative max-w-6xl mx-auto min-h-[calc(100vh-3rem)] grid lg:grid-cols-[0.95fr_1.05fr] gap-6 lg:gap-8 items-center">
         <section className="hidden lg:block">
           <div className="relative overflow-hidden bg-[#073B35] rounded-[2.5rem] p-10 min-h-[680px] shadow-2xl shadow-[#073B35]/25">
             <div className="absolute -top-28 -right-28 w-96 h-96 bg-[#41D3BD]/25 rounded-full blur-[110px]" />
@@ -217,7 +209,7 @@ export default function CustomerLogin() {
               <div>
                 <Link
                   to="/"
-                  className="inline-flex items-center gap-3 bg-white/10 border border-white/10 rounded-3xl px-4 py-3 hover:bg-white/15 transition-all"
+                  className="inline-flex items-center gap-3 bg-white/10 border border-white/10 rounded-3xl px-4 py-3"
                 >
                   <div className="w-12 h-12 rounded-2xl bg-[#FFFFF2] flex items-center justify-center overflow-hidden">
                     <img
@@ -285,7 +277,7 @@ export default function CustomerLogin() {
         </section>
 
         <section className="w-full max-w-xl mx-auto lg:max-w-none">
-          <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-2xl shadow-[#073B35]/10">
+          <div className="bg-white/95 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-8 shadow-2xl shadow-[#073B35]/10">
             <div className="flex items-center justify-between gap-4 mb-6">
               <Link to="/" className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-[#FFFFF2] border border-[#D7F5EF] flex items-center justify-center overflow-hidden shadow-sm">
@@ -304,15 +296,12 @@ export default function CustomerLogin() {
                 </div>
               </Link>
 
-              <Link
-                to="/"
-                className="text-[#51615D] hover:text-[#073B35] text-sm font-black"
-              >
+              <Link to="/" className="text-[#51615D] text-sm font-black">
                 Home
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mb-6 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-2">
+            <div className="grid grid-cols-2 gap-2 mb-6 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-2">
               <button
                 type="button"
                 onClick={() => {
@@ -322,7 +311,7 @@ export default function CustomerLogin() {
                 className={`py-3 rounded-2xl font-black transition-all ${
                   selectedRole === "customer"
                     ? "bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
-                    : "text-[#51615D] hover:bg-white"
+                    : "text-[#51615D]"
                 }`}
               >
                 Customer
@@ -337,7 +326,7 @@ export default function CustomerLogin() {
                 className={`py-3 rounded-2xl font-black transition-all ${
                   selectedRole === "seller"
                     ? "bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
-                    : "text-[#51615D] hover:bg-white"
+                    : "text-[#51615D]"
                 }`}
               >
                 Seller
@@ -351,12 +340,12 @@ export default function CustomerLogin() {
                   : "Customer access"}
               </p>
 
-              <h1 className="text-3xl sm:text-4xl font-black mt-2 text-[#111827] leading-tight">
+              <h1 className="text-4xl sm:text-5xl font-black mt-2 text-[#111827] leading-tight">
                 {isSignUp
                   ? `Create ${
                       selectedRole === "seller" ? "seller" : "customer"
                     } account`
-                  : "Welcome back"}
+                  : "Welcome"}
               </h1>
 
               <p className="text-[#51615D] mt-3 leading-relaxed">
@@ -405,15 +394,25 @@ export default function CustomerLogin() {
                 className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
               />
 
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                placeholder="Password"
-                className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  placeholder="Password"
+                  className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 pr-20 outline-none focus:border-[#41D3BD] text-[#111827]"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1A9F8D] text-sm font-black"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
 
               {!isSignUp && (
                 <div className="flex justify-end">
@@ -421,7 +420,7 @@ export default function CustomerLogin() {
                     type="button"
                     onClick={handleForgotPassword}
                     disabled={resettingPassword}
-                    className="text-[#1A9F8D] hover:text-[#073B35] text-sm font-black transition-all disabled:opacity-50"
+                    className="text-[#1A9F8D] text-sm font-black disabled:opacity-50"
                   >
                     {resettingPassword
                       ? "Sending reset link..."
@@ -476,7 +475,7 @@ export default function CustomerLogin() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-2 bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.99] disabled:opacity-50 text-white font-black py-4 rounded-2xl shadow-lg shadow-[#073B35]/15"
+                className="w-full mt-2 bg-[#073B35] active:scale-[0.99] disabled:opacity-50 text-white font-black py-4 rounded-2xl shadow-lg shadow-[#073B35]/15"
               >
                 {loading
                   ? "Please wait..."
@@ -492,19 +491,12 @@ export default function CustomerLogin() {
                 setIsSignUp(!isSignUp);
                 setMessage("");
               }}
-              className="w-full mt-5 text-sm text-[#1A9F8D] hover:text-[#073B35] font-black"
+              className="w-full mt-5 text-sm text-[#1A9F8D] font-black"
             >
               {isSignUp
                 ? "Already have an account? Sign In"
                 : "New here? Create an account"}
             </button>
-
-            <Link
-              to="/marketplace"
-              className="block text-[#51615D] hover:text-[#073B35] text-sm mt-6 text-center font-bold"
-            >
-              Continue to Marketplace
-            </Link>
           </div>
         </section>
       </div>

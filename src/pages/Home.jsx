@@ -360,19 +360,6 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] p-6 shadow-lg shadow-[#073B35]/5">
-                <div className="w-12 h-12 rounded-2xl bg-[#41D3BD]/15 flex items-center justify-center text-2xl">
-                  🔒
-                </div>
-
-                <h3 className="text-[#073B35] font-black text-xl mt-5">
-                  Privacy-safe
-                </h3>
-
-                <p className="text-[#51615D] mt-2 leading-relaxed">
-                  Exact kitchen door/location is not shown publicly.
-                </p>
-              </div>
             </section>
 
             <section className="mt-10 sm:mt-12 mb-4 bg-[#073B35] rounded-[2rem] p-6 sm:p-8 shadow-2xl shadow-[#073B35]/15 overflow-hidden relative">

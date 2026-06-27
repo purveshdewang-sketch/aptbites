@@ -130,15 +130,17 @@ export default function FoodDetails() {
       };
     }
 
+    const finalKitchenName =
+      kitchenProfile.seller_kitchen_name ||
+      foodData.seller_kitchen_name ||
+      foodData.seller ||
+      "Home Kitchen";
+
     const enrichedFood = {
       ...foodData,
       seller_id: kitchenId,
       seller_online: kitchenProfile.seller_online,
-      seller_kitchen_name:
-        kitchenProfile.seller_kitchen_name ||
-        foodData.seller_kitchen_name ||
-        foodData.seller ||
-        "Home Kitchen",
+      seller_kitchen_name: finalKitchenName,
       delivery_available: kitchenProfile.delivery_available,
       pickup_available: kitchenProfile.pickup_available,
     };
@@ -148,32 +150,52 @@ export default function FoodDetails() {
     setDeliveryAvailable(kitchenProfile.delivery_available);
     setPickupAvailable(kitchenProfile.pickup_available);
 
-    if (kitchenId) {
-      const { data: otherFoodsData } = await supabase
-        .from("foods")
-        .select("*")
-        .or(`user_id.eq.${kitchenId},seller_id.eq.${kitchenId}`)
-        .neq("id", id)
-        .order("id", { ascending: false });
+    const { data: allFoodsData } = await supabase
+      .from("foods")
+      .select("*")
+      .order("id", { ascending: false });
 
-      const enrichedKitchenFoods = (otherFoodsData || []).map((item) => ({
+    const currentSellerNames = [
+      finalKitchenName,
+      foodData.seller_kitchen_name,
+      foodData.seller,
+    ]
+      .filter(Boolean)
+      .map((name) => String(name).trim().toLowerCase());
+
+    const enrichedKitchenFoods = (allFoodsData || [])
+      .filter((item) => {
+        if (String(item.id) === String(id)) return false;
+
+        const itemKitchenId = item.user_id || item.seller_id;
+
+        const itemNames = [item.seller_kitchen_name, item.seller]
+          .filter(Boolean)
+          .map((name) => String(name).trim().toLowerCase());
+
+        const sameKitchenId =
+          kitchenId && itemKitchenId && String(itemKitchenId) === String(kitchenId);
+
+        const sameKitchenName = itemNames.some((name) =>
+          currentSellerNames.includes(name)
+        );
+
+        return sameKitchenId || sameKitchenName;
+      })
+      .map((item) => ({
         ...item,
-        seller_id: kitchenId,
+        seller_id: item.user_id || item.seller_id || kitchenId,
         seller_online: kitchenProfile.seller_online,
         seller_kitchen_name:
           kitchenProfile.seller_kitchen_name ||
           item.seller_kitchen_name ||
           item.seller ||
-          "Home Kitchen",
+          finalKitchenName,
         delivery_available: kitchenProfile.delivery_available,
         pickup_available: kitchenProfile.pickup_available,
       }));
 
-      setKitchenFoods(enrichedKitchenFoods);
-    } else {
-      setKitchenFoods([]);
-    }
-
+    setKitchenFoods(enrichedKitchenFoods);
     setLoading(false);
   }
 
@@ -494,7 +516,9 @@ export default function FoodDetails() {
                     <p className="text-[#51615D] text-[10px] font-bold uppercase">
                       Availability
                     </p>
-                    <p className={`font-black mt-2 text-sm ${getAvailabilityClass()}`}>
+                    <p
+                      className={`font-black mt-2 text-sm ${getAvailabilityClass()}`}
+                    >
                       {getAvailabilityText()}
                     </p>
                   </div>
@@ -575,6 +599,14 @@ export default function FoodDetails() {
                 <h2 className="text-2xl sm:text-3xl font-black mt-1 text-[#111827] truncate">
                   {kitchenName} menu
                 </h2>
+
+                <p className="text-[#51615D] text-sm mt-1">
+                  {kitchenFoods.length > 0
+                    ? `${kitchenFoods.length} more item${
+                        kitchenFoods.length === 1 ? "" : "s"
+                      } from this kitchen`
+                    : "This kitchen has no other active items right now."}
+                </p>
               </div>
 
               <Link
@@ -619,10 +651,25 @@ export default function FoodDetails() {
             )}
 
             {kitchenFoods.length === 0 ? (
-              <div className="bg-white border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-sm">
-                <p className="text-[#51615D]">
-                  No other dishes from this kitchen right now.
+              <div className="bg-white border border-[#D7F5EF] rounded-3xl p-6 text-center shadow-sm">
+                <div className="w-16 h-16 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-3xl">
+                  🍽️
+                </div>
+
+                <p className="text-[#111827] font-black mt-4">
+                  No other dishes from this kitchen.
                 </p>
+
+                <p className="text-[#51615D] text-sm mt-2">
+                  Explore other nearby kitchens in the marketplace.
+                </p>
+
+                <Link
+                  to="/marketplace"
+                  className="inline-block mt-5 bg-[#073B35] text-white font-black px-5 py-3 rounded-2xl"
+                >
+                  Explore Marketplace
+                </Link>
               </div>
             ) : visibleKitchenFoods.length === 0 ? (
               <div className="bg-white border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-sm">
