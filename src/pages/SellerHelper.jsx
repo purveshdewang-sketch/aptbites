@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import Navbar from "../components/Navbar";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../context/AuthContext";
-import { getSellerAIResponse } from "../lib/supportAI";
-
 
 const QUICK_ACTIONS = [
   {
@@ -49,8 +46,18 @@ const QUICK_ACTIONS = [
   },
 ];
 
+const CARD =
+  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+
+const SOFT_CARD =
+  "rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
+
+const INPUT =
+  "w-full rounded-2xl border border-[#BDEFE6] bg-white px-4 py-4 text-sm font-semibold text-[#111827] outline-none placeholder:text-[#8AA5A0] focus:border-[#41D3BD]";
+
 export default function SellerHelper() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const chatEndRef = useRef(null);
 
   const [input, setInput] = useState("");
@@ -80,7 +87,10 @@ export default function SellerHelper() {
   }, [messages]);
 
   async function loadSellerData() {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
 
@@ -792,216 +802,282 @@ This usually happens when the website is updated but the Android app has not bee
   }
 
   function getGeneralAnswer() {
-    return `I can help with:\n\n• Food photo upload issues\n• Dish saving problems\n• Seller dashboard problems\n• Why orders are low\n• Why food is not visible\n• Today’s earnings\n• Stock/restocking\n• Delivery, pickup, packing settings\n• Payout/bank setup\n• Sales improvement tips\n\nTry: “Food image is not uploading.”`;
+    return `I can help with:
+
+• Food photo upload issues
+• Dish saving problems
+• Seller dashboard problems
+• Why orders are low
+• Why food is not visible
+• Today’s earnings
+• Stock/restocking
+• Delivery, pickup, packing settings
+• Payout/bank setup
+• Sales improvement tips
+
+Try: “Food image is not uploading.”`;
   }
 
-  return (
-    <>
-      <Navbar />
+  if (!user) {
+    return (
+      <main className="min-h-screen bg-[#FFFFF2] px-4 py-5 pb-28 text-[#111827]">
+        <div className="mx-auto max-w-md">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
+            aria-label="Go back"
+          >
+            <BackIcon />
+          </button>
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-3 sm:px-6 py-4 sm:py-8 pb-24">
-        <div className="max-w-6xl mx-auto">
-          <section className="relative overflow-hidden bg-[#073B35] rounded-[1.75rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-2xl shadow-[#073B35]/20">
-            <div className="absolute -top-20 -right-16 w-72 h-72 bg-[#41D3BD]/25 rounded-full blur-[85px]" />
-
-            <div className="relative flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
-              <div>
-                <div className="inline-flex items-center gap-2 bg-white/10 border border-white/10 text-[#41D3BD] px-3 py-1.5 rounded-full text-xs font-black">
-                  <span>👨‍🍳</span>
-                  <span>Seller Help</span>
-                </div>
-
-                <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-white">
-                  Smart seller
-                  <span className="block text-[#41D3BD]">assistant</span>
-                </h1>
-
-                <p className="text-[#D7F5EF] mt-4 text-sm sm:text-lg max-w-2xl leading-relaxed">
-                  Get step-by-step help for seller issues, uploads, orders,
-                  visibility, payouts, stock, and dashboard problems.
-                </p>
-              </div>
-
-              <Link
-                to="/seller-dashboard"
-                className="bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black px-5 py-3 rounded-2xl text-center"
-              >
-                Seller Dashboard
-              </Link>
+          <section className={`mt-6 p-8 text-center ${CARD}`}>
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 text-4xl">
+              👨‍🍳
             </div>
-          </section>
 
-          <section className="grid grid-cols-2 lg:grid-cols-5 gap-3 mt-5">
-            <StatCard label="Dishes" value={stats.foods.length} />
-            <StatCard label="Active" value={stats.activeFoods.length} />
-            <StatCard label="Orders" value={stats.orders.length} />
-            <StatCard label="Today" value={`₹${stats.todayEarnings}`} />
-            <StatCard label="Low Stock" value={stats.lowStockFoods.length} />
-          </section>
+            <h1 className="mt-5 text-2xl font-black text-[#111827]">
+              Sign in as seller
+            </h1>
 
-          <section className="mt-5 grid grid-cols-1 lg:grid-cols-[0.78fr_1.22fr] gap-5">
-            <aside className="space-y-5 lg:sticky lg:top-24 h-fit order-2 lg:order-1">
-              <div className="bg-white/95 border border-[#D7F5EF] rounded-[1.75rem] p-4 sm:p-5 shadow-xl shadow-[#073B35]/5">
-                <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                  Quick Help
-                </p>
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+              Seller Assistant is available only for approved seller accounts.
+            </p>
 
-                <h2 className="text-2xl font-black text-[#111827] mt-1">
-                  Common seller issues
-                </h2>
-
-                <div className="mt-5 grid grid-cols-2 lg:grid-cols-1 gap-3">
-                  {QUICK_ACTIONS.map((item) => (
-                    <button
-                      key={item.label}
-                      type="button"
-                      onClick={() => sendMessage(item.prompt)}
-                      className="text-left bg-[#FFFFF2] border border-[#D7F5EF] hover:border-[#41D3BD]/60 text-[#073B35] rounded-2xl p-4 transition-all active:scale-[0.98]"
-                    >
-                      <div className="text-2xl">{item.icon}</div>
-                      <p className="font-black text-sm mt-2 leading-tight">
-                        {item.label}
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="hidden lg:block bg-white/95 border border-[#D7F5EF] rounded-[1.75rem] p-4 sm:p-5 shadow-xl shadow-[#073B35]/5">
-                <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                  Kitchen Health
-                </p>
-
-                <h2 className="text-2xl font-black text-[#111827] mt-1">
-                  Live checks
-                </h2>
-
-                <div className="mt-5 space-y-3">
-                  <HealthRow
-                    label="Kitchen online"
-                    active={stats.profile?.seller_online !== false}
-                  />
-                  <HealthRow
-                    label="Delivery"
-                    active={stats.profile?.delivery_available !== false}
-                  />
-                  <HealthRow
-                    label="Self pickup"
-                    active={stats.profile?.pickup_available !== false}
-                  />
-                  <HealthRow
-                    label="Active dishes"
-                    active={stats.activeFoods.length > 0}
-                    value={stats.activeFoods.length}
-                  />
-                  <HealthRow
-                    label="Bank details"
-                    active={Boolean(
-                      stats.profile?.bank_account_holder &&
-                        stats.profile?.bank_name &&
-                        stats.profile?.bank_account_number &&
-                        stats.profile?.bank_ifsc
-                    )}
-                  />
-                </div>
-              </div>
-            </aside>
-
-            <section className="bg-white/95 border border-[#D7F5EF] rounded-[1.75rem] overflow-hidden shadow-2xl shadow-[#073B35]/8 order-1 lg:order-2">
-              <div className="bg-[#073B35] p-4 sm:p-5 text-white flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-[#41D3BD] text-[#073B35] flex items-center justify-center text-2xl">
-                    👨‍🍳
-                  </div>
-
-                  <div>
-                    <p className="font-black text-xl">Seller Assistant</p>
-                    <p className="text-[#D7F5EF] text-xs mt-0.5">
-                      Support agent for kitchen issues
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={loadSellerData}
-                  className="hidden sm:block bg-white/10 hover:bg-white/15 text-white font-black px-4 py-2 rounded-2xl"
-                >
-                  Refresh
-                </button>
-              </div>
-
-              <div className="bg-[#FFFFF2] p-3 sm:p-4">
-                {loading && (
-                  <div className="mb-3 bg-white border border-[#D7F5EF] rounded-2xl p-4 text-[#51615D] font-bold">
-                    Loading seller data...
-                  </div>
-                )}
-
-                <div className="bg-white border border-[#D7F5EF] rounded-3xl p-3 sm:p-4 h-[430px] sm:h-[520px] overflow-y-auto space-y-3">
-                  {messages.map((msg, index) => (
-                    <div
-                      key={`${msg.role}-${index}`}
-                      className={`flex ${
-                        msg.role === "user" ? "justify-end" : "justify-start"
-                      }`}
-                    >
-                      <div
-                        className={`max-w-[88%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-line ${
-                          msg.role === "user"
-                            ? "bg-[#073B35] text-white rounded-br-md"
-                            : "bg-[#FFFFF2] border border-[#D7F5EF] text-[#51615D] rounded-bl-md"
-                        }`}
-                      >
-                        {msg.text}
-                      </div>
-                    </div>
-                  ))}
-
-                  <div ref={chatEndRef} />
-                </div>
-
-                <div className="mt-4 flex gap-2">
-                  <input
-                    value={input}
-                    onChange={(event) => setInput(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") sendMessage();
-                    }}
-                    placeholder="Type seller issue..."
-                    className="flex-1 bg-white border border-[#D7F5EF] rounded-2xl px-4 py-3 outline-none focus:border-[#41D3BD]"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => sendMessage()}
-                    className="bg-[#073B35] hover:bg-[#0B5149] text-white px-5 sm:px-6 rounded-2xl font-black"
-                  >
-                    Send
-                  </button>
-                </div>
-              </div>
-            </section>
+            <Link
+              to="/seller-login"
+              className="mt-6 block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center text-sm font-black text-white"
+            >
+              Seller Login
+            </Link>
           </section>
         </div>
       </main>
-    </>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-32 text-[#111827]">
+      <div className="mx-auto max-w-md">
+        <header className="flex items-start gap-3">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+            aria-label="Go back"
+          >
+            <BackIcon />
+          </button>
+
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+              Seller Help
+            </p>
+
+            <h1 className="mt-1 text-3xl font-black leading-tight text-[#073B35]">
+              Smart seller
+              <span className="block text-[#111827]">assistant</span>
+            </h1>
+
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+              Get help for uploads, orders, visibility, payouts, stock, and
+              dashboard issues.
+            </p>
+          </div>
+        </header>
+
+        <section className="mt-5 grid grid-cols-3 gap-3">
+          <StatCard label="Dishes" value={stats.foods.length} />
+          <StatCard label="Active" value={stats.activeFoods.length} />
+          <StatCard label="Today" value={`₹${stats.todayEarnings}`} strong />
+        </section>
+
+        <section className="mt-3 grid grid-cols-2 gap-3">
+          <StatCard label="Orders" value={stats.orders.length} />
+          <StatCard label="Low Stock" value={stats.lowStockFoods.length} muted />
+        </section>
+
+        <section className={`mt-5 p-5 ${CARD}`}>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                Kitchen Health
+              </p>
+
+              <h2 className="mt-1 text-2xl font-black text-[#111827]">
+                Live checks
+              </h2>
+            </div>
+
+            <button
+              type="button"
+              onClick={loadSellerData}
+              className="shrink-0 rounded-full border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-2 text-xs font-black text-[#073B35] active:scale-95"
+            >
+              Refresh
+            </button>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            <HealthRow
+              label="Kitchen online"
+              active={stats.profile?.seller_online !== false}
+            />
+            <HealthRow
+              label="Delivery"
+              active={stats.profile?.delivery_available !== false}
+            />
+            <HealthRow
+              label="Self pickup"
+              active={stats.profile?.pickup_available !== false}
+            />
+            <HealthRow
+              label="Active dishes"
+              active={stats.activeFoods.length > 0}
+              value={stats.activeFoods.length}
+            />
+            <HealthRow
+              label="Bank details"
+              active={Boolean(
+                stats.profile?.bank_account_holder &&
+                  stats.profile?.bank_name &&
+                  stats.profile?.bank_account_number &&
+                  stats.profile?.bank_ifsc
+              )}
+            />
+          </div>
+        </section>
+
+        <section className={`mt-5 p-5 ${CARD}`}>
+          <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+            Quick Help
+          </p>
+
+          <h2 className="mt-1 text-2xl font-black text-[#111827]">
+            Common seller issues
+          </h2>
+
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            {QUICK_ACTIONS.map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => sendMessage(item.prompt)}
+                className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4 text-left text-[#073B35] transition-all active:scale-[0.98]"
+              >
+                <div className="text-2xl">{item.icon}</div>
+
+                <p className="mt-2 text-sm font-black leading-tight">
+                  {item.label}
+                </p>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className={`mt-5 overflow-hidden ${CARD}`}>
+          <div className="border-b border-[#174E47] bg-[#073B35] p-4 text-white">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#41D3BD] bg-[#41D3BD] text-2xl text-[#073B35]">
+                👨‍🍳
+              </div>
+
+              <div className="min-w-0">
+                <p className="text-xl font-black">Seller Assistant</p>
+
+                <p className="mt-0.5 text-xs font-semibold text-[#D7F5EF]">
+                  Support agent for kitchen issues
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-[#FFFFF2] p-4">
+            {loading ? (
+              <div className="mb-3 rounded-2xl border border-[#BDEFE6] bg-white p-4 font-bold text-[#51615D]">
+                Loading seller data...
+              </div>
+            ) : null}
+
+            <div className="h-[420px] space-y-3 overflow-y-auto rounded-3xl border border-[#BDEFE6] bg-white p-3">
+              {messages.map((msg, index) => (
+                <div
+                  key={`${msg.role}-${index}`}
+                  className={`flex ${
+                    msg.role === "user" ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  <div
+                    className={`max-w-[88%] whitespace-pre-line rounded-2xl border px-4 py-3 text-sm leading-relaxed ${
+                      msg.role === "user"
+                        ? "rounded-br-md border-[#073B35] bg-[#073B35] text-white"
+                        : "rounded-bl-md border-[#BDEFE6] bg-[#FFFFF2] text-[#51615D]"
+                    }`}
+                  >
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+
+              <div ref={chatEndRef} />
+            </div>
+
+            <div className="mt-4 flex gap-2">
+              <input
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") sendMessage();
+                }}
+                placeholder="Type seller issue..."
+                className={INPUT}
+              />
+
+              <button
+                type="button"
+                onClick={() => sendMessage()}
+                className="shrink-0 rounded-2xl border border-[#073B35] bg-[#073B35] px-5 font-black text-white active:scale-95"
+              >
+                Send
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <Link
+          to="/seller-dashboard"
+          className="mt-5 block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-95"
+        >
+          Back to Seller Dashboard
+        </Link>
+      </div>
+    </main>
   );
 }
 
-function StatCard({ label, value }) {
+function StatCard({ label, value, strong = false, muted = false }) {
   return (
-    <div className="bg-white/90 border border-[#D7F5EF] rounded-3xl p-4 shadow-lg shadow-[#073B35]/5">
-      <p className="text-[#51615D] text-xs font-black uppercase">{label}</p>
-      <p className="text-[#073B35] text-2xl font-black mt-2">{value}</p>
+    <div className="rounded-[22px] border border-[#D7F5EF] bg-white/90 p-3 shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
+      <p className="text-[10px] font-black uppercase text-[#7A8A86]">
+        {label}
+      </p>
+
+      <p
+        className={`mt-1 text-xl font-black ${
+          muted ? "text-[#8AA5A0]" : strong ? "text-[#073B35]" : "text-[#111827]"
+        }`}
+      >
+        {value}
+      </p>
     </div>
   );
 }
 
 function HealthRow({ label, active, value }) {
   return (
-    <div className="flex items-center justify-between gap-3 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3">
-      <p className="text-[#51615D] text-sm font-bold">{label}</p>
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-3">
+      <p className="text-sm font-bold text-[#51615D]">{label}</p>
+
       <p
         className={`text-sm font-black ${
           active ? "text-green-600" : "text-red-500"
@@ -1010,5 +1086,20 @@ function HealthRow({ label, active, value }) {
         {value !== undefined ? value : active ? "OK" : "Fix"}
       </p>
     </div>
+  );
+}
+
+function BackIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+    >
+      <path d="M19 12H5" />
+      <path d="M12 19l-7-7 7-7" />
+    </svg>
   );
 }

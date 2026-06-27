@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Navbar from "../components/Navbar";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabaseClient";
@@ -8,6 +7,15 @@ import { supabase } from "../lib/supabaseClient";
 const PLATFORM_FEE = 8;
 const Nefo_UPI_ID = "cropg1agroresearch@sbi";
 const Nefo_PAYEE_NAME = "Nefo";
+
+const CARD =
+  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+
+const SOFT_CARD =
+  "rounded-[24px] border border-[#E8F4F1] bg-white/90 shadow-[6px_6px_16px_rgba(7,59,53,0.06),-6px_-6px_16px_rgba(255,255,255,0.95)]";
+
+const INPUT =
+  "w-full rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-4 text-base font-semibold text-[#111827] outline-none placeholder:text-[#8AA5A0] focus:border-[#41D3BD] focus:bg-white disabled:cursor-not-allowed disabled:bg-[#EAF7F4] disabled:text-[#51615D]";
 
 export default function Checkout() {
   const { cartItems, cartTotal, clearCart } = useCart();
@@ -741,882 +749,889 @@ export default function Checkout() {
     }
   }
 
-  function StepHeader({ number, title, subtitle }) {
-    return (
-      <div className="flex items-start gap-3">
-        <div className="w-9 h-9 rounded-2xl bg-[#073B35] text-white font-black flex items-center justify-center shrink-0 shadow-lg shadow-[#073B35]/15">
-          {number}
-        </div>
-
-        <div>
-          <h2 className="text-xl sm:text-2xl font-black text-[#111827]">
-            {title}
-          </h2>
-          {subtitle && (
-            <p className="text-[#51615D] text-sm mt-1 leading-relaxed">
-              {subtitle}
-            </p>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  function OrderSummaryCard({ compact = false }) {
-    return (
-      <section
-        className={`bg-white/95 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] shadow-xl shadow-[#073B35]/5 ${
-          compact
-            ? "p-4 max-h-[70vh] overflow-y-auto"
-            : "p-5 sm:p-6 h-fit lg:sticky lg:top-24"
-        }`}
-      >
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-[11px] sm:text-xs">
-              Order Summary
-            </p>
-
-            <h2 className="text-2xl sm:text-3xl font-black mt-1 text-[#111827]">
-              Your food
-            </h2>
-          </div>
-
-          <div className="bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] text-xs px-3 py-1.5 rounded-full font-black">
-            {cartItems.length} items
-          </div>
-        </div>
-
-        <div className="mt-4 sm:mt-5 space-y-3">
-          {cartItems.map((item) => (
-            <div
-              key={item.id}
-              className="flex gap-3 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3"
-            >
-              <img
-                src={item.image}
-                alt={item.name}
-                className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl object-cover bg-[#D7F5EF] shrink-0"
-              />
-
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="font-black truncate text-[#111827] text-sm sm:text-base">
-                      {item.name}
-                    </p>
-
-                    <p className="text-[#51615D] text-xs mt-1 truncate">
-                      Kitchen: {getKitchenName(item)}
-                    </p>
-
-                    <p className="text-[#51615D] text-xs sm:text-sm mt-1">
-                      Qty {item.quantity}
-                    </p>
-                  </div>
-
-                  <p className="font-black text-[#073B35] shrink-0 text-sm sm:text-base">
-                    ₹{Number(item.price || 0) * Number(item.quantity || 1)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-5 sm:mt-6 border-t border-[#D7F5EF] pt-5 space-y-3 sm:space-y-4">
-          {orderTiming === "scheduled" && formattedSchedule && (
-            <div className="bg-[#41D3BD]/12 border border-[#41D3BD]/25 rounded-2xl p-4">
-              <p className="text-[#073B35] text-sm font-black">
-                Scheduled Order
-              </p>
-              <p className="text-[#51615D] text-sm mt-1">
-                {formattedSchedule}
-              </p>
-            </div>
-          )}
-
-          {!packingRequired && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4">
-              <p className="text-yellow-700 text-sm font-black">
-                No packing selected
-              </p>
-              <p className="text-yellow-700 text-xs mt-1">
-                Please carry your own container.
-              </p>
-            </div>
-          )}
-
-          {checkoutBlocked && (
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
-              <p className="text-red-600 text-sm font-black">
-                This kitchen is currently not accepting delivery or pickup
-                orders.
-              </p>
-            </div>
-          )}
-
-          <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4">
-            <p className="text-[#51615D] text-xs uppercase font-bold">
-              Payment
-            </p>
-
-            <p className="text-[#111827] font-black mt-1">UPI Payment Only</p>
-
-            {paymentProofFile ? (
-              <p className="text-[#1A9F8D] text-xs font-bold mt-2 truncate">
-                Screenshot selected
-              </p>
-            ) : paymentReference ? (
-              <p className="text-[#1A9F8D] text-xs font-bold mt-2 truncate">
-                Ref: {paymentReference}
-              </p>
-            ) : (
-              <p className="text-[#073B35] text-xs font-bold mt-2">
-                Screenshot or reference required
-              </p>
-            )}
-          </div>
-
-          <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 space-y-3">
-            <div className="flex items-center justify-between text-sm">
-              <p className="text-[#51615D]">Subtotal</p>
-              <p className="font-bold text-[#111827]">₹{subtotalAmount}</p>
-            </div>
-
-            <div className="flex items-center justify-between text-sm">
-              <p className="text-[#51615D]">
-                Packing Charge{" "}
-                {!packingRequired && (
-                  <span className="text-yellow-700 font-black">(Skipped)</span>
-                )}
-              </p>
-              <p className="font-bold text-[#111827]">
-                ₹{effectivePackingCharge}
-              </p>
-            </div>
-
-            <div className="flex items-center justify-between text-sm">
-              <p className="text-[#51615D]">Platform Fee</p>
-              <p className="font-bold text-[#111827]">₹{PLATFORM_FEE}</p>
-            </div>
-
-            <div className="border-t border-[#D7F5EF] pt-4 flex items-end justify-between">
-              <div>
-                <p className="text-[#51615D] text-sm">Total Amount</p>
-                <p className="text-[#51615D] text-xs mt-1">
-                  Fresh homemade food
-                </p>
-              </div>
-
-              <p className="text-3xl sm:text-4xl font-black text-[#073B35]">
-                ₹{totalAmount}
-              </p>
-            </div>
-          </div>
-
-          {!compact && (
-            <>
-              <button
-                onClick={handlePlaceOrder}
-                disabled={loading || checkoutBlocked}
-                className="w-full mt-3 bg-[#073B35] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-5 rounded-2xl text-lg transition-all duration-200 shadow-lg shadow-[#073B35]/15"
-              >
-                {loading
-                  ? "Checking live stock..."
-                  : checkoutBlocked
-                  ? "Kitchen Unavailable"
-                  : orderTiming === "scheduled"
-                  ? `Schedule Order • ₹${totalAmount}`
-                  : `Place Order • ₹${totalAmount}`}
-              </button>
-
-              <Link
-                to="/cart"
-                className="block text-center mt-3 border border-[#D7F5EF] bg-[#FFFFF2] text-[#51615D] font-black py-3 rounded-2xl"
-              >
-                Back to Cart
-              </Link>
-            </>
-          )}
-
-          <p className="text-[#51615D] text-xs leading-relaxed">
-            From your community. Exact kitchen door/location is not shown
-            publicly.
-          </p>
-        </div>
-      </section>
-    );
-  }
-
   if (orderPlaced) {
     return (
-      <>
-        <Navbar />
+      <main className="flex min-h-screen items-center justify-center bg-[#FFFFF2] px-4 py-8 text-[#111827]">
+        <div className={`w-full max-w-md p-7 text-center ${CARD}`}>
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 text-4xl">
+            🎉
+          </div>
 
-        <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-8 flex items-center justify-center">
-          <div className="max-w-xl w-full bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-7 sm:p-10 text-center shadow-xl shadow-[#073B35]/5">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-4xl sm:text-5xl">
-              🎉
+          <p className="mt-6 text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+            {orderTiming === "scheduled" ? "Order Scheduled" : "Order Confirmed"}
+          </p>
+
+          <h1 className="mt-3 text-3xl font-black leading-tight text-[#111827]">
+            {orderTiming === "scheduled"
+              ? "Your order has been scheduled."
+              : "Your food is now being prepared."}
+          </h1>
+
+          <p className="mt-4 text-sm font-semibold leading-relaxed text-[#51615D]">
+            Redirecting you to live order tracking.
+          </p>
+
+          <Link
+            to="/orders"
+            className="mt-7 block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 font-black text-white active:scale-95"
+          >
+            Track My Order
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  if (cartItems.length === 0) {
+    return (
+      <main className="min-h-screen bg-[#FFFFF2] px-4 py-5 pb-28 text-[#111827]">
+        <div className="mx-auto max-w-md">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
+          >
+            <BackIcon />
+          </button>
+
+          <section className={`mt-6 p-8 text-center ${CARD}`}>
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 text-4xl">
+              🛒
             </div>
 
-            <p className="text-[#1A9F8D] font-black uppercase tracking-wide mt-6">
-              {orderTiming === "scheduled"
-                ? "Order Scheduled"
-                : "Order Confirmed"}
-            </p>
-
-            <h1 className="text-3xl sm:text-5xl font-black mt-4 leading-tight text-[#111827]">
-              {orderTiming === "scheduled"
-                ? "Your order has been scheduled."
-                : "Your food is now being prepared."}
+            <h1 className="mt-5 text-2xl font-black text-[#111827]">
+              Your cart is empty
             </h1>
 
-            <p className="text-[#51615D] mt-5 leading-relaxed">
-              Redirecting you to live order tracking.
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+              Add dishes from the marketplace before checkout.
             </p>
 
             <Link
-              to="/orders"
-              className="block mt-8 bg-[#073B35] active:scale-95 text-white font-black py-4 rounded-2xl"
+              to="/marketplace"
+              className="mt-6 block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center text-sm font-black text-white"
             >
-              Track My Order
+              Explore Marketplace
             </Link>
-          </div>
-        </main>
-      </>
+          </section>
+        </div>
+      </main>
     );
   }
 
   return (
-    <>
-      <Navbar />
+    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-40 text-[#111827]">
+      <div className="mx-auto max-w-md">
+        <header className="flex items-start gap-3">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+            aria-label="Go back"
+          >
+            <BackIcon />
+          </button>
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-3 sm:px-6 py-4 sm:py-10 pb-40 lg:pb-10">
-        <div className="max-w-6xl mx-auto">
-          <section className="relative overflow-hidden bg-white/85 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2.5rem] p-4 sm:p-8 shadow-xl shadow-[#073B35]/5 mb-5 lg:mb-8">
-            <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[95px]" />
-            <div className="absolute -bottom-28 -left-24 w-72 h-72 bg-[#41D3BD]/10 rounded-full blur-[110px]" />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+              Checkout
+            </p>
 
-            <div className="relative">
-              <div className="flex items-center justify-between gap-3">
-                <div className="inline-flex items-center gap-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
-                  <span>✅</span>
-                  <span>Checkout</span>
-                </div>
+            <h1 className="mt-1 text-3xl font-black leading-tight text-[#073B35]">
+              Complete
+              <span className="block text-[#111827]">your order</span>
+            </h1>
 
-                <button
-                  type="button"
-                  onClick={() => setShowMobileSummary(!showMobileSummary)}
-                  className="lg:hidden shrink-0 bg-[#073B35] text-white font-black px-4 py-2 rounded-2xl text-xs shadow-sm"
-                >
-                  Summary • ₹{totalAmount}
-                </button>
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+              Confirm details, pay by UPI, then upload screenshot or reference.
+            </p>
+          </div>
+        </header>
+
+        <section className="mt-5 grid grid-cols-3 gap-3">
+          <StatTile label="Items" value={cartItems.length} />
+          <StatTile label="Packing" value={`₹${effectivePackingCharge}`} />
+          <StatTile label="Total" value={`₹${totalAmount}`} strong />
+        </section>
+
+        <button
+          type="button"
+          onClick={() => setShowMobileSummary((current) => !current)}
+          className="mt-4 flex w-full items-center justify-between rounded-2xl border border-[#BDEFE6] bg-white/90 px-4 py-4 text-left font-black text-[#073B35] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] active:scale-[0.99]"
+        >
+          <span>Order Summary</span>
+          <span>{showMobileSummary ? "Hide" : `₹${totalAmount}`}</span>
+        </button>
+
+        {showMobileSummary ? (
+          <div className="mt-4">
+            <OrderSummaryCard
+              cartItems={cartItems}
+              getKitchenName={getKitchenName}
+              orderTiming={orderTiming}
+              formattedSchedule={formattedSchedule}
+              packingRequired={packingRequired}
+              checkoutBlocked={checkoutBlocked}
+              subtotalAmount={subtotalAmount}
+              effectivePackingCharge={effectivePackingCharge}
+              totalAmount={totalAmount}
+              paymentProofFile={paymentProofFile}
+              paymentReference={paymentReference}
+            />
+          </div>
+        ) : null}
+
+        <section className="mt-5 space-y-5">
+          <CardSection
+            number="1"
+            title="Delivery details"
+            subtitle="Confirm name, phone, flat and delivery mode."
+          >
+            <div className="space-y-4">
+              <Field label="Full name">
+                <input
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  className={INPUT}
+                  placeholder="Full Name"
+                />
+              </Field>
+
+              <Field label="Phone number">
+                <input
+                  name="phone"
+                  value={formData.phone}
+                  disabled
+                  readOnly
+                  className={INPUT}
+                  placeholder="Phone Number"
+                />
+              </Field>
+
+              <Field label="Tower / flat number">
+                <input
+                  name="flat"
+                  value={formData.flat}
+                  onChange={handleChange}
+                  className={INPUT}
+                  placeholder="Your tower / flat number"
+                />
+              </Field>
+
+              <div>
+                <p className="mb-3 text-xs font-black uppercase tracking-wide text-[#51615D]">
+                  Delivery option
+                </p>
+
+                {checkingKitchenSettings ? (
+                  <div className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4 text-sm font-bold text-[#51615D]">
+                    Checking kitchen delivery options...
+                  </div>
+                ) : checkoutBlocked ? (
+                  <div className="rounded-2xl border border-red-200 bg-red-50 p-4">
+                    <p className="font-black text-red-600">
+                      Kitchen unavailable
+                    </p>
+                    <p className="mt-1 text-sm text-red-500">
+                      This kitchen has turned off both delivery and pickup.
+                    </p>
+                  </div>
+                ) : (
+                  <div
+                    className={`grid gap-3 ${
+                      deliveryAvailable && pickupAvailable
+                        ? "grid-cols-2"
+                        : "grid-cols-1"
+                    }`}
+                  >
+                    {deliveryAvailable ? (
+                      <OptionButton
+                        active={formData.deliveryType === "Doorstep delivery"}
+                        onClick={() => selectDeliveryType("Doorstep delivery")}
+                        title="🚚 Delivery"
+                        subtitle="Doorstep"
+                      />
+                    ) : null}
+
+                    {pickupAvailable ? (
+                      <OptionButton
+                        active={formData.deliveryType === "Self pickup"}
+                        onClick={() => selectDeliveryType("Self pickup")}
+                        title="🛍️ Pickup"
+                        subtitle="Self pickup"
+                      />
+                    ) : null}
+                  </div>
+                )}
               </div>
 
-              <h1 className="text-3xl sm:text-6xl font-black mt-4 sm:mt-5 leading-[0.98] tracking-tight text-[#073B35]">
-                Complete order
-              </h1>
+              <Field label="Order notes">
+                <textarea
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleChange}
+                  rows="3"
+                  className={`${INPUT} min-h-28 resize-none`}
+                  placeholder="Extra spicy, less oil, call before arrival..."
+                />
+              </Field>
+            </div>
+          </CardSection>
 
-              <p className="text-[#51615D] mt-3 sm:mt-4 text-sm sm:text-lg max-w-2xl leading-relaxed">
-                Confirm details, pay by UPI, and upload payment screenshot.
+          <CardSection
+            number="2"
+            title="Packing option"
+            subtitle="Choose kitchen packing or carry your own container."
+          >
+            <div className="grid grid-cols-1 gap-3">
+              <OptionPanel
+                active={packingRequired}
+                onClick={() => setPackingRequired(true)}
+                title="🥡 Packing required"
+                subtitle={`Packing charge ₹${sellerPackingCharge} will apply.`}
+              />
+
+              <OptionPanel
+                active={!packingRequired}
+                onClick={() => setPackingRequired(false)}
+                title="♻️ No packing required"
+                subtitle="Packing charge ₹0. Carry your own container."
+              />
+            </div>
+
+            {!packingRequired ? (
+              <div className="mt-4 rounded-2xl border border-yellow-200 bg-yellow-50 p-4">
+                <p className="text-sm font-black text-yellow-700">
+                  Please carry your own container.
+                </p>
+              </div>
+            ) : null}
+          </CardSection>
+
+          <CardSection
+            number="3"
+            title="Order timing"
+            subtitle="Order now or schedule for later if the kitchen allows it."
+          >
+            <div className="grid grid-cols-1 gap-3">
+              <OptionPanel
+                active={orderTiming === "now"}
+                onClick={() => selectOrderTiming("now")}
+                title="⚡ Order Now"
+                subtitle="Prepare immediately."
+              />
+
+              <OptionPanel
+                active={orderTiming === "scheduled"}
+                disabled={
+                  checkingKitchenSettings ||
+                  !kitchenAcceptsScheduledOrders ||
+                  checkoutBlocked
+                }
+                onClick={() => selectOrderTiming("scheduled")}
+                title="🕒 Schedule Later"
+                subtitle="Choose date and time."
+              />
+            </div>
+
+            {!checkingKitchenSettings && !kitchenAcceptsScheduledOrders ? (
+              <p className="mt-3 text-xs font-bold text-red-500">
+                This kitchen is not accepting scheduled orders right now.
               </p>
+            ) : null}
 
-              <div className="lg:hidden mt-4 grid grid-cols-3 gap-2">
-                <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3">
-                  <p className="text-[10px] uppercase font-black text-[#51615D]">
-                    Items
+            {orderTiming === "scheduled" ? (
+              <div className="mt-5 space-y-5">
+                <div>
+                  <p className="mb-3 text-xs font-black uppercase tracking-wide text-[#51615D]">
+                    Select date
                   </p>
-                  <p className="text-[#073B35] font-black text-lg">
-                    {cartItems.length}
+
+                  <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2 scrollbar-hide">
+                    {getDateOptions().map((option) => {
+                      const active = scheduledDate === option.value;
+
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => {
+                            setScheduledDate(option.value);
+                            setScheduledTime("");
+                          }}
+                          className={`min-w-[92px] shrink-0 rounded-2xl border px-3 py-3 text-left active:scale-95 ${
+                            active
+                              ? "border-[#073B35] bg-[#073B35] text-white"
+                              : "border-[#BDEFE6] bg-[#FFFFF2] text-[#073B35]"
+                          }`}
+                        >
+                          <p className="text-xs font-black">{option.day}</p>
+                          <p
+                            className={`mt-1 text-sm font-bold ${
+                              active ? "text-white/75" : "text-[#51615D]"
+                            }`}
+                          >
+                            {option.date}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-3 text-xs font-black uppercase tracking-wide text-[#51615D]">
+                    Select time
+                  </p>
+
+                  {!scheduledDate ? (
+                    <div className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4 text-sm font-bold text-[#51615D]">
+                      Select date first.
+                    </div>
+                  ) : getTimeOptions().length === 0 ? (
+                    <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-600">
+                      No time slots available today. Choose another date.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-2">
+                      {getTimeOptions().map((option) => {
+                        const active = scheduledTime === option.value;
+
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => setScheduledTime(option.value)}
+                            className={`h-12 rounded-2xl border text-sm font-black active:scale-95 ${
+                              active
+                                ? "border-[#41D3BD] bg-[#41D3BD] text-[#073B35]"
+                                : "border-[#BDEFE6] bg-[#FFFFF2] text-[#073B35]"
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {formattedSchedule ? (
+                  <div className="rounded-2xl border border-[#BDEFE6] bg-[#41D3BD]/12 p-4">
+                    <p className="text-sm font-black text-[#073B35]">
+                      Selected schedule
+                    </p>
+                    <p className="mt-1 text-base font-bold text-[#111827]">
+                      {formattedSchedule}
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </CardSection>
+
+          <section className={`overflow-hidden ${CARD}`}>
+            <div className="border-b border-[#174E47] bg-[#073B35] p-5 text-white">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-wide text-white/60">
+                    Step 4
+                  </p>
+
+                  <h2 className="mt-1 text-3xl font-black">UPI Payment</h2>
+
+                  <p className="mt-2 text-sm font-semibold text-white/65">
+                    Pay first, then upload screenshot or reference.
                   </p>
                 </div>
 
-                <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-3">
-                  <p className="text-[10px] uppercase font-black text-[#51615D]">
-                    Pack
+                <div className="shrink-0 text-right">
+                  <p className="text-xs font-black uppercase text-white/60">
+                    Payable
                   </p>
-                  <p className="text-[#073B35] font-black text-lg">
-                    ₹{effectivePackingCharge}
-                  </p>
-                </div>
 
-                <div className="bg-[#41D3BD]/12 border border-[#41D3BD]/25 rounded-2xl p-3">
-                  <p className="text-[10px] uppercase font-black text-[#51615D]">
-                    Total
-                  </p>
-                  <p className="text-[#073B35] font-black text-lg">
+                  <p className="text-4xl font-black text-[#41D3BD]">
                     ₹{totalAmount}
                   </p>
                 </div>
               </div>
 
-              {showMobileSummary && (
-                <div className="relative lg:hidden mt-5">
-                  <OrderSummaryCard compact />
-                </div>
-              )}
+              <div className="mt-5 rounded-2xl border border-white/15 bg-white/10 px-4 py-3">
+                <p className="font-black">UPI payment only</p>
+                <p className="mt-1 break-all text-xs font-bold text-[#41D3BD]">
+                  {Nefo_UPI_ID}
+                </p>
+              </div>
             </div>
-          </section>
 
-          <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-5 lg:gap-8">
-            <section className="space-y-5 sm:space-y-6">
-              <div className="bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-4 sm:p-6 shadow-xl shadow-[#073B35]/5">
-                <StepHeader
-                  number="1"
-                  title="Delivery details"
-                  subtitle="Confirm your name, phone, address and delivery option."
-                />
+            <div className="p-5">
+              <div className="grid grid-cols-1 gap-3">
+                <a
+                  href={upiPaymentLink}
+                  className="block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.98]"
+                >
+                  Pay via UPI App
+                </a>
 
-                <div className="mt-5 sm:mt-6 space-y-3 sm:space-y-4">
-                  <input
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleChange}
-                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD]"
-                    placeholder="Full Name"
-                  />
-
-                  <input
-                    name="phone"
-                    value={formData.phone}
-                    disabled
-                    readOnly
-                    className="w-full bg-[#EAF7F4] border border-[#D7F5EF] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none text-[#51615D] cursor-not-allowed"
-                    placeholder="Phone Number"
-                  />
-
-                  <input
-                    name="flat"
-                    value={formData.flat}
-                    onChange={handleChange}
-                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD]"
-                    placeholder="Your tower / flat number"
-                  />
-
-                  <div>
-                    <p className="text-[#51615D] text-sm font-bold mb-3">
-                      Delivery Option
-                    </p>
-
-                    {checkingKitchenSettings ? (
-                      <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 text-[#51615D] font-bold">
-                        Checking kitchen delivery options...
-                      </div>
-                    ) : checkoutBlocked ? (
-                      <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
-                        <p className="text-red-600 font-black">
-                          Kitchen unavailable
-                        </p>
-                        <p className="text-red-500 text-sm mt-1">
-                          This kitchen has turned off both delivery and pickup.
-                        </p>
-                      </div>
-                    ) : (
-                      <div
-                        className={`grid gap-3 ${
-                          deliveryAvailable && pickupAvailable
-                            ? "grid-cols-2"
-                            : "grid-cols-1"
-                        }`}
-                      >
-                        {deliveryAvailable && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              selectDeliveryType("Doorstep delivery")
-                            }
-                            className={`py-4 rounded-2xl font-black border ${
-                              formData.deliveryType === "Doorstep delivery"
-                                ? "bg-[#073B35] text-white border-[#073B35]"
-                                : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
-                            }`}
-                          >
-                            🚚 Delivery
-                          </button>
-                        )}
-
-                        {pickupAvailable && (
-                          <button
-                            type="button"
-                            onClick={() => selectDeliveryType("Self pickup")}
-                            className={`py-4 rounded-2xl font-black border ${
-                              formData.deliveryType === "Self pickup"
-                                ? "bg-[#073B35] text-white border-[#073B35]"
-                                : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
-                            }`}
-                          >
-                            🛍️ Pickup
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  <textarea
-                    name="notes"
-                    value={formData.notes}
-                    onChange={handleChange}
-                    rows="3"
-                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD] resize-none"
-                    placeholder="Extra spicy, less oil, call before arrival..."
-                  />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowQr((current) => !current)}
+                  className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] py-4 font-black text-[#073B35] active:scale-[0.98]"
+                >
+                  {showQr ? "Hide QR" : "Scan QR"}
+                </button>
               </div>
 
-              <div className="bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-4 sm:p-6 shadow-xl shadow-[#073B35]/5">
-                <StepHeader
-                  number="2"
-                  title="Packing option"
-                  subtitle="Choose whether you want kitchen packing or you will carry your own container."
+              {showQr ? (
+                <div className="mt-5 rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] p-5 text-center">
+                  <p className="text-sm font-black uppercase tracking-wide text-[#0B8F80]">
+                    Scan & Pay
+                  </p>
+
+                  <div className="mx-auto mt-4 w-fit rounded-3xl border border-[#D7F5EF] bg-white p-4">
+                    <img
+                      src={qrCodeUrl}
+                      alt="Nefo UPI QR Code"
+                      className="h-52 w-52 object-contain"
+                    />
+                  </div>
+
+                  <p className="mt-4 font-black text-[#073B35]">
+                    ₹{totalAmount}
+                  </p>
+
+                  <p className="mt-1 break-all text-sm text-[#51615D]">
+                    {Nefo_UPI_ID}
+                  </p>
+                </div>
+              ) : null}
+
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                {["Google Pay", "PhonePe", "Paytm", "BHIM"].map((app) => (
+                  <a
+                    key={app}
+                    href={upiPaymentLink}
+                    className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] py-4 text-center font-black text-[#073B35]"
+                  >
+                    {app}
+                  </a>
+                ))}
+              </div>
+
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(Nefo_UPI_ID, "UPI ID")}
+                  className="rounded-2xl border border-[#BDEFE6] bg-white py-4 font-black text-[#073B35]"
+                >
+                  Copy UPI ID
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(totalAmount, "Amount")}
+                  className="rounded-2xl border border-[#BDEFE6] bg-white py-4 font-black text-[#073B35]"
+                >
+                  Copy Amount
+                </button>
+              </div>
+
+              {paymentMessage ? (
+                <p className="mt-3 text-center text-sm font-bold text-[#0B8F80]">
+                  {paymentMessage}
+                </p>
+              ) : null}
+
+              <div className="mt-5 border-t border-[#D7F5EF] pt-5">
+                <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                  Payment proof
+                </p>
+
+                <input
+                  ref={paymentProofInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/*"
+                  className="hidden"
+                  onChange={handlePaymentProofChange}
                 />
 
-                <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {!paymentProofPreview ? (
                   <button
                     type="button"
-                    onClick={() => setPackingRequired(true)}
-                    className={`text-left rounded-2xl p-4 border ${
-                      packingRequired
-                        ? "bg-[#073B35] text-white border-[#073B35]"
-                        : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
-                    }`}
+                    onClick={() => paymentProofInputRef.current?.click()}
+                    className="mt-3 flex min-h-[128px] w-full flex-col items-center justify-center rounded-3xl border-2 border-dashed border-[#41D3BD] bg-[#FFFFF2] text-[#073B35] active:scale-[0.99]"
                   >
-                    <p className="font-black text-lg">🥡 Packing required</p>
-                    <p
-                      className={`text-sm mt-1 ${
-                        packingRequired ? "text-white/70" : "text-[#51615D]"
-                      }`}
-                    >
-                      Packing charge ₹{sellerPackingCharge} will apply.
-                    </p>
+                    <span className="text-4xl">📷</span>
+                    <span className="mt-3 font-black">
+                      Upload Payment Screenshot
+                    </span>
+                    <span className="mt-1 text-xs text-[#51615D]">
+                      JPG, PNG, WEBP up to 5 MB
+                    </span>
                   </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setPackingRequired(false)}
-                    className={`text-left rounded-2xl p-4 border ${
-                      !packingRequired
-                        ? "bg-[#073B35] text-white border-[#073B35]"
-                        : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
-                    }`}
-                  >
-                    <p className="font-black text-lg">♻️ No packing required</p>
-                    <p
-                      className={`text-sm mt-1 ${
-                        !packingRequired ? "text-white/70" : "text-[#51615D]"
-                      }`}
-                    >
-                      Packing charge ₹0. Carry your own container.
-                    </p>
-                  </button>
-                </div>
-
-                {!packingRequired && (
-                  <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-2xl p-4">
-                    <p className="text-yellow-700 font-black text-sm">
-                      Please carry your own container.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-4 sm:p-6 shadow-xl shadow-[#073B35]/5">
-                <StepHeader
-                  number="3"
-                  title="Order timing"
-                  subtitle="Order now or schedule for later if the kitchen allows it."
-                />
-
-                <div className="mt-5 sm:mt-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => selectOrderTiming("now")}
-                      className={`text-left rounded-2xl p-4 border ${
-                        orderTiming === "now"
-                          ? "bg-[#073B35] text-white border-[#073B35]"
-                          : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
-                      }`}
-                    >
-                      <p className="font-black text-lg">⚡ Order Now</p>
-                      <p
-                        className={`text-sm mt-1 ${
-                          orderTiming === "now"
-                            ? "text-white/70"
-                            : "text-[#51615D]"
-                        }`}
-                      >
-                        Prepare immediately.
-                      </p>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => selectOrderTiming("scheduled")}
-                      disabled={
-                        checkingKitchenSettings ||
-                        !kitchenAcceptsScheduledOrders ||
-                        checkoutBlocked
-                      }
-                      className={`text-left rounded-2xl p-4 border ${
-                        orderTiming === "scheduled"
-                          ? "bg-[#073B35] text-white border-[#073B35]"
-                          : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF]"
-                      } ${
-                        checkingKitchenSettings ||
-                        !kitchenAcceptsScheduledOrders ||
-                        checkoutBlocked
-                          ? "opacity-50 cursor-not-allowed"
-                          : ""
-                      }`}
-                    >
-                      <p className="font-black text-lg">🕒 Schedule Later</p>
-                      <p
-                        className={`text-sm mt-1 ${
-                          orderTiming === "scheduled"
-                            ? "text-white/70"
-                            : "text-[#51615D]"
-                        }`}
-                      >
-                        Choose date and time.
-                      </p>
-                    </button>
-                  </div>
-
-                  {!checkingKitchenSettings &&
-                    !kitchenAcceptsScheduledOrders && (
-                      <p className="text-red-500 text-xs mt-3">
-                        This kitchen is not accepting scheduled orders right now.
-                      </p>
-                    )}
-
-                  {orderTiming === "scheduled" && (
-                    <div className="mt-5 space-y-5">
-                      <div>
-                        <p className="text-[#51615D] text-xs font-black uppercase mb-3">
-                          Select date
-                        </p>
-
-                        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                          {getDateOptions().map((option) => {
-                            const active = scheduledDate === option.value;
-
-                            return (
-                              <button
-                                key={option.value}
-                                type="button"
-                                onClick={() => {
-                                  setScheduledDate(option.value);
-                                  setScheduledTime("");
-                                }}
-                                className={`shrink-0 min-w-[92px] rounded-2xl border px-3 py-3 text-left ${
-                                  active
-                                    ? "bg-[#073B35] text-white border-[#073B35]"
-                                    : "bg-[#FFFFF2] text-[#073B35] border-[#D7F5EF]"
-                                }`}
-                              >
-                                <p className="text-xs font-black">
-                                  {option.day}
-                                </p>
-                                <p
-                                  className={`text-sm font-bold mt-1 ${
-                                    active ? "text-white/75" : "text-[#51615D]"
-                                  }`}
-                                >
-                                  {option.date}
-                                </p>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      <div>
-                        <p className="text-[#51615D] text-xs font-black uppercase mb-3">
-                          Select time
-                        </p>
-
-                        {!scheduledDate ? (
-                          <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 text-[#51615D] font-bold text-sm">
-                            Select date first.
-                          </div>
-                        ) : getTimeOptions().length === 0 ? (
-                          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-red-600 font-bold text-sm">
-                            No time slots available today. Choose another date.
-                          </div>
-                        ) : (
-                          <div className="grid grid-cols-3 gap-2">
-                            {getTimeOptions().map((option) => {
-                              const active = scheduledTime === option.value;
-
-                              return (
-                                <button
-                                  key={option.value}
-                                  type="button"
-                                  onClick={() =>
-                                    setScheduledTime(option.value)
-                                  }
-                                  className={`h-12 rounded-2xl border text-sm font-black ${
-                                    active
-                                      ? "bg-[#41D3BD] text-[#073B35] border-[#41D3BD]"
-                                      : "bg-[#FFFFF2] text-[#073B35] border-[#D7F5EF]"
-                                  }`}
-                                >
-                                  {option.label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-
-                      {formattedSchedule && (
-                        <div className="bg-[#41D3BD]/12 border border-[#41D3BD]/25 rounded-2xl p-4">
-                          <p className="text-[#073B35] text-sm font-black">
-                            Selected schedule
-                          </p>
-                          <p className="text-[#111827] text-base font-bold mt-1">
-                            {formattedSchedule}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] overflow-hidden shadow-xl shadow-[#073B35]/5">
-                <div className="bg-[#073B35] text-white p-4 sm:p-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-xs sm:text-sm font-black uppercase tracking-wide text-white/60">
-                        Step 4
-                      </p>
-
-                      <h2 className="text-2xl sm:text-3xl font-black mt-1">
-                        UPI Payment
-                      </h2>
-
-                      <p className="text-white/65 text-sm mt-2">
-                        Pay first, then upload screenshot.
-                      </p>
-                    </div>
-
-                    <div className="text-right shrink-0">
-                      <p className="text-xs font-black uppercase text-white/60">
-                        Payable
-                      </p>
-
-                      <p className="text-3xl sm:text-4xl font-black text-[#41D3BD]">
-                        ₹{totalAmount}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 bg-white/10 border border-white/10 rounded-2xl px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div>
-                      <p className="font-black">UPI payment only</p>
-                      <p className="text-white/60 text-xs mt-0.5">
-                        Copy, scan, or open your UPI app
-                      </p>
-                    </div>
-
-                    <p className="font-black text-xs sm:text-sm break-all text-[#41D3BD]">
-                      {Nefo_UPI_ID}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-4 sm:p-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <a
-                      href={upiPaymentLink}
-                      className="block text-center w-full bg-[#073B35] active:scale-[0.98] text-white font-black py-4 rounded-2xl shadow-lg shadow-[#073B35]/15"
-                    >
-                      Pay via UPI App
-                    </a>
-
-                    <button
-                      type="button"
-                      onClick={() => setShowQr((current) => !current)}
-                      className="block text-center w-full bg-[#FFFFF2] border border-[#41D3BD]/40 text-[#073B35] font-black py-4 rounded-2xl"
-                    >
-                      {showQr ? "Hide QR" : "Scan QR"}
-                    </button>
-                  </div>
-
-                  {showQr && (
-                    <div className="mt-5 bg-[#FFFFF2] border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-5 text-center">
-                      <p className="text-[#1A9F8D] text-sm font-black uppercase tracking-wide">
-                        Scan & Pay
-                      </p>
-
-                      <div className="mt-4 bg-white rounded-3xl p-4 w-fit mx-auto border border-[#D7F5EF]">
-                        <img
-                          src={qrCodeUrl}
-                          alt="Nefo UPI QR Code"
-                          className="w-52 h-52 sm:w-56 sm:h-56 object-contain"
-                        />
-                      </div>
-
-                      <p className="text-[#073B35] font-black mt-4">
-                        ₹{totalAmount}
-                      </p>
-
-                      <p className="text-[#51615D] text-sm mt-1 break-all">
-                        {Nefo_UPI_ID}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-3 mt-5">
-                    {["Google Pay", "PhonePe", "Paytm", "BHIM"].map((app) => (
-                      <a
-                        key={app}
-                        href={upiPaymentLink}
-                        className="text-center bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl py-4 font-black text-[#073B35]"
-                      >
-                        {app}
-                      </a>
-                    ))}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 mt-5">
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(Nefo_UPI_ID, "UPI ID")}
-                      className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl py-4 font-black text-[#073B35]"
-                    >
-                      Copy UPI ID
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(totalAmount, "Amount")}
-                      className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl py-4 font-black text-[#073B35]"
-                    >
-                      Copy Amount
-                    </button>
-                  </div>
-
-                  {paymentMessage && (
-                    <p className="text-[#1A9F8D] text-sm font-bold mt-3 text-center">
-                      {paymentMessage}
-                    </p>
-                  )}
-
-                  <div className="mt-5 border-t border-[#D7F5EF] pt-5">
-                    <p className="text-[#1A9F8D] text-sm font-black uppercase tracking-wide">
-                      Payment proof
-                    </p>
-
-                    <input
-                      ref={paymentProofInputRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/*"
-                      className="hidden"
-                      onChange={handlePaymentProofChange}
+                ) : (
+                  <div className="mt-3 rounded-3xl border border-[#BDEFE6] bg-[#FFFFF2] p-3">
+                    <img
+                      src={paymentProofPreview}
+                      alt="Payment proof preview"
+                      className="max-h-72 w-full rounded-2xl border border-[#D7F5EF] bg-white object-contain"
                     />
 
-                    {!paymentProofPreview ? (
+                    <div className="mt-3 grid grid-cols-2 gap-3">
                       <button
                         type="button"
                         onClick={() => paymentProofInputRef.current?.click()}
-                        className="mt-3 w-full min-h-[120px] bg-[#FFFFF2] border-2 border-dashed border-[#41D3BD]/45 rounded-3xl flex flex-col items-center justify-center text-[#073B35] active:scale-[0.99]"
+                        className="rounded-2xl border border-[#073B35] bg-[#073B35] py-3 font-black text-white"
                       >
-                        <span className="text-4xl">📷</span>
-                        <span className="font-black mt-3">
-                          Upload Payment Screenshot
-                        </span>
-                        <span className="text-xs text-[#51615D] mt-1">
-                          JPG, PNG, WEBP up to 5 MB
-                        </span>
+                        Replace
                       </button>
-                    ) : (
-                      <div className="mt-3 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-3">
-                        <img
-                          src={paymentProofPreview}
-                          alt="Payment proof preview"
-                          className="w-full max-h-72 object-contain rounded-2xl bg-white border border-[#D7F5EF]"
-                        />
 
-                        <div className="grid grid-cols-2 gap-3 mt-3">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              paymentProofInputRef.current?.click()
-                            }
-                            className="bg-[#073B35] text-white font-black py-3 rounded-2xl"
-                          >
-                            Replace
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={removePaymentProof}
-                            className="bg-red-50 border border-red-200 text-red-500 font-black py-3 rounded-2xl"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    <input
-                      value={paymentReference}
-                      onChange={(event) =>
-                        setPaymentReference(event.target.value)
-                      }
-                      className="w-full mt-4 bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-4 sm:px-5 py-3.5 sm:py-4 outline-none focus:border-[#41D3BD]"
-                      placeholder="UPI transaction ID / reference number optional"
-                    />
-
-                    <p className="text-[#51615D] text-xs mt-3 leading-relaxed">
-                      Upload screenshot after payment. Transaction reference is
-                      optional but useful for verification.
-                    </p>
+                      <button
+                        type="button"
+                        onClick={removePaymentProof}
+                        className="rounded-2xl border border-red-200 bg-red-50 py-3 font-black text-red-500"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
+
+                <Field label="UPI transaction ID / reference">
+                  <input
+                    value={paymentReference}
+                    onChange={(event) => setPaymentReference(event.target.value)}
+                    className={INPUT}
+                    placeholder="UPI transaction ID / reference number optional"
+                  />
+                </Field>
+
+                <p className="mt-3 text-xs leading-relaxed text-[#51615D]">
+                  Upload screenshot after payment. Transaction reference is
+                  optional but useful for verification.
+                </p>
               </div>
-            </section>
-
-            <div className="hidden lg:block">
-              <OrderSummaryCard />
             </div>
-          </div>
-        </div>
+          </section>
 
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#FFFFF2]/95 backdrop-blur-xl border-t border-[#D7F5EF] px-3 py-3">
-          <div className="max-w-6xl mx-auto flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setShowMobileSummary(!showMobileSummary)}
-              className="shrink-0 bg-white border border-[#D7F5EF] rounded-2xl px-4 py-3 text-left shadow-sm"
-            >
-              <p className="text-[#51615D] text-[10px] font-black uppercase">
-                Total
-              </p>
-              <p className="text-[#073B35] text-xl font-black">
-                ₹{totalAmount}
-              </p>
-            </button>
+          <OrderSummaryCard
+            cartItems={cartItems}
+            getKitchenName={getKitchenName}
+            orderTiming={orderTiming}
+            formattedSchedule={formattedSchedule}
+            packingRequired={packingRequired}
+            checkoutBlocked={checkoutBlocked}
+            subtotalAmount={subtotalAmount}
+            effectivePackingCharge={effectivePackingCharge}
+            totalAmount={totalAmount}
+            paymentProofFile={paymentProofFile}
+            paymentReference={paymentReference}
+          />
+        </section>
+      </div>
 
-            <button
-              onClick={handlePlaceOrder}
-              disabled={loading || checkoutBlocked}
-              className="flex-1 bg-[#073B35] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-4 rounded-2xl shadow-lg shadow-[#073B35]/15"
-            >
-              {loading
-                ? "Checking..."
-                : checkoutBlocked
-                ? "Unavailable"
-                : orderTiming === "scheduled"
-                ? "Schedule Order"
-                : "Place Order"}
-            </button>
-          </div>
+      <div className="fixed bottom-0 left-0 right-0 z-[950] border-t border-[#D7F5EF] bg-[#FFFFF2]/95 px-4 py-3 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-md items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setShowMobileSummary((current) => !current)}
+            className="shrink-0 rounded-2xl border border-[#D7F5EF] bg-white px-4 py-3 text-left shadow-sm"
+          >
+            <p className="text-[10px] font-black uppercase text-[#51615D]">
+              Total
+            </p>
+            <p className="text-xl font-black text-[#073B35]">₹{totalAmount}</p>
+          </button>
+
+          <button
+            onClick={handlePlaceOrder}
+            disabled={loading || checkoutBlocked}
+            className="flex-1 rounded-2xl border border-[#073B35] bg-[#073B35] py-4 font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {loading
+              ? "Checking..."
+              : checkoutBlocked
+              ? "Unavailable"
+              : orderTiming === "scheduled"
+              ? "Schedule Order"
+              : "Place Order"}
+          </button>
         </div>
-      </main>
-    </>
+      </div>
+    </main>
   );
 }
+
+function CardSection({ number, title, subtitle, children }) {
+  return (
+    <section className={`p-5 ${CARD}`}>
+      <div className="flex items-start gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-[#073B35] bg-[#073B35] font-black text-white shadow-lg shadow-[#073B35]/15">
+          {number}
+        </div>
+
+        <div className="min-w-0">
+          <h2 className="text-xl font-black text-[#111827]">{title}</h2>
+
+          {subtitle ? (
+            <p className="mt-1 text-sm font-semibold leading-relaxed text-[#51615D]">
+              {subtitle}
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="mt-5">{children}</div>
+    </section>
+  );
+}
+
+function OrderSummaryCard({
+  cartItems,
+  getKitchenName,
+  orderTiming,
+  formattedSchedule,
+  packingRequired,
+  checkoutBlocked,
+  subtotalAmount,
+  effectivePackingCharge,
+  totalAmount,
+  paymentProofFile,
+  paymentReference,
+}) {
+  return (
+    <section className={`p-5 ${CARD}`}>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+            Order Summary
+          </p>
+
+          <h2 className="mt-1 text-2xl font-black text-[#111827]">
+            Your food
+          </h2>
+        </div>
+
+        <div className="rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 px-3 py-1.5 text-xs font-black text-[#073B35]">
+          {cartItems.length} items
+        </div>
+      </div>
+
+      <div className="mt-4 space-y-3">
+        {cartItems.map((item) => (
+          <div
+            key={item.id}
+            className="flex gap-3 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-3"
+          >
+            <img
+              src={item.image}
+              alt={item.name}
+              className="h-16 w-16 shrink-0 rounded-2xl border border-[#D7F5EF] bg-[#D7F5EF] object-cover"
+            />
+
+            <div className="min-w-0 flex-1">
+              <div className="flex justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-black text-[#111827]">
+                    {item.name}
+                  </p>
+
+                  <p className="mt-1 truncate text-xs text-[#51615D]">
+                    Kitchen: {getKitchenName(item)}
+                  </p>
+
+                  <p className="mt-1 text-xs font-semibold text-[#51615D]">
+                    Qty {item.quantity}
+                  </p>
+                </div>
+
+                <p className="shrink-0 text-sm font-black text-[#073B35]">
+                  ₹{Number(item.price || 0) * Number(item.quantity || 1)}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-5 space-y-3 border-t border-[#D7F5EF] pt-5">
+        {orderTiming === "scheduled" && formattedSchedule ? (
+          <div className="rounded-2xl border border-[#BDEFE6] bg-[#41D3BD]/12 p-4">
+            <p className="text-sm font-black text-[#073B35]">
+              Scheduled Order
+            </p>
+            <p className="mt-1 text-sm text-[#51615D]">{formattedSchedule}</p>
+          </div>
+        ) : null}
+
+        {!packingRequired ? (
+          <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-4">
+            <p className="text-sm font-black text-yellow-700">
+              No packing selected
+            </p>
+            <p className="mt-1 text-xs text-yellow-700">
+              Please carry your own container.
+            </p>
+          </div>
+        ) : null}
+
+        {checkoutBlocked ? (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-4">
+            <p className="text-sm font-black text-red-600">
+              This kitchen is currently not accepting delivery or pickup orders.
+            </p>
+          </div>
+        ) : null}
+
+        <div className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4">
+          <p className="text-xs font-black uppercase text-[#51615D]">Payment</p>
+
+          <p className="mt-1 font-black text-[#111827]">UPI Payment Only</p>
+
+          {paymentProofFile ? (
+            <p className="mt-2 truncate text-xs font-bold text-[#0B8F80]">
+              Screenshot selected
+            </p>
+          ) : paymentReference ? (
+            <p className="mt-2 truncate text-xs font-bold text-[#0B8F80]">
+              Ref: {paymentReference}
+            </p>
+          ) : (
+            <p className="mt-2 text-xs font-bold text-[#073B35]">
+              Screenshot or reference required
+            </p>
+          )}
+        </div>
+
+        <div className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4 space-y-3">
+          <SummaryRow label="Subtotal" value={`₹${subtotalAmount}`} />
+
+          <SummaryRow
+            label={`Packing Charge${!packingRequired ? " (Skipped)" : ""}`}
+            value={`₹${effectivePackingCharge}`}
+          />
+
+          <SummaryRow label="Platform Fee" value={`₹${PLATFORM_FEE}`} />
+
+          <div className="flex items-end justify-between border-t border-[#D7F5EF] pt-4">
+            <div>
+              <p className="text-sm text-[#51615D]">Total Amount</p>
+              <p className="mt-1 text-xs text-[#51615D]">
+                Fresh homemade food
+              </p>
+            </div>
+
+            <p className="text-3xl font-black text-[#073B35]">
+              ₹{totalAmount}
+            </p>
+          </div>
+        </div>
+
+        <p className="text-xs leading-relaxed text-[#51615D]">
+          From your community. Exact kitchen door/location is not shown publicly.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function SummaryRow({ label, value }) {
+  return (
+    <div className="flex items-center justify-between text-sm">
+      <p className="text-[#51615D]">{label}</p>
+      <p className="font-bold text-[#111827]">{value}</p>
+    </div>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-xs font-black uppercase tracking-wide text-[#51615D]">
+        {label}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+function OptionButton({ active, onClick, title, subtitle }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-2xl border p-4 text-left active:scale-95 ${
+        active
+          ? "border-[#073B35] bg-[#073B35] text-white"
+          : "border-[#BDEFE6] bg-[#FFFFF2] text-[#073B35]"
+      }`}
+    >
+      <p className="font-black">{title}</p>
+      <p
+        className={`mt-1 text-xs font-semibold ${
+          active ? "text-white/70" : "text-[#51615D]"
+        }`}
+      >
+        {subtitle}
+      </p>
+    </button>
+  );
+}
+
+function OptionPanel({ active, onClick, title, subtitle, disabled = false }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`rounded-2xl border p-4 text-left active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 ${
+        active
+          ? "border-[#073B35] bg-[#073B35] text-white"
+          : "border-[#BDEFE6] bg-[#FFFFF2] text-[#073B35]"
+      }`}
+    >
+      <p className="text-base font-black">{title}</p>
+      <p
+        className={`mt-1 text-sm font-semibold ${
+          active ? "text-white/70" : "text-[#51615D]"
+        }`}
+      >
+        {subtitle}
+      </p>
+    </button>
+  );
+}
+
+function StatTile({ label, value, strong = false }) {
+  return (
+    <div className="rounded-[22px] border border-[#D7F5EF] bg-white/90 p-3 shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
+      <p className="text-[10px] font-black uppercase text-[#7A8A86]">
+        {label}
+      </p>
+
+      <p
+        className={`mt-1 text-xl font-black ${
+          strong ? "text-[#073B35]" : "text-[#111827]"
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function BackIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+    >
+      <path d="M19 12H5" />
+      <path d="M12 19l-7-7 7-7" />
+    </svg>
+  );
+} 

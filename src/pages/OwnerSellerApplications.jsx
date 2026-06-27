@@ -1,11 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import Navbar from "../components/Navbar";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabaseClient";
 
+const CARD =
+  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+
+const SOFT_CARD =
+  "rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
+
+const INPUT =
+  "w-full rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-4 text-sm font-black text-[#111827] outline-none focus:border-[#41D3BD] focus:bg-white";
+
 export default function OwnerSellerApplications() {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [applications, setApplications] = useState([]);
   const [statusFilter, setStatusFilter] = useState("pending");
@@ -62,21 +71,26 @@ export default function OwnerSellerApplications() {
     if (statusFilter === "all") return applications;
 
     return applications.filter((application) => {
-      return String(application.status || "pending").toLowerCase() === statusFilter;
+      return (
+        String(application.status || "pending").toLowerCase() === statusFilter
+      );
     });
   }, [applications, statusFilter]);
 
   const analytics = useMemo(() => {
     const pending = applications.filter(
-      (application) => String(application.status || "pending").toLowerCase() === "pending"
+      (application) =>
+        String(application.status || "pending").toLowerCase() === "pending"
     ).length;
 
     const approved = applications.filter(
-      (application) => String(application.status || "").toLowerCase() === "approved"
+      (application) =>
+        String(application.status || "").toLowerCase() === "approved"
     ).length;
 
     const rejected = applications.filter(
-      (application) => String(application.status || "").toLowerCase() === "rejected"
+      (application) =>
+        String(application.status || "").toLowerCase() === "rejected"
     ).length;
 
     return {
@@ -94,11 +108,12 @@ export default function OwnerSellerApplications() {
 
     if (Number.isNaN(date.getTime())) return "-";
 
-    return date.toLocaleString([], {
+    return date.toLocaleString("en-IN", {
       day: "2-digit",
       month: "short",
       hour: "numeric",
       minute: "2-digit",
+      hour12: true,
     });
   }
 
@@ -106,14 +121,14 @@ export default function OwnerSellerApplications() {
     const currentStatus = String(status || "pending").toLowerCase();
 
     if (currentStatus === "approved") {
-      return "bg-green-50 text-green-700 border-green-200";
+      return "border-green-200 bg-green-50 text-green-700";
     }
 
     if (currentStatus === "rejected") {
-      return "bg-red-50 text-red-600 border-red-200";
+      return "border-red-200 bg-red-50 text-red-600";
     }
 
-    return "bg-yellow-50 text-yellow-700 border-yellow-200";
+    return "border-yellow-200 bg-yellow-50 text-yellow-700";
   }
 
   async function approveApplication(application) {
@@ -230,258 +245,296 @@ export default function OwnerSellerApplications() {
   }
 
   return (
-    <>
-      <Navbar />
+    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-32 text-[#111827]">
+      <div className="mx-auto max-w-md">
+        <header className="flex items-start gap-3">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+            aria-label="Go back"
+          >
+            <BackIcon />
+          </button>
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-6 sm:py-10 pb-28">
-        <div className="max-w-7xl mx-auto">
-          <section className="relative overflow-hidden bg-white/90 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-xl shadow-[#073B35]/5">
-            <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[95px]" />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+              Seller Review
+            </p>
 
-            <div className="relative flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
-              <div>
-                <div className="inline-flex items-center gap-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
-                  <span>✅</span>
-                  <span>Seller Review</span>
-                </div>
+            <h1 className="mt-1 text-3xl font-black leading-tight text-[#073B35]">
+              Seller
+              <span className="block text-[#111827]">applications</span>
+            </h1>
 
-                <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
-                  Seller
-                  <span className="block text-[#111827]">applications</span>
-                </h1>
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+              Review home kitchen applications, approve trusted sellers, and
+              control Seller Dashboard access.
+            </p>
+          </div>
+        </header>
 
-                <p className="text-[#51615D] mt-4 text-sm sm:text-lg max-w-2xl leading-relaxed">
-                  Review home kitchen applications, approve trusted sellers, and
-                  control who can access the Seller Dashboard.
-                </p>
-              </div>
+        <section className="mt-5 grid grid-cols-2 gap-3">
+          <StatCard title="Total" value={analytics.total} />
+          <StatCard title="Pending" value={analytics.pending} />
+          <StatCard title="Approved" value={analytics.approved} />
+          <StatCard title="Rejected" value={analytics.rejected} />
+        </section>
 
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  to="/owner-dashboard"
-                  className="bg-[#FFFFF2] border border-[#D7F5EF] hover:bg-[#D7F5EF] text-[#073B35] font-black px-5 py-3 rounded-2xl transition-all"
-                >
-                  Owner Dashboard
-                </Link>
+        <section className={`mt-5 p-4 ${CARD}`}>
+          <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+            Filter
+          </p>
 
-                <Link
-                  to="/owner-accounting"
-                  className="bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black px-5 py-3 rounded-2xl transition-all shadow-lg shadow-[#41D3BD]/20"
-                >
-                  Accounting
-                </Link>
-              </div>
-            </div>
-          </section>
+          <div className="mt-3 grid grid-cols-1 gap-3">
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              className={INPUT}
+            >
+              <option value="pending">Pending Applications</option>
+              <option value="approved">Approved Applications</option>
+              <option value="rejected">Rejected Applications</option>
+              <option value="all">All Applications</option>
+            </select>
 
-          <section className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard title="Total" value={analytics.total} />
-            <StatCard title="Pending" value={analytics.pending} />
-            <StatCard title="Approved" value={analytics.approved} />
-            <StatCard title="Rejected" value={analytics.rejected} />
-          </section>
+            <button
+              type="button"
+              onClick={() => fetchApplications()}
+              className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-5 py-4 font-black text-[#073B35] active:scale-95"
+            >
+              Refresh
+            </button>
+          </div>
+        </section>
 
-          <section className="mt-6 bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-4 sm:p-5 shadow-lg shadow-[#073B35]/5">
-            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3">
-              <select
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
-                className="bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] font-bold"
-              >
-                <option value="pending">Pending Applications</option>
-                <option value="approved">Approved Applications</option>
-                <option value="rejected">Rejected Applications</option>
-                <option value="all">All Applications</option>
-              </select>
+        <section className="mt-5 grid grid-cols-2 gap-3">
+          <Link
+            to="/owner-dashboard"
+            className="rounded-2xl border border-[#BDEFE6] bg-white px-4 py-4 text-center text-sm font-black text-[#073B35] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] active:scale-95"
+          >
+            Owner Dashboard
+          </Link>
 
-              <button
-                type="button"
-                onClick={() => fetchApplications()}
-                className="bg-[#FFFFF2] border border-[#41D3BD]/45 hover:bg-[#D7F5EF] text-[#073B35] font-black px-5 py-4 rounded-2xl transition-all"
-              >
-                Refresh
-              </button>
-            </div>
-          </section>
+          <Link
+            to="/owner-accounting"
+            className="rounded-2xl border border-[#41D3BD] bg-[#41D3BD] px-4 py-4 text-center text-sm font-black text-[#073B35] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] active:scale-95"
+          >
+            Accounting
+          </Link>
+        </section>
 
-          {successMessage && (
-            <div className="mt-6 bg-green-50 border border-green-200 rounded-3xl p-5 text-green-700 font-bold">
+        {successMessage ? (
+          <div className="mt-5 rounded-2xl border border-green-200 bg-green-50 p-4">
+            <p className="text-sm font-black text-green-700">
               {successMessage}
-            </div>
-          )}
+            </p>
+          </div>
+        ) : null}
 
-          {errorMessage && (
-            <div className="mt-6 bg-red-50 border border-red-200 rounded-3xl p-5 text-red-600 font-bold">
-              {errorMessage}
-            </div>
-          )}
+        {errorMessage ? (
+          <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4">
+            <p className="text-sm font-black text-red-600">{errorMessage}</p>
+          </div>
+        ) : null}
 
-          {loading ? (
-            <div className="mt-8 bg-white/90 border border-[#D7F5EF] rounded-3xl p-8 text-center">
-              <p className="text-[#51615D] font-bold">
-                Loading seller applications...
+        {loading ? (
+          <section className={`mt-5 p-8 text-center ${CARD}`}>
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-4 border-[#D7F5EF] border-t-[#073B35] animate-spin" />
+
+            <p className="mt-4 font-bold text-[#51615D]">
+              Loading seller applications...
+            </p>
+          </section>
+        ) : (
+          <section className={`mt-5 p-5 ${CARD}`}>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                  Application Register
+                </p>
+
+                <h2 className="mt-1 text-2xl font-black text-[#111827]">
+                  Review kitchens
+                </h2>
+              </div>
+
+              <p className="shrink-0 text-sm font-black text-[#51615D]">
+                {filteredApplications.length}
               </p>
             </div>
-          ) : (
-            <section className="mt-8 bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                    Application Register
-                  </p>
 
-                  <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
-                    Review kitchens
-                  </h2>
-                </div>
-
-                <p className="text-[#51615D] text-sm font-bold">
-                  {filteredApplications.length} records
+            {filteredApplications.length === 0 ? (
+              <div className={`mt-6 p-8 text-center ${SOFT_CARD}`}>
+                <p className="font-bold text-[#51615D]">
+                  No seller applications found.
                 </p>
               </div>
+            ) : (
+              <div className="mt-6 space-y-4">
+                {filteredApplications.map((application) => {
+                  const status = String(
+                    application.status || "pending"
+                  ).toLowerCase();
+                  const isPending = status === "pending";
+                  const isWorking = actionLoadingId === application.id;
 
-              {filteredApplications.length === 0 ? (
-                <div className="mt-6 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-8 text-center">
-                  <p className="text-[#51615D] font-bold">
-                    No seller applications found.
-                  </p>
-                </div>
-              ) : (
-                <div className="mt-6 space-y-4">
-                  {filteredApplications.map((application) => {
-                    const status = String(application.status || "pending").toLowerCase();
-                    const isPending = status === "pending";
+                  return (
+                    <article
+                      key={application.id}
+                      className="rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] p-4"
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="min-w-0 flex-1 text-xl font-black leading-tight text-[#073B35]">
+                          {application.kitchen_name || "Unnamed Kitchen"}
+                        </h3>
 
-                    return (
-                      <article
-                        key={application.id}
-                        className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4 sm:p-5"
-                      >
-                        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
-                          <div className="min-w-0">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="text-2xl font-black text-[#073B35]">
-                                {application.kitchen_name || "Unnamed Kitchen"}
-                              </h3>
+                        <span
+                          className={`rounded-full border px-3 py-1.5 text-xs font-black ${getStatusClass(
+                            application.status
+                          )}`}
+                        >
+                          {application.status || "pending"}
+                        </span>
+                      </div>
 
-                              <span
-                                className={`border text-xs font-black px-3 py-1.5 rounded-full ${getStatusClass(
-                                  application.status
-                                )}`}
-                              >
-                                {application.status || "pending"}
-                              </span>
-                            </div>
+                      <div className="mt-4 space-y-2 rounded-2xl border border-[#BDEFE6] bg-white p-4">
+                        <DetailLine
+                          label="Applicant"
+                          value={`${application.full_name || "-"} • ${
+                            application.phone || "-"
+                          }`}
+                        />
+                        <DetailLine label="Email" value={application.email} />
+                        <DetailLine
+                          label="Address"
+                          value={`${application.apartment_name || "-"}${
+                            application.block
+                              ? ` • Block ${application.block}`
+                              : ""
+                          }${
+                            application.flat
+                              ? ` • Flat ${application.flat}`
+                              : ""
+                          }`}
+                        />
+                        <DetailLine
+                          label="Applied"
+                          value={formatDate(application.created_at)}
+                        />
+                      </div>
 
-                            <p className="text-[#51615D] text-sm font-bold mt-2">
-                              Applicant: {application.full_name || "-"} •{" "}
-                              {application.phone || "-"}
-                            </p>
+                      <div className="mt-4 grid grid-cols-1 gap-3">
+                        <InfoBox
+                          title="Food Specialty"
+                          value={application.food_specialty}
+                        />
 
-                            <p className="text-[#51615D] text-sm mt-1">
-                              Email: {application.email || "-"}
-                            </p>
+                        <InfoBox
+                          title="Experience"
+                          value={application.experience}
+                        />
 
-                            <p className="text-[#51615D] text-sm mt-1">
-                              Address: {application.apartment_name || "-"}{" "}
-                              {application.block ? `• Block ${application.block}` : ""}{" "}
-                              {application.flat ? `• Flat ${application.flat}` : ""}
-                            </p>
+                        <InfoBox
+                          title="About Kitchen"
+                          value={application.about_kitchen}
+                        />
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-                              <InfoBox
-                                title="Food Specialty"
-                                value={application.food_specialty}
-                              />
+                        <InfoBox
+                          title="Hygiene Note"
+                          value={application.hygiene_note}
+                        />
+                      </div>
 
-                              <InfoBox
-                                title="Experience"
-                                value={application.experience}
-                              />
+                      {application.rejection_reason ? (
+                        <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4">
+                          <p className="text-xs font-black uppercase tracking-wide text-red-600">
+                            Rejection Reason
+                          </p>
 
-                              <InfoBox
-                                title="About Kitchen"
-                                value={application.about_kitchen}
-                              />
-
-                              <InfoBox
-                                title="Hygiene Note"
-                                value={application.hygiene_note}
-                              />
-                            </div>
-
-                            {application.rejection_reason && (
-                              <div className="mt-4 bg-red-50 border border-red-200 rounded-2xl p-4">
-                                <p className="text-red-600 text-xs font-black uppercase">
-                                  Rejection Reason
-                                </p>
-
-                                <p className="text-red-500 text-sm font-bold mt-1">
-                                  {application.rejection_reason}
-                                </p>
-                              </div>
-                            )}
-
-                            <p className="text-[#51615D] text-xs font-bold mt-4">
-                              Applied: {formatDate(application.created_at)}
-                            </p>
-                          </div>
-
-                          <div className="flex flex-col gap-2 lg:w-48">
-                            <button
-                              type="button"
-                              onClick={() => approveApplication(application)}
-                              disabled={!isPending || actionLoadingId === application.id}
-                              className="bg-[#073B35] hover:bg-[#0B5149] disabled:opacity-40 text-white font-black px-5 py-3 rounded-2xl transition-all"
-                            >
-                              {actionLoadingId === application.id
-                                ? "Working..."
-                                : "Approve"}
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => rejectApplication(application)}
-                              disabled={!isPending || actionLoadingId === application.id}
-                              className="bg-red-50 hover:bg-red-100 disabled:opacity-40 text-red-600 border border-red-200 font-black px-5 py-3 rounded-2xl transition-all"
-                            >
-                              Reject
-                            </button>
-                          </div>
+                          <p className="mt-1 text-sm font-bold leading-relaxed text-red-500">
+                            {application.rejection_reason}
+                          </p>
                         </div>
-                      </article>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
-          )}
-        </div>
-      </main>
-    </>
+                      ) : null}
+
+                      <div className="mt-4 grid grid-cols-1 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => approveApplication(application)}
+                          disabled={!isPending || isWorking}
+                          className="rounded-2xl border border-[#073B35] bg-[#073B35] px-5 py-4 font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          {isWorking ? "Working..." : "Approve"}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => rejectApplication(application)}
+                          disabled={!isPending || isWorking}
+                          className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 font-black text-red-600 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
+      </div>
+    </main>
   );
 }
 
 function StatCard({ title, value }) {
   return (
-    <div className="bg-white/90 border border-[#D7F5EF] rounded-3xl p-5 shadow-lg shadow-[#073B35]/5">
-      <p className="text-[#51615D] text-xs uppercase font-black">{title}</p>
-
-      <p className="text-2xl sm:text-3xl font-black text-[#073B35] mt-3">
-        {value}
+    <div className="rounded-[22px] border border-[#D7F5EF] bg-white/90 p-4 shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
+      <p className="text-[10px] font-black uppercase tracking-wide text-[#7A8A86]">
+        {title}
       </p>
+
+      <p className="mt-2 text-2xl font-black text-[#073B35]">{value}</p>
+    </div>
+  );
+}
+
+function DetailLine({ label, value }) {
+  return (
+    <div className="text-sm">
+      <span className="font-black text-[#073B35]">{label}: </span>
+      <span className="font-semibold text-[#51615D]">{value || "-"}</span>
     </div>
   );
 }
 
 function InfoBox({ title, value }) {
   return (
-    <div className="bg-white border border-[#D7F5EF] rounded-2xl p-4">
-      <p className="text-[#1A9F8D] text-xs font-black uppercase">{title}</p>
+    <div className="rounded-2xl border border-[#BDEFE6] bg-white p-4">
+      <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+        {title}
+      </p>
 
-      <p className="text-[#51615D] text-sm font-bold mt-2 whitespace-pre-wrap">
+      <p className="mt-2 whitespace-pre-wrap text-sm font-semibold leading-relaxed text-[#51615D]">
         {value || "-"}
       </p>
     </div>
+  );
+}
+
+function BackIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+    >
+      <path d="M19 12H5" />
+      <path d="M12 19l-7-7 7-7" />
+    </svg>
   );
 }

@@ -1,4 +1,10 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 const CartContext = createContext(null);
 const CART_STORAGE_KEY = "Nefo_cart_items";
@@ -7,23 +13,51 @@ export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState(() => {
     try {
       const savedCart = localStorage.getItem(CART_STORAGE_KEY);
-      return savedCart ? JSON.parse(savedCart) : [];
+      const parsedCart = savedCart ? JSON.parse(savedCart) : [];
+
+      if (!Array.isArray(parsedCart)) return [];
+
+      return parsedCart
+        .map((item) => ({
+          ...item,
+          quantity: Math.max(Number(item.quantity || 1), 1),
+        }))
+        .filter((item) => item?.id);
     } catch {
       return [];
     }
   });
 
   useEffect(() => {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+    } catch {
+      // Ignore localStorage write errors.
+    }
   }, [cartItems]);
 
+  function normalizeId(value) {
+    if (value === null || value === undefined) return "";
+    return String(value);
+  }
+
+  function getSellerId(item) {
+    return item?.seller_id || item?.user_id || "";
+  }
+
   function getItemStock(item) {
-    return Number(item.stock ?? 999);
+    const stock = Number(item?.stock ?? 999);
+    return Number.isFinite(stock) ? stock : 999;
+  }
+
+  function getSafeQuantity(value) {
+    const quantity = Number(value || 0);
+    return Number.isFinite(quantity) ? quantity : 0;
   }
 
   function addToCart(item) {
     setCartItems((currentItems) => {
-      const incomingSellerId = item.user_id || item.seller_id;
+      const incomingSellerId = getSellerId(item);
 
       if (!incomingSellerId) {
         alert("Seller information missing. Please refresh and try again.");
@@ -36,28 +70,32 @@ export function CartProvider({ children }) {
       }
 
       if (currentItems.length > 0) {
-        const existingSellerId =
-          currentItems[0].user_id || currentItems[0].seller_id;
+        const existingSellerId = getSellerId(currentItems[0]);
 
-        if (existingSellerId !== incomingSellerId) {
+        if (normalizeId(existingSellerId) !== normalizeId(incomingSellerId)) {
           alert("You can only order from one seller at a time.");
           return currentItems;
         }
       }
 
       const existingItem = currentItems.find(
-        (cartItem) => cartItem.id === item.id
+        (cartItem) => normalizeId(cartItem.id) === normalizeId(item.id)
       );
 
       if (existingItem) {
-        if (existingItem.quantity >= getItemStock(existingItem)) {
+        if (getSafeQuantity(existingItem.quantity) >= getItemStock(existingItem)) {
           alert("No more stock available for this item.");
           return currentItems;
         }
 
         return currentItems.map((cartItem) =>
-          cartItem.id === item.id
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+          normalizeId(cartItem.id) === normalizeId(item.id)
+            ? {
+                ...cartItem,
+                ...item,
+                seller_id: incomingSellerId,
+                quantity: getSafeQuantity(cartItem.quantity) + 1,
+              }
             : cartItem
         );
       }
@@ -76,16 +114,16 @@ export function CartProvider({ children }) {
   function increaseQuantity(itemId) {
     setCartItems((currentItems) =>
       currentItems.map((cartItem) => {
-        if (cartItem.id !== itemId) return cartItem;
+        if (normalizeId(cartItem.id) !== normalizeId(itemId)) return cartItem;
 
-        if (cartItem.quantity >= getItemStock(cartItem)) {
+        if (getSafeQuantity(cartItem.quantity) >= getItemStock(cartItem)) {
           alert("No more stock available for this item.");
           return cartItem;
         }
 
         return {
           ...cartItem,
-          quantity: cartItem.quantity + 1,
+          quantity: getSafeQuantity(cartItem.quantity) + 1,
         };
       })
     );
@@ -95,40 +133,46 @@ export function CartProvider({ children }) {
     setCartItems((currentItems) =>
       currentItems
         .map((cartItem) =>
-          cartItem.id === itemId
-            ? { ...cartItem, quantity: cartItem.quantity - 1 }
+          normalizeId(cartItem.id) === normalizeId(itemId)
+            ? {
+                ...cartItem,
+                quantity: getSafeQuantity(cartItem.quantity) - 1,
+              }
             : cartItem
         )
-        .filter((cartItem) => cartItem.quantity > 0)
+        .filter((cartItem) => getSafeQuantity(cartItem.quantity) > 0)
     );
   }
 
   function removeFromCart(itemId) {
     setCartItems((currentItems) =>
-      currentItems.filter((cartItem) => cartItem.id !== itemId)
+      currentItems.filter(
+        (cartItem) => normalizeId(cartItem.id) !== normalizeId(itemId)
+      )
     );
   }
 
   function clearCart() {
     setCartItems([]);
-    localStorage.removeItem(CART_STORAGE_KEY);
+
+    try {
+      localStorage.removeItem(CART_STORAGE_KEY);
+    } catch {
+      // Ignore localStorage remove errors.
+    }
   }
 
   const cartCount = cartItems.reduce(
-    (total, item) => total + Number(item.quantity || 0),
+    (total, item) => total + getSafeQuantity(item.quantity),
     0
   );
 
-  const cartTotal = cartItems.reduce(
-    (total, item) =>
-      total + Number(item.price || 0) * Number(item.quantity || 0),
-    0
-  );
+  const cartTotal = cartItems.reduce((total, item) => {
+    return total + Number(item.price || 0) * getSafeQuantity(item.quantity);
+  }, 0);
 
   const currentSellerId =
-    cartItems.length > 0
-      ? cartItems[0].seller_id || cartItems[0].user_id
-      : null;
+    cartItems.length > 0 ? getSellerId(cartItems[0]) || null : null;
 
   const value = useMemo(
     () => ({
@@ -145,11 +189,7 @@ export function CartProvider({ children }) {
     [cartItems, cartCount, cartTotal, currentSellerId]
   );
 
-  return (
-    <CartContext.Provider value={value}>
-      {children}
-    </CartContext.Provider>
-  );
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
 export function useCart() {

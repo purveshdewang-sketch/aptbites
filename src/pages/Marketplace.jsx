@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import FoodCard from "../components/FoodCard";
-import Navbar from "../components/Navbar";
 import { supabase } from "../lib/supabaseClient";
 import { useCart } from "../context/CartContext";
 
@@ -15,6 +14,15 @@ const FOOD_CATEGORIES = [
   { label: "Tiffin", emoji: "🍱" },
   { label: "Specials", emoji: "⭐" },
 ];
+
+const CARD =
+  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+
+const SOFT_CARD =
+  "rounded-[24px] border border-[#E8F4F1] bg-white/90 shadow-[6px_6px_16px_rgba(7,59,53,0.06),-6px_-6px_16px_rgba(255,255,255,0.95)]";
+
+const INPUT =
+  "w-full rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-3.5 text-sm font-semibold text-[#111827] outline-none placeholder:text-[#8AA5A0] focus:border-[#41D3BD] focus:bg-white";
 
 export default function Marketplace() {
   const { cartCount } = useCart();
@@ -248,7 +256,7 @@ export default function Marketplace() {
       const searchValue = searchTerm.trim().toLowerCase();
       const foodCategory = item.category || "Meals";
       const kitchenName =
-        item.seller || item.seller_kitchen_name || "Home Kitchen";
+        item.seller_kitchen_name || item.seller || "Home Kitchen";
 
       const matchesSearch =
         searchValue === "" ||
@@ -332,251 +340,246 @@ export default function Marketplace() {
     searchTerm || selectedType !== "All" || selectedCategory !== "All";
 
   return (
-    <>
-      <Navbar />
+    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-32 text-[#111827]">
+      <div className="mx-auto max-w-md">
+        <header className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+              Marketplace
+            </p>
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] pb-28">
-        <section className="px-4 pt-4 pb-3">
-          <div className="max-w-7xl mx-auto">
-            <div className="bg-white border border-[#E8F4F1] rounded-3xl p-4 sm:p-6 shadow-sm">
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <div className="inline-flex items-center gap-2 bg-[#EFFFFB] border border-[#41D3BD]/35 text-[#073B35] px-3 py-1 rounded-full text-xs font-black">
-                    <span>🌿</span>
-                    <span>Homemade nearby</span>
-                  </div>
+            <h1 className="mt-1 text-3xl font-black leading-tight tracking-tight text-[#073B35]">
+              Fresh food
+              <span className="block text-[#111827]">near you</span>
+            </h1>
 
-                  <h1 className="text-3xl sm:text-5xl font-black mt-4 leading-tight tracking-tight text-[#073B35]">
-                    What would you like
-                    <span className="block text-[#111827]">to eat today?</span>
-                  </h1>
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+              Meals, snacks, sweets, tiffins and daily food drops from nearby
+              kitchens.
+            </p>
+          </div>
 
-                  <p className="text-[#51615D] text-sm sm:text-base mt-3 max-w-2xl leading-relaxed">
-                    Fresh meals, snacks, sweets, tiffins and food drops from
-                    kitchens inside your community.
-                  </p>
-                </div>
+          <Link
+            to="/cart"
+            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+            aria-label="Cart"
+          >
+            <CartIcon />
 
-                {highestSellingFood && (
-                  <Link
-                    to={`/food/${highestSellingFood.id}`}
-                    className="hidden lg:block w-72 shrink-0 rounded-3xl overflow-hidden bg-[#073B35] text-white shadow-sm"
-                  >
-                    <div className="h-36 bg-[#D7F5EF]">
-                      <img
-                        src={highestSellingFood.image}
-                        alt={highestSellingFood.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+            {cartCount > 0 ? (
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-[#41D3BD] px-1 text-[10px] font-black text-[#073B35]">
+                {cartCount > 9 ? "9+" : cartCount}
+              </span>
+            ) : null}
+          </Link>
+        </header>
 
-                    <div className="p-4">
-                      <p className="text-[#41D3BD] text-xs font-black">
-                        🔥 Popular Today
-                      </p>
+        <section className={`mt-5 p-4 ${CARD}`}>
+          <div className="flex items-center gap-2 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-3.5">
+            <SearchIcon />
 
-                      <h2 className="font-black text-lg truncate mt-1">
-                        {highestSellingFood.name}
-                      </h2>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search dishes or kitchens..."
+              className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[#111827] outline-none placeholder:text-[#8AA5A0]"
+            />
+          </div>
 
-                      <div className="flex items-center justify-between mt-2">
-                        <p className="text-white/70 text-xs">
-                          {getFulfillmentText(highestSellingFood)}
-                        </p>
+          <div className="mt-3 grid grid-cols-[1fr_auto] gap-3">
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setTypeDropdownOpen(!typeDropdownOpen)}
+                className="flex h-12 w-full items-center justify-between rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 text-sm font-black text-[#111827] active:scale-[0.99]"
+              >
+                <span>{getTypeLabel(selectedType)}</span>
+                <ChevronDownIcon open={typeDropdownOpen} />
+              </button>
 
-                        <p className="text-[#41D3BD] font-black">
-                          ₹{highestSellingFood.price}
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
-                )}
-              </div>
-
-              <div className="grid grid-cols-3 gap-2 mt-5">
-                <div className="bg-[#FFFFF2] border border-[#E8F4F1] rounded-2xl p-3">
-                  <p className="text-[#7A8A86] text-[10px] font-black uppercase">
-                    Available
-                  </p>
-                  <p className="text-[#073B35] text-2xl font-black mt-1">
-                    {availableFoods.length}
-                  </p>
-                </div>
-
-                <div className="bg-[#FFFFF2] border border-[#E8F4F1] rounded-2xl p-3">
-                  <p className="text-[#7A8A86] text-[10px] font-black uppercase">
-                    Food Drops
-                  </p>
-                  <p className="text-[#111827] text-2xl font-black mt-1">
-                    {foods.length}
-                  </p>
-                </div>
-
-                <div className="bg-[#FFFFF2] border border-[#E8F4F1] rounded-2xl p-3">
-                  <p className="text-[#7A8A86] text-[10px] font-black uppercase">
-                    Closed
-                  </p>
-                  <p className="text-[#9AA7A3] text-2xl font-black mt-1">
-                    {closedOrSoldOutCount}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="sticky top-[92px] z-40 bg-[#FFFFF2]/95 backdrop-blur-xl py-3">
-              <div className="bg-white border border-[#E8F4F1] rounded-3xl p-3 shadow-sm">
-                <div className="grid grid-cols-1 sm:grid-cols-[1fr_180px_auto] gap-2">
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2">
-                      🔎
-                    </span>
-
-                    <input
-                      type="text"
-                      value={searchTerm}
-                      onChange={(event) => setSearchTerm(event.target.value)}
-                      placeholder="Search dishes or kitchens..."
-                      className="w-full h-12 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl pl-11 pr-4 outline-none focus:border-[#41D3BD] text-sm"
-                    />
-                  </div>
-
-                  <div className="relative">
+              {typeDropdownOpen ? (
+                <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl border border-[#BDEFE6] bg-white shadow-lg shadow-[#073B35]/10">
+                  {["All", "Veg", "Non-Veg"].map((type) => (
                     <button
+                      key={type}
                       type="button"
-                      onClick={() => setTypeDropdownOpen(!typeDropdownOpen)}
-                      className="w-full h-12 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 flex items-center justify-between font-black text-sm"
-                    >
-                      <span>{getTypeLabel(selectedType)}</span>
-                      <span className="text-[#1A9F8D]">
-                        {typeDropdownOpen ? "▲" : "▼"}
-                      </span>
-                    </button>
-
-                    {typeDropdownOpen && (
-                      <div className="absolute z-50 mt-2 w-full bg-white border border-[#E8F4F1] rounded-2xl shadow-lg overflow-hidden">
-                        {["All", "Veg", "Non-Veg"].map((type) => (
-                          <button
-                            key={type}
-                            type="button"
-                            onClick={() => {
-                              setSelectedType(type);
-                              setTypeDropdownOpen(false);
-                            }}
-                            className={`w-full text-left px-4 py-3 font-black text-sm ${
-                              selectedType === type
-                                ? "bg-[#41D3BD] text-[#073B35]"
-                                : "text-[#51615D] hover:bg-[#EFFFFB]"
-                            }`}
-                          >
-                            {getTypeLabel(type)}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={hasActiveFilters ? clearFilters : undefined}
-                    className={`h-12 px-5 rounded-2xl font-black active:scale-95 ${
-                      hasActiveFilters
-                        ? "bg-white border border-[#41D3BD]/45 text-[#073B35]"
-                        : "bg-[#41D3BD] text-[#073B35]"
-                    }`}
-                  >
-                    {hasActiveFilters ? "Clear" : "Search"}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-hide">
-              {FOOD_CATEGORIES.map((category) => {
-                const isActive = selectedCategory === category.label;
-                const count = categoryCounts[category.label] || 0;
-
-                return (
-                  <button
-                    key={category.label}
-                    type="button"
-                    onClick={() => setSelectedCategory(category.label)}
-                    className={`shrink-0 min-w-[88px] rounded-2xl border px-3 py-3 active:scale-95 transition-all ${
-                      isActive
-                        ? "bg-[#073B35] text-white border-[#073B35]"
-                        : "bg-white text-[#51615D] border-[#E8F4F1]"
-                    }`}
-                  >
-                    <div className="text-xl">{category.emoji}</div>
-
-                    <div className="font-black text-xs mt-1">
-                      {category.label}
-                    </div>
-
-                    <div
-                      className={`text-[10px] mt-0.5 ${
-                        isActive ? "text-white/70" : "text-[#9AA7A3]"
+                      onClick={() => {
+                        setSelectedType(type);
+                        setTypeDropdownOpen(false);
+                      }}
+                      className={`w-full px-4 py-3 text-left text-sm font-black ${
+                        selectedType === type
+                          ? "bg-[#D7F5EF] text-[#073B35]"
+                          : "text-[#51615D]"
                       }`}
                     >
-                      {count}
-                    </div>
-                  </button>
-                );
-              })}
+                      {getTypeLabel(type)}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </div>
+
+            <button
+              type="button"
+              onClick={hasActiveFilters ? clearFilters : undefined}
+              className={`h-12 rounded-2xl border px-4 text-sm font-black active:scale-95 ${
+                hasActiveFilters
+                  ? "border-[#BDEFE6] bg-white text-[#073B35]"
+                  : "border-[#41D3BD] bg-[#41D3BD] text-[#073B35]"
+              }`}
+            >
+              {hasActiveFilters ? "Clear" : "Search"}
+            </button>
           </div>
         </section>
 
-        {featuredFoods.length > 0 && selectedCategory === "All" && !searchTerm && (
-          <section className="px-4 pb-4">
-            <div className="max-w-7xl mx-auto">
-              <div className="flex items-end justify-between mb-3">
-                <div>
-                  <p className="text-[#1A9F8D] text-xs font-black uppercase">
-                    Recommended
-                  </p>
+        <section className="mt-4 -mx-4 overflow-x-auto px-4 pb-2 scrollbar-hide">
+          <div className="flex min-w-max gap-2">
+            {FOOD_CATEGORIES.map((category) => {
+              const isActive = selectedCategory === category.label;
+              const count = categoryCounts[category.label] || 0;
 
-                  <h2 className="text-xl font-black text-[#111827]">
-                    Popular today
-                  </h2>
+              return (
+                <button
+                  key={category.label}
+                  type="button"
+                  onClick={() => setSelectedCategory(category.label)}
+                  className={`min-w-[86px] shrink-0 rounded-[22px] border px-3 py-3 text-center transition-all active:scale-95 ${
+                    isActive
+                      ? "border-[#073B35] bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
+                      : "border-[#D7F5EF] bg-white/90 text-[#51615D] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]"
+                  }`}
+                >
+                  <div className="text-lg leading-none">{category.emoji}</div>
+
+                  <div className="mt-1 text-xs font-black">
+                    {category.label}
+                  </div>
+
+                  <div
+                    className={`mt-0.5 text-[10px] font-bold ${
+                      isActive ? "text-white/75" : "text-[#8AA5A0]"
+                    }`}
+                  >
+                    {count}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="mt-3 grid grid-cols-3 gap-3">
+          <StatTile label="Available" value={availableFoods.length} />
+          <StatTile label="Food Drops" value={foods.length} />
+          <StatTile label="Closed" value={closedOrSoldOutCount} muted />
+        </section>
+
+        {highestSellingFood ? (
+          <section className={`mt-5 overflow-hidden ${CARD}`}>
+            <Link to={`/food/${highestSellingFood.id}`} className="block">
+              <div className="relative h-36 bg-[#D7F5EF]">
+                {highestSellingFood.image ? (
+                  <img
+                    src={highestSellingFood.image}
+                    alt={highestSellingFood.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-4xl">
+                    🍽️
+                  </div>
+                )}
+
+                <div className="absolute left-3 top-3 rounded-full border border-[#41D3BD]/40 bg-[#41D3BD] px-3 py-1 text-[11px] font-black text-[#073B35]">
+                  🔥 Popular Today
                 </div>
               </div>
 
-              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              <div className="p-4">
+                <h2 className="truncate text-lg font-black text-[#111827]">
+                  {highestSellingFood.name}
+                </h2>
+
+                <p className="mt-1 truncate text-xs font-semibold text-[#51615D]">
+                  {highestSellingFood.seller_kitchen_name ||
+                    highestSellingFood.seller ||
+                    "Home Kitchen"}
+                </p>
+
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <p className="text-sm font-bold text-[#51615D]">
+                    {getFulfillmentText(highestSellingFood)}
+                  </p>
+
+                  <p className="text-lg font-black text-[#073B35]">
+                    ₹{highestSellingFood.price}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          </section>
+        ) : null}
+
+        {featuredFoods.length > 0 && selectedCategory === "All" && !searchTerm ? (
+          <section className="mt-5">
+            <div className="mb-3 flex items-end justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                  Recommended
+                </p>
+
+                <h2 className="text-xl font-black text-[#111827]">
+                  Popular today
+                </h2>
+              </div>
+            </div>
+
+            <div className="-mx-4 overflow-x-auto px-4 pb-2 scrollbar-hide">
+              <div className="flex min-w-max gap-3">
                 {featuredFoods.map((food) => (
                   <Link
                     key={food.id}
                     to={`/food/${food.id}`}
-                    className="shrink-0 w-[235px] sm:w-[280px] bg-white border border-[#E8F4F1] rounded-3xl overflow-hidden shadow-sm active:scale-[0.99]"
+                    className={`w-[218px] shrink-0 overflow-hidden active:scale-[0.99] ${SOFT_CARD}`}
                   >
-                    <div className="relative h-32 sm:h-40 bg-[#D7F5EF] overflow-hidden">
-                      <img
-                        src={food.image}
-                        alt={food.name}
-                        className="w-full h-full object-cover"
-                      />
+                    <div className="relative h-30 bg-[#D7F5EF]">
+                      {food.image ? (
+                        <img
+                          src={food.image}
+                          alt={food.name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-3xl">
+                          🍽️
+                        </div>
+                      )}
 
-                      <div className="absolute top-3 left-3 bg-[#41D3BD] text-[#073B35] text-[11px] font-black px-3 py-1 rounded-full">
+                      <div className="absolute left-3 top-3 rounded-full border border-[#41D3BD]/40 bg-[#41D3BD] px-3 py-1 text-[10px] font-black text-[#073B35]">
                         {food.demand_badge?.label || "Fresh Drop"}
                       </div>
                     </div>
 
                     <div className="p-3">
-                      <h3 className="text-[#111827] font-black truncate">
+                      <h3 className="truncate text-sm font-black text-[#111827]">
                         {food.name}
                       </h3>
 
-                      <p className="text-[#51615D] text-xs mt-1 truncate">
+                      <p className="mt-1 truncate text-xs font-semibold text-[#51615D]">
                         {food.seller_kitchen_name ||
                           food.seller ||
                           "Home Kitchen"}
                       </p>
 
-                      <div className="flex items-center justify-between mt-3">
-                        <p className="text-[#073B35] text-lg font-black">
+                      <div className="mt-3 flex items-center justify-between">
+                        <p className="text-base font-black text-[#073B35]">
                           ₹{food.price}
                         </p>
 
-                        <span className="bg-[#EFFFFB] text-[#073B35] border border-[#41D3BD]/30 text-xs font-black px-3 py-1 rounded-full">
+                        <span className="rounded-full border border-[#BDEFE6] bg-[#EFFFFB] px-3 py-1 text-[11px] font-black text-[#073B35]">
                           View
                         </span>
                       </div>
@@ -586,103 +589,167 @@ export default function Marketplace() {
               </div>
             </div>
           </section>
-        )}
+        ) : null}
 
-        <section className="px-4 py-4">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-end justify-between gap-4 mb-4">
-              <div>
-                <p className="text-[#1A9F8D] text-xs font-black uppercase">
-                  Explore
-                </p>
+        <section className="mt-5">
+          <div className="mb-4 flex items-end justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                Explore
+              </p>
 
-                <h2 className="text-2xl font-black text-[#111827]">
-                  {getCategoryHeading()}
-                </h2>
+              <h2 className="mt-1 text-2xl font-black text-[#111827]">
+                {getCategoryHeading()}
+              </h2>
 
-                <p className="text-[#51615D] mt-1 text-sm max-w-2xl">
-                  {getCategorySubheading()}
-                </p>
+              <p className="mt-1 text-sm font-semibold leading-relaxed text-[#51615D]">
+                {getCategorySubheading()}
+              </p>
+            </div>
+
+            {hasActiveFilters ? (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="shrink-0 rounded-full border border-[#BDEFE6] bg-white px-4 py-2 text-xs font-black text-[#073B35]"
+              >
+                View All
+              </button>
+            ) : null}
+          </div>
+
+          {loading ? (
+            <div className={`p-8 text-center ${CARD}`}>
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-[#BDEFE6] bg-[#EFFFFB] text-2xl">
+                🍽️
               </div>
 
-              {hasActiveFilters && (
+              <p className="mt-4 font-bold text-[#51615D]">
+                Loading fresh food drops...
+              </p>
+            </div>
+          ) : null}
+
+          {!loading && errorMessage ? (
+            <div className="rounded-[28px] border border-red-200 bg-red-50 p-8 text-center">
+              <p className="font-black text-red-700">
+                Could not load marketplace.
+              </p>
+              <p className="mt-2 text-sm text-red-500">{errorMessage}</p>
+            </div>
+          ) : null}
+
+          {!loading && !errorMessage && filteredFoods.length === 0 ? (
+            <div className={`p-8 text-center ${CARD}`}>
+              <div className="text-5xl">🍽️</div>
+
+              <p className="mt-4 font-black text-[#111827]">
+                No dishes found.
+              </p>
+
+              <p className="mt-2 text-sm font-semibold text-[#51615D]">
+                Try another category, food type, or search term.
+              </p>
+
+              {hasActiveFilters ? (
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="hidden sm:block bg-white border border-[#41D3BD]/45 text-[#073B35] px-4 py-2 rounded-2xl font-black"
+                  className="mt-5 rounded-2xl border border-[#41D3BD] bg-[#41D3BD] px-6 py-3 font-black text-[#073B35]"
                 >
-                  View All
+                  View All Food
                 </button>
-              )}
+              ) : null}
             </div>
+          ) : null}
 
-            {loading && (
-              <div className="bg-white border border-[#E8F4F1] rounded-3xl p-8 text-center shadow-sm">
-                <div className="w-14 h-14 mx-auto rounded-full bg-[#EFFFFB] flex items-center justify-center text-2xl">
-                  🍽️
-                </div>
-
-                <p className="text-[#51615D] font-bold mt-4">
-                  Loading fresh food drops...
-                </p>
-              </div>
-            )}
-
-            {!loading && errorMessage && (
-              <div className="bg-red-50 border border-red-200 rounded-3xl p-8 text-center">
-                <p className="text-red-700 font-bold">
-                  Could not load marketplace.
-                </p>
-                <p className="text-red-500 text-sm mt-2">{errorMessage}</p>
-              </div>
-            )}
-
-            {!loading && !errorMessage && filteredFoods.length === 0 && (
-              <div className="bg-white border border-[#E8F4F1] rounded-3xl p-8 text-center shadow-sm">
-                <div className="text-5xl">🍽️</div>
-
-                <p className="text-[#111827] font-black mt-4">
-                  No dishes found.
-                </p>
-
-                <p className="text-[#51615D] text-sm mt-2">
-                  Try another category, food type, or search term.
-                </p>
-
-                {hasActiveFilters && (
-                  <button
-                    type="button"
-                    onClick={clearFilters}
-                    className="mt-5 bg-[#41D3BD] text-[#073B35] font-black px-6 py-3 rounded-2xl"
-                  >
-                    View All Food
-                  </button>
-                )}
-              </div>
-            )}
-
-            {!loading && !errorMessage && filteredFoods.length > 0 && (
-              <div className="grid grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredFoods.map((item) => (
-                  <FoodCard key={item.id} item={item} />
-                ))}
-              </div>
-            )}
-          </div>
+          {!loading && !errorMessage && filteredFoods.length > 0 ? (
+            <div className="space-y-3">
+              {filteredFoods.map((item) => (
+                <FoodCard key={item.id} item={item} />
+              ))}
+            </div>
+          ) : null}
         </section>
+      </div>
 
-        {cartCount > 0 && (
-          <Link
-            to="/cart"
-            className="fixed bottom-20 left-4 right-4 z-50 sm:left-auto sm:right-6 sm:w-auto bg-[#073B35] active:scale-[0.98] text-white font-black px-6 py-4 rounded-2xl shadow-lg shadow-[#073B35]/20 flex items-center justify-center gap-3"
-          >
-            <span>🛒</span>
-            <span>
-              View Cart • {cartCount} {cartCount === 1 ? "item" : "items"}
-            </span>
-          </Link>
-        )}
-      </main>
-    </>
+      {cartCount > 0 ? (
+        <Link
+          to="/cart"
+          className="fixed bottom-24 left-4 right-4 z-[940] mx-auto flex max-w-md items-center justify-center gap-3 rounded-2xl border border-[#073B35] bg-[#073B35] px-6 py-4 font-black text-white shadow-lg shadow-[#073B35]/20 active:scale-[0.98]"
+        >
+          <span>🛒</span>
+          <span>
+            View Cart • {cartCount} {cartCount === 1 ? "item" : "items"}
+          </span>
+        </Link>
+      ) : null}
+    </main>
+  );
+}
+
+function StatTile({ label, value, muted = false }) {
+  return (
+    <div className="rounded-[22px] border border-[#D7F5EF] bg-white/90 p-3 shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
+      <p className="text-[10px] font-black uppercase text-[#7A8A86]">
+        {label}
+      </p>
+
+      <p
+        className={`mt-1 text-2xl font-black ${
+          muted ? "text-[#8AA5A0]" : "text-[#073B35]"
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4 shrink-0 text-[#0B8F80]"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="M20 20l-3.5-3.5" />
+    </svg>
+  );
+}
+
+function CartIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+    >
+      <path d="M6 6h15l-1.5 9h-12L6 6z" />
+      <path d="M6 6L5 3H2" />
+      <circle cx="9" cy="20" r="1.5" />
+      <circle cx="18" cy="20" r="1.5" />
+    </svg>
+  );
+}
+
+function ChevronDownIcon({ open }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={`h-4 w-4 text-[#0B8F80] transition-transform ${
+        open ? "rotate-180" : ""
+      }`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+    >
+      <path d="M6 9l6 6 6-6" />
+    </svg>
   );
 }

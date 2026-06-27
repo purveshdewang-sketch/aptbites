@@ -1,11 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import Navbar from "../components/Navbar";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 
 const PLATFORM_FEE = 10;
 
+const CARD =
+  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+
+const SOFT_CARD =
+  "rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
+
+const INPUT =
+  "w-full rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-4 text-sm font-black text-[#111827] outline-none focus:border-[#41D3BD] focus:bg-white";
+
 export default function OwnerDashboard() {
+  const navigate = useNavigate();
+
   const [orders, setOrders] = useState([]);
   const [sellerMap, setSellerMap] = useState({});
   const [dateFilter, setDateFilter] = useState("today");
@@ -54,10 +64,12 @@ export default function OwnerDashboard() {
     }
 
     const sellerIds = [
-      ...new Set((orderData || []).map((order) => order.seller_id).filter(Boolean)),
+      ...new Set(
+        (orderData || []).map((order) => order.seller_id).filter(Boolean)
+      ),
     ];
 
-    let nextSellerMap = {};
+    const nextSellerMap = {};
 
     if (sellerIds.length > 0) {
       const { data: profileData } = await supabase
@@ -177,18 +189,22 @@ export default function OwnerDashboard() {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "-";
 
-    return date.toLocaleString([], {
+    return date.toLocaleString("en-IN", {
       day: "2-digit",
       month: "short",
       hour: "numeric",
       minute: "2-digit",
+      hour12: true,
     });
   }
 
   function getSellerName(order) {
     const sellerProfile = sellerMap[order.seller_id];
 
-    if (sellerProfile?.seller_kitchen_name) return sellerProfile.seller_kitchen_name;
+    if (sellerProfile?.seller_kitchen_name) {
+      return sellerProfile.seller_kitchen_name;
+    }
+
     if (sellerProfile?.full_name) return sellerProfile.full_name;
 
     const firstItem = getOrderItems(order)[0];
@@ -213,26 +229,26 @@ export default function OwnerDashboard() {
     const method = normalizePaymentMethod(order.payment_method);
     const status = normalizePaymentStatus(order.payment_status);
 
-    if (method === "cash") return "bg-blue-50 text-blue-700 border-blue-200";
+    if (method === "cash") return "border-blue-200 bg-blue-50 text-blue-700";
     if (status === "reference_submitted") {
-      return "bg-green-50 text-green-700 border-green-200";
+      return "border-green-200 bg-green-50 text-green-700";
     }
 
-    return "bg-yellow-50 text-yellow-700 border-yellow-200";
+    return "border-yellow-200 bg-yellow-50 text-yellow-700";
   }
 
   function getStatusBadgeClass(status) {
     const currentStatus = normalizeStatus(status);
 
     if (currentStatus === "completed") {
-      return "bg-green-50 text-green-700 border-green-200";
+      return "border-green-200 bg-green-50 text-green-700";
     }
 
     if (currentStatus === "cancelled") {
-      return "bg-red-50 text-red-600 border-red-200";
+      return "border-red-200 bg-red-50 text-red-600";
     }
 
-    return "bg-[#41D3BD]/12 text-[#073B35] border-[#41D3BD]/30";
+    return "border-[#BDEFE6] bg-[#41D3BD]/12 text-[#073B35]";
   }
 
   const filteredOrders = useMemo(() => {
@@ -344,7 +360,9 @@ export default function OwnerDashboard() {
     const insights = [];
 
     if (analytics.totalOrders === 0) {
-      insights.push("No orders found for this filter. Check seller availability and marketplace visibility.");
+      insights.push(
+        "No orders found for this filter. Check seller availability and marketplace visibility."
+      );
     }
 
     if (analytics.activeOrders > 0) {
@@ -352,11 +370,15 @@ export default function OwnerDashboard() {
     }
 
     if (analytics.paymentPending > 0) {
-      insights.push(`${analytics.paymentPending} orders have pending payment status. Verify references before settlement.`);
+      insights.push(
+        `${analytics.paymentPending} orders have pending payment status. Verify references before settlement.`
+      );
     }
 
     if (analytics.cancelledOrders > 0) {
-      insights.push(`${analytics.cancelledOrders} cancelled orders detected. Review seller/customer issues.`);
+      insights.push(
+        `${analytics.cancelledOrders} cancelled orders detected. Review seller/customer issues.`
+      );
     }
 
     const sellersWithPendingPayments = sellerWiseReport.filter(
@@ -364,17 +386,23 @@ export default function OwnerDashboard() {
     );
 
     if (sellersWithPendingPayments.length > 0) {
-      insights.push(`${sellersWithPendingPayments.length} sellers have pending payment follow-ups.`);
+      insights.push(
+        `${sellersWithPendingPayments.length} sellers have pending payment follow-ups.`
+      );
     }
 
     const topSeller = sellerWiseReport[0];
 
     if (topSeller && topSeller.orders > 0) {
-      insights.push(`${topSeller.sellerName} is the top kitchen for this period with ₹${topSeller.grossSales} sales.`);
+      insights.push(
+        `${topSeller.sellerName} is the top kitchen for this period with ₹${topSeller.grossSales} sales.`
+      );
     }
 
     if (analytics.platformFeeEarned > 0) {
-      insights.push(`Platform fee earned for this filter is ₹${analytics.platformFeeEarned}.`);
+      insights.push(
+        `Platform fee earned for this filter is ₹${analytics.platformFeeEarned}.`
+      );
     }
 
     return insights.length > 0
@@ -447,369 +475,412 @@ export default function OwnerDashboard() {
   }
 
   return (
-    <>
-      <Navbar />
+    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-32 text-[#111827]">
+      <div className="mx-auto max-w-md">
+        <header className="flex items-start gap-3">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+            aria-label="Go back"
+          >
+            <BackIcon />
+          </button>
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-3 sm:px-6 py-4 sm:py-10 pb-32">
-        <div className="max-w-7xl mx-auto">
-          <section className="relative overflow-hidden bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-xl shadow-[#073B35]/5">
-            <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[95px]" />
-            <div className="absolute -bottom-28 -left-24 w-72 h-72 bg-[#41D3BD]/10 rounded-full blur-[110px]" />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+              Owner Dashboard
+            </p>
 
-            <div className="relative flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
-              <div>
-                <div className="inline-flex items-center gap-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
-                  <span>👑</span>
-                  <span>Owner Dashboard</span>
-                </div>
+            <h1 className="mt-1 text-3xl font-black leading-tight text-[#073B35]">
+              Orders
+              <span className="block text-[#111827]">& payments</span>
+            </h1>
 
-                <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
-                  Orders
-                  <span className="block text-[#111827]">& payments</span>
-                </h1>
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+              Daily control center for orders, UPI references, platform fees,
+              seller performance, and operational records.
+            </p>
+          </div>
+        </header>
 
-                <p className="text-[#51615D] mt-4 text-sm sm:text-lg max-w-2xl leading-relaxed">
-                  Daily control center for Nefo orders, UPI references, platform
-                  fees, seller performance, and operational records.
+        <section className="mt-5 grid grid-cols-2 gap-3">
+          <Link
+            to="/marketplace"
+            className="rounded-2xl border border-[#BDEFE6] bg-white px-4 py-4 text-center text-sm font-black text-[#073B35] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] active:scale-95"
+          >
+            Marketplace
+          </Link>
+
+          <Link
+            to="/owner-accounting"
+            className="rounded-2xl border border-[#41D3BD] bg-[#41D3BD] px-4 py-4 text-center text-sm font-black text-[#073B35] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] active:scale-95"
+          >
+            Accounting
+          </Link>
+
+          <Link
+            to="/owner-seller-applications"
+            className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-4 text-center text-sm font-black text-[#073B35] active:scale-95"
+          >
+            Applications
+          </Link>
+
+          <button
+            type="button"
+            onClick={downloadCSV}
+            className="rounded-2xl border border-[#073B35] bg-[#073B35] px-4 py-4 text-sm font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-95"
+          >
+            CSV Export
+          </button>
+        </section>
+
+        <section className="mt-5 rounded-[28px] border border-[#073B35] bg-[#073B35] p-5 text-white shadow-xl shadow-[#073B35]/15">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-black uppercase tracking-wide text-[#41D3BD]">
+                Nefo AI Insights
+              </p>
+
+              <h2 className="mt-1 text-2xl font-black">
+                Owner command center
+              </h2>
+            </div>
+
+            <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black text-[#D7F5EF]">
+              Live
+            </span>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            {aiInsights.map((insight, index) => (
+              <div
+                key={index}
+                className="rounded-2xl border border-white/15 bg-white/10 p-4"
+              >
+                <p className="text-sm font-bold leading-relaxed text-white">
+                  {index + 1}. {insight}
                 </p>
               </div>
+            ))}
+          </div>
+        </section>
 
-              <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3">
-                <Link
-                  to="/marketplace"
-                  className="bg-[#FFFFF2] border border-[#D7F5EF] hover:bg-[#D7F5EF] text-[#073B35] font-black px-4 sm:px-5 py-3 rounded-2xl transition-all text-center text-sm"
-                >
-                  Marketplace
-                </Link>
+        <section className={`mt-5 p-4 ${CARD}`}>
+          <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+            Filters
+          </p>
 
-                <Link
-                  to="/owner-accounting"
-                  className="bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black px-4 sm:px-5 py-3 rounded-2xl transition-all shadow-lg shadow-[#41D3BD]/20 text-center text-sm"
-                >
-                  Accounting
-                </Link>
+          <div className="mt-3 grid grid-cols-1 gap-3">
+            <select
+              value={dateFilter}
+              onChange={(event) => setDateFilter(event.target.value)}
+              className={INPUT}
+            >
+              <option value="today">Today</option>
+              <option value="yesterday">Yesterday</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+              <option value="all">All Time</option>
+            </select>
 
-                <Link
-                  to="/owner-seller-applications"
-                  className="bg-[#FFFFF2] border border-[#41D3BD]/45 hover:bg-[#D7F5EF] text-[#073B35] font-black px-4 sm:px-5 py-3 rounded-2xl transition-all text-center text-sm"
-                >
-                  Applications
-                </Link>
+            <select
+              value={paymentFilter}
+              onChange={(event) => setPaymentFilter(event.target.value)}
+              className={INPUT}
+            >
+              <option value="all">All Payments</option>
+              <option value="upi">UPI Orders</option>
+              <option value="reference">UPI Reference Submitted</option>
+              <option value="pending">Payment Pending</option>
+              <option value="cash">Cash / Pay Later</option>
+            </select>
 
-                <button
-                  type="button"
-                  onClick={downloadCSV}
-                  className="bg-[#073B35] hover:bg-[#0B5149] text-white font-black px-4 sm:px-5 py-3 rounded-2xl shadow-lg shadow-[#073B35]/15 transition-all text-sm"
-                >
-                  CSV
-                </button>
-              </div>
-            </div>
+            <button
+              type="button"
+              onClick={() => fetchOwnerData()}
+              className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-5 py-4 font-black text-[#073B35] active:scale-95"
+            >
+              Refresh
+            </button>
+          </div>
+        </section>
+
+        {loading ? (
+          <section className={`mt-5 p-8 text-center ${CARD}`}>
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-4 border-[#D7F5EF] border-t-[#073B35] animate-spin" />
+
+            <p className="mt-4 font-bold text-[#51615D]">
+              Loading owner dashboard...
+            </p>
           </section>
+        ) : null}
 
-          <section className="mt-5 bg-[#073B35] rounded-[1.75rem] sm:rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/15 overflow-hidden relative">
-            <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[90px]" />
+        {!loading && errorMessage ? (
+          <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-5">
+            <p className="font-black text-red-600">
+              Could not load dashboard.
+            </p>
 
-            <div className="relative">
-              <div className="flex items-start justify-between gap-4">
+            <p className="mt-2 text-sm font-semibold text-red-500">
+              {errorMessage}
+            </p>
+          </div>
+        ) : null}
+
+        {!loading && !errorMessage ? (
+          <>
+            <section className="mt-5 grid grid-cols-2 gap-3">
+              <StatCard title="Total Orders" value={analytics.totalOrders} />
+              <StatCard title="Active Orders" value={analytics.activeOrders} />
+              <StatCard title="Completed" value={analytics.completedOrders} />
+              <StatCard title="Cancelled" value={analytics.cancelledOrders} />
+              <StatCard title="Total Sales" value={`₹${analytics.totalSales}`} />
+              <StatCard
+                title="Subtotal Sales"
+                value={`₹${analytics.subtotalSales}`}
+              />
+              <StatCard
+                title="Platform Fee"
+                value={`₹${analytics.platformFeeEarned}`}
+              />
+              <StatCard
+                title="UPI Ref"
+                value={analytics.upiReferenceSubmitted}
+              />
+            </section>
+
+            <section className={`mt-5 p-5 ${CARD}`}>
+              <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-[#41D3BD] font-black uppercase tracking-wide text-xs">
-                    Nefo AI Insights
+                  <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                    Seller Report
                   </p>
 
-                  <h2 className="text-white text-2xl sm:text-3xl font-black mt-1">
-                    Owner command center
+                  <h2 className="mt-1 text-2xl font-black text-[#111827]">
+                    Seller-wise sales
                   </h2>
                 </div>
 
-                <span className="bg-white/10 border border-white/10 text-[#D7F5EF] text-xs font-black px-3 py-1.5 rounded-full">
-                  Live
-                </span>
+                <p className="shrink-0 text-sm font-black text-[#51615D]">
+                  {sellerWiseReport.length}
+                </p>
               </div>
 
-              <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-3">
-                {aiInsights.map((insight, index) => (
-                  <div
-                    key={index}
-                    className="bg-white/10 border border-white/10 rounded-2xl p-4"
-                  >
-                    <p className="text-white font-bold text-sm leading-relaxed">
-                      {index + 1}. {insight}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <section className="mt-5 bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-4 sm:p-5 shadow-lg shadow-[#073B35]/5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] gap-3">
-              <select
-                value={dateFilter}
-                onChange={(event) => setDateFilter(event.target.value)}
-                className="bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] font-bold"
-              >
-                <option value="today">Today</option>
-                <option value="yesterday">Yesterday</option>
-                <option value="week">This Week</option>
-                <option value="month">This Month</option>
-                <option value="all">All Time</option>
-              </select>
-
-              <select
-                value={paymentFilter}
-                onChange={(event) => setPaymentFilter(event.target.value)}
-                className="bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] font-bold"
-              >
-                <option value="all">All Payments</option>
-                <option value="upi">UPI Orders</option>
-                <option value="reference">UPI Reference Submitted</option>
-                <option value="pending">Payment Pending</option>
-                <option value="cash">Cash / Pay Later</option>
-              </select>
-
-              <button
-                type="button"
-                onClick={() => fetchOwnerData()}
-                className="bg-[#FFFFF2] border border-[#41D3BD]/45 hover:bg-[#D7F5EF] text-[#073B35] font-black px-5 py-4 rounded-2xl transition-all"
-              >
-                Refresh
-              </button>
-            </div>
-          </section>
-
-          {loading && (
-            <div className="mt-6 bg-white/90 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-lg shadow-[#073B35]/5">
-              <p className="text-[#51615D] font-bold">
-                Loading owner dashboard...
-              </p>
-            </div>
-          )}
-
-          {!loading && errorMessage && (
-            <div className="mt-6 bg-red-50 border border-red-200 rounded-3xl p-6">
-              <p className="text-red-600 font-black">
-                Could not load dashboard.
-              </p>
-              <p className="text-red-500 text-sm mt-2">{errorMessage}</p>
-            </div>
-          )}
-
-          {!loading && !errorMessage && (
-            <>
-              <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-6">
-                <StatCard title="Total Orders" value={analytics.totalOrders} />
-                <StatCard title="Active Orders" value={analytics.activeOrders} />
-                <StatCard title="Completed" value={analytics.completedOrders} />
-                <StatCard title="Cancelled" value={analytics.cancelledOrders} />
-                <StatCard title="Total Sales" value={`₹${analytics.totalSales}`} />
-                <StatCard
-                  title="Subtotal Sales"
-                  value={`₹${analytics.subtotalSales}`}
-                />
-                <StatCard
-                  title="Platform Fee"
-                  value={`₹${analytics.platformFeeEarned}`}
-                />
-                <StatCard
-                  title="UPI Ref Submitted"
-                  value={analytics.upiReferenceSubmitted}
-                />
-              </section>
-
-              <section className="mt-6 bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                      Seller Report
-                    </p>
-
-                    <h2 className="text-2xl sm:text-3xl font-black mt-1 text-[#111827]">
-                      Seller-wise sales
-                    </h2>
-                  </div>
-
-                  <p className="text-[#51615D] text-sm font-bold">
-                    {sellerWiseReport.length} sellers
+              {sellerWiseReport.length === 0 ? (
+                <div className={`mt-6 p-6 text-center ${SOFT_CARD}`}>
+                  <p className="font-bold text-[#51615D]">
+                    No seller data found.
                   </p>
                 </div>
+              ) : (
+                <div className="mt-6 space-y-3">
+                  {sellerWiseReport.map((seller) => (
+                    <article
+                      key={seller.sellerId}
+                      className="rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-black text-[#111827]">
+                            {seller.sellerName}
+                          </p>
 
-                {sellerWiseReport.length === 0 ? (
-                  <p className="text-[#51615D] mt-6">No seller data found.</p>
-                ) : (
-                  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                    {sellerWiseReport.map((seller) => (
-                      <div
-                        key={seller.sellerId}
-                        className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="text-[#111827] font-black truncate">
-                              {seller.sellerName}
-                            </p>
-
-                            <p className="text-[#51615D] text-xs mt-1">
-                              {seller.orders} orders
-                            </p>
-                          </div>
-
-                          <p className="text-[#073B35] font-black text-xl shrink-0">
-                            ₹{seller.grossSales}
+                          <p className="mt-1 text-xs font-semibold text-[#51615D]">
+                            {seller.orders} orders
                           </p>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-2 mt-4">
-                          <SmallMetric label="Done" value={seller.completed} />
-                          <SmallMetric label="Cancel" value={seller.cancelled} />
-                          <SmallMetric
-                            label="Pending"
-                            value={seller.pendingPayments}
-                          />
-                        </div>
-
-                        <div className="mt-3 bg-white border border-[#D7F5EF] rounded-2xl p-3">
-                          <p className="text-[#51615D] text-xs font-black uppercase">
-                            Platform Fee
-                          </p>
-                          <p className="text-[#073B35] font-black mt-1">
-                            ₹{seller.platformFee}
-                          </p>
-                        </div>
+                        <p className="shrink-0 text-xl font-black text-[#073B35]">
+                          ₹{seller.grossSales}
+                        </p>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </section>
 
-              <section className="mt-6 bg-white/90 border border-[#D7F5EF] rounded-[1.75rem] sm:rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                      Order Register
-                    </p>
+                      <div className="mt-4 grid grid-cols-3 gap-2">
+                        <SmallMetric label="Done" value={seller.completed} />
+                        <SmallMetric label="Cancel" value={seller.cancelled} />
+                        <SmallMetric
+                          label="Pending"
+                          value={seller.pendingPayments}
+                        />
+                      </div>
 
-                    <h2 className="text-2xl sm:text-3xl font-black mt-1 text-[#111827]">
-                      Orders + payments
-                    </h2>
-                  </div>
+                      <div className="mt-3 rounded-2xl border border-[#BDEFE6] bg-white p-3">
+                        <p className="text-xs font-black uppercase text-[#51615D]">
+                          Platform Fee
+                        </p>
 
-                  <p className="text-[#51615D] text-sm font-bold">
-                    {filteredOrders.length} records
+                        <p className="mt-1 font-black text-[#073B35]">
+                          ₹{seller.platformFee}
+                        </p>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className={`mt-5 p-5 ${CARD}`}>
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                    Order Register
                   </p>
+
+                  <h2 className="mt-1 text-2xl font-black text-[#111827]">
+                    Orders + payments
+                  </h2>
                 </div>
 
-                {filteredOrders.length === 0 ? (
-                  <div className="mt-6 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-8 text-center">
-                    <p className="text-[#51615D] font-bold">
-                      No orders found for selected filters.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="mt-6 space-y-4">
-                    {filteredOrders.map((order) => (
-                      <article
-                        key={order.id}
-                        className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4 sm:p-5"
-                      >
-                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                          <div className="min-w-0">
-                            <p className="text-[#51615D] text-sm font-bold">
-                              Order #{order.id} •{" "}
-                              {formatDateTime(order.created_at)}
-                            </p>
+                <p className="shrink-0 text-sm font-black text-[#51615D]">
+                  {filteredOrders.length}
+                </p>
+              </div>
 
-                            <h3 className="text-3xl font-black mt-1 text-[#073B35]">
-                              ₹{order.total_amount}
-                            </h3>
+              {filteredOrders.length === 0 ? (
+                <div className={`mt-6 p-8 text-center ${SOFT_CARD}`}>
+                  <p className="font-bold text-[#51615D]">
+                    No orders found for selected filters.
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-6 space-y-4">
+                  {filteredOrders.map((order) => (
+                    <article
+                      key={order.id}
+                      className="rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-[#51615D]">
+                            Order #{order.id}
+                          </p>
 
-                            <p className="text-[#51615D] text-sm mt-2">
-                              {order.customer_name} • {order.phone}
-                            </p>
-
-                            <p className="text-[#51615D] text-sm mt-1">
-                              Kitchen: {getSellerName(order)}
-                            </p>
-
-                            <p className="text-[#51615D] text-sm mt-1">
-                              {order.delivery_type} • {order.flat}
-                            </p>
-                          </div>
-
-                          <div className="flex flex-wrap sm:justify-end gap-2">
-                            <span
-                              className={`w-fit border text-xs font-black px-3 py-1.5 rounded-full ${getStatusBadgeClass(
-                                order.status
-                              )}`}
-                            >
-                              {order.status || "confirmed"}
-                            </span>
-
-                            <span
-                              className={`w-fit border text-xs font-black px-3 py-1.5 rounded-full ${getPaymentBadgeClass(
-                                order
-                              )}`}
-                            >
-                              {getPaymentLabel(order)}
-                            </span>
-                          </div>
+                          <h3 className="mt-1 text-3xl font-black text-[#073B35]">
+                            ₹{order.total_amount}
+                          </h3>
                         </div>
 
-                        {order.payment_reference && (
-                          <div className="mt-4 bg-green-50 border border-green-200 rounded-2xl p-4">
-                            <p className="text-green-700 text-xs font-black uppercase">
-                              Payment Reference
-                            </p>
+                        <p className="shrink-0 text-right text-xs font-semibold leading-relaxed text-[#51615D]">
+                          {formatDateTime(order.created_at)}
+                        </p>
+                      </div>
 
-                            <p className="text-[#111827] font-bold mt-1 break-all">
-                              {order.payment_reference}
-                            </p>
-                          </div>
-                        )}
+                      <div className="mt-4 space-y-2 rounded-2xl border border-[#BDEFE6] bg-white p-4">
+                        <DetailLine
+                          label="Customer"
+                          value={`${order.customer_name || "-"} • ${
+                            order.phone || "-"
+                          }`}
+                        />
 
-                        {order.scheduled_order && (
-                          <div className="mt-4 bg-[#41D3BD]/12 border border-[#41D3BD]/25 rounded-2xl p-4">
-                            <p className="text-[#073B35] text-xs font-black uppercase">
-                              Scheduled For
-                            </p>
+                        <DetailLine label="Kitchen" value={getSellerName(order)} />
 
-                            <p className="text-[#111827] font-bold mt-1">
-                              {formatDateTime(order.scheduled_for)}
-                            </p>
-                          </div>
-                        )}
-                      </article>
-                    ))}
-                  </div>
-                )}
-              </section>
-            </>
-          )}
-        </div>
-      </main>
-    </>
+                        <DetailLine
+                          label="Delivery"
+                          value={`${order.delivery_type || "-"} • ${
+                            order.flat || "-"
+                          }`}
+                        />
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <span
+                          className={`w-fit rounded-full border px-3 py-1.5 text-xs font-black ${getStatusBadgeClass(
+                            order.status
+                          )}`}
+                        >
+                          {order.status || "confirmed"}
+                        </span>
+
+                        <span
+                          className={`w-fit rounded-full border px-3 py-1.5 text-xs font-black ${getPaymentBadgeClass(
+                            order
+                          )}`}
+                        >
+                          {getPaymentLabel(order)}
+                        </span>
+                      </div>
+
+                      {order.payment_reference ? (
+                        <div className="mt-4 rounded-2xl border border-green-200 bg-green-50 p-4">
+                          <p className="text-xs font-black uppercase text-green-700">
+                            Payment Reference
+                          </p>
+
+                          <p className="mt-1 break-all font-bold text-[#111827]">
+                            {order.payment_reference}
+                          </p>
+                        </div>
+                      ) : null}
+
+                      {order.scheduled_order ? (
+                        <div className="mt-4 rounded-2xl border border-[#BDEFE6] bg-[#41D3BD]/12 p-4">
+                          <p className="text-xs font-black uppercase text-[#073B35]">
+                            Scheduled For
+                          </p>
+
+                          <p className="mt-1 font-bold text-[#111827]">
+                            {formatDateTime(order.scheduled_for)}
+                          </p>
+                        </div>
+                      ) : null}
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+          </>
+        ) : null}
+      </div>
+    </main>
   );
 }
 
 function StatCard({ title, value }) {
   return (
-    <div className="bg-white/90 border border-[#D7F5EF] rounded-3xl p-4 sm:p-5 shadow-lg shadow-[#073B35]/5">
-      <p className="text-[#51615D] text-[10px] sm:text-xs uppercase font-black">
+    <div className="rounded-[22px] border border-[#D7F5EF] bg-white/90 p-4 shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
+      <p className="text-[10px] font-black uppercase tracking-wide text-[#7A8A86]">
         {title}
       </p>
 
-      <p className="text-xl sm:text-3xl font-black text-[#073B35] mt-3">
-        {value}
-      </p>
+      <p className="mt-2 text-xl font-black text-[#073B35]">{value}</p>
     </div>
   );
 }
 
 function SmallMetric({ label, value }) {
   return (
-    <div className="bg-white border border-[#D7F5EF] rounded-2xl p-3">
-      <p className="text-[#51615D] text-[10px] uppercase font-black">{label}</p>
-      <p className="text-[#073B35] font-black mt-1">{value}</p>
+    <div className="rounded-2xl border border-[#BDEFE6] bg-white p-3">
+      <p className="text-[10px] font-black uppercase text-[#51615D]">
+        {label}
+      </p>
+
+      <p className="mt-1 font-black text-[#073B35]">{value}</p>
     </div>
+  );
+}
+
+function DetailLine({ label, value }) {
+  return (
+    <div className="text-sm">
+      <span className="font-black text-[#073B35]">{label}: </span>
+      <span className="font-semibold text-[#51615D]">{value || "-"}</span>
+    </div>
+  );
+}
+
+function BackIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+    >
+      <path d="M19 12H5" />
+      <path d="M12 19l-7-7 7-7" />
+    </svg>
   );
 }

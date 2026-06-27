@@ -1,9 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Navbar from "../components/Navbar";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+
+const CARD =
+  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+
+const SOFT_CARD =
+  "rounded-[24px] border border-[#E8F4F1] bg-white/90 shadow-[6px_6px_16px_rgba(7,59,53,0.06),-6px_-6px_16px_rgba(255,255,255,0.95)]";
 
 export default function OrderHistory() {
   const { user } = useAuth();
@@ -85,10 +90,10 @@ export default function OrderHistory() {
     const currentStatus = normalizeStatus(status);
 
     if (currentStatus === "cancelled") {
-      return "bg-red-50 text-red-600 border-red-200";
+      return "border-red-200 bg-red-50 text-red-600";
     }
 
-    return "bg-green-50 text-green-700 border-green-200";
+    return "border-[#BDEFE6] bg-[#DFF8EF] text-[#087A51]";
   }
 
   function getOrderItems(order) {
@@ -113,13 +118,27 @@ export default function OrderHistory() {
 
     if (Number.isNaN(date.getTime())) return "Date not available";
 
-    return date.toLocaleString([], {
+    return date.toLocaleString("en-IN", {
       day: "2-digit",
       month: "short",
       year: "numeric",
       hour: "numeric",
       minute: "2-digit",
+      hour12: true,
     });
+  }
+
+  function getShortOrderId(order) {
+    const value = String(order.id || "");
+    return value.length > 8 ? value.slice(0, 8).toUpperCase() : value;
+  }
+
+  function getPaymentLabel(order) {
+    const status = String(order.payment_status || "").replaceAll("_", " ");
+
+    if (!status) return "Payment submitted";
+
+    return status.charAt(0).toUpperCase() + status.slice(1);
   }
 
   function handleReorder(order) {
@@ -140,10 +159,11 @@ export default function OrderHistory() {
     orderItems.forEach((item) => {
       const quantity = Number(item.quantity || 1);
 
-      for (let i = 0; i < quantity; i++) {
+      for (let index = 0; index < quantity; index += 1) {
         addToCart({
           ...item,
           seller_id: order.seller_id,
+          user_id: item.user_id || order.seller_id,
           quantity: 1,
         });
       }
@@ -152,207 +172,316 @@ export default function OrderHistory() {
     navigate("/cart");
   }
 
-  return (
-    <>
-      <Navbar />
+  const deliveredOrdersCount = useMemo(() => {
+    return orders.filter((order) => normalizeStatus(order.status) === "completed")
+      .length;
+  }, [orders]);
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-6 sm:py-10 pb-24">
-        <div className="max-w-5xl mx-auto">
-          <section className="relative overflow-hidden bg-white/85 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-xl shadow-[#073B35]/5">
-            <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[95px]" />
-            <div className="absolute -bottom-28 -left-24 w-72 h-72 bg-[#41D3BD]/10 rounded-full blur-[110px]" />
+  const cancelledOrdersCount = useMemo(() => {
+    return orders.filter((order) => normalizeStatus(order.status) === "cancelled")
+      .length;
+  }, [orders]);
 
-            <div className="relative">
-              <div className="inline-flex items-center gap-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
-                <span>📜</span>
-                <span>Order History</span>
-              </div>
+  const totalSpent = useMemo(() => {
+    return orders
+      .filter((order) => normalizeStatus(order.status) === "completed")
+      .reduce((total, order) => total + Number(order.total_amount || 0), 0);
+  }, [orders]);
 
-              <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
-                Past orders
-                <span className="block text-[#111827]">and reorders</span>
-              </h1>
+  if (!user) {
+    return (
+      <main className="min-h-screen bg-[#FFFFF2] px-4 py-5 pb-28 text-[#111827]">
+        <div className="mx-auto max-w-md">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
+            aria-label="Go back"
+          >
+            <BackIcon />
+          </button>
 
-              <p className="text-[#51615D] mt-4 max-w-2xl leading-relaxed text-sm sm:text-lg">
-                View completed, picked-up, and cancelled Nefo orders. Reorder
-                your favourite dishes when they are available again.
-              </p>
+          <section className={`mt-6 p-8 text-center ${CARD}`}>
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 text-4xl">
+              📜
             </div>
-          </section>
 
-          {!user && (
-            <div className="mt-8 bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-8 text-center shadow-xl shadow-[#073B35]/5">
-              <h2 className="text-2xl font-black text-[#111827]">
-                Sign in to view history
-              </h2>
+            <h1 className="mt-5 text-2xl font-black text-[#111827]">
+              Sign in to view history
+            </h1>
+
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+              Your completed, picked-up, and cancelled orders will appear here.
+            </p>
+
+            <Link
+              to="/customer-login"
+              className="mt-6 block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center text-sm font-black text-white"
+            >
+              Sign In
+            </Link>
+          </section>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-32 text-[#111827]">
+      <div className="mx-auto max-w-md">
+        <header className="flex items-start gap-3">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+            aria-label="Go back"
+          >
+            <BackIcon />
+          </button>
+
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+              Order History
+            </p>
+
+            <h1 className="mt-1 text-3xl font-black leading-tight text-[#073B35]">
+              Past orders
+              <span className="block text-[#111827]">and reorders</span>
+            </h1>
+
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+              View delivered, picked-up, and cancelled Nefo orders.
+            </p>
+          </div>
+        </header>
+
+        <section className="mt-5 grid grid-cols-3 gap-3">
+          <StatTile label="Delivered" value={deliveredOrdersCount} />
+          <StatTile label="Cancelled" value={cancelledOrdersCount} muted />
+          <StatTile label="Spent" value={`₹${totalSpent}`} strong />
+        </section>
+
+        {loading ? (
+          <div className="mt-5 space-y-4">
+            {[1, 2, 3].map((item) => (
+              <div key={item} className={`animate-pulse p-5 ${CARD}`}>
+                <div className="h-5 w-1/3 rounded-full bg-[#D7F5EF]" />
+                <div className="mt-4 h-4 w-2/3 rounded-full bg-[#D7F5EF]" />
+                <div className="mt-5 h-24 rounded-2xl border border-[#D7F5EF] bg-[#FFFFF2]" />
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {!loading && errorMessage ? (
+          <div className="mt-5 rounded-[28px] border border-red-200 bg-red-50 p-5">
+            <p className="font-black text-red-600">
+              Failed to load order history
+            </p>
+
+            <p className="mt-1 text-sm font-semibold text-red-500">
+              {errorMessage}
+            </p>
+          </div>
+        ) : null}
+
+        {!loading && !errorMessage && orders.length === 0 ? (
+          <section className={`mt-5 p-8 text-center ${CARD}`}>
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 text-4xl">
+              📜
+            </div>
+
+            <h2 className="mt-5 text-2xl font-black text-[#111827]">
+              No order history yet
+            </h2>
+
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+              Completed and cancelled orders will appear here.
+            </p>
+
+            <div className="mt-6 grid grid-cols-1 gap-3">
+              <Link
+                to="/orders"
+                className="rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center text-sm font-black text-white active:scale-95"
+              >
+                View Active Orders
+              </Link>
 
               <Link
-                to="/customer-login"
-                className="inline-block mt-7 bg-[#073B35] hover:bg-[#0B5149] text-white font-black px-6 py-3 rounded-2xl shadow-lg shadow-[#073B35]/15"
+                to="/marketplace"
+                className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] py-4 text-center text-sm font-black text-[#073B35] active:scale-95"
               >
-                Sign In
+                Explore Marketplace
               </Link>
             </div>
-          )}
+          </section>
+        ) : null}
 
-          {user && loading && (
-            <div className="mt-8 space-y-4">
-              {[1, 2].map((item) => (
-                <div
-                  key={item}
-                  className="bg-white/90 border border-[#D7F5EF] rounded-3xl p-6 animate-pulse shadow-lg shadow-[#073B35]/5"
-                >
-                  <div className="h-5 bg-[#D7F5EF] rounded-full w-1/3" />
-                  <div className="h-4 bg-[#D7F5EF] rounded-full w-2/3 mt-4" />
-                  <div className="h-20 bg-[#D7F5EF] rounded-2xl mt-5" />
-                </div>
-              ))}
-            </div>
-          )}
+        {!loading && !errorMessage && orders.length > 0 ? (
+          <section className="mt-5 space-y-4">
+            {orders.map((order) => {
+              const orderStatus = normalizeStatus(order.status);
+              const orderItems = getOrderItems(order);
+              const isCancelled = orderStatus === "cancelled";
 
-          {user && errorMessage && (
-            <div className="mt-8 bg-red-50 border border-red-200 text-red-600 rounded-3xl p-5">
-              <p className="font-black">Failed to load order history</p>
-              <p className="text-sm mt-1">{errorMessage}</p>
-            </div>
-          )}
-
-          {user && !loading && !errorMessage && orders.length === 0 && (
-            <div className="mt-8 bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-8 sm:p-10 text-center shadow-xl shadow-[#073B35]/5">
-              <div className="w-24 h-24 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-5xl">
-                📜
-              </div>
-
-              <h2 className="text-3xl sm:text-4xl font-black mt-6 text-[#111827]">
-                No order history yet
-              </h2>
-
-              <p className="text-[#51615D] mt-3 max-w-md mx-auto">
-                Completed and cancelled orders will appear here.
-              </p>
-
-              <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
-                <Link
-                  to="/orders"
-                  className="w-full sm:w-auto bg-[#073B35] hover:bg-[#0B5149] active:scale-95 text-white font-black px-6 py-3 rounded-2xl transition-all duration-200 shadow-lg shadow-[#073B35]/15 text-center"
-                >
-                  View Active Orders
-                </Link>
-
-                <Link
-                  to="/customer-care"
-                  className="w-full sm:w-auto border border-[#41D3BD]/45 bg-[#FFFFF2] text-[#073B35] hover:bg-[#D7F5EF] active:scale-95 font-black px-6 py-3 rounded-2xl transition-all duration-200 text-center"
-                >
-                  Need Help?
-                </Link>
-              </div>
-            </div>
-          )}
-
-          {user && !loading && !errorMessage && orders.length > 0 && (
-            <div className="mt-8 space-y-5">
-              {orders.map((order) => {
-                const orderStatus = normalizeStatus(order.status);
-                const orderItems = getOrderItems(order);
-
-                return (
-                  <article
-                    key={order.id}
-                    className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-4 sm:p-6 shadow-xl shadow-[#073B35]/5"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                      <div>
-                        <p className="text-[#51615D] text-sm font-bold">
-                          Order #{order.id}
+              return (
+                <article key={order.id} className={`overflow-hidden ${CARD}`}>
+                  <div className="border-b border-[#E8F4F1] p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-black uppercase tracking-wide text-[#51615D]">
+                          Order #{getShortOrderId(order)}
                         </p>
 
-                        <h2 className="text-3xl sm:text-4xl font-black mt-1 text-[#073B35]">
+                        <h2 className="mt-1 text-3xl font-black text-[#073B35]">
                           ₹{order.total_amount || 0}
                         </h2>
 
-                        <p className="text-[#51615D] text-sm mt-2">
-                          {order.delivery_type || "Delivery"} • Your address:{" "}
-                          {order.flat || "Not available"}
+                        <p className="mt-1 truncate text-sm font-semibold text-[#51615D]">
+                          {order.delivery_type || "Delivery"} •{" "}
+                          {order.flat || "Address not available"}
                         </p>
 
-                        <p className="text-[#9AA7A3] text-xs mt-2">
+                        <p className="mt-2 text-xs font-bold text-[#8AA5A0]">
                           {getOrderDate(order)}
                         </p>
                       </div>
 
                       <span
-                        className={`w-fit border text-xs font-black px-3 py-1.5 rounded-full ${getStatusStyle(
+                        className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-black ${getStatusStyle(
                           order.status
                         )}`}
                       >
                         {getStatusLabel(order)}
                       </span>
                     </div>
+                  </div>
 
-                    <div className="mt-5 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4 space-y-3">
+                  <div className="p-4">
+                    <div className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-3">
+                      <div className="mb-3 flex items-center justify-between">
+                        <p className="text-sm font-black text-[#111827]">
+                          Items
+                        </p>
+
+                        <p className="text-xs font-bold text-[#51615D]">
+                          {orderItems.length} item
+                          {orderItems.length === 1 ? "" : "s"}
+                        </p>
+                      </div>
+
                       {orderItems.length === 0 ? (
-                        <p className="text-[#51615D] text-sm">
+                        <p className="text-sm font-semibold text-[#51615D]">
                           No item details available for this order.
                         </p>
                       ) : (
-                        orderItems.map((item) => (
-                          <div
-                            key={`${order.id}-${item.id}`}
-                            className="flex items-center justify-between gap-4"
-                          >
-                            <div className="min-w-0">
-                              <p className="font-black truncate text-[#111827]">
-                                {item.name}
-                              </p>
+                        <div className="space-y-3">
+                          {orderItems.map((item) => (
+                            <div
+                              key={`${order.id}-${item.id || item.name}`}
+                              className="flex items-center justify-between gap-4"
+                            >
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-black text-[#111827]">
+                                  {item.name}
+                                </p>
 
-                              <p className="text-[#51615D] text-sm">
-                                Qty {item.quantity} × ₹{item.price}
+                                <p className="mt-0.5 text-xs font-semibold text-[#51615D]">
+                                  Qty {item.quantity} × ₹{item.price}
+                                </p>
+                              </div>
+
+                              <p className="shrink-0 text-sm font-black text-[#073B35]">
+                                ₹
+                                {Number(item.price || 0) *
+                                  Number(item.quantity || 0)}
                               </p>
                             </div>
-
-                            <p className="text-[#073B35] font-black shrink-0">
-                              ₹
-                              {Number(item.price || 0) *
-                                Number(item.quantity || 0)}
-                            </p>
-                          </div>
-                        ))
+                          ))}
+                        </div>
                       )}
                     </div>
 
-                    <div className="mt-4 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 space-y-3 text-sm">
-                      <div className="flex justify-between text-[#51615D]">
-                        <span>Subtotal</span>
-                        <span>₹{order.subtotal_amount || 0}</span>
-                      </div>
+                    <div className="mt-3 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4 space-y-3">
+                      <SummaryRow
+                        label="Subtotal"
+                        value={`₹${order.subtotal_amount || 0}`}
+                      />
 
-                      <div className="flex justify-between text-[#51615D]">
-                        <span>Platform Fee</span>
-                        <span>₹{order.platform_fee || 10}</span>
-                      </div>
+                      {order.packing_charge !== undefined ? (
+                        <SummaryRow
+                          label="Packing"
+                          value={`₹${order.packing_charge || 0}`}
+                        />
+                      ) : null}
 
-                      <div className="flex justify-between text-[#073B35] font-black border-t border-[#D7F5EF] pt-3">
-                        <span>Total</span>
-                        <span>₹{order.total_amount || 0}</span>
+                      <SummaryRow
+                        label="Platform Fee"
+                        value={`₹${order.platform_fee || 0}`}
+                      />
+
+                      <div className="flex items-center justify-between border-t border-[#D7F5EF] pt-3">
+                        <p className="font-black text-[#073B35]">Total</p>
+                        <p className="font-black text-[#073B35]">
+                          ₹{order.total_amount || 0}
+                        </p>
                       </div>
                     </div>
 
-                    {order.notes && (
-                      <p className="text-[#51615D] text-sm mt-4 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4">
+                    <div className="mt-3 rounded-2xl border border-[#BDEFE6] bg-white p-4">
+                      <p className="text-xs font-black uppercase tracking-wide text-[#51615D]">
+                        Payment
+                      </p>
+
+                      <p className="mt-1 text-sm font-black text-[#111827]">
+                        {getPaymentLabel(order)}
+                      </p>
+
+                      {order.payment_reference ? (
+                        <p className="mt-1 truncate text-xs font-semibold text-[#51615D]">
+                          Ref: {order.payment_reference}
+                        </p>
+                      ) : null}
+                    </div>
+
+                    {order.scheduled_order && order.scheduled_for ? (
+                      <div className="mt-3 rounded-2xl border border-[#BDEFE6] bg-[#41D3BD]/12 p-4">
+                        <p className="text-sm font-black text-[#073B35]">
+                          Scheduled order
+                        </p>
+
+                        <p className="mt-1 text-xs font-semibold text-[#51615D]">
+                          {new Date(order.scheduled_for).toLocaleString(
+                            "en-IN",
+                            {
+                              weekday: "short",
+                              day: "2-digit",
+                              month: "short",
+                              hour: "numeric",
+                              minute: "2-digit",
+                              hour12: true,
+                            }
+                          )}
+                        </p>
+                      </div>
+                    ) : null}
+
+                    {order.notes ? (
+                      <p className="mt-3 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4 text-sm font-semibold text-[#51615D]">
                         Note: {order.notes}
                       </p>
-                    )}
+                    ) : null}
 
-                    <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {orderStatus === "cancelled" ? (
-                        <div className="w-full border border-red-200 text-red-600 bg-red-50 font-black py-3 rounded-2xl text-center">
+                    <div className="mt-4 grid grid-cols-2 gap-3">
+                      {isCancelled ? (
+                        <div className="rounded-2xl border border-red-200 bg-red-50 py-3 text-center text-sm font-black text-red-600">
                           Cancelled
                         </div>
                       ) : (
                         <button
                           type="button"
                           onClick={() => handleReorder(order)}
-                          className="w-full bg-[#073B35] hover:bg-[#0B5149] active:scale-[0.98] text-white font-black py-3 rounded-2xl transition-all duration-200 shadow-lg shadow-[#073B35]/15"
+                          className="rounded-2xl border border-[#073B35] bg-[#073B35] py-3 text-sm font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.98]"
                         >
                           Re-order
                         </button>
@@ -360,23 +489,65 @@ export default function OrderHistory() {
 
                       <Link
                         to={`/customer-care?order_id=${order.id}`}
-                        className="w-full border border-[#41D3BD]/45 bg-[#FFFFF2] text-[#073B35] hover:bg-[#D7F5EF] active:scale-[0.98] font-black py-3 rounded-2xl transition-all duration-200 text-center"
+                        className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] py-3 text-center text-sm font-black text-[#073B35] active:scale-[0.98]"
                       >
-                        Need Help?
+                        Need Help
                       </Link>
                     </div>
 
-                    <p className="text-[#51615D] text-xs mt-4 leading-relaxed">
+                    <p className="mt-4 text-xs leading-relaxed text-[#51615D]">
                       Exact kitchen door/location is not shown publicly. Pickup
                       coordination happens through Nefo after confirmation.
                     </p>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </main>
-    </>
+                  </div>
+                </article>
+              );
+            })}
+          </section>
+        ) : null}
+      </div>
+    </main>
+  );
+}
+
+function SummaryRow({ label, value }) {
+  return (
+    <div className="flex items-center justify-between text-sm">
+      <p className="text-[#51615D]">{label}</p>
+      <p className="font-bold text-[#111827]">{value}</p>
+    </div>
+  );
+}
+
+function StatTile({ label, value, strong = false, muted = false }) {
+  return (
+    <div className="rounded-[22px] border border-[#D7F5EF] bg-white/90 p-3 shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
+      <p className="text-[10px] font-black uppercase text-[#7A8A86]">
+        {label}
+      </p>
+
+      <p
+        className={`mt-1 text-xl font-black ${
+          muted ? "text-[#8AA5A0]" : strong ? "text-[#073B35]" : "text-[#111827]"
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function BackIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+    >
+      <path d="M19 12H5" />
+      <path d="M12 19l-7-7 7-7" />
+    </svg>
   );
 }

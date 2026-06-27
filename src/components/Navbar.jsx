@@ -4,6 +4,9 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabaseClient";
 
+const MENU_CARD =
+  "rounded-[28px] border border-[#D7F5EF] bg-[#FFFFF2] shadow-[8px_8px_22px_rgba(7,59,53,0.16),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+
 export default function Navbar() {
   const { cartCount } = useCart();
   const { user, signOut, authLoading } = useAuth();
@@ -140,7 +143,9 @@ export default function Navbar() {
 
   function getSellerActionLabel() {
     if (isSeller) return "Seller Dashboard";
-    if (sellerApplicationStatus === "pending") return "Seller Application Pending";
+    if (sellerApplicationStatus === "pending") {
+      return "Seller Application Pending";
+    }
     if (sellerApplicationStatus === "rejected") return "Re-apply to Sell";
     return "Apply to Sell on Nefo";
   }
@@ -151,16 +156,16 @@ export default function Navbar() {
 
   function LogoMark() {
     return (
-      <div className="hidden sm:flex w-11 h-11 rounded-2xl bg-[#FFFFF2] border border-[#41D3BD]/35 items-center justify-center overflow-hidden shadow-lg shadow-black/25 shrink-0">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] shadow-[4px_4px_10px_rgba(7,59,53,0.10),-4px_-4px_10px_rgba(255,255,255,0.95)]">
         {!logoFailed ? (
           <img
             src="/Nefo-logo.png"
             alt="Nefo"
-            className="w-full h-full object-cover scale-[1.65]"
+            className="h-full w-full scale-[1.65] object-cover"
             onError={() => setLogoFailed(true)}
           />
         ) : (
-          <span className="text-[#073B35] font-black text-base">N</span>
+          <span className="text-base font-black text-[#073B35]">N</span>
         )}
       </div>
     );
@@ -168,54 +173,54 @@ export default function Navbar() {
 
   if (authLoading) {
     return (
-      <header className="sticky top-0 z-50 bg-[#073B35] border-b border-[#0F5B51]">
-        <div className="h-[92px] sm:h-[72px]" />
+      <header className="sticky top-0 z-[900] border-b border-[#D7F5EF] bg-[#FFFFF2]/95 backdrop-blur-xl">
+        <div className="mx-auto h-[74px] max-w-md px-4" />
       </header>
     );
   }
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-[#073B35]/96 backdrop-blur-2xl border-b border-[#0F5B51] shadow-lg shadow-[#073B35]/25">
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="h-[92px] sm:h-[72px] flex items-center justify-between gap-3">
-            <Link to="/" className="flex items-center gap-3 group min-w-0">
+      <header className="sticky top-0 z-[900] border-b border-[#D7F5EF] bg-[#FFFFF2]/95 shadow-[0_8px_24px_rgba(7,59,53,0.06)] backdrop-blur-xl">
+        <nav className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="flex h-[74px] items-center justify-between gap-3">
+            <Link to="/" className="group flex min-w-0 items-center gap-3">
               <LogoMark />
 
-              <div className="leading-none min-w-0">
-                <p className="text-[#FFFFF2] font-black text-2xl sm:text-lg tracking-tight group-hover:text-[#41D3BD] transition-all truncate">
+              <div className="min-w-0 leading-none">
+                <p className="truncate text-2xl font-black tracking-tight text-[#073B35] transition-all group-hover:text-[#0B8F80] sm:text-xl">
                   Nefo
                 </p>
 
-                <p className="text-xs sm:text-[10px] text-[#BFE8E1] mt-2 sm:mt-1 tracking-wide uppercase truncate">
+                <p className="mt-2 truncate text-[10px] font-black uppercase tracking-wide text-[#51615D]">
                   Neighbourhood Food
                 </p>
               </div>
             </Link>
 
-            <div className="hidden md:flex items-center gap-7">
+            <div className="hidden items-center gap-7 md:flex">
               {navLinks.map((link) => (
                 <Link
                   key={link.name}
                   to={link.path}
-                  className={`text-sm font-semibold transition-all duration-200 ${
+                  className={`text-sm font-black transition-all duration-200 ${
                     isActive(link.path)
-                      ? "text-[#41D3BD]"
-                      : "text-[#D7F5EF] hover:text-[#41D3BD]"
+                      ? "text-[#073B35]"
+                      : "text-[#51615D] hover:text-[#073B35]"
                   }`}
                 >
                   {link.name}
                 </Link>
               ))}
 
-              {isAdmin && (
+              {isAdmin ? (
                 <>
                   <Link
                     to="/owner-dashboard"
-                    className={`text-sm font-semibold transition-all duration-200 ${
+                    className={`text-sm font-black transition-all duration-200 ${
                       isActive("/owner-dashboard")
-                        ? "text-[#41D3BD]"
-                        : "text-[#D7F5EF] hover:text-[#41D3BD]"
+                        ? "text-[#073B35]"
+                        : "text-[#51615D] hover:text-[#073B35]"
                     }`}
                   >
                     Owner Dashboard
@@ -223,10 +228,10 @@ export default function Navbar() {
 
                   <Link
                     to="/owner-accounting"
-                    className={`text-sm font-semibold transition-all duration-200 ${
+                    className={`text-sm font-black transition-all duration-200 ${
                       isActive("/owner-accounting")
-                        ? "text-[#41D3BD]"
-                        : "text-[#D7F5EF] hover:text-[#41D3BD]"
+                        ? "text-[#073B35]"
+                        : "text-[#51615D] hover:text-[#073B35]"
                     }`}
                   >
                     Accounting
@@ -234,46 +239,46 @@ export default function Navbar() {
 
                   <Link
                     to="/owner-seller-applications"
-                    className={`text-sm font-semibold transition-all duration-200 ${
+                    className={`text-sm font-black transition-all duration-200 ${
                       isActive("/owner-seller-applications")
-                        ? "text-[#41D3BD]"
-                        : "text-[#D7F5EF] hover:text-[#41D3BD]"
+                        ? "text-[#073B35]"
+                        : "text-[#51615D] hover:text-[#073B35]"
                     }`}
                   >
-                    Seller Applications
+                    Applications
                   </Link>
                 </>
-              )}
+              ) : null}
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              {!user && (
+            <div className="flex shrink-0 items-center gap-2">
+              {!user ? (
                 <Link
                   to="/customer-login"
-                  className="hidden md:flex bg-[#41D3BD] hover:bg-[#55E4CF] active:scale-95 text-[#073B35] text-sm font-black px-5 py-2.5 rounded-2xl transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
+                  className="hidden rounded-2xl border border-[#41D3BD] bg-[#41D3BD] px-5 py-2.5 text-sm font-black text-[#073B35] shadow-lg shadow-[#41D3BD]/20 transition-all duration-200 active:scale-95 md:flex"
                 >
                   Sign In
                 </Link>
-              )}
+              ) : null}
 
               <Link
                 to="/cart"
                 aria-label="Cart"
-                className="relative bg-[#0B4A43] hover:bg-[#0F5B51] border border-[#14796D] hover:border-[#41D3BD] active:scale-95 text-[#FFFFF2] w-[58px] h-[58px] sm:w-auto sm:h-auto sm:px-4 sm:py-2 rounded-3xl sm:rounded-2xl transition-all duration-200 flex items-center justify-center gap-2 shadow-sm"
+                className="relative flex h-[52px] w-[52px] items-center justify-center gap-2 rounded-2xl border border-[#BDEFE6] bg-white text-[#073B35] shadow-[4px_4px_12px_rgba(7,59,53,0.08),-4px_-4px_12px_rgba(255,255,255,0.95)] transition-all duration-200 active:scale-95 sm:h-auto sm:w-auto sm:px-4 sm:py-2.5"
               >
-                <span className="text-2xl sm:text-lg">🛒</span>
+                <span className="text-xl">🛒</span>
 
-                <span className="hidden sm:inline text-sm font-bold">
+                <span className="hidden text-sm font-black sm:inline">
                   Cart
                 </span>
 
-                {cartCount > 0 && (
-                  <div className="absolute -top-2 -right-2 min-w-[22px] h-[22px] px-1 bg-[#41D3BD] rounded-full flex items-center justify-center">
-                    <span className="text-[#073B35] text-[11px] font-black">
+                {cartCount > 0 ? (
+                  <div className="absolute -right-2 -top-2 flex h-[22px] min-w-[22px] items-center justify-center rounded-full border border-[#073B35] bg-[#41D3BD] px-1">
+                    <span className="text-[11px] font-black text-[#073B35]">
                       {cartCount}
                     </span>
                   </div>
-                )}
+                ) : null}
               </Link>
 
               {user ? (
@@ -282,19 +287,21 @@ export default function Navbar() {
                     <button
                       type="button"
                       onClick={() => setProfileOpen(!profileOpen)}
-                      className="w-11 h-11 rounded-2xl bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black flex items-center justify-center transition-all duration-200 shadow-lg shadow-[#41D3BD]/20"
+                      className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#41D3BD] bg-[#41D3BD] font-black text-[#073B35] shadow-lg shadow-[#41D3BD]/20 transition-all duration-200 active:scale-95"
                     >
                       {getInitial()}
                     </button>
 
-                    {profileOpen && (
-                      <div className="absolute right-0 mt-3 w-72 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl overflow-hidden shadow-2xl shadow-[#073B35]/25">
-                        <div className="p-5 border-b border-[#D7F5EF]">
-                          <p className="text-[#111827] font-semibold truncate">
+                    {profileOpen ? (
+                      <div
+                        className={`absolute right-0 mt-3 w-72 overflow-hidden ${MENU_CARD}`}
+                      >
+                        <div className="border-b border-[#D7F5EF] p-5">
+                          <p className="truncate font-black text-[#111827]">
                             {user.email}
                           </p>
 
-                          <p className="text-[#51615D] text-sm mt-1">
+                          <p className="mt-1 text-sm font-semibold text-[#51615D]">
                             {getAccountLabel()}
                           </p>
                         </div>
@@ -309,14 +316,14 @@ export default function Navbar() {
                           />
                         </div>
                       </div>
-                    )}
+                    ) : null}
                   </div>
 
                   <button
                     type="button"
                     onClick={() => setMobileMenuOpen(true)}
                     aria-label="Open menu"
-                    className="md:hidden w-[58px] h-[58px] rounded-3xl bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black flex items-center justify-center transition-all duration-200 shadow-lg shadow-[#41D3BD]/20 text-xl"
+                    className="flex h-[52px] w-[52px] items-center justify-center rounded-2xl border border-[#41D3BD] bg-[#41D3BD] text-xl font-black text-[#073B35] shadow-lg shadow-[#41D3BD]/20 transition-all duration-200 active:scale-95 md:hidden"
                   >
                     {getInitial()}
                   </button>
@@ -325,7 +332,7 @@ export default function Navbar() {
                 <Link
                   to="/customer-login"
                   aria-label="Sign in"
-                  className="md:hidden w-[58px] h-[58px] rounded-3xl bg-[#41D3BD] hover:bg-[#55E4CF] text-[#073B35] font-black flex items-center justify-center transition-all duration-200 shadow-lg shadow-[#41D3BD]/20 text-xl"
+                  className="flex h-[52px] w-[52px] items-center justify-center rounded-2xl border border-[#41D3BD] bg-[#41D3BD] text-xl font-black text-[#073B35] shadow-lg shadow-[#41D3BD]/20 transition-all duration-200 active:scale-95 md:hidden"
                 >
                   →
                 </Link>
@@ -335,37 +342,42 @@ export default function Navbar() {
         </nav>
       </header>
 
-      {mobileMenuOpen && user && (
-        <div className="md:hidden fixed inset-0 z-[70] bg-[#073B35]/55 backdrop-blur-sm">
+      {mobileMenuOpen && user ? (
+        <div className="fixed inset-0 z-[950] bg-[#073B35]/55 backdrop-blur-sm md:hidden">
           <div
             ref={mobileDropdownRef}
-            className="absolute top-[104px] right-3 left-3 bg-[#FFFFF2] border border-[#D7F5EF] rounded-[2rem] shadow-2xl shadow-[#073B35]/25 overflow-hidden"
+            className={`absolute left-3 right-3 top-[86px] max-h-[calc(100vh-104px)] overflow-hidden ${MENU_CARD}`}
           >
-            <div className="p-5 border-b border-[#D7F5EF]">
+            <div className="border-b border-[#D7F5EF] p-5">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-[#41D3BD] text-[#073B35] font-black flex items-center justify-center shadow-lg shadow-[#41D3BD]/20 text-xl">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-[#41D3BD] bg-[#41D3BD] text-xl font-black text-[#073B35] shadow-lg shadow-[#41D3BD]/20">
                   {getInitial()}
                 </div>
 
-                <div className="min-w-0">
-                  <p className="text-[#111827] font-black truncate text-base">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-base font-black text-[#111827]">
                     {user.email}
                   </p>
 
-                  <p className="text-[#51615D] text-sm mt-1">
+                  <p className="mt-1 text-sm font-semibold text-[#51615D]">
                     {getAccountLabel()}
                   </p>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#BDEFE6] bg-white text-[#073B35] font-black"
+                  aria-label="Close menu"
+                >
+                  ×
+                </button>
               </div>
             </div>
 
-            <div className="p-3 max-h-[72vh] overflow-y-auto">
+            <div className="max-h-[72vh] overflow-y-auto p-3">
               <div className="grid gap-2">
-                <MobileLink
-                  to="/"
-                  active={isActive("/")}
-                  label="Home"
-                />
+                <MobileLink to="/" active={isActive("/")} label="Home" />
 
                 <MobileLink
                   to="/marketplace"
@@ -379,8 +391,10 @@ export default function Navbar() {
                   label="My Profile"
                 />
 
-                {isAdmin && (
+                {isAdmin ? (
                   <>
+                    <MobileDivider />
+
                     <MobileLink
                       to="/owner-dashboard"
                       active={isActive("/owner-dashboard")}
@@ -402,9 +416,9 @@ export default function Navbar() {
                       highlight
                     />
                   </>
-                )}
+                ) : null}
 
-                <div className="h-px bg-[#D7F5EF] my-2" />
+                <MobileDivider />
 
                 <MobileLink
                   to="/orders"
@@ -418,27 +432,53 @@ export default function Navbar() {
                   label="Order History"
                 />
 
-                {isSeller && (
+                <MobileLink
+                  to="/customer-care"
+                  active={isActive("/customer-care")}
+                  label="Customer Care"
+                />
+
+                {isSeller ? (
                   <MobileLink
                     to="/seller-helper"
                     active={isActive("/seller-helper")}
                     label="Seller Assistant"
                     highlight
                   />
-                )}
+                ) : null}
 
                 <button
                   type="button"
                   onClick={handleSellerAction}
-                  className="text-left px-4 py-4 rounded-2xl text-[#1A9F8D] hover:bg-[#D7F5EF] font-black"
+                  className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-4 text-left text-sm font-black text-[#073B35]"
                 >
                   {getSellerActionLabel()}
                 </button>
 
+                <MobileDivider />
+
+                <MobileLink
+                  to="/privacy-policy"
+                  active={isActive("/privacy-policy")}
+                  label="Privacy Policy"
+                />
+
+                <MobileLink
+                  to="/terms"
+                  active={isActive("/terms")}
+                  label="Terms & Conditions"
+                />
+
+                <MobileLink
+                  to="/refund-policy"
+                  active={isActive("/refund-policy")}
+                  label="Refund Policy"
+                />
+
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="mt-2 bg-red-50 text-red-500 font-black px-4 py-4 rounded-2xl"
+                  className="mt-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-left text-sm font-black text-red-500"
                 >
                   Sign Out
                 </button>
@@ -446,7 +486,7 @@ export default function Navbar() {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </>
   );
 }
@@ -460,84 +500,55 @@ function DesktopMenuLinks({
 }) {
   return (
     <>
-      <Link
-        to="/profile"
-        className="block px-4 py-3 rounded-2xl text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D] transition-all"
-      >
-        My Profile
-      </Link>
+      <DesktopLink to="/profile" label="My Profile" />
+      <DesktopLink to="/marketplace" label="Marketplace" />
+      <DesktopLink to="/orders" label="Active Orders" />
+      <DesktopLink to="/order-history" label="Order History" />
+      <DesktopLink to="/customer-care" label="Customer Care" />
 
-      <Link
-        to="/marketplace"
-        className="block px-4 py-3 rounded-2xl text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D] transition-all"
-      >
-        Marketplace
-      </Link>
-
-      <Link
-        to="/orders"
-        className="block px-4 py-3 rounded-2xl text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D] transition-all"
-      >
-        Active Orders
-      </Link>
-
-      <Link
-        to="/order-history"
-        className="block px-4 py-3 rounded-2xl text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D] transition-all"
-      >
-        Order History
-      </Link>
-
-      {isAdmin && (
+      {isAdmin ? (
         <>
-          <Link
-            to="/owner-dashboard"
-            className="block px-4 py-3 rounded-2xl text-[#1A9F8D] hover:bg-[#D7F5EF] transition-all"
-          >
-            Owner Dashboard
-          </Link>
-
-          <Link
+          <DesktopDivider />
+          <DesktopLink to="/owner-dashboard" label="Owner Dashboard" highlight />
+          <DesktopLink
             to="/owner-accounting"
-            className="block px-4 py-3 rounded-2xl text-[#1A9F8D] hover:bg-[#D7F5EF] transition-all"
-          >
-            Owner Accounting
-          </Link>
-
-          <Link
+            label="Owner Accounting"
+            highlight
+          />
+          <DesktopLink
             to="/owner-seller-applications"
-            className="block px-4 py-3 rounded-2xl text-[#1A9F8D] hover:bg-[#D7F5EF] transition-all"
-          >
-            Seller Applications
-          </Link>
+            label="Seller Applications"
+            highlight
+          />
         </>
-      )}
+      ) : null}
 
-      {isSeller && (
-        <Link
-          to="/seller-helper"
-          className="block px-4 py-3 rounded-2xl text-[#1A9F8D] hover:bg-[#D7F5EF] transition-all"
-        >
-          Seller Assistant
-        </Link>
-      )}
+      {isSeller ? (
+        <DesktopLink to="/seller-helper" label="Seller Assistant" highlight />
+      ) : null}
 
       <button
         type="button"
         onClick={handleSellerAction}
-        className={`w-full text-left px-4 py-3 rounded-2xl transition-all ${
+        className={`w-full rounded-2xl px-4 py-3 text-left text-sm font-black transition-all ${
           isSeller
-            ? "text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D]"
-            : "text-[#1A9F8D] hover:bg-[#D7F5EF]"
+            ? "text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#073B35]"
+            : "text-[#073B35] hover:bg-[#D7F5EF]"
         }`}
       >
         {getSellerActionLabel()}
       </button>
 
+      <DesktopDivider />
+
+      <DesktopLink to="/privacy-policy" label="Privacy Policy" />
+      <DesktopLink to="/terms" label="Terms & Conditions" />
+      <DesktopLink to="/refund-policy" label="Refund Policy" />
+
       <button
         type="button"
         onClick={handleLogout}
-        className="w-full text-left px-4 py-3 rounded-2xl text-red-500 hover:bg-red-50 transition-all"
+        className="w-full rounded-2xl px-4 py-3 text-left text-sm font-black text-red-500 transition-all hover:bg-red-50"
       >
         Sign Out
       </button>
@@ -545,16 +556,39 @@ function DesktopMenuLinks({
   );
 }
 
+function DesktopLink({ to, label, highlight = false }) {
+  return (
+    <Link
+      to={to}
+      className={`block rounded-2xl px-4 py-3 text-sm font-black transition-all ${
+        highlight
+          ? "text-[#073B35] hover:bg-[#D7F5EF]"
+          : "text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#073B35]"
+      }`}
+    >
+      {label}
+    </Link>
+  );
+}
+
+function DesktopDivider() {
+  return <div className="my-2 h-px bg-[#D7F5EF]" />;
+}
+
+function MobileDivider() {
+  return <div className="my-2 h-px bg-[#D7F5EF]" />;
+}
+
 function MobileLink({ to, active, label, highlight = false }) {
   return (
     <Link
       to={to}
-      className={`px-4 py-4 rounded-2xl text-sm font-black transition-all ${
+      className={`rounded-2xl border px-4 py-4 text-sm font-black transition-all ${
         active
-          ? "bg-[#41D3BD] text-[#073B35]"
+          ? "border-[#41D3BD] bg-[#41D3BD] text-[#073B35]"
           : highlight
-          ? "text-[#1A9F8D] hover:bg-[#D7F5EF]"
-          : "text-[#51615D] hover:bg-[#D7F5EF] hover:text-[#1A9F8D]"
+          ? "border-[#BDEFE6] bg-[#FFFFF2] text-[#073B35]"
+          : "border-transparent text-[#51615D] hover:border-[#BDEFE6] hover:bg-[#D7F5EF] hover:text-[#073B35]"
       }`}
     >
       {label}

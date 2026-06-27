@@ -1,12 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import Navbar from "../components/Navbar";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 
 const PLATFORM_FEE = 10;
 const SELLER_COMMISSION_RATE = 0.1;
 
+const CARD =
+  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+
+const SOFT_CARD =
+  "rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
+
+const INPUT =
+  "w-full rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-4 text-sm font-black text-[#111827] outline-none focus:border-[#41D3BD] focus:bg-white";
+
 export default function OwnerAccounting() {
+  const navigate = useNavigate();
+
   const [orders, setOrders] = useState([]);
   const [sellerMap, setSellerMap] = useState({});
   const [dateFilter, setDateFilter] = useState("week");
@@ -50,7 +60,9 @@ export default function OwnerAccounting() {
     }
 
     const sellerIds = [
-      ...new Set((orderData || []).map((order) => order.seller_id).filter(Boolean)),
+      ...new Set(
+        (orderData || []).map((order) => order.seller_id).filter(Boolean)
+      ),
     ];
 
     const nextSellerMap = {};
@@ -149,7 +161,9 @@ export default function OwnerAccounting() {
     if (paymentFilter === "upi") return method === "upi";
     if (paymentFilter === "cash") return method === "cash";
     if (paymentFilter === "pending") return paymentStatus === "pending";
-    if (paymentFilter === "reference") return paymentStatus === "reference_submitted";
+    if (paymentFilter === "reference") {
+      return paymentStatus === "reference_submitted";
+    }
 
     return true;
   }
@@ -188,11 +202,12 @@ export default function OwnerAccounting() {
 
     if (Number.isNaN(date.getTime())) return "-";
 
-    return date.toLocaleString([], {
+    return date.toLocaleString("en-IN", {
       day: "2-digit",
       month: "short",
       hour: "numeric",
       minute: "2-digit",
+      hour12: true,
     });
   }
 
@@ -203,7 +218,10 @@ export default function OwnerAccounting() {
   function getSellerName(order) {
     const sellerProfile = getSellerProfile(order);
 
-    if (sellerProfile?.seller_kitchen_name) return sellerProfile.seller_kitchen_name;
+    if (sellerProfile?.seller_kitchen_name) {
+      return sellerProfile.seller_kitchen_name;
+    }
+
     if (sellerProfile?.full_name) return sellerProfile.full_name;
 
     const firstItem = getOrderItems(order)[0];
@@ -254,7 +272,10 @@ export default function OwnerAccounting() {
   }
 
   function getSellerNetPayout(order) {
-    return Math.max(getSellerGrossEarning(order) - getSellerCommission(order), 0);
+    return Math.max(
+      getSellerGrossEarning(order) - getSellerCommission(order),
+      0
+    );
   }
 
   function getNefoTotalEarning(order) {
@@ -300,26 +321,26 @@ export default function OwnerAccounting() {
     const method = normalizePaymentMethod(order.payment_method);
     const paymentStatus = normalizePaymentStatus(order.payment_status);
 
-    if (method === "cash") return "bg-blue-50 text-blue-700 border-blue-200";
+    if (method === "cash") return "border-blue-200 bg-blue-50 text-blue-700";
     if (paymentStatus === "reference_submitted") {
-      return "bg-green-50 text-green-700 border-green-200";
+      return "border-green-200 bg-green-50 text-green-700";
     }
 
-    return "bg-yellow-50 text-yellow-700 border-yellow-200";
+    return "border-yellow-200 bg-yellow-50 text-yellow-700";
   }
 
   function getStatusBadgeClass(status) {
     const currentStatus = normalizeStatus(status);
 
     if (currentStatus === "completed") {
-      return "bg-green-50 text-green-700 border-green-200";
+      return "border-green-200 bg-green-50 text-green-700";
     }
 
     if (currentStatus === "cancelled") {
-      return "bg-red-50 text-red-600 border-red-200";
+      return "border-red-200 bg-red-50 text-red-600";
     }
 
-    return "bg-[#41D3BD]/12 text-[#073B35] border-[#41D3BD]/30";
+    return "border-[#BDEFE6] bg-[#41D3BD]/12 text-[#073B35]";
   }
 
   const filteredOrders = useMemo(() => {
@@ -388,7 +409,9 @@ export default function OwnerAccounting() {
     }).length;
 
     const upiReferenceSubmitted = filteredOrders.filter((order) => {
-      return normalizePaymentStatus(order.payment_status) === "reference_submitted";
+      return (
+        normalizePaymentStatus(order.payment_status) === "reference_submitted"
+      );
     }).length;
 
     const cashOrders = filteredOrders.filter((order) => {
@@ -467,9 +490,13 @@ export default function OwnerAccounting() {
 
       if (status === "completed") ledger[sellerId].completedOrders += 1;
       if (status === "cancelled") ledger[sellerId].cancelledOrders += 1;
-      if (status !== "completed" && status !== "cancelled") ledger[sellerId].activeOrders += 1;
+      if (status !== "completed" && status !== "cancelled") {
+        ledger[sellerId].activeOrders += 1;
+      }
       if (paymentStatus === "pending") ledger[sellerId].pendingPayments += 1;
-      if (paymentStatus === "reference_submitted") ledger[sellerId].upiReferenceSubmitted += 1;
+      if (paymentStatus === "reference_submitted") {
+        ledger[sellerId].upiReferenceSubmitted += 1;
+      }
       if (paymentMethod === "cash") ledger[sellerId].cashOrders += 1;
     });
 
@@ -571,487 +598,600 @@ export default function OwnerAccounting() {
   }
 
   return (
-    <>
-      <Navbar />
+    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-32 text-[#111827]">
+      <div className="mx-auto max-w-md">
+        <header className="flex items-start gap-3">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+            aria-label="Go back"
+          >
+            <BackIcon />
+          </button>
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-6 sm:py-10 pb-28">
-        <div className="max-w-7xl mx-auto">
-          <section className="relative overflow-hidden bg-white/90 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-xl shadow-[#073B35]/5">
-            <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[95px]" />
-            <div className="absolute -bottom-28 -left-24 w-72 h-72 bg-[#41D3BD]/10 rounded-full blur-[110px]" />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+              Owner Accounting
+            </p>
 
-            <div className="relative flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
-              <div>
-                <div className="inline-flex items-center gap-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
-                  <span>📒</span>
-                  <span>Owner Accounting</span>
+            <h1 className="mt-1 text-3xl font-black leading-tight text-[#073B35]">
+              Weekly seller
+              <span className="block text-[#111827]">payouts</span>
+            </h1>
+
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+              Track seller earnings, deduct Nefo commission, view seller bank
+              details, and calculate net weekly payout.
+            </p>
+          </div>
+        </header>
+
+        <section className="mt-5 grid grid-cols-2 gap-3">
+          <Link
+            to="/owner-dashboard"
+            className="rounded-2xl border border-[#BDEFE6] bg-white px-4 py-4 text-center text-sm font-black text-[#073B35] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] active:scale-95"
+          >
+            Owner Dashboard
+          </Link>
+
+          <Link
+            to="/owner-seller-applications"
+            className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-4 text-center text-sm font-black text-[#073B35] active:scale-95"
+          >
+            Applications
+          </Link>
+
+          <button
+            type="button"
+            onClick={downloadAccountingCSV}
+            className="col-span-2 rounded-2xl border border-[#073B35] bg-[#073B35] px-4 py-4 text-sm font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-95"
+          >
+            Download Payout CSV
+          </button>
+        </section>
+
+        <section className={`mt-5 p-4 ${CARD}`}>
+          <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+            Filters
+          </p>
+
+          <div className="mt-3 grid grid-cols-1 gap-3">
+            <select
+              value={dateFilter}
+              onChange={(event) => setDateFilter(event.target.value)}
+              className={INPUT}
+            >
+              <option value="today">Today</option>
+              <option value="yesterday">Yesterday</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+              <option value="all">All Time</option>
+            </select>
+
+            <select
+              value={paymentFilter}
+              onChange={(event) => setPaymentFilter(event.target.value)}
+              className={INPUT}
+            >
+              <option value="all">All Payments</option>
+              <option value="upi">UPI Orders</option>
+              <option value="reference">UPI Reference Submitted</option>
+              <option value="pending">Payment Pending</option>
+              <option value="cash">Cash / Pay Later</option>
+            </select>
+
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              className={INPUT}
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active Orders</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="cooking">Cooking</option>
+              <option value="packing">Packing</option>
+              <option value="ready_for_pickup">Ready for Pickup</option>
+            </select>
+
+            <button
+              type="button"
+              onClick={() => fetchAccountingData()}
+              className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-5 py-4 font-black text-[#073B35] active:scale-95"
+            >
+              Refresh
+            </button>
+          </div>
+        </section>
+
+        {loading ? (
+          <section className={`mt-5 p-8 text-center ${CARD}`}>
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-4 border-[#D7F5EF] border-t-[#073B35] animate-spin" />
+
+            <p className="mt-4 font-bold text-[#51615D]">
+              Loading accounting data...
+            </p>
+          </section>
+        ) : null}
+
+        {!loading && errorMessage ? (
+          <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-5">
+            <p className="font-black text-red-600">
+              Could not load accounting page.
+            </p>
+
+            <p className="mt-2 text-sm font-semibold text-red-500">
+              {errorMessage}
+            </p>
+          </div>
+        ) : null}
+
+        {!loading && !errorMessage ? (
+          <>
+            <section className="mt-5 grid grid-cols-2 gap-3">
+              <AccountingCard
+                title="Gross Sales"
+                value={`₹${analytics.grossSales}`}
+              />
+              <AccountingCard
+                title="Food Sales"
+                value={`₹${analytics.foodSales}`}
+              />
+              <AccountingCard
+                title="Seller Commission"
+                value={`₹${analytics.sellerCommission}`}
+              />
+              <AccountingCard
+                title="Net Payout"
+                value={`₹${analytics.sellerNetPayout}`}
+              />
+              <AccountingCard
+                title="Platform Fee"
+                value={`₹${analytics.platformRevenue}`}
+              />
+              <AccountingCard
+                title="Nefo Earning"
+                value={`₹${analytics.nefoTotalEarning}`}
+              />
+              <AccountingCard
+                title="Total Orders"
+                value={analytics.totalOrders}
+              />
+              <AccountingCard
+                title="Payment Pending"
+                value={analytics.paymentPendingOrders}
+              />
+            </section>
+
+            <section className={`mt-5 p-5 ${CARD}`}>
+              <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                Weekly Payout Logic
+              </p>
+
+              <h2 className="mt-1 text-2xl font-black leading-tight text-[#111827]">
+                {getDateFilterLabel()} payout summary
+              </h2>
+
+              <div className="mt-5 space-y-3">
+                <MoneyRow
+                  label="Seller Gross Earning"
+                  value={`₹${analytics.sellerGrossEarning}`}
+                />
+                <MoneyRow
+                  label={`Nefo Commission (${Math.round(
+                    SELLER_COMMISSION_RATE * 100
+                  )}%)`}
+                  value={`₹${analytics.sellerCommission}`}
+                />
+                <MoneyRow
+                  label="Net Amount to Send Sellers"
+                  value={`₹${analytics.sellerNetPayout}`}
+                />
+                <MoneyRow
+                  label="Nefo Platform Fee"
+                  value={`₹${analytics.platformRevenue}`}
+                />
+                <MoneyRow
+                  label="Nefo Total Earning"
+                  value={`₹${analytics.nefoTotalEarning}`}
+                />
+              </div>
+            </section>
+
+            <section className="mt-5 rounded-[28px] border border-[#073B35] bg-[#073B35] p-5 text-white shadow-xl shadow-[#073B35]/15">
+              <p className="text-xs font-black uppercase tracking-wide text-[#41D3BD]">
+                Payout Rule
+              </p>
+
+              <h2 className="mt-2 text-2xl font-black leading-tight">
+                Weekly payout = seller earning minus commission
+              </h2>
+
+              <p className="mt-3 text-sm font-semibold leading-relaxed text-[#D7F5EF]">
+                For every non-cancelled order, Nefo calculates seller food
+                earning, deducts seller commission, and shows the net payout
+                amount before weekly settlement.
+              </p>
+
+              <p className="mt-5 text-sm font-black text-[#41D3BD]">
+                Current commission: {Math.round(SELLER_COMMISSION_RATE * 100)}%
+              </p>
+            </section>
+
+            <section className={`mt-5 p-5 ${CARD}`}>
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                    Weekly Seller Payout Ledger
+                  </p>
+
+                  <h2 className="mt-1 text-2xl font-black text-[#111827]">
+                    Amount to send
+                  </h2>
                 </div>
 
-                <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
-                  Weekly seller
-                  <span className="block text-[#111827]">payouts</span>
-                </h1>
-
-                <p className="text-[#51615D] mt-4 text-sm sm:text-lg max-w-2xl leading-relaxed">
-                  Track seller earnings, deduct Nefo commission, view seller
-                  bank details, and calculate net seller payout before weekly
-                  settlement.
+                <p className="shrink-0 text-sm font-black text-[#51615D]">
+                  {sellerLedger.length}
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  to="/owner-dashboard"
-                  className="bg-[#FFFFF2] border border-[#D7F5EF] hover:bg-[#D7F5EF] text-[#073B35] font-black px-5 py-3 rounded-2xl transition-all"
-                >
-                  Owner Dashboard
-                </Link>
-
-                <button
-                  type="button"
-                  onClick={downloadAccountingCSV}
-                  className="bg-[#073B35] hover:bg-[#0B5149] text-white font-black px-5 py-3 rounded-2xl shadow-lg shadow-[#073B35]/15 transition-all"
-                >
-                  Download Payout CSV
-                </button>
-              </div>
-            </div>
-          </section>
-
-          <section className="mt-6 bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-4 sm:p-5 shadow-lg shadow-[#073B35]/5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto] gap-3">
-              <select
-                value={dateFilter}
-                onChange={(event) => setDateFilter(event.target.value)}
-                className="bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] font-bold"
-              >
-                <option value="today">Today</option>
-                <option value="yesterday">Yesterday</option>
-                <option value="week">This Week</option>
-                <option value="month">This Month</option>
-                <option value="all">All Time</option>
-              </select>
-
-              <select
-                value={paymentFilter}
-                onChange={(event) => setPaymentFilter(event.target.value)}
-                className="bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] font-bold"
-              >
-                <option value="all">All Payments</option>
-                <option value="upi">UPI Orders</option>
-                <option value="reference">UPI Reference Submitted</option>
-                <option value="pending">Payment Pending</option>
-                <option value="cash">Cash / Pay Later</option>
-              </select>
-
-              <select
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
-                className="bg-[#FFFFF2] border border-[#D7F5EF] text-[#111827] rounded-2xl px-5 py-4 outline-none focus:border-[#41D3BD] font-bold"
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active Orders</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="cooking">Cooking</option>
-                <option value="packing">Packing</option>
-                <option value="ready_for_pickup">Ready for Pickup</option>
-              </select>
-
-              <button
-                type="button"
-                onClick={() => fetchAccountingData()}
-                className="bg-[#FFFFF2] border border-[#41D3BD]/45 hover:bg-[#D7F5EF] text-[#073B35] font-black px-5 py-4 rounded-2xl transition-all"
-              >
-                Refresh
-              </button>
-            </div>
-          </section>
-
-          {loading && (
-            <div className="mt-8 bg-white/90 border border-[#D7F5EF] rounded-3xl p-8 text-center shadow-lg shadow-[#073B35]/5">
-              <p className="text-[#51615D] font-bold">
-                Loading accounting data...
-              </p>
-            </div>
-          )}
-
-          {!loading && errorMessage && (
-            <div className="mt-8 bg-red-50 border border-red-200 rounded-3xl p-6">
-              <p className="text-red-600 font-black">
-                Could not load accounting page.
-              </p>
-              <p className="text-red-500 text-sm mt-2">{errorMessage}</p>
-            </div>
-          )}
-
-          {!loading && !errorMessage && (
-            <>
-              <section className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <AccountingCard title="Gross Sales" value={`₹${analytics.grossSales}`} />
-                <AccountingCard title="Food Sales" value={`₹${analytics.foodSales}`} />
-                <AccountingCard title="Seller Commission" value={`₹${analytics.sellerCommission}`} />
-                <AccountingCard title="Net Seller Payout" value={`₹${analytics.sellerNetPayout}`} />
-                <AccountingCard title="Platform Fee" value={`₹${analytics.platformRevenue}`} />
-                <AccountingCard title="Nefo Total Earning" value={`₹${analytics.nefoTotalEarning}`} />
-                <AccountingCard title="Total Orders" value={analytics.totalOrders} />
-                <AccountingCard title="Payment Pending" value={analytics.paymentPendingOrders} />
-              </section>
-
-              <section className="mt-8 grid grid-cols-1 lg:grid-cols-[1fr_0.75fr] gap-5">
-                <div className="bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
-                  <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                    Weekly Payout Logic
-                  </p>
-
-                  <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
-                    {getDateFilterLabel()} payout summary
-                  </h2>
-
-                  <div className="mt-5 space-y-3">
-                    <MoneyRow label="Seller Gross Earning" value={`₹${analytics.sellerGrossEarning}`} />
-                    <MoneyRow
-                      label={`Nefo Commission (${Math.round(
-                        SELLER_COMMISSION_RATE * 100
-                      )}%)`}
-                      value={`₹${analytics.sellerCommission}`}
-                    />
-                    <MoneyRow label="Net Amount to Send Sellers" value={`₹${analytics.sellerNetPayout}`} />
-                    <MoneyRow label="Nefo Platform Fee" value={`₹${analytics.platformRevenue}`} />
-                    <MoneyRow label="Nefo Total Earning" value={`₹${analytics.nefoTotalEarning}`} />
-                  </div>
-                </div>
-
-                <div className="bg-[#073B35] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/15 relative overflow-hidden">
-                  <div className="absolute -top-16 -right-16 w-48 h-48 bg-[#41D3BD]/20 blur-[70px] rounded-full" />
-
-                  <div className="relative">
-                    <p className="text-[#41D3BD] font-black uppercase tracking-wide text-xs">
-                      Payout Rule
-                    </p>
-
-                    <h2 className="text-2xl font-black text-white mt-2">
-                      Weekly payout = seller earning minus commission
-                    </h2>
-
-                    <p className="text-[#D7F5EF] text-sm mt-3 leading-relaxed">
-                      For every non-cancelled order, Nefo calculates seller food
-                      earning, deducts seller commission, and shows the net payout
-                      amount. Use this page before sending weekly settlements.
-                    </p>
-
-                    <p className="text-[#41D3BD] text-sm font-black mt-5">
-                      Current commission: {Math.round(SELLER_COMMISSION_RATE * 100)}%
-                    </p>
-                  </div>
-                </div>
-              </section>
-
-              <section className="mt-8 bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                      Weekly Seller Payout Ledger
-                    </p>
-
-                    <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
-                      How much to send each seller
-                    </h2>
-                  </div>
-
-                  <p className="text-[#51615D] text-sm font-bold">
-                    {sellerLedger.length} sellers
+              {sellerLedger.length === 0 ? (
+                <div className={`mt-6 p-8 text-center ${SOFT_CARD}`}>
+                  <p className="font-bold text-[#51615D]">
+                    No seller payout data found for selected filters.
                   </p>
                 </div>
+              ) : (
+                <div className="mt-6 space-y-4">
+                  {sellerLedger.map((seller) => (
+                    <article
+                      key={seller.sellerId}
+                      className="rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-black text-[#111827]">
+                            {seller.sellerName}
+                          </p>
 
-                {sellerLedger.length === 0 ? (
-                  <div className="mt-6 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-8 text-center">
-                    <p className="text-[#51615D] font-bold">
-                      No seller payout data found for selected filters.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="mt-6 overflow-x-auto">
-                    <table className="w-full text-left min-w-[1650px]">
-                      <thead>
-                        <tr className="border-b border-[#D7F5EF] text-[#51615D] text-sm">
-                          <th className="py-3 pr-4">Kitchen</th>
-                          <th className="py-3 pr-4">Orders</th>
-                          <th className="py-3 pr-4">Completed</th>
-                          <th className="py-3 pr-4">Gross Sales</th>
-                          <th className="py-3 pr-4">Seller Earning</th>
-                          <th className="py-3 pr-4">Commission</th>
-                          <th className="py-3 pr-4">Net Payout</th>
-                          <th className="py-3 pr-4">Account Holder</th>
-                          <th className="py-3 pr-4">Bank</th>
-                          <th className="py-3 pr-4">Account No.</th>
-                          <th className="py-3 pr-4">IFSC</th>
-                          <th className="py-3 pr-4">UPI</th>
-                          <th className="py-3 pr-4">Platform Fee</th>
-                          <th className="py-3 pr-4">Nefo Earning</th>
-                          <th className="py-3 pr-4">Pending Payments</th>
-                          <th className="py-3 pr-4">Payout Status</th>
-                        </tr>
-                      </thead>
+                          <p className="mt-1 text-xs font-semibold text-[#51615D]">
+                            {seller.phone || seller.email || "No contact"}
+                          </p>
+                        </div>
 
-                      <tbody>
-                        {sellerLedger.map((seller) => (
-                          <tr
-                            key={seller.sellerId}
-                            className="border-b border-[#D7F5EF] text-sm"
-                          >
-                            <td className="py-4 pr-4">
-                              <p className="font-black text-[#111827]">
-                                {seller.sellerName}
-                              </p>
-                              <p className="text-[#51615D] text-xs mt-1">
-                                {seller.phone || seller.email || "No contact"}
-                              </p>
-                            </td>
-                            <td className="py-4 pr-4 text-[#51615D]">
-                              {seller.totalOrders}
-                            </td>
-                            <td className="py-4 pr-4 text-green-600 font-bold">
-                              {seller.completedOrders}
-                            </td>
-                            <td className="py-4 pr-4 text-[#073B35] font-black">
-                              ₹{seller.grossSales}
-                            </td>
-                            <td className="py-4 pr-4 text-[#51615D]">
-                              ₹{seller.sellerGrossEarning}
-                            </td>
-                            <td className="py-4 pr-4 text-red-500 font-black">
-                              ₹{seller.sellerCommission}
-                            </td>
-                            <td className="py-4 pr-4 text-[#073B35] font-black">
-                              ₹{seller.sellerNetPayout}
-                            </td>
-                            <td className="py-4 pr-4 text-[#111827] font-bold">
-                              {seller.bankAccountHolder || "Not added"}
-                            </td>
-                            <td className="py-4 pr-4 text-[#51615D]">
-                              {seller.bankName || "Not added"}
-                            </td>
-                            <td className="py-4 pr-4 text-[#51615D]">
-                              {seller.bankAccountNumber || "Not added"}
-                            </td>
-                            <td className="py-4 pr-4 text-[#51615D]">
-                              {seller.bankIfsc || "Not added"}
-                            </td>
-                            <td className="py-4 pr-4 text-[#51615D]">
-                              {seller.bankUpiId || "-"}
-                            </td>
-                            <td className="py-4 pr-4 text-[#51615D]">
-                              ₹{seller.platformFee}
-                            </td>
-                            <td className="py-4 pr-4 text-[#073B35] font-black">
-                              ₹{seller.nefoTotalEarning}
-                            </td>
-                            <td className="py-4 pr-4 text-yellow-700 font-bold">
-                              {seller.pendingPayments}
-                            </td>
-                            <td className="py-4 pr-4">
-                              <span
-                                className={`text-xs font-black px-3 py-1.5 rounded-full border ${
-                                  seller.pendingPayments > 0
-                                    ? "bg-yellow-50 text-yellow-700 border-yellow-200"
-                                    : "bg-green-50 text-green-700 border-green-200"
-                                }`}
-                              >
-                                {seller.pendingPayments > 0
-                                  ? "Hold / Verify"
-                                  : "Ready to Pay"}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </section>
+                        <p className="shrink-0 text-xl font-black text-[#073B35]">
+                          ₹{seller.sellerNetPayout}
+                        </p>
+                      </div>
 
-              <section className="mt-8 bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                      Accounting Register
-                    </p>
+                      <div className="mt-4 grid grid-cols-3 gap-2">
+                        <SmallMetric label="Orders" value={seller.totalOrders} />
+                        <SmallMetric
+                          label="Done"
+                          value={seller.completedOrders}
+                        />
+                        <SmallMetric
+                          label="Pending"
+                          value={seller.pendingPayments}
+                        />
+                      </div>
 
-                    <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
-                      Order-wise payout calculation
-                    </h2>
-                  </div>
+                      <div className="mt-4 space-y-2 rounded-2xl border border-[#BDEFE6] bg-white p-4">
+                        <DetailLine
+                          label="Gross Sales"
+                          value={`₹${seller.grossSales}`}
+                        />
+                        <DetailLine
+                          label="Seller Earning"
+                          value={`₹${seller.sellerGrossEarning}`}
+                        />
+                        <DetailLine
+                          label="Commission"
+                          value={`₹${seller.sellerCommission}`}
+                        />
+                        <DetailLine
+                          label="Platform Fee"
+                          value={`₹${seller.platformFee}`}
+                        />
+                        <DetailLine
+                          label="Nefo Earning"
+                          value={`₹${seller.nefoTotalEarning}`}
+                        />
+                      </div>
 
-                  <p className="text-[#51615D] text-sm font-bold">
-                    {filteredOrders.length} records
-                  </p>
-                </div>
+                      <div className="mt-4 rounded-2xl border border-[#BDEFE6] bg-white p-4">
+                        <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                          Bank Details
+                        </p>
 
-                {filteredOrders.length === 0 ? (
-                  <div className="mt-6 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-8 text-center">
-                    <p className="text-[#51615D] font-bold">
-                      No orders found for selected filters.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="mt-6 space-y-4">
-                    {filteredOrders.map((order) => {
-                      const sellerProfile = getSellerProfile(order);
+                        <div className="mt-3 space-y-2">
+                          <DetailLine
+                            label="Holder"
+                            value={seller.bankAccountHolder || "Not added"}
+                          />
+                          <DetailLine
+                            label="Bank"
+                            value={seller.bankName || "Not added"}
+                          />
+                          <DetailLine
+                            label="A/C"
+                            value={seller.bankAccountNumber || "Not added"}
+                          />
+                          <DetailLine
+                            label="IFSC"
+                            value={seller.bankIfsc || "Not added"}
+                          />
+                          <DetailLine
+                            label="UPI"
+                            value={seller.bankUpiId || "-"}
+                          />
+                        </div>
+                      </div>
 
-                      return (
-                        <article
-                          key={order.id}
-                          className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-4 sm:p-5"
+                      <div className="mt-4">
+                        <span
+                          className={`inline-flex rounded-full border px-3 py-1.5 text-xs font-black ${
+                            seller.pendingPayments > 0
+                              ? "border-yellow-200 bg-yellow-50 text-yellow-700"
+                              : "border-green-200 bg-green-50 text-green-700"
+                          }`}
                         >
-                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                            <div className="min-w-0">
-                              <p className="text-[#51615D] text-sm font-bold">
-                                Order #{order.id} • {formatDateTime(order.created_at)}
-                              </p>
+                          {seller.pendingPayments > 0
+                            ? "Hold / Verify"
+                            : "Ready to Pay"}
+                        </span>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
 
-                              <h3 className="text-2xl sm:text-3xl font-black mt-1 text-[#073B35]">
-                                ₹{Number(order.total_amount || 0)}
-                              </h3>
+            <section className={`mt-5 p-5 ${CARD}`}>
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                    Accounting Register
+                  </p>
 
-                              <p className="text-[#51615D] text-sm mt-2">
-                                Customer: {order.customer_name || "Unknown"} •{" "}
-                                {order.phone || "No phone"}
-                              </p>
+                  <h2 className="mt-1 text-2xl font-black text-[#111827]">
+                    Order-wise payout
+                  </h2>
+                </div>
 
-                              <p className="text-[#51615D] text-sm mt-1">
-                                Kitchen: {getSellerName(order)}
-                              </p>
+                <p className="shrink-0 text-sm font-black text-[#51615D]">
+                  {filteredOrders.length}
+                </p>
+              </div>
 
-                              <p className="text-[#51615D] text-sm mt-1">
-                                {order.delivery_type || "Delivery"} •{" "}
-                                {order.flat || "No flat"}
-                              </p>
+              {filteredOrders.length === 0 ? (
+                <div className={`mt-6 p-8 text-center ${SOFT_CARD}`}>
+                  <p className="font-bold text-[#51615D]">
+                    No orders found for selected filters.
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-6 space-y-4">
+                  {filteredOrders.map((order) => {
+                    const sellerProfile = getSellerProfile(order);
 
-                              <p className="text-[#51615D] text-sm mt-3 line-clamp-2">
-                                Items: {getItemsText(order)}
-                              </p>
+                    return (
+                      <article
+                        key={order.id}
+                        className="rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] p-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-[#51615D]">
+                              Order #{order.id}
+                            </p>
 
-                              <div className="mt-4 bg-white border border-[#D7F5EF] rounded-2xl p-4">
-                                <p className="text-[#073B35] font-black text-sm">
-                                  Seller Bank Details
-                                </p>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 text-xs font-bold text-[#51615D]">
-                                  <p>
-                                    Holder:{" "}
-                                    <span className="text-[#111827]">
-                                      {sellerProfile.bank_account_holder || "Not added"}
-                                    </span>
-                                  </p>
-                                  <p>
-                                    Bank:{" "}
-                                    <span className="text-[#111827]">
-                                      {sellerProfile.bank_name || "Not added"}
-                                    </span>
-                                  </p>
-                                  <p>
-                                    A/C:{" "}
-                                    <span className="text-[#111827]">
-                                      {sellerProfile.bank_account_number || "Not added"}
-                                    </span>
-                                  </p>
-                                  <p>
-                                    IFSC:{" "}
-                                    <span className="text-[#111827]">
-                                      {sellerProfile.bank_ifsc || "Not added"}
-                                    </span>
-                                  </p>
-                                  <p>
-                                    UPI:{" "}
-                                    <span className="text-[#111827]">
-                                      {sellerProfile.bank_upi_id || "-"}
-                                    </span>
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div className="flex flex-wrap gap-2 mt-4">
-                                <span className="bg-white border border-[#D7F5EF] text-[#073B35] text-xs font-black px-3 py-1.5 rounded-full">
-                                  Seller Earning ₹{getSellerGrossEarning(order)}
-                                </span>
-
-                                <span className="bg-white border border-red-200 text-red-500 text-xs font-black px-3 py-1.5 rounded-full">
-                                  Commission ₹{getSellerCommission(order)}
-                                </span>
-
-                                <span className="bg-white border border-[#D7F5EF] text-[#073B35] text-xs font-black px-3 py-1.5 rounded-full">
-                                  Net Payout ₹{getSellerNetPayout(order)}
-                                </span>
-
-                                <span className="bg-white border border-[#D7F5EF] text-[#073B35] text-xs font-black px-3 py-1.5 rounded-full">
-                                  Nefo Earning ₹{getNefoTotalEarning(order)}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="flex flex-wrap sm:justify-end gap-2">
-                              <span
-                                className={`w-fit border text-xs font-black px-3 py-1.5 rounded-full ${getStatusBadgeClass(
-                                  order.status
-                                )}`}
-                              >
-                                {order.status || "confirmed"}
-                              </span>
-
-                              <span
-                                className={`w-fit border text-xs font-black px-3 py-1.5 rounded-full ${getPaymentBadgeClass(
-                                  order
-                                )}`}
-                              >
-                                {getPaymentLabel(order)}
-                              </span>
-                            </div>
+                            <h3 className="mt-1 text-3xl font-black text-[#073B35]">
+                              ₹{Number(order.total_amount || 0)}
+                            </h3>
                           </div>
 
-                          {order.payment_reference && (
-                            <div className="mt-4 bg-green-50 border border-green-200 rounded-2xl p-4">
-                              <p className="text-green-700 text-xs font-black uppercase">
-                                Payment Reference
-                              </p>
+                          <p className="shrink-0 text-right text-xs font-semibold leading-relaxed text-[#51615D]">
+                            {formatDateTime(order.created_at)}
+                          </p>
+                        </div>
 
-                              <p className="text-[#111827] font-bold mt-1 break-all">
-                                {order.payment_reference}
-                              </p>
-                            </div>
-                          )}
-                        </article>
-                      );
-                    })}
-                  </div>
-                )}
-              </section>
-            </>
-          )}
-        </div>
-      </main>
-    </>
+                        <div className="mt-4 space-y-2 rounded-2xl border border-[#BDEFE6] bg-white p-4">
+                          <DetailLine
+                            label="Customer"
+                            value={`${order.customer_name || "Unknown"} • ${
+                              order.phone || "No phone"
+                            }`}
+                          />
+                          <DetailLine
+                            label="Kitchen"
+                            value={getSellerName(order)}
+                          />
+                          <DetailLine
+                            label="Delivery"
+                            value={`${order.delivery_type || "Delivery"} • ${
+                              order.flat || "No flat"
+                            }`}
+                          />
+                          <DetailLine label="Items" value={getItemsText(order)} />
+                        </div>
+
+                        <div className="mt-4 rounded-2xl border border-[#BDEFE6] bg-white p-4">
+                          <p className="text-sm font-black text-[#073B35]">
+                            Seller Bank Details
+                          </p>
+
+                          <div className="mt-3 space-y-2">
+                            <DetailLine
+                              label="Holder"
+                              value={
+                                sellerProfile.bank_account_holder || "Not added"
+                              }
+                            />
+                            <DetailLine
+                              label="Bank"
+                              value={sellerProfile.bank_name || "Not added"}
+                            />
+                            <DetailLine
+                              label="A/C"
+                              value={
+                                sellerProfile.bank_account_number || "Not added"
+                              }
+                            />
+                            <DetailLine
+                              label="IFSC"
+                              value={sellerProfile.bank_ifsc || "Not added"}
+                            />
+                            <DetailLine
+                              label="UPI"
+                              value={sellerProfile.bank_upi_id || "-"}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="mt-4 grid grid-cols-2 gap-2">
+                          <MoneyPill
+                            label="Seller"
+                            value={`₹${getSellerGrossEarning(order)}`}
+                          />
+                          <MoneyPill
+                            label="Commission"
+                            value={`₹${getSellerCommission(order)}`}
+                            danger
+                          />
+                          <MoneyPill
+                            label="Net Payout"
+                            value={`₹${getSellerNetPayout(order)}`}
+                          />
+                          <MoneyPill
+                            label="Nefo"
+                            value={`₹${getNefoTotalEarning(order)}`}
+                          />
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <span
+                            className={`w-fit rounded-full border px-3 py-1.5 text-xs font-black ${getStatusBadgeClass(
+                              order.status
+                            )}`}
+                          >
+                            {order.status || "confirmed"}
+                          </span>
+
+                          <span
+                            className={`w-fit rounded-full border px-3 py-1.5 text-xs font-black ${getPaymentBadgeClass(
+                              order
+                            )}`}
+                          >
+                            {getPaymentLabel(order)}
+                          </span>
+                        </div>
+
+                        {order.payment_reference ? (
+                          <div className="mt-4 rounded-2xl border border-green-200 bg-green-50 p-4">
+                            <p className="text-xs font-black uppercase text-green-700">
+                              Payment Reference
+                            </p>
+
+                            <p className="mt-1 break-all font-bold text-[#111827]">
+                              {order.payment_reference}
+                            </p>
+                          </div>
+                        ) : null}
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          </>
+        ) : null}
+      </div>
+    </main>
   );
 }
 
 function AccountingCard({ title, value }) {
   return (
-    <div className="bg-white/90 border border-[#D7F5EF] rounded-3xl p-5 shadow-lg shadow-[#073B35]/5">
-      <p className="text-[#51615D] text-xs uppercase font-black">{title}</p>
-
-      <p className="text-2xl sm:text-3xl font-black text-[#073B35] mt-3">
-        {value}
+    <div className="rounded-[22px] border border-[#D7F5EF] bg-white/90 p-4 shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
+      <p className="text-[10px] font-black uppercase tracking-wide text-[#7A8A86]">
+        {title}
       </p>
+
+      <p className="mt-2 text-xl font-black text-[#073B35]">{value}</p>
     </div>
   );
 }
 
 function MoneyRow({ label, value }) {
   return (
-    <div className="flex items-center justify-between gap-4 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4">
-      <p className="text-[#51615D] font-bold">{label}</p>
-      <p className="text-[#073B35] font-black shrink-0">{value}</p>
+    <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4">
+      <p className="text-sm font-bold text-[#51615D]">{label}</p>
+      <p className="shrink-0 text-sm font-black text-[#073B35]">{value}</p>
     </div>
+  );
+}
+
+function SmallMetric({ label, value }) {
+  return (
+    <div className="rounded-2xl border border-[#BDEFE6] bg-white p-3">
+      <p className="text-[10px] font-black uppercase text-[#51615D]">
+        {label}
+      </p>
+
+      <p className="mt-1 font-black text-[#073B35]">{value}</p>
+    </div>
+  );
+}
+
+function DetailLine({ label, value }) {
+  return (
+    <div className="text-sm">
+      <span className="font-black text-[#073B35]">{label}: </span>
+      <span className="font-semibold text-[#51615D]">{value || "-"}</span>
+    </div>
+  );
+}
+
+function MoneyPill({ label, value, danger = false }) {
+  return (
+    <div
+      className={`rounded-2xl border bg-white p-3 ${
+        danger ? "border-red-200" : "border-[#BDEFE6]"
+      }`}
+    >
+      <p
+        className={`text-[10px] font-black uppercase ${
+          danger ? "text-red-500" : "text-[#51615D]"
+        }`}
+      >
+        {label}
+      </p>
+
+      <p
+        className={`mt-1 font-black ${
+          danger ? "text-red-500" : "text-[#073B35]"
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function BackIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+    >
+      <path d="M19 12H5" />
+      <path d="M12 19l-7-7 7-7" />
+    </svg>
   );
 }

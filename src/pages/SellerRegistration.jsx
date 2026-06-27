@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import Navbar from "../components/Navbar";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabaseClient";
 
@@ -17,10 +16,33 @@ const EMPTY_FORM = {
   hygiene_note: "",
 };
 
+const EMPTY_ERRORS = {
+  full_name: "",
+  phone: "",
+  apartment_name: "",
+  flat: "",
+  kitchen_name: "",
+  food_specialty: "",
+  about_kitchen: "",
+  hygiene_note: "",
+  general: "",
+};
+
+const CARD =
+  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+
+const SOFT_CARD =
+  "rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
+
+const INPUT =
+  "w-full rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-4 text-base font-semibold text-[#111827] outline-none placeholder:text-[#8AA5A0] focus:border-[#41D3BD] focus:bg-white";
+
 export default function SellerRegistration() {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState(EMPTY_FORM);
+  const [fieldErrors, setFieldErrors] = useState(EMPTY_ERRORS);
   const [existingApplication, setExistingApplication] = useState(null);
   const [profileStatus, setProfileStatus] = useState("not_applied");
   const [loading, setLoading] = useState(true);
@@ -33,10 +55,14 @@ export default function SellerRegistration() {
   }, [user]);
 
   async function fetchSellerApplication() {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     setErrorMessage("");
+    setFieldErrors(EMPTY_ERRORS);
 
     const { data: profileData } = await supabase
       .from("profiles")
@@ -106,19 +132,55 @@ export default function SellerRegistration() {
       ...previous,
       [name]: value,
     }));
+
+    setFieldErrors((previous) => ({
+      ...previous,
+      [name]: "",
+      general: "",
+    }));
+
+    setErrorMessage("");
+    setMessage("");
   }
 
   function validateForm() {
-    if (!formData.full_name.trim()) return "Full name is required.";
-    if (!formData.phone.trim()) return "Phone number is required.";
-    if (!formData.apartment_name.trim()) return "Apartment name is required.";
-    if (!formData.flat.trim()) return "Flat number is required.";
-    if (!formData.kitchen_name.trim()) return "Kitchen name is required.";
-    if (!formData.food_specialty.trim()) return "Food specialty is required.";
-    if (!formData.about_kitchen.trim()) return "About kitchen is required.";
-    if (!formData.hygiene_note.trim()) return "Hygiene note is required.";
+    const nextErrors = { ...EMPTY_ERRORS };
 
-    return "";
+    if (!formData.full_name.trim()) {
+      nextErrors.full_name = "Full name is required.";
+    }
+
+    if (!formData.phone.trim()) {
+      nextErrors.phone = "Phone number is required.";
+    }
+
+    if (!formData.apartment_name.trim()) {
+      nextErrors.apartment_name = "Apartment name is required.";
+    }
+
+    if (!formData.flat.trim()) {
+      nextErrors.flat = "Flat number is required.";
+    }
+
+    if (!formData.kitchen_name.trim()) {
+      nextErrors.kitchen_name = "Kitchen name is required.";
+    }
+
+    if (!formData.food_specialty.trim()) {
+      nextErrors.food_specialty = "Food specialty is required.";
+    }
+
+    if (!formData.about_kitchen.trim()) {
+      nextErrors.about_kitchen = "About kitchen is required.";
+    }
+
+    if (!formData.hygiene_note.trim()) {
+      nextErrors.hygiene_note = "Hygiene note is required.";
+    }
+
+    setFieldErrors(nextErrors);
+
+    return !Object.values(nextErrors).some(Boolean);
   }
 
   async function handleSubmit(event) {
@@ -126,16 +188,15 @@ export default function SellerRegistration() {
 
     if (!user) return;
 
-    const validationError = validateForm();
-
-    if (validationError) {
-      setErrorMessage(validationError);
+    if (!validateForm()) {
+      setErrorMessage("Please correct the highlighted fields.");
       return;
     }
 
     setSaving(true);
     setMessage("");
     setErrorMessage("");
+    setFieldErrors(EMPTY_ERRORS);
 
     const payload = {
       user_id: user.id,
@@ -210,251 +271,373 @@ export default function SellerRegistration() {
 
     if (status === "approved") {
       return (
-        <div className="bg-green-50 border border-green-200 rounded-3xl p-5">
-          <p className="text-green-700 font-black">Application approved</p>
-          <p className="text-green-700/80 text-sm mt-2">
-            Your kitchen has been approved. You can now access the Seller
-            Dashboard.
-          </p>
+        <section className="rounded-[24px] border border-green-200 bg-green-50 p-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-green-200 bg-white text-2xl">
+              ✅
+            </div>
 
-          <Link
-            to="/seller-dashboard"
-            className="inline-flex mt-4 bg-[#073B35] hover:bg-[#0B5149] text-white font-black px-5 py-3 rounded-2xl"
-          >
-            Open Seller Dashboard
-          </Link>
-        </div>
+            <div>
+              <p className="font-black text-green-700">
+                Application approved
+              </p>
+
+              <p className="mt-2 text-sm font-semibold leading-relaxed text-green-700/80">
+                Your kitchen has been approved. You can now access the Seller
+                Dashboard.
+              </p>
+
+              <Link
+                to="/seller-dashboard"
+                className="mt-4 inline-flex rounded-2xl border border-[#073B35] bg-[#073B35] px-5 py-3 font-black text-white active:scale-95"
+              >
+                Open Seller Dashboard
+              </Link>
+            </div>
+          </div>
+        </section>
       );
     }
 
     if (status === "pending") {
       return (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-3xl p-5">
-          <p className="text-yellow-700 font-black">Application under review</p>
-          <p className="text-yellow-700/80 text-sm mt-2">
-            Please wait up to 2 working days. The Nefo owner/admin will review
-            your kitchen details.
-          </p>
-        </div>
+        <section className="rounded-[24px] border border-yellow-200 bg-yellow-50 p-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-yellow-200 bg-white text-2xl">
+              ⏳
+            </div>
+
+            <div>
+              <p className="font-black text-yellow-700">
+                Application under review
+              </p>
+
+              <p className="mt-2 text-sm font-semibold leading-relaxed text-yellow-700/80">
+                Please wait up to 2 working days. The Nefo owner/admin will
+                review your kitchen details.
+              </p>
+            </div>
+          </div>
+        </section>
       );
     }
 
     if (status === "rejected") {
       return (
-        <div className="bg-red-50 border border-red-200 rounded-3xl p-5">
-          <p className="text-red-600 font-black">Application rejected</p>
-          <p className="text-red-500 text-sm mt-2">
-            You can correct your details and re-apply.
-          </p>
+        <section className="rounded-[24px] border border-red-200 bg-red-50 p-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-red-200 bg-white text-2xl">
+              ⚠️
+            </div>
 
-          {existingApplication?.rejection_reason && (
-            <p className="text-red-500 text-sm mt-2">
-              Reason: {existingApplication.rejection_reason}
-            </p>
-          )}
-        </div>
+            <div>
+              <p className="font-black text-red-600">
+                Application rejected
+              </p>
+
+              <p className="mt-2 text-sm font-semibold text-red-500">
+                You can correct your details and re-apply.
+              </p>
+
+              {existingApplication?.rejection_reason ? (
+                <p className="mt-2 text-sm font-semibold text-red-500">
+                  Reason: {existingApplication.rejection_reason}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </section>
       );
     }
 
     return (
-      <div className="bg-[#41D3BD]/12 border border-[#41D3BD]/25 rounded-3xl p-5">
-        <p className="text-[#073B35] font-black">Apply to sell on Nefo</p>
-        <p className="text-[#51615D] text-sm mt-2">
-          Submit your kitchen details. The owner will review and approve before
-          you can sell.
-        </p>
-      </div>
+      <section className="rounded-[24px] border border-[#BDEFE6] bg-[#41D3BD]/12 p-5">
+        <div className="flex items-start gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#BDEFE6] bg-white text-2xl">
+            🍱
+          </div>
+
+          <div>
+            <p className="font-black text-[#073B35]">Apply to sell on Nefo</p>
+
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+              Submit your kitchen details. The owner will review and approve
+              before you can sell.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!user && !loading) {
+    return (
+      <main className="min-h-screen bg-[#FFFFF2] px-4 py-5 pb-28 text-[#111827]">
+        <div className="mx-auto max-w-md">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
+            aria-label="Go back"
+          >
+            <BackIcon />
+          </button>
+
+          <section className={`mt-6 p-8 text-center ${CARD}`}>
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 text-4xl">
+              🍱
+            </div>
+
+            <h1 className="mt-5 text-2xl font-black text-[#111827]">
+              Sign in to apply
+            </h1>
+
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+              You need a Nefo account before applying as a seller.
+            </p>
+
+            <Link
+              to="/customer-login"
+              className="mt-6 block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center text-sm font-black text-white"
+            >
+              Sign In / Create Account
+            </Link>
+          </section>
+        </div>
+      </main>
     );
   }
 
   return (
-    <>
-      <Navbar />
+    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-32 text-[#111827]">
+      <div className="mx-auto max-w-md">
+        <header className="flex items-start gap-3">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+            aria-label="Go back"
+          >
+            <BackIcon />
+          </button>
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 sm:px-6 py-6 sm:py-10 pb-28">
-        <div className="max-w-5xl mx-auto">
-          <section className="relative overflow-hidden bg-white/90 border border-[#D7F5EF] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-xl shadow-[#073B35]/5">
-            <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#41D3BD]/20 rounded-full blur-[95px]" />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+              Seller Application
+            </p>
 
-            <div className="relative">
-              <div className="inline-flex items-center gap-2 bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] px-3 py-1.5 rounded-full text-xs font-black">
-                <span>🍱</span>
-                <span>Seller Application</span>
-              </div>
+            <h1 className="mt-1 text-3xl font-black leading-tight text-[#073B35]">
+              Apply to sell
+              <span className="block text-[#111827]">on Nefo</span>
+            </h1>
 
-              <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-[#073B35]">
-                Apply to sell
-                <span className="block text-[#111827]">on Nefo</span>
-              </h1>
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+              Tell us about your home kitchen. Once approved, your Seller
+              Dashboard will be unlocked.
+            </p>
+          </div>
+        </header>
 
-              <p className="text-[#51615D] mt-4 text-sm sm:text-lg max-w-2xl leading-relaxed">
-                Tell us about your home kitchen. Once approved, your Seller
-                Dashboard will be unlocked.
-              </p>
-            </div>
+        <section className="mt-5">{getStatusCard()}</section>
+
+        {loading ? (
+          <section className={`mt-5 p-8 text-center ${CARD}`}>
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-4 border-[#D7F5EF] border-t-[#073B35] animate-spin" />
+
+            <p className="mt-4 font-bold text-[#51615D]">
+              Loading application...
+            </p>
           </section>
+        ) : (
+          <form onSubmit={handleSubmit} className={`mt-5 p-5 ${CARD}`}>
+            <div>
+              <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                Kitchen Details
+              </p>
 
-          <section className="mt-6">{getStatusCard()}</section>
+              <h2 className="mt-1 text-2xl font-black text-[#111827]">
+                Registration form
+              </h2>
 
-          {loading ? (
-            <div className="mt-8 bg-white/90 border border-[#D7F5EF] rounded-3xl p-8 text-center">
-              <p className="text-[#51615D] font-bold">
-                Loading application...
+              <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+                Fill the required details carefully. These will be reviewed by
+                the owner/admin.
               </p>
             </div>
-          ) : (
-            <form
-              onSubmit={handleSubmit}
-              className="mt-8 bg-white/90 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-[#073B35]/5"
-            >
-              <div>
-                <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                  Kitchen Details
-                </p>
 
-                <h2 className="text-2xl sm:text-3xl font-black text-[#111827] mt-1">
-                  Registration form
-                </h2>
+            {message ? (
+              <div className="mt-5 rounded-2xl border border-green-200 bg-green-50 p-4">
+                <p className="text-sm font-black text-green-700">{message}</p>
               </div>
+            ) : null}
 
-              {message && (
-                <div className="mt-5 bg-green-50 border border-green-200 rounded-2xl p-4 text-green-700 font-bold">
-                  {message}
-                </div>
-              )}
-
-              {errorMessage && (
-                <div className="mt-5 bg-red-50 border border-red-200 rounded-2xl p-4 text-red-600 font-bold">
+            {errorMessage ? (
+              <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4">
+                <p className="text-sm font-black text-red-600">
                   {errorMessage}
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-                <Input
-                  label="Full Name"
-                  name="full_name"
-                  value={formData.full_name}
-                  onChange={handleChange}
-                />
-
-                <Input
-                  label="Phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                />
-
-                <Input
-                  label="Apartment Name"
-                  name="apartment_name"
-                  value={formData.apartment_name}
-                  onChange={handleChange}
-                />
-
-                <Input
-                  label="Block"
-                  name="block"
-                  value={formData.block}
-                  onChange={handleChange}
-                />
-
-                <Input
-                  label="Flat"
-                  name="flat"
-                  value={formData.flat}
-                  onChange={handleChange}
-                />
-
-                <Input
-                  label="Kitchen Name"
-                  name="kitchen_name"
-                  value={formData.kitchen_name}
-                  onChange={handleChange}
-                />
-
-                <Input
-                  label="Food Specialty"
-                  name="food_specialty"
-                  value={formData.food_specialty}
-                  onChange={handleChange}
-                  placeholder="Example: South Indian, Punjabi, Tiffin, Snacks"
-                />
-
-                <Input
-                  label="Cooking Experience"
-                  name="experience"
-                  value={formData.experience}
-                  onChange={handleChange}
-                  placeholder="Example: 5 years home cooking"
-                />
-
-                <Textarea
-                  label="About Kitchen"
-                  name="about_kitchen"
-                  value={formData.about_kitchen}
-                  onChange={handleChange}
-                  placeholder="Tell us what kind of food you will sell."
-                />
-
-                <Textarea
-                  label="Hygiene Note"
-                  name="hygiene_note"
-                  value={formData.hygiene_note}
-                  onChange={handleChange}
-                  placeholder="Mention your hygiene, packing, and kitchen cleanliness practices."
-                />
+                </p>
               </div>
+            ) : null}
 
-              <div className="flex flex-col sm:flex-row gap-3 mt-6">
-                <button
-                  type="submit"
-                  disabled={saving || profileStatus === "approved"}
-                  className="bg-[#073B35] hover:bg-[#0B5149] disabled:opacity-50 text-white font-black px-6 py-4 rounded-2xl shadow-lg shadow-[#073B35]/15 transition-all"
-                >
-                  {saving
-                    ? "Submitting..."
-                    : profileStatus === "rejected"
-                    ? "Re-apply"
-                    : profileStatus === "pending"
-                    ? "Update Application"
-                    : "Submit Application"}
-                </button>
+            <div className="mt-6 space-y-4">
+              <Input
+                label="Full Name"
+                name="full_name"
+                value={formData.full_name}
+                onChange={handleChange}
+                error={fieldErrors.full_name}
+              />
 
-                <Link
-                  to="/marketplace"
-                  className="bg-[#FFFFF2] border border-[#D7F5EF] hover:bg-[#D7F5EF] text-[#073B35] font-black px-6 py-4 rounded-2xl text-center"
-                >
-                  Back to Marketplace
-                </Link>
-              </div>
-            </form>
-          )}
-        </div>
-      </main>
-    </>
+              <Input
+                label="Phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                error={fieldErrors.phone}
+              />
+
+              <Input
+                label="Apartment Name"
+                name="apartment_name"
+                value={formData.apartment_name}
+                onChange={handleChange}
+                error={fieldErrors.apartment_name}
+              />
+
+              <Input
+                label="Block"
+                name="block"
+                value={formData.block}
+                onChange={handleChange}
+                placeholder="Optional: Block / Tower"
+              />
+
+              <Input
+                label="Flat"
+                name="flat"
+                value={formData.flat}
+                onChange={handleChange}
+                error={fieldErrors.flat}
+              />
+
+              <Input
+                label="Kitchen Name"
+                name="kitchen_name"
+                value={formData.kitchen_name}
+                onChange={handleChange}
+                error={fieldErrors.kitchen_name}
+              />
+
+              <Input
+                label="Food Specialty"
+                name="food_specialty"
+                value={formData.food_specialty}
+                onChange={handleChange}
+                error={fieldErrors.food_specialty}
+                placeholder="Example: South Indian, Punjabi, Tiffin, Snacks"
+              />
+
+              <Input
+                label="Cooking Experience"
+                name="experience"
+                value={formData.experience}
+                onChange={handleChange}
+                placeholder="Optional: 5 years home cooking"
+              />
+
+              <Textarea
+                label="About Kitchen"
+                name="about_kitchen"
+                value={formData.about_kitchen}
+                onChange={handleChange}
+                error={fieldErrors.about_kitchen}
+                placeholder="Tell us what kind of food you will sell."
+              />
+
+              <Textarea
+                label="Hygiene Note"
+                name="hygiene_note"
+                value={formData.hygiene_note}
+                onChange={handleChange}
+                error={fieldErrors.hygiene_note}
+                placeholder="Mention hygiene, packing, and kitchen cleanliness practices."
+              />
+            </div>
+
+            <div className="mt-6 grid grid-cols-1 gap-3">
+              <button
+                type="submit"
+                disabled={saving || profileStatus === "approved"}
+                className="rounded-2xl border border-[#073B35] bg-[#073B35] px-6 py-4 font-black text-white shadow-lg shadow-[#073B35]/15 transition-all active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {saving
+                  ? "Submitting..."
+                  : profileStatus === "rejected"
+                  ? "Re-apply"
+                  : profileStatus === "pending"
+                  ? "Update Application"
+                  : profileStatus === "approved"
+                  ? "Already Approved"
+                  : "Submit Application"}
+              </button>
+
+              <Link
+                to="/marketplace"
+                className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-6 py-4 text-center font-black text-[#073B35] active:scale-95"
+              >
+                Back to Marketplace
+              </Link>
+            </div>
+
+            <p className="mt-5 text-xs font-semibold leading-relaxed text-[#8AA5A0]">
+              After approval, use Seller Login to access your Seller Dashboard.
+            </p>
+          </form>
+        )}
+      </div>
+    </main>
   );
 }
 
-function Input({ label, name, value, onChange, placeholder = "" }) {
+function Input({ label, name, value, onChange, placeholder = "", error = "" }) {
   return (
     <label className="block">
-      <span className="text-[#51615D] text-sm font-black">{label}</span>
+      {error ? (
+        <p className="mb-2 text-sm font-black text-red-600">{error}</p>
+      ) : null}
+
+      <span className="mb-2 block text-xs font-black uppercase tracking-wide text-[#51615D]">
+        {label}
+      </span>
 
       <input
         name={name}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="mt-2 w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-3 outline-none focus:border-[#41D3BD] text-[#111827] font-bold"
+        className={`${INPUT} ${error ? "border-red-300" : ""}`}
       />
     </label>
   );
 }
 
-function Textarea({ label, name, value, onChange, placeholder = "" }) {
+function Textarea({
+  label,
+  name,
+  value,
+  onChange,
+  placeholder = "",
+  error = "",
+}) {
   return (
-    <label className="block sm:col-span-2">
-      <span className="text-[#51615D] text-sm font-black">{label}</span>
+    <label className="block">
+      {error ? (
+        <p className="mb-2 text-sm font-black text-red-600">{error}</p>
+      ) : null}
+
+      <span className="mb-2 block text-xs font-black uppercase tracking-wide text-[#51615D]">
+        {label}
+      </span>
 
       <textarea
         name={name}
@@ -462,8 +645,23 @@ function Textarea({ label, name, value, onChange, placeholder = "" }) {
         onChange={onChange}
         placeholder={placeholder}
         rows={4}
-        className="mt-2 w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-3 outline-none focus:border-[#41D3BD] text-[#111827] font-bold resize-none"
+        className={`${INPUT} min-h-32 resize-none ${error ? "border-red-300" : ""}`}
       />
     </label>
+  );
+}
+
+function BackIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+    >
+      <path d="M19 12H5" />
+      <path d="M12 19l-7-7 7-7" />
+    </svg>
   );
 }

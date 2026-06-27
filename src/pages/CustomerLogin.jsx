@@ -2,6 +2,15 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 
+const CARD =
+  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+
+const SOFT_CARD =
+  "rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
+
+const INPUT =
+  "w-full rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-4 text-base font-semibold text-[#111827] outline-none placeholder:text-[#8AA5A0] focus:border-[#41D3BD] focus:bg-white";
+
 export default function CustomerLogin() {
   const navigate = useNavigate();
 
@@ -320,230 +329,149 @@ export default function CustomerLogin() {
     setLoading(false);
   }
 
-  function FieldError({ message }) {
-    if (!message) return null;
-
-    return (
-      <p className="mb-2 text-sm font-black text-red-600">
-        {message}
-      </p>
-    );
-  }
-
   return (
-    <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 py-6 overflow-hidden">
-      <div className="fixed top-0 right-0 w-80 h-80 bg-[#41D3BD]/20 blur-[110px] rounded-full pointer-events-none" />
-      <div className="fixed bottom-0 left-0 w-80 h-80 bg-[#41D3BD]/10 blur-[120px] rounded-full pointer-events-none" />
+    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-28 text-[#111827]">
+      <div className="mx-auto max-w-md">
+        <header className="flex items-center justify-between gap-3">
+          <Link to="/" className="flex min-w-0 items-center gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#D7F5EF] bg-white/90 shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]">
+              <img
+                src="/Nefo-logo.png"
+                alt="Nefo"
+                className="h-full w-full scale-[1.65] object-cover"
+              />
+            </div>
 
-      <div className="relative max-w-6xl mx-auto min-h-[calc(100vh-3rem)] grid lg:grid-cols-[0.95fr_1.05fr] gap-6 lg:gap-8 items-center">
-        <section className="hidden lg:block">
-          <div className="relative overflow-hidden bg-[#073B35] rounded-[2.5rem] p-10 min-h-[680px] shadow-2xl shadow-[#073B35]/25">
-            <div className="absolute -top-28 -right-28 w-96 h-96 bg-[#41D3BD]/25 rounded-full blur-[110px]" />
-            <div className="absolute bottom-0 left-0 w-80 h-80 bg-[#41D3BD]/10 rounded-full blur-[100px]" />
+            <div className="min-w-0">
+              <p className="text-xl font-black text-[#073B35]">Nefo</p>
+              <p className="text-[10px] font-black uppercase tracking-wide text-[#51615D]">
+                Homemade nearby food
+              </p>
+            </div>
+          </Link>
 
-            <div className="relative h-full flex flex-col justify-between min-h-[600px]">
-              <div>
-                <Link
-                  to="/"
-                  className="inline-flex items-center gap-3 bg-white/10 border border-white/10 rounded-3xl px-4 py-3"
-                >
-                  <div className="w-12 h-12 rounded-2xl bg-[#FFFFF2] flex items-center justify-center overflow-hidden">
-                    <img
-                      src="/Nefo-logo.png"
-                      alt="Nefo"
-                      className="w-full h-full object-cover scale-[1.65]"
-                    />
-                  </div>
+          <Link
+            to="/"
+            className="shrink-0 rounded-full border border-[#BDEFE6] bg-white px-4 py-2 text-xs font-black text-[#073B35] active:scale-95"
+          >
+            Home
+          </Link>
+        </header>
 
-                  <div>
-                    <p className="text-white font-black text-xl">Nefo</p>
-                    <p className="text-[#D7F5EF] text-xs uppercase tracking-wide">
-                      homemade nearby food
-                    </p>
-                  </div>
-                </Link>
+        <section className={`mt-5 overflow-hidden ${CARD}`}>
+          <div className="bg-[#073B35] p-5 text-white">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-[#41D3BD]">
+              <span>🌿</span>
+              <span>Community kitchens</span>
+            </div>
 
-                <div className="mt-12">
-                  <div className="inline-flex items-center gap-2 bg-[#41D3BD]/15 border border-[#41D3BD]/25 text-[#41D3BD] px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wide">
-                    <span>🌿</span>
-                    <span>Community kitchens</span>
-                  </div>
+            <h1 className="mt-5 text-4xl font-black leading-[0.95] tracking-tight">
+              Fresh food,
+              <span className="block text-[#41D3BD]">closer to home.</span>
+            </h1>
 
-                  <h1 className="text-white text-6xl font-black mt-6 leading-[0.98] tracking-tight">
-                    Fresh food,
-                    <span className="block text-[#41D3BD]">
-                      closer to home.
-                    </span>
-                  </h1>
+            <p className="mt-4 text-sm font-semibold leading-relaxed text-[#D7F5EF]">
+              Sign in to order homemade food or manage your Nefo kitchen panel.
+            </p>
 
-                  <p className="text-[#D7F5EF] text-lg mt-6 leading-relaxed max-w-xl">
-                    Sign in to order homemade food from trusted kitchens or
-                    manage your own Nefo kitchen panel.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-white/10 border border-white/10 rounded-3xl p-4">
-                  <p className="text-[#41D3BD] text-2xl">🍲</p>
-                  <p className="text-white font-black mt-3">Fresh</p>
-                  <p className="text-white/60 text-xs mt-1">
-                    Daily food drops
-                  </p>
-                </div>
-
-                <div className="bg-white/10 border border-white/10 rounded-3xl p-4">
-                  <p className="text-[#41D3BD] text-2xl">🏠</p>
-                  <p className="text-white font-black mt-3">Local</p>
-                  <p className="text-white/60 text-xs mt-1">
-                    Nearby kitchens
-                  </p>
-                </div>
-
-                <div className="bg-white/10 border border-white/10 rounded-3xl p-4">
-                  <p className="text-[#41D3BD] text-2xl">🔒</p>
-                  <p className="text-white font-black mt-3">Private</p>
-                  <p className="text-white/60 text-xs mt-1">
-                    Safe location flow
-                  </p>
-                </div>
-              </div>
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              <HeroTile icon="🍲" title="Fresh" />
+              <HeroTile icon="🏠" title="Local" />
+              <HeroTile icon="🔒" title="Private" />
             </div>
           </div>
-        </section>
 
-        <section className="w-full max-w-xl mx-auto lg:max-w-none">
-          <div className="bg-white/95 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-8 shadow-2xl shadow-[#073B35]/10">
-            <div className="flex items-center justify-between gap-4 mb-6">
-              <Link to="/" className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-[#FFFFF2] border border-[#D7F5EF] flex items-center justify-center overflow-hidden shadow-sm">
-                  <img
-                    src="/Nefo-logo.png"
-                    alt="Nefo"
-                    className="w-full h-full object-cover scale-[1.65]"
-                  />
-                </div>
-
-                <div>
-                  <p className="text-[#073B35] font-black text-xl">Nefo</p>
-                  <p className="text-[#51615D] text-[10px] uppercase tracking-wide">
-                    Login
-                  </p>
-                </div>
-              </Link>
-
-              <Link to="/" className="text-[#51615D] text-sm font-black">
-                Home
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 mb-6 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-2">
-              <button
-                type="button"
+          <div className="p-5">
+            <div className="grid grid-cols-2 gap-2 rounded-3xl border border-[#BDEFE6] bg-[#FFFFF2] p-2">
+              <RoleButton
+                active={selectedRole === "customer"}
                 onClick={() => {
                   setSelectedRole("customer");
                   setMessage("");
                   clearErrors();
                 }}
-                className={`py-3 rounded-2xl font-black transition-all ${
-                  selectedRole === "customer"
-                    ? "bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
-                    : "text-[#51615D]"
-                }`}
-              >
-                Customer
-              </button>
+                label="Customer"
+              />
 
-              <button
-                type="button"
+              <RoleButton
+                active={selectedRole === "seller"}
                 onClick={() => {
                   setSelectedRole("seller");
                   setMessage("");
                   clearErrors();
                 }}
-                className={`py-3 rounded-2xl font-black transition-all ${
-                  selectedRole === "seller"
-                    ? "bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
-                    : "text-[#51615D]"
-                }`}
-              >
-                Seller
-              </button>
+                label="Seller"
+              />
             </div>
 
-            <div>
-              <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
+            <div className="mt-6">
+              <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
                 {selectedRole === "seller"
                   ? "Kitchen access"
                   : "Customer access"}
               </p>
 
-              <h1 className="text-4xl sm:text-5xl font-black mt-2 text-[#111827] leading-tight">
+              <h2 className="mt-2 text-3xl font-black leading-tight text-[#111827]">
                 {isSignUp
                   ? `Create ${
                       selectedRole === "seller" ? "seller" : "customer"
                     } account`
-                  : "Welcome"}
-              </h1>
+                  : "Welcome back"}
+              </h2>
 
-              <p className="text-[#51615D] mt-3 leading-relaxed">
+              <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
                 {selectedRole === "seller"
-                  ? "Manage dishes, stock, scheduling, and realtime neighbourhood food orders."
+                  ? "Manage dishes, stock, scheduling, and realtime neighbourhood orders."
                   : "Order homemade food from trusted kitchens inside your community."}
               </p>
             </div>
 
-            {errors.general && (
+            {errors.general ? (
               <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4">
                 <p className="text-sm font-black text-red-700">
                   {errors.general}
                 </p>
               </div>
-            )}
+            ) : null}
 
-            {message && (
-              <div className="mt-5 rounded-2xl border border-[#D7F5EF] bg-[#FFFFF2] p-4">
-                <p className="text-sm font-black text-[#073B35]">
-                  {message}
-                </p>
+            {message ? (
+              <div className="mt-5 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4">
+                <p className="text-sm font-black text-[#073B35]">{message}</p>
               </div>
-            )}
+            ) : null}
 
-            <form onSubmit={handleAuth} className="mt-7 space-y-4">
-              {isSignUp && (
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div>
-                    <FieldError message={errors.fullName} />
+            <form onSubmit={handleAuth} className="mt-6 space-y-4">
+              {isSignUp ? (
+                <>
+                  <Field label="Full name" error={errors.fullName}>
                     <input
                       name="fullName"
                       value={formData.fullName}
                       onChange={handleChange}
                       required
                       placeholder="Full name"
-                      className={`bg-[#FFFFF2] border rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827] w-full ${
-                        errors.fullName ? "border-red-300" : "border-[#D7F5EF]"
+                      className={`${INPUT} ${
+                        errors.fullName ? "border-red-300" : ""
                       }`}
                     />
-                  </div>
+                  </Field>
 
-                  <div>
-                    <FieldError message={errors.phone} />
+                  <Field label="Phone number" error={errors.phone}>
                     <input
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
                       required
                       placeholder="Phone number"
-                      className={`bg-[#FFFFF2] border rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827] w-full ${
-                        errors.phone ? "border-red-300" : "border-[#D7F5EF]"
+                      className={`${INPUT} ${
+                        errors.phone ? "border-red-300" : ""
                       }`}
                     />
-                  </div>
-                </div>
-              )}
+                  </Field>
+                </>
+              ) : null}
 
-              <div>
-                <FieldError message={errors.email} />
+              <Field label="Email address" error={errors.email}>
                 <input
                   type="email"
                   name="email"
@@ -551,14 +479,11 @@ export default function CustomerLogin() {
                   onChange={handleChange}
                   required
                   placeholder="Email address"
-                  className={`w-full bg-[#FFFFF2] border rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827] ${
-                    errors.email ? "border-red-300" : "border-[#D7F5EF]"
-                  }`}
+                  className={`${INPUT} ${errors.email ? "border-red-300" : ""}`}
                 />
-              </div>
+              </Field>
 
-              <div>
-                <FieldError message={errors.password} />
+              <Field label="Password" error={errors.password}>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
@@ -567,97 +492,94 @@ export default function CustomerLogin() {
                     onChange={handleChange}
                     required
                     placeholder="Password"
-                    className={`w-full bg-[#FFFFF2] border rounded-2xl px-4 py-4 pr-20 outline-none focus:border-[#41D3BD] text-[#111827] ${
-                      errors.password ? "border-red-300" : "border-[#D7F5EF]"
+                    className={`${INPUT} pr-20 ${
+                      errors.password ? "border-red-300" : ""
                     }`}
                   />
 
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1A9F8D] text-sm font-black"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-black text-[#0B8F80]"
                   >
                     {showPassword ? "Hide" : "Show"}
                   </button>
                 </div>
-              </div>
+              </Field>
 
-              {!isSignUp && (
+              {!isSignUp ? (
                 <div className="flex justify-end">
                   <button
                     type="button"
                     onClick={handleForgotPassword}
                     disabled={resettingPassword}
-                    className="text-[#1A9F8D] text-sm font-black disabled:opacity-50"
+                    className="text-sm font-black text-[#0B8F80] disabled:opacity-50"
                   >
                     {resettingPassword
                       ? "Sending reset link..."
                       : "Forgot Password?"}
                   </button>
                 </div>
-              )}
+              ) : null}
 
-              {isSignUp && (
-                <div className="mt-6 bg-[#FFFFF2] border border-[#D7F5EF] rounded-3xl p-5">
-                  <p className="text-[#073B35] font-black mb-4">
+              {isSignUp ? (
+                <section className={`p-5 ${SOFT_CARD}`}>
+                  <p className="mb-4 font-black text-[#073B35]">
                     Apartment Address
                   </p>
 
                   <div className="space-y-4">
-                    <div>
-                      <FieldError message={errors.apartmentName} />
+                    <Field
+                      label="Apartment name"
+                      error={errors.apartmentName}
+                    >
                       <input
                         name="apartmentName"
                         value={formData.apartmentName}
                         onChange={handleChange}
                         required
                         placeholder="Apartment name"
-                        className={`w-full bg-white/80 border rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827] ${
-                          errors.apartmentName
-                            ? "border-red-300"
-                            : "border-[#D7F5EF]"
+                        className={`${INPUT} bg-white ${
+                          errors.apartmentName ? "border-red-300" : ""
                         }`}
                       />
-                    </div>
+                    </Field>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <Field label="Block / Tower">
                       <input
                         name="block"
                         value={formData.block}
                         onChange={handleChange}
                         placeholder="Block / Tower"
-                        className="bg-white/80 border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
+                        className={`${INPUT} bg-white`}
                       />
+                    </Field>
 
-                      <div>
-                        <FieldError message={errors.flatNo} />
-                        <input
-                          name="flatNo"
-                          value={formData.flatNo}
-                          onChange={handleChange}
-                          required
-                          placeholder="Flat No."
-                          className={`w-full bg-white/80 border rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827] ${
-                            errors.flatNo
-                              ? "border-red-300"
-                              : "border-[#D7F5EF]"
-                          }`}
-                        />
-                      </div>
-                    </div>
+                    <Field label="Flat No." error={errors.flatNo}>
+                      <input
+                        name="flatNo"
+                        value={formData.flatNo}
+                        onChange={handleChange}
+                        required
+                        placeholder="Flat No."
+                        className={`${INPUT} bg-white ${
+                          errors.flatNo ? "border-red-300" : ""
+                        }`}
+                      />
+                    </Field>
                   </div>
 
-                  <p className="text-[#51615D] text-xs mt-4 leading-relaxed">
+                  <p className="mt-4 text-xs font-semibold leading-relaxed text-[#51615D]">
                     Address is used for order coordination. Kitchen/customer
                     door details are not shown publicly.
                   </p>
-                </div>
-              )}
+                </section>
+              ) : null}
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-2 bg-[#073B35] active:scale-[0.99] disabled:opacity-50 text-white font-black py-4 rounded-2xl shadow-lg shadow-[#073B35]/15"
+                className="w-full rounded-2xl border border-[#073B35] bg-[#073B35] py-4 font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.99] disabled:opacity-50"
               >
                 {loading
                   ? "Please wait..."
@@ -674,7 +596,7 @@ export default function CustomerLogin() {
                 setMessage("");
                 clearErrors();
               }}
-              className="w-full mt-5 text-sm text-[#1A9F8D] font-black"
+              className="mt-5 w-full rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] py-4 text-sm font-black text-[#073B35] active:scale-95"
             >
               {isSignUp
                 ? "Already have an account? Sign In"
@@ -684,5 +606,46 @@ export default function CustomerLogin() {
         </section>
       </div>
     </main>
+  );
+}
+
+function RoleButton({ active, onClick, label }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-2xl border py-3 text-sm font-black transition-all active:scale-95 ${
+        active
+          ? "border-[#073B35] bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
+          : "border-transparent bg-transparent text-[#51615D]"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function HeroTile({ icon, title }) {
+  return (
+    <div className="rounded-2xl border border-white/15 bg-white/10 p-3 text-center">
+      <p className="text-2xl">{icon}</p>
+      <p className="mt-2 text-xs font-black text-white">{title}</p>
+    </div>
+  );
+}
+
+function Field({ label, error, children }) {
+  return (
+    <label className="block">
+      {error ? (
+        <p className="mb-2 text-sm font-black text-red-600">{error}</p>
+      ) : null}
+
+      <span className="mb-2 block text-xs font-black uppercase tracking-wide text-[#51615D]">
+        {label}
+      </span>
+
+      {children}
+    </label>
   );
 }

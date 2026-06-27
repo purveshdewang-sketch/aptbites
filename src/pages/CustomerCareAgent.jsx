@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import Navbar from "../components/Navbar";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../context/AuthContext";
-import { getCustomerAIResponse } from "../lib/supportAI";
 
 const QUICK_ACTIONS = [
   {
@@ -50,8 +48,18 @@ const QUICK_ACTIONS = [
   },
 ];
 
+const CARD =
+  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+
+const SOFT_CARD =
+  "rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
+
+const INPUT =
+  "w-full rounded-2xl border border-[#BDEFE6] bg-white px-4 py-4 text-sm font-semibold text-[#111827] outline-none placeholder:text-[#8AA5A0] focus:border-[#41D3BD]";
+
 export default function CustomerCareAgent() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const chatEndRef = useRef(null);
 
@@ -76,7 +84,11 @@ export default function CustomerCareAgent() {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setLoadingOrders(false);
+      setLoadingTickets(false);
+      return;
+    }
 
     fetchOrders();
     fetchTickets();
@@ -235,11 +247,12 @@ export default function CustomerCareAgent() {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "-";
 
-    return date.toLocaleString([], {
+    return date.toLocaleString("en-IN", {
       day: "2-digit",
       month: "short",
       hour: "numeric",
       minute: "2-digit",
+      hour12: true,
     });
   }
 
@@ -275,7 +288,8 @@ export default function CustomerCareAgent() {
     if (status === "cooking") return "Cooking";
     if (status === "packing") return "Almost Ready";
     if (status === "ready_for_pickup") return "Ready for Pickup";
-    if (status === "completed") return isSelfPickup(order) ? "Picked Up" : "Delivered";
+    if (status === "completed")
+      return isSelfPickup(order) ? "Picked Up" : "Delivered";
     if (status === "cancelled") return "Cancelled";
 
     return "Order Confirmed";
@@ -284,15 +298,17 @@ export default function CustomerCareAgent() {
   function getStatusClass(order) {
     const status = getAutoStatus(order);
 
-    if (status === "cancelled") return "bg-red-50 text-red-600 border-red-200";
-    if (status === "completed") return "bg-green-50 text-green-700 border-green-200";
+    if (status === "cancelled") return "border-red-200 bg-red-50 text-red-600";
+    if (status === "completed")
+      return "border-green-200 bg-green-50 text-green-700";
     if (status === "ready_for_pickup") {
-      return "bg-emerald-50 text-emerald-700 border-emerald-200";
+      return "border-emerald-200 bg-emerald-50 text-emerald-700";
     }
-    if (status === "packing") return "bg-blue-50 text-blue-700 border-blue-200";
-    if (status === "cooking") return "bg-orange-50 text-orange-700 border-orange-200";
+    if (status === "packing") return "border-blue-200 bg-blue-50 text-blue-700";
+    if (status === "cooking")
+      return "border-orange-200 bg-orange-50 text-orange-700";
 
-    return "bg-[#41D3BD]/12 text-[#073B35] border-[#41D3BD]/30";
+    return "border-[#BDEFE6] bg-[#41D3BD]/12 text-[#073B35]";
   }
 
   function getIssueLabel(issueType) {
@@ -310,7 +326,9 @@ export default function CustomerCareAgent() {
         .map((item) => `${item.name} x ${item.quantity}`)
         .join(", ");
 
-      return `Order #${order.id}\nStatus: ${getStatusLabel(order)}\nAmount: ₹${order.total_amount}\nMode: ${order.delivery_type || "Delivery"}\nItems: ${items || "Not available"}`;
+      return `Order #${order.id}\nStatus: ${getStatusLabel(order)}\nAmount: ₹${order.total_amount}\nMode: ${
+        order.delivery_type || "Delivery"
+      }\nItems: ${items || "Not available"}`;
     }
 
     if (actionKey === "payment_issue") {
@@ -318,7 +336,9 @@ export default function CustomerCareAgent() {
         return "Select the order first. If money was deducted, keep your UPI reference number ready.";
       }
 
-      return `For Order #${order.id}, payment status is ${order.payment_status || "pending"}.\nIf money was deducted, type the UPI reference number and issue details.`;
+      return `For Order #${order.id}, payment status is ${
+        order.payment_status || "pending"
+      }.\nIf money was deducted, type the UPI reference number and issue details.`;
     }
 
     if (actionKey === "refund_request") {
@@ -394,7 +414,9 @@ export default function CustomerCareAgent() {
             selectedOrder
           )}\nAmount: ₹${selectedOrder.total_amount}\nDelivery Type: ${
             selectedOrder.delivery_type || "-"
-          }\nPayment Status: ${selectedOrder.payment_status || "-"}\nPayment Reference: ${
+          }\nPayment Status: ${
+            selectedOrder.payment_status || "-"
+          }\nPayment Reference: ${
             selectedOrder.payment_reference || "-"
           }\nPacking Required: ${
             selectedOrder.packing_required === false ? "No" : "Yes"
@@ -438,418 +460,472 @@ export default function CustomerCareAgent() {
     const value = String(status || "open").toLowerCase();
 
     if (value === "closed" || value === "resolved") {
-      return "bg-green-50 text-green-700 border-green-200";
+      return "border-green-200 bg-green-50 text-green-700";
     }
 
     if (value === "in_progress") {
-      return "bg-blue-50 text-blue-700 border-blue-200";
+      return "border-blue-200 bg-blue-50 text-blue-700";
     }
 
-    return "bg-yellow-50 text-yellow-700 border-yellow-200";
+    return "border-yellow-200 bg-yellow-50 text-yellow-700";
   }
 
-  return (
-    <>
-      <Navbar />
+  if (!user) {
+    return (
+      <main className="min-h-screen bg-[#FFFFF2] px-4 py-5 pb-28 text-[#111827]">
+        <div className="mx-auto max-w-md">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
+            aria-label="Go back"
+          >
+            <BackIcon />
+          </button>
 
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-3 sm:px-6 py-4 sm:py-8 pb-24">
-        <div className="max-w-6xl mx-auto">
-          <section className="relative overflow-hidden bg-[#073B35] rounded-[1.75rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-2xl shadow-[#073B35]/20">
-            <div className="absolute -top-20 -right-16 w-72 h-72 bg-[#41D3BD]/25 rounded-full blur-[85px]" />
-            <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-white/10 rounded-full blur-[95px]" />
-
-            <div className="relative flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
-              <div>
-                <div className="inline-flex items-center gap-2 bg-white/10 border border-white/10 text-[#41D3BD] px-3 py-1.5 rounded-full text-xs font-black">
-                  <span>💬</span>
-                  <span>Chat with Us</span>
-                </div>
-
-                <h1 className="text-4xl sm:text-6xl font-black mt-5 leading-[0.98] tracking-tight text-white">
-                  How can we
-                  <span className="block text-[#41D3BD]">help today?</span>
-                </h1>
-
-                <p className="text-[#D7F5EF] mt-4 text-sm sm:text-lg max-w-2xl leading-relaxed">
-                  Select an issue, attach an order if needed, and create a
-                  support ticket in seconds.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:min-w-[360px]">
-                <MiniStat label="Orders" value={orders.length} />
-                <MiniStat label="Open" value={openTickets.length} />
-                <MiniStat label="Tickets" value={tickets.length} />
-              </div>
+          <section className={`mt-6 p-8 text-center ${CARD}`}>
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 text-4xl">
+              💬
             </div>
-          </section>
 
-          {errorMessage && (
-            <div className="mt-5 bg-red-50 border border-red-200 rounded-2xl p-4 text-red-600 text-sm font-black">
-              {errorMessage}
-            </div>
-          )}
+            <h1 className="mt-5 text-2xl font-black text-[#111827]">
+              Sign in for support
+            </h1>
 
-          <section className="mt-5 grid grid-cols-1 lg:grid-cols-[0.88fr_1.12fr] gap-5">
-            <aside className="space-y-5 lg:sticky lg:top-24 h-fit">
-              <div className="bg-white/95 border border-[#D7F5EF] rounded-[1.75rem] p-4 sm:p-5 shadow-xl shadow-[#073B35]/5">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                      Step 1
-                    </p>
-                    <h2 className="text-2xl font-black text-[#111827] mt-1">
-                      Choose issue
-                    </h2>
-                  </div>
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+              Sign in to attach orders and create support tickets.
+            </p>
 
-                  {selectedIssueType && (
-                    <span className="bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] text-xs font-black px-3 py-1.5 rounded-full">
-                      Selected
-                    </span>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 mt-5">
-                  {QUICK_ACTIONS.map((action) => (
-                    <button
-                      key={action.key}
-                      type="button"
-                      onClick={() => handleQuickAction(action)}
-                      className={`text-left rounded-2xl p-4 border transition-all active:scale-[0.98] ${
-                        selectedIssueType === action.issueType
-                          ? "bg-[#073B35] text-white border-[#073B35] shadow-lg shadow-[#073B35]/15"
-                          : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF] hover:border-[#41D3BD]/60"
-                      }`}
-                    >
-                      <div className="text-2xl">{action.icon}</div>
-                      <p className="font-black text-sm mt-2 leading-tight">
-                        {action.label}
-                      </p>
-                      <p
-                        className={`text-[11px] mt-1 ${
-                          selectedIssueType === action.issueType
-                            ? "text-white/65"
-                            : "text-[#8AA5A0]"
-                        }`}
-                      >
-                        {action.short}
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-white/95 border border-[#D7F5EF] rounded-[1.75rem] p-4 sm:p-5 shadow-xl shadow-[#073B35]/5">
-                <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                  Step 2
-                </p>
-
-                <h2 className="text-2xl font-black text-[#111827] mt-1">
-                  Attach order
-                </h2>
-
-                {loadingOrders ? (
-                  <p className="text-[#51615D] font-bold mt-5">
-                    Loading orders...
-                  </p>
-                ) : orders.length === 0 ? (
-                  <div className="mt-5 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4">
-                    <p className="text-[#073B35] font-black">No orders yet</p>
-                    <p className="text-[#51615D] text-sm mt-1">
-                      You can still create an account or general support ticket.
-                    </p>
-
-                    <Link
-                      to="/marketplace"
-                      className="block mt-4 text-center bg-[#073B35] text-white font-black py-3 rounded-2xl"
-                    >
-                      Explore Food
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="mt-5 space-y-3 max-h-[370px] overflow-y-auto pr-1">
-                    {orders.map((order) => (
-                      <button
-                        key={order.id}
-                        type="button"
-                        onClick={() => setSelectedOrderId(String(order.id))}
-                        className={`w-full text-left border rounded-2xl p-4 transition-all ${
-                          String(selectedOrderId) === String(order.id)
-                            ? "bg-[#073B35] text-white border-[#073B35]"
-                            : "bg-[#FFFFF2] text-[#51615D] border-[#D7F5EF] hover:border-[#41D3BD]/60"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="font-black">Order #{order.id}</p>
-                            <p
-                              className={`text-xs mt-1 ${
-                                String(selectedOrderId) === String(order.id)
-                                  ? "text-white/70"
-                                  : "text-[#51615D]"
-                              }`}
-                            >
-                              {formatDateTime(order.created_at)} •{" "}
-                              {order.delivery_type || "Delivery"}
-                            </p>
-                          </div>
-
-                          <p className="font-black shrink-0">
-                            ₹{order.total_amount}
-                          </p>
-                        </div>
-
-                        <div className="mt-3 flex items-center justify-between gap-2">
-                          <span
-                            className={`border text-[10px] font-black px-2.5 py-1 rounded-full ${
-                              String(selectedOrderId) === String(order.id)
-                                ? "bg-white/10 text-[#41D3BD] border-white/10"
-                                : getStatusClass(order)
-                            }`}
-                          >
-                            {getStatusLabel(order)}
-                          </span>
-
-                          {order.packing_required === false && (
-                            <span
-                              className={`text-[10px] font-black ${
-                                String(selectedOrderId) === String(order.id)
-                                  ? "text-white/60"
-                                  : "text-yellow-700"
-                              }`}
-                            >
-                              No packing
-                            </span>
-                          )}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </aside>
-
-            <section className="space-y-5">
-              {latestActiveOrder && (
-                <div className="bg-white/95 border border-[#D7F5EF] rounded-[1.75rem] p-4 sm:p-5 shadow-xl shadow-[#073B35]/5">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div>
-                      <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                        Current Order
-                      </p>
-                      <h2 className="text-2xl font-black text-[#111827] mt-1">
-                        Order #{latestActiveOrder.id} • {getStatusLabel(latestActiveOrder)}
-                      </h2>
-                      <p className="text-[#51615D] text-sm mt-1">
-                        {latestActiveOrder.delivery_type || "Delivery"} • ₹
-                        {latestActiveOrder.total_amount}
-                      </p>
-                    </div>
-
-                    <Link
-                      to="/orders"
-                      className="bg-[#073B35] text-white font-black px-5 py-3 rounded-2xl text-center"
-                    >
-                      Track Order
-                    </Link>
-                  </div>
-                </div>
-              )}
-
-              <div className="bg-white/95 border border-[#D7F5EF] rounded-[1.75rem] overflow-hidden shadow-2xl shadow-[#073B35]/8">
-                <div className="bg-[#073B35] p-4 sm:p-5 text-white flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-[#41D3BD] text-[#073B35] flex items-center justify-center text-2xl">
-                      💬
-                    </div>
-
-                    <div>
-                      <p className="font-black text-xl">Chat with Us</p>
-                      <p className="text-[#D7F5EF] text-xs mt-0.5">
-                        Smart support for Nefo orders
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="hidden sm:block text-right">
-                    <p className="text-[#41D3BD] font-black text-xs uppercase">
-                      Status
-                    </p>
-                    <p className="text-white text-sm font-bold">Online</p>
-                  </div>
-                </div>
-
-                {selectedOrder && (
-                  <div className="bg-[#FFFFF2] border-b border-[#D7F5EF] p-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      <InfoPill label="Order" value={`#${selectedOrder.id}`} />
-                      <InfoPill label="Status" value={getStatusLabel(selectedOrder)} />
-                      <InfoPill label="Amount" value={`₹${selectedOrder.total_amount}`} />
-                      <InfoPill
-                        label="Packing"
-                        value={
-                          selectedOrder.packing_required === false
-                            ? "No packing"
-                            : `₹${selectedOrder.packing_charge || 0}`
-                        }
-                      />
-                    </div>
-
-                    {selectedOrder.packing_required === false && (
-                      <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded-2xl p-3">
-                        <p className="text-yellow-700 text-sm font-black">
-                          Please carry your own container.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <div className="bg-[#FFFFF2] p-3 sm:p-4">
-                  <div className="bg-white border border-[#D7F5EF] rounded-3xl p-3 sm:p-4 h-[310px] sm:h-[390px] overflow-y-auto space-y-3">
-                    {chatMessages.map((message, index) => (
-                      <div
-                        key={`${message.sender}-${index}`}
-                        className={`flex ${
-                          message.sender === "user"
-                            ? "justify-end"
-                            : "justify-start"
-                        }`}
-                      >
-                        <div
-                          className={`max-w-[86%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-line ${
-                            message.sender === "user"
-                              ? "bg-[#073B35] text-white rounded-br-md"
-                              : "bg-[#FFFFF2] border border-[#D7F5EF] text-[#51615D] rounded-bl-md"
-                          }`}
-                        >
-                          {message.text}
-                        </div>
-                      </div>
-                    ))}
-
-                    <div ref={chatEndRef} />
-                  </div>
-
-                  <div className="mt-4">
-                    <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs mb-2">
-                      Step 3 • Describe issue
-                    </p>
-
-                    <textarea
-                      value={messageText}
-                      onChange={(event) => setMessageText(event.target.value)}
-                      rows="3"
-                      className="w-full bg-white border border-[#D7F5EF] text-[#111827] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] resize-none"
-                      placeholder={
-                        selectedIssueType
-                          ? "Write issue details, UPI reference, missing item, or refund reason..."
-                          : "Select an issue first..."
-                      }
-                    />
-
-                    <button
-                      type="button"
-                      onClick={createSupportTicket}
-                      disabled={creatingTicket || !selectedIssueType}
-                      className="w-full mt-3 bg-[#073B35] hover:bg-[#0B5149] disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-4 rounded-2xl shadow-lg shadow-[#073B35]/15 transition-all"
-                    >
-                      {creatingTicket
-                        ? "Creating Ticket..."
-                        : selectedIssueType
-                        ? `Create Ticket • ${getIssueLabel(selectedIssueType)}`
-                        : "Select Issue First"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white/95 border border-[#D7F5EF] rounded-[1.75rem] p-4 sm:p-5 shadow-xl shadow-[#073B35]/5">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                      Ticket History
-                    </p>
-                    <h2 className="text-2xl font-black text-[#111827] mt-1">
-                      Your support tickets
-                    </h2>
-                  </div>
-
-                  <span className="bg-[#41D3BD]/12 border border-[#41D3BD]/25 text-[#073B35] text-xs font-black px-3 py-1.5 rounded-full">
-                    {tickets.length}
-                  </span>
-                </div>
-
-                {loadingTickets ? (
-                  <p className="text-[#51615D] font-bold mt-5">
-                    Loading tickets...
-                  </p>
-                ) : tickets.length === 0 ? (
-                  <div className="mt-5 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-5 text-center">
-                    <p className="text-[#073B35] font-black">No tickets yet</p>
-                    <p className="text-[#51615D] text-sm mt-1">
-                      Created tickets will appear here.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {tickets.map((ticket) => (
-                      <div
-                        key={ticket.id}
-                        className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="font-black text-[#111827]">
-                              Ticket #{ticket.id}
-                            </p>
-                            <p className="text-[#51615D] text-xs mt-1">
-                              {getIssueLabel(ticket.issue_type)}
-                            </p>
-                          </div>
-
-                          <span
-                            className={`border text-[10px] font-black px-2.5 py-1 rounded-full ${getTicketStatusClass(
-                              ticket.status
-                            )}`}
-                          >
-                            {ticket.status || "open"}
-                          </span>
-                        </div>
-
-                        <p className="text-[#51615D] text-xs mt-3 line-clamp-2">
-                          {ticket.message}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </section>
+            <Link
+              to="/customer-login"
+              className="mt-6 block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center text-sm font-black text-white"
+            >
+              Sign In
+            </Link>
           </section>
         </div>
       </main>
-    </>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-32 text-[#111827]">
+      <div className="mx-auto max-w-md">
+        <header className="flex items-start gap-3">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+            aria-label="Go back"
+          >
+            <BackIcon />
+          </button>
+
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+              Chat with Us
+            </p>
+
+            <h1 className="mt-1 text-3xl font-black leading-tight text-[#073B35]">
+              How can we
+              <span className="block text-[#111827]">help today?</span>
+            </h1>
+
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+              Select an issue, attach an order if needed, and create a support
+              ticket.
+            </p>
+          </div>
+        </header>
+
+        <section className="mt-5 grid grid-cols-3 gap-3">
+          <MiniStat label="Orders" value={orders.length} />
+          <MiniStat label="Open" value={openTickets.length} />
+          <MiniStat label="Tickets" value={tickets.length} />
+        </section>
+
+        {errorMessage ? (
+          <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-black text-red-600">
+            {errorMessage}
+          </div>
+        ) : null}
+
+        {latestActiveOrder ? (
+          <section className={`mt-5 p-5 ${CARD}`}>
+            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+              Current Order
+            </p>
+
+            <h2 className="mt-1 text-xl font-black text-[#111827]">
+              Order #{latestActiveOrder.id}
+            </h2>
+
+            <p className="mt-1 text-sm font-semibold text-[#51615D]">
+              {getStatusLabel(latestActiveOrder)} •{" "}
+              {latestActiveOrder.delivery_type || "Delivery"} • ₹
+              {latestActiveOrder.total_amount}
+            </p>
+
+            <Link
+              to="/orders"
+              className="mt-4 block rounded-2xl border border-[#073B35] bg-[#073B35] py-3 text-center text-sm font-black text-white active:scale-95"
+            >
+              Track Order
+            </Link>
+          </section>
+        ) : null}
+
+        <section className={`mt-5 p-5 ${CARD}`}>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                Step 1
+              </p>
+
+              <h2 className="mt-1 text-2xl font-black text-[#111827]">
+                Choose issue
+              </h2>
+            </div>
+
+            {selectedIssueType ? (
+              <span className="rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 px-3 py-1.5 text-xs font-black text-[#073B35]">
+                Selected
+              </span>
+            ) : null}
+          </div>
+
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            {QUICK_ACTIONS.map((action) => (
+              <button
+                key={action.key}
+                type="button"
+                onClick={() => handleQuickAction(action)}
+                className={`rounded-2xl border p-4 text-left transition-all active:scale-[0.98] ${
+                  selectedIssueType === action.issueType
+                    ? "border-[#073B35] bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
+                    : "border-[#BDEFE6] bg-[#FFFFF2] text-[#51615D]"
+                }`}
+              >
+                <div className="text-2xl">{action.icon}</div>
+
+                <p className="mt-2 text-sm font-black leading-tight">
+                  {action.label}
+                </p>
+
+                <p
+                  className={`mt-1 text-[11px] font-semibold ${
+                    selectedIssueType === action.issueType
+                      ? "text-white/65"
+                      : "text-[#8AA5A0]"
+                  }`}
+                >
+                  {action.short}
+                </p>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className={`mt-5 p-5 ${CARD}`}>
+          <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+            Step 2
+          </p>
+
+          <h2 className="mt-1 text-2xl font-black text-[#111827]">
+            Attach order
+          </h2>
+
+          {loadingOrders ? (
+            <div className="mt-5 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4 text-sm font-bold text-[#51615D]">
+              Loading orders...
+            </div>
+          ) : orders.length === 0 ? (
+            <div className={`mt-5 p-5 text-center ${SOFT_CARD}`}>
+              <p className="font-black text-[#073B35]">No orders yet</p>
+
+              <p className="mt-1 text-sm font-semibold text-[#51615D]">
+                You can still create a general support ticket.
+              </p>
+
+              <Link
+                to="/marketplace"
+                className="mt-4 block rounded-2xl border border-[#073B35] bg-[#073B35] py-3 text-center font-black text-white"
+              >
+                Explore Food
+              </Link>
+            </div>
+          ) : (
+            <div className="mt-5 max-h-[380px] space-y-3 overflow-y-auto pr-1">
+              {orders.map((order) => (
+                <button
+                  key={order.id}
+                  type="button"
+                  onClick={() => setSelectedOrderId(String(order.id))}
+                  className={`w-full rounded-2xl border p-4 text-left transition-all active:scale-[0.99] ${
+                    String(selectedOrderId) === String(order.id)
+                      ? "border-[#073B35] bg-[#073B35] text-white"
+                      : "border-[#BDEFE6] bg-[#FFFFF2] text-[#51615D]"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-black">Order #{order.id}</p>
+
+                      <p
+                        className={`mt-1 text-xs font-semibold ${
+                          String(selectedOrderId) === String(order.id)
+                            ? "text-white/70"
+                            : "text-[#51615D]"
+                        }`}
+                      >
+                        {formatDateTime(order.created_at)} •{" "}
+                        {order.delivery_type || "Delivery"}
+                      </p>
+                    </div>
+
+                    <p className="shrink-0 font-black">₹{order.total_amount}</p>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between gap-2">
+                    <span
+                      className={`rounded-full border px-2.5 py-1 text-[10px] font-black ${
+                        String(selectedOrderId) === String(order.id)
+                          ? "border-white/10 bg-white/10 text-[#41D3BD]"
+                          : getStatusClass(order)
+                      }`}
+                    >
+                      {getStatusLabel(order)}
+                    </span>
+
+                    {order.packing_required === false ? (
+                      <span
+                        className={`text-[10px] font-black ${
+                          String(selectedOrderId) === String(order.id)
+                            ? "text-white/60"
+                            : "text-yellow-700"
+                        }`}
+                      >
+                        No packing
+                      </span>
+                    ) : null}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className={`mt-5 overflow-hidden ${CARD}`}>
+          <div className="border-b border-[#174E47] bg-[#073B35] p-4 text-white">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#41D3BD] bg-[#41D3BD] text-2xl text-[#073B35]">
+                💬
+              </div>
+
+              <div>
+                <p className="text-xl font-black">Chat with Us</p>
+                <p className="mt-0.5 text-xs font-semibold text-[#D7F5EF]">
+                  Smart support for Nefo orders
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {selectedOrder ? (
+            <div className="border-b border-[#D7F5EF] bg-[#FFFFF2] p-4">
+              <div className="grid grid-cols-2 gap-3">
+                <InfoPill label="Order" value={`#${selectedOrder.id}`} />
+                <InfoPill
+                  label="Status"
+                  value={getStatusLabel(selectedOrder)}
+                />
+                <InfoPill
+                  label="Amount"
+                  value={`₹${selectedOrder.total_amount}`}
+                />
+                <InfoPill
+                  label="Packing"
+                  value={
+                    selectedOrder.packing_required === false
+                      ? "No packing"
+                      : `₹${selectedOrder.packing_charge || 0}`
+                  }
+                />
+              </div>
+
+              {selectedOrder.packing_required === false ? (
+                <div className="mt-3 rounded-2xl border border-yellow-200 bg-yellow-50 p-3">
+                  <p className="text-sm font-black text-yellow-700">
+                    Please carry your own container.
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          <div className="bg-[#FFFFF2] p-4">
+            <div className="h-[330px] space-y-3 overflow-y-auto rounded-3xl border border-[#BDEFE6] bg-white p-3">
+              {chatMessages.map((message, index) => (
+                <div
+                  key={`${message.sender}-${index}`}
+                  className={`flex ${
+                    message.sender === "user" ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  <div
+                    className={`max-w-[86%] whitespace-pre-line rounded-2xl border px-4 py-3 text-sm leading-relaxed ${
+                      message.sender === "user"
+                        ? "rounded-br-md border-[#073B35] bg-[#073B35] text-white"
+                        : "rounded-bl-md border-[#BDEFE6] bg-[#FFFFF2] text-[#51615D]"
+                    }`}
+                  >
+                    {message.text}
+                  </div>
+                </div>
+              ))}
+
+              <div ref={chatEndRef} />
+            </div>
+
+            <div className="mt-4">
+              <p className="mb-2 text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                Step 3 • Describe issue
+              </p>
+
+              <textarea
+                value={messageText}
+                onChange={(event) => setMessageText(event.target.value)}
+                rows="3"
+                className={`${INPUT} min-h-28 resize-none`}
+                placeholder={
+                  selectedIssueType
+                    ? "Write issue details, UPI reference, missing item, or refund reason..."
+                    : "Select an issue first..."
+                }
+              />
+
+              <button
+                type="button"
+                onClick={createSupportTicket}
+                disabled={creatingTicket || !selectedIssueType}
+                className="mt-3 w-full rounded-2xl border border-[#073B35] bg-[#073B35] py-4 font-black text-white shadow-lg shadow-[#073B35]/15 transition-all active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {creatingTicket
+                  ? "Creating Ticket..."
+                  : selectedIssueType
+                  ? `Create Ticket • ${getIssueLabel(selectedIssueType)}`
+                  : "Select Issue First"}
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section className={`mt-5 p-5 ${CARD}`}>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                Ticket History
+              </p>
+
+              <h2 className="mt-1 text-2xl font-black text-[#111827]">
+                Your tickets
+              </h2>
+            </div>
+
+            <span className="rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 px-3 py-1.5 text-xs font-black text-[#073B35]">
+              {tickets.length}
+            </span>
+          </div>
+
+          {loadingTickets ? (
+            <div className="mt-5 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4 text-sm font-bold text-[#51615D]">
+              Loading tickets...
+            </div>
+          ) : tickets.length === 0 ? (
+            <div className={`mt-5 p-5 text-center ${SOFT_CARD}`}>
+              <p className="font-black text-[#073B35]">No tickets yet</p>
+
+              <p className="mt-1 text-sm font-semibold text-[#51615D]">
+                Created tickets will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-5 space-y-3">
+              {tickets.map((ticket) => (
+                <div
+                  key={ticket.id}
+                  className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-black text-[#111827]">
+                        Ticket #{ticket.id}
+                      </p>
+
+                      <p className="mt-1 text-xs font-semibold text-[#51615D]">
+                        {getIssueLabel(ticket.issue_type)}
+                      </p>
+                    </div>
+
+                    <span
+                      className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-black ${getTicketStatusClass(
+                        ticket.status
+                      )}`}
+                    >
+                      {ticket.status || "open"}
+                    </span>
+                  </div>
+
+                  <p className="mt-3 line-clamp-2 text-xs font-semibold leading-relaxed text-[#51615D]">
+                    {ticket.message}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
+    </main>
   );
 }
 
 function MiniStat({ label, value }) {
   return (
-    <div className="bg-white/10 border border-white/10 rounded-2xl p-3">
-      <p className="text-[#D7F5EF] text-[10px] font-black uppercase">
+    <div className="rounded-[22px] border border-[#D7F5EF] bg-white/90 p-3 shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
+      <p className="text-[10px] font-black uppercase text-[#7A8A86]">
         {label}
       </p>
-      <p className="text-white text-2xl font-black mt-1">{value}</p>
+
+      <p className="mt-1 text-2xl font-black text-[#073B35]">{value}</p>
     </div>
   );
 }
 
 function InfoPill({ label, value }) {
   return (
-    <div className="bg-white border border-[#D7F5EF] rounded-2xl p-3">
-      <p className="text-[#51615D] text-[10px] font-black uppercase">{label}</p>
-      <p className="text-[#073B35] text-sm font-black mt-1 truncate">{value}</p>
+    <div className="rounded-2xl border border-[#BDEFE6] bg-white p-3">
+      <p className="text-[10px] font-black uppercase text-[#51615D]">
+        {label}
+      </p>
+
+      <p className="mt-1 truncate text-sm font-black text-[#073B35]">
+        {value}
+      </p>
     </div>
+  );
+}
+
+function BackIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+    >
+      <path d="M19 12H5" />
+      <path d="M12 19l-7-7 7-7" />
+    </svg>
   );
 }

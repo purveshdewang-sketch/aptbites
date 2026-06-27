@@ -8,9 +8,13 @@
   --qb-primary: #41d3bd;
   --qb-primary-dark: #1a9f8d;
   --qb-deep: #073b35;
+  --qb-hover: #0b5149;
   --qb-border: #d7f5ef;
+  --qb-border-strong: #bdefe6;
+  --qb-border-soft: #e8f4f1;
   --qb-text: #111827;
   --qb-muted: #51615d;
+  --qb-danger: #dc2626;
 }
 
 * {
@@ -21,18 +25,25 @@ html {
   background: var(--qb-bg);
   color: var(--qb-text);
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: hidden;
   background: var(--qb-bg);
   color: var(--qb-text);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+#root {
+  min-height: 100vh;
+  background: var(--qb-bg);
 }
 
 button,
@@ -47,9 +58,47 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
 img {
-  max-width: 100%;
   display: block;
+  max-width: 100%;
+}
+
+input,
+textarea,
+select {
+  border-radius: 16px;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #8aa5a0;
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--qb-primary);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--qb-primary);
+  color: var(--qb-deep);
 }
 
 .scrollbar-hide {
@@ -61,9 +110,51 @@ img {
   display: none;
 }
 
+.line-clamp-1 {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
 /* Better mobile app feel */
 @media (max-width: 640px) {
+  html,
   body {
     overscroll-behavior-y: none;
+  }
+
+  body {
+    touch-action: manipulation;
+  }
+
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+@keyframes nefoShimmer {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(300%);
   }
 }

@@ -2,6 +2,15 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 
+const CARD =
+  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+
+const SOFT_CARD =
+  "rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
+
+const INPUT =
+  "w-full rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-4 text-base font-semibold text-[#111827] outline-none placeholder:text-[#8AA5A0] focus:border-[#41D3BD] focus:bg-white";
+
 export default function SellerLogin() {
   const navigate = useNavigate();
 
@@ -25,13 +34,66 @@ export default function SellerLogin() {
   const [resettingPassword, setResettingPassword] = useState(false);
   const [message, setMessage] = useState("");
 
+  const [errors, setErrors] = useState({
+    email: "",
+    password: "",
+    kitchenName: "",
+    flat: "",
+    doorNo: "",
+    phone: "",
+    specialty: "",
+    general: "",
+  });
+
   useEffect(() => {
     checkExistingSession();
   }, []);
 
+  function clearErrors() {
+    setErrors({
+      email: "",
+      password: "",
+      kitchenName: "",
+      flat: "",
+      doorNo: "",
+      phone: "",
+      specialty: "",
+      general: "",
+    });
+  }
+
+  function setAuthError(errorMessage) {
+    const cleanMessage = String(errorMessage || "").toLowerCase();
+
+    if (
+      cleanMessage.includes("invalid login credentials") ||
+      cleanMessage.includes("invalid")
+    ) {
+      setErrors((current) => ({
+        ...current,
+        password: "Invalid seller email or password.",
+      }));
+      return;
+    }
+
+    if (cleanMessage.includes("email")) {
+      setErrors((current) => ({
+        ...current,
+        email: errorMessage,
+      }));
+      return;
+    }
+
+    setErrors((current) => ({
+      ...current,
+      general: errorMessage || "Something went wrong. Please try again.",
+    }));
+  }
+
   async function checkExistingSession() {
     setCheckingSession(true);
     setMessage("");
+    clearErrors();
 
     const { data } = await supabase.auth.getUser();
     const loggedInUser = data?.user || null;
@@ -138,20 +200,80 @@ export default function SellerLogin() {
       ...currentData,
       [name]: type === "checkbox" ? checked : value,
     }));
+
+    setErrors((currentErrors) => ({
+      ...currentErrors,
+      [name]: "",
+      general: "",
+    }));
+
+    setMessage("");
   }
 
-  function sellerSetupFieldsAreValid() {
-    return Boolean(
-      formData.kitchenName.trim() &&
-        formData.flat.trim() &&
-        formData.doorNo.trim() &&
-        formData.phone.trim() &&
-        formData.specialty.trim()
-    );
+  function validateLoginFields() {
+    const nextErrors = {
+      email: "",
+      password: "",
+      kitchenName: "",
+      flat: "",
+      doorNo: "",
+      phone: "",
+      specialty: "",
+      general: "",
+    };
+
+    if (!formData.email.trim()) {
+      nextErrors.email = "Seller email is required.";
+    }
+
+    if (!formData.password.trim()) {
+      nextErrors.password = "Password is required.";
+    }
+
+    setErrors(nextErrors);
+
+    return !Object.values(nextErrors).some(Boolean);
+  }
+
+  function validateSellerSetupFields() {
+    const nextErrors = {
+      email: "",
+      password: "",
+      kitchenName: "",
+      flat: "",
+      doorNo: "",
+      phone: "",
+      specialty: "",
+      general: "",
+    };
+
+    if (!formData.kitchenName.trim()) {
+      nextErrors.kitchenName = "Kitchen name is required.";
+    }
+
+    if (!formData.flat.trim()) {
+      nextErrors.flat = "Tower / flat is required.";
+    }
+
+    if (!formData.doorNo.trim()) {
+      nextErrors.doorNo = "Door number is required.";
+    }
+
+    if (!formData.phone.trim()) {
+      nextErrors.phone = "Phone number is required.";
+    }
+
+    if (!formData.specialty.trim()) {
+      nextErrors.specialty = "Food specialty is required.";
+    }
+
+    setErrors(nextErrors);
+
+    return !Object.values(nextErrors).some(Boolean);
   }
 
   async function saveSellerDetails(user, existingProfile = null) {
-    if (!sellerSetupFieldsAreValid()) {
+    if (!validateSellerSetupFields()) {
       throw new Error(
         "Please fill kitchen name, tower/flat, door number, phone number, and food specialty."
       );
@@ -196,16 +318,22 @@ export default function SellerLogin() {
 
     setLoading(true);
     setMessage("");
+    clearErrors();
 
     try {
       if (!currentUser) {
+        if (!validateLoginFields()) {
+          setLoading(false);
+          return;
+        }
+
         const { data, error } = await supabase.auth.signInWithPassword({
           email: formData.email.trim(),
           password: formData.password,
         });
 
         if (error) {
-          setMessage(error.message);
+          setAuthError(error.message);
           setLoading(false);
           return;
         }
@@ -213,7 +341,10 @@ export default function SellerLogin() {
         const signedInUser = data?.user;
 
         if (!signedInUser) {
-          setMessage("Seller login failed.");
+          setErrors((current) => ({
+            ...current,
+            general: "Seller login failed.",
+          }));
           setLoading(false);
           return;
         }
@@ -242,7 +373,10 @@ export default function SellerLogin() {
       }
 
       if (!sellerVerified) {
-        setMessage("Seller account is not verified.");
+        setErrors((current) => ({
+          ...current,
+          general: "Seller account is not verified.",
+        }));
         setLoading(false);
         return;
       }
@@ -264,16 +398,24 @@ export default function SellerLogin() {
       await saveSellerDetails(currentUser, profileResult.profile);
       navigate("/seller-dashboard");
     } catch (error) {
-      setMessage(error.message);
+      setErrors((current) => ({
+        ...current,
+        general: error.message || "Something went wrong. Please try again.",
+      }));
       setLoading(false);
     }
   }
 
   async function handleForgotPassword() {
+    clearErrors();
+
     const email = formData.email.trim();
 
     if (!email) {
-      setMessage("Please enter your email first, then click Forgot Password.");
+      setErrors((current) => ({
+        ...current,
+        email: "Please enter your email first, then tap Forgot Password.",
+      }));
       return;
     }
 
@@ -287,7 +429,10 @@ export default function SellerLogin() {
     });
 
     if (error) {
-      setMessage(`Password reset failed: ${error.message}`);
+      setErrors((current) => ({
+        ...current,
+        email: `Password reset failed: ${error.message}`,
+      }));
       setResettingPassword(false);
       return;
     }
@@ -302,6 +447,7 @@ export default function SellerLogin() {
     setCurrentUser(null);
     setSellerVerified(false);
     setMessage("");
+    clearErrors();
 
     setFormData({
       email: "",
@@ -318,16 +464,13 @@ export default function SellerLogin() {
 
   if (checkingSession) {
     return (
-      <main className="min-h-screen bg-[#FFFFF2] text-[#111827] flex items-center justify-center px-4">
-        <div className="fixed top-0 right-0 w-80 h-80 bg-[#41D3BD]/20 blur-[110px] rounded-full pointer-events-none" />
-        <div className="fixed bottom-0 left-0 w-80 h-80 bg-[#41D3BD]/10 blur-[120px] rounded-full pointer-events-none" />
-
-        <div className="relative bg-white/95 border border-[#D7F5EF] rounded-[2rem] p-8 shadow-xl shadow-[#073B35]/5 text-center">
-          <div className="w-16 h-16 mx-auto rounded-full bg-[#41D3BD]/12 flex items-center justify-center text-3xl">
+      <main className="flex min-h-screen items-center justify-center bg-[#FFFFF2] px-4 py-8 text-[#111827]">
+        <div className={`w-full max-w-md p-8 text-center ${CARD}`}>
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 text-3xl">
             👨‍🍳
           </div>
 
-          <p className="text-[#51615D] font-bold mt-4">
+          <p className="mt-4 font-bold text-[#51615D]">
             Checking seller account...
           </p>
         </div>
@@ -336,185 +479,152 @@ export default function SellerLogin() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FFFFF2] text-[#111827] px-4 py-6 overflow-hidden">
-      <div className="fixed top-0 right-0 w-80 h-80 bg-[#41D3BD]/20 blur-[110px] rounded-full pointer-events-none" />
-      <div className="fixed bottom-0 left-0 w-80 h-80 bg-[#41D3BD]/10 blur-[120px] rounded-full pointer-events-none" />
+    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-28 text-[#111827]">
+      <div className="mx-auto max-w-md">
+        <header className="flex items-center justify-between gap-3">
+          <Link to="/" className="flex min-w-0 items-center gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#D7F5EF] bg-white/90 shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]">
+              <img
+                src="/Nefo-logo.png"
+                alt="Nefo"
+                className="h-full w-full scale-[1.65] object-cover"
+              />
+            </div>
 
-      <div className="relative max-w-6xl mx-auto min-h-[calc(100vh-3rem)] grid lg:grid-cols-[0.95fr_1.05fr] gap-6 lg:gap-8 items-center">
-        <section className="hidden lg:block">
-          <div className="relative overflow-hidden bg-[#073B35] rounded-[2.5rem] p-10 min-h-[720px] shadow-2xl shadow-[#073B35]/25">
-            <div className="absolute -top-28 -right-28 w-96 h-96 bg-[#41D3BD]/25 rounded-full blur-[110px]" />
-            <div className="absolute bottom-0 left-0 w-80 h-80 bg-[#41D3BD]/10 rounded-full blur-[100px]" />
+            <div className="min-w-0">
+              <p className="text-xl font-black text-[#073B35]">Nefo</p>
+              <p className="text-[10px] font-black uppercase tracking-wide text-[#51615D]">
+                Seller Login
+              </p>
+            </div>
+          </Link>
 
-            <div className="relative h-full flex flex-col justify-between min-h-[640px]">
-              <div>
-                <Link
-                  to="/"
-                  className="inline-flex items-center gap-3 bg-white/10 border border-white/10 rounded-3xl px-4 py-3"
-                >
-                  <div className="w-12 h-12 rounded-2xl bg-[#FFFFF2] flex items-center justify-center overflow-hidden">
-                    <img
-                      src="/Nefo-logo.png"
-                      alt="Nefo"
-                      className="w-full h-full object-cover scale-[1.65]"
-                    />
-                  </div>
+          <Link
+            to="/"
+            className="shrink-0 rounded-full border border-[#BDEFE6] bg-white px-4 py-2 text-xs font-black text-[#073B35] active:scale-95"
+          >
+            Home
+          </Link>
+        </header>
 
-                  <div>
-                    <p className="text-white font-black text-xl">Nefo</p>
-                    <p className="text-[#D7F5EF] text-xs uppercase tracking-wide">
-                      kitchen partner
-                    </p>
-                  </div>
-                </Link>
+        <section className={`mt-5 overflow-hidden ${CARD}`}>
+          <div className="bg-[#073B35] p-5 text-white">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-[#41D3BD]">
+              <span>👨‍🍳</span>
+              <span>Seller portal</span>
+            </div>
 
-                <div className="mt-12">
-                  <div className="inline-flex items-center gap-2 bg-[#41D3BD]/15 border border-[#41D3BD]/25 text-[#41D3BD] px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wide">
-                    <span>👨‍🍳</span>
-                    <span>Seller portal</span>
-                  </div>
+            <h1 className="mt-5 text-4xl font-black leading-[0.95] tracking-tight">
+              Run your
+              <span className="block text-[#41D3BD]">kitchen panel.</span>
+            </h1>
 
-                  <h1 className="text-white text-6xl font-black mt-6 leading-[0.98] tracking-tight">
-                    Run your
-                    <span className="block text-[#41D3BD]">
-                      kitchen panel.
-                    </span>
-                  </h1>
+            <p className="mt-4 text-sm font-semibold leading-relaxed text-[#D7F5EF]">
+              Sign in as an approved seller, manage dishes, stock, orders, and
+              scheduling.
+            </p>
 
-                  <p className="text-[#D7F5EF] text-lg mt-6 leading-relaxed max-w-xl">
-                    Sign in as an approved seller, manage dishes, stock, accept
-                    orders, and serve fresh homemade food to your community.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-white/10 border border-white/10 rounded-3xl p-4">
-                  <p className="text-[#41D3BD] text-2xl">🛎️</p>
-                  <p className="text-white font-black mt-3">Orders</p>
-                  <p className="text-white/60 text-xs mt-1">Live requests</p>
-                </div>
-
-                <div className="bg-white/10 border border-white/10 rounded-3xl p-4">
-                  <p className="text-[#41D3BD] text-2xl">🍲</p>
-                  <p className="text-white font-black mt-3">Menu</p>
-                  <p className="text-white/60 text-xs mt-1">Dish control</p>
-                </div>
-
-                <div className="bg-white/10 border border-white/10 rounded-3xl p-4">
-                  <p className="text-[#41D3BD] text-2xl">📊</p>
-                  <p className="text-white font-black mt-3">Sales</p>
-                  <p className="text-white/60 text-xs mt-1">Basic analytics</p>
-                </div>
-              </div>
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              <HeroTile icon="🛎️" title="Orders" />
+              <HeroTile icon="🍲" title="Menu" />
+              <HeroTile icon="📊" title="Sales" />
             </div>
           </div>
-        </section>
 
-        <section className="w-full max-w-xl mx-auto lg:max-w-none">
-          <div className="bg-white/95 border border-[#D7F5EF] rounded-[2rem] p-5 sm:p-8 shadow-2xl shadow-[#073B35]/10">
-            <div className="flex items-center justify-between gap-4 mb-6">
-              <Link to="/" className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-[#FFFFF2] border border-[#D7F5EF] flex items-center justify-center overflow-hidden shadow-sm">
-                  <img
-                    src="/Nefo-logo.png"
-                    alt="Nefo"
-                    className="w-full h-full object-cover scale-[1.65]"
-                  />
-                </div>
+          <div className="p-5">
+            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+              Seller access
+            </p>
 
-                <div>
-                  <p className="text-[#073B35] font-black text-xl">Nefo</p>
-                  <p className="text-[#51615D] text-[10px] uppercase tracking-wide">
-                    Seller Login
-                  </p>
-                </div>
-              </Link>
+            <h2 className="mt-2 text-3xl font-black leading-tight text-[#111827]">
+              {currentUser ? "Review details" : "Welcome"}
+            </h2>
 
-              <Link to="/" className="text-[#51615D] text-sm font-black">
-                Home
-              </Link>
-            </div>
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+              {currentUser
+                ? "Confirm or update your kitchen profile before opening the dashboard."
+                : "Sign in with your approved seller account to manage your kitchen."}
+            </p>
 
-            <div>
-              <p className="text-[#1A9F8D] font-black uppercase tracking-wide text-xs">
-                Seller access
-              </p>
-
-              <h1 className="text-4xl sm:text-5xl font-black mt-2 text-[#111827] leading-tight">
-                {currentUser ? "Review details" : "Welcome"}
-              </h1>
-
-              <p className="text-[#51615D] mt-3 leading-relaxed">
-                {currentUser
-                  ? "Confirm or update your kitchen profile before opening the dashboard."
-                  : "Sign in with your approved seller account to manage your kitchen."}
-              </p>
-            </div>
-
-            {message && (
-              <div className="mt-5 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 text-sm font-bold text-[#073B35]">
-                {message}
+            {errors.general ? (
+              <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4">
+                <p className="text-sm font-black text-red-700">
+                  {errors.general}
+                </p>
               </div>
-            )}
+            ) : null}
 
-            {!currentUser && message && (
-              <div className="mt-4 flex flex-col sm:flex-row gap-3">
+            {message ? (
+              <div className="mt-5 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4">
+                <p className="text-sm font-black text-[#073B35]">{message}</p>
+              </div>
+            ) : null}
+
+            {!currentUser && message ? (
+              <div className="mt-4 grid grid-cols-1 gap-3">
                 <Link
                   to="/seller-registration"
-                  className="flex-1 text-center bg-[#41D3BD]/15 border border-[#41D3BD]/30 text-[#073B35] font-black px-4 py-3 rounded-2xl"
+                  className="rounded-2xl border border-[#41D3BD] bg-[#41D3BD]/15 px-4 py-3 text-center font-black text-[#073B35]"
                 >
                   Open Seller Registration
                 </Link>
 
                 <Link
                   to="/customer-login"
-                  className="flex-1 text-center bg-white border border-[#D7F5EF] text-[#51615D] font-black px-4 py-3 rounded-2xl"
+                  className="rounded-2xl border border-[#BDEFE6] bg-white px-4 py-3 text-center font-black text-[#51615D]"
                 >
                   Customer Login
                 </Link>
               </div>
-            )}
+            ) : null}
 
-            <form onSubmit={handleSellerLogin} className="mt-7 space-y-4">
-              {!currentUser && (
+            <form onSubmit={handleSellerLogin} className="mt-6 space-y-4">
+              {!currentUser ? (
                 <>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
-                    placeholder="Seller email"
-                  />
-
-                  <div className="relative">
+                  <Field label="Seller email" error={errors.email}>
                     <input
-                      type={showPassword ? "text" : "password"}
-                      name="password"
-                      value={formData.password}
+                      type="email"
+                      name="email"
+                      value={formData.email}
                       onChange={handleChange}
                       required
-                      className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 pr-20 outline-none focus:border-[#41D3BD] text-[#111827]"
-                      placeholder="Password"
+                      className={`${INPUT} ${
+                        errors.email ? "border-red-300" : ""
+                      }`}
+                      placeholder="Seller email"
                     />
+                  </Field>
 
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[#1A9F8D] text-sm font-black"
-                    >
-                      {showPassword ? "Hide" : "Show"}
-                    </button>
-                  </div>
+                  <Field label="Password" error={errors.password}>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                        className={`${INPUT} pr-20 ${
+                          errors.password ? "border-red-300" : ""
+                        }`}
+                        placeholder="Password"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-black text-[#0B8F80]"
+                      >
+                        {showPassword ? "Hide" : "Show"}
+                      </button>
+                    </div>
+                  </Field>
 
                   <div className="flex items-center justify-between gap-3">
                     <button
                       type="button"
                       onClick={handleForgotPassword}
                       disabled={resettingPassword}
-                      className="text-[#1A9F8D] text-sm font-black disabled:opacity-50"
+                      className="text-sm font-black text-[#0B8F80] disabled:opacity-50"
                     >
                       {resettingPassword
                         ? "Sending reset link..."
@@ -523,135 +633,153 @@ export default function SellerLogin() {
 
                     <Link
                       to="/customer-login"
-                      className="text-[#51615D] text-sm font-bold"
+                      className="text-sm font-bold text-[#51615D]"
                     >
                       Customer login
                     </Link>
                   </div>
                 </>
-              )}
+              ) : null}
 
-              {currentUser && sellerVerified && (
+              {currentUser && sellerVerified ? (
                 <>
-                  <div className="bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4">
-                    <p className="text-[#073B35] font-black text-sm">
+                  <section className={`p-4 ${SOFT_CARD}`}>
+                    <p className="text-sm font-black text-[#073B35]">
                       Signed in as seller
                     </p>
 
-                    <p className="text-[#51615D] text-sm mt-1 truncate">
+                    <p className="mt-1 truncate text-sm font-semibold text-[#51615D]">
                       {currentUser.email}
                     </p>
 
                     <button
                       type="button"
                       onClick={handleUseAnotherAccount}
-                      className="mt-3 text-[#1A9F8D] text-sm font-black"
+                      className="mt-3 text-sm font-black text-[#0B8F80]"
                     >
                       Use another account
                     </button>
-                  </div>
+                  </section>
 
-                  <div className="grid grid-cols-1 gap-4">
+                  <Field label="Kitchen name" error={errors.kitchenName}>
                     <input
                       type="text"
                       name="kitchenName"
                       value={formData.kitchenName}
                       onChange={handleChange}
                       required
-                      className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
+                      className={`${INPUT} ${
+                        errors.kitchenName ? "border-red-300" : ""
+                      }`}
                       placeholder="Kitchen name e.g. Asha's Kitchen"
                     />
+                  </Field>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <input
-                        type="text"
-                        name="flat"
-                        value={formData.flat}
-                        onChange={handleChange}
-                        required
-                        className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
-                        placeholder="Tower / Flat e.g. Block B"
-                      />
+                  <Field label="Tower / Flat" error={errors.flat}>
+                    <input
+                      type="text"
+                      name="flat"
+                      value={formData.flat}
+                      onChange={handleChange}
+                      required
+                      className={`${INPUT} ${
+                        errors.flat ? "border-red-300" : ""
+                      }`}
+                      placeholder="Tower / Flat e.g. Block B"
+                    />
+                  </Field>
 
-                      <input
-                        type="text"
-                        name="doorNo"
-                        value={formData.doorNo}
-                        onChange={handleChange}
-                        required
-                        className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
-                        placeholder="Door No. e.g. 1204"
-                      />
-                    </div>
+                  <Field label="Door No." error={errors.doorNo}>
+                    <input
+                      type="text"
+                      name="doorNo"
+                      value={formData.doorNo}
+                      onChange={handleChange}
+                      required
+                      className={`${INPUT} ${
+                        errors.doorNo ? "border-red-300" : ""
+                      }`}
+                      placeholder="Door No. e.g. 1204"
+                    />
+                  </Field>
 
+                  <Field label="Phone number" error={errors.phone}>
                     <input
                       type="tel"
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
                       required
-                      className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
+                      className={`${INPUT} ${
+                        errors.phone ? "border-red-300" : ""
+                      }`}
                       placeholder="Phone Number"
                     />
+                  </Field>
 
+                  <Field label="Food specialty" error={errors.specialty}>
                     <input
                       type="text"
                       name="specialty"
                       value={formData.specialty}
                       onChange={handleChange}
                       required
-                      className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] text-[#111827]"
+                      className={`${INPUT} ${
+                        errors.specialty ? "border-red-300" : ""
+                      }`}
                       placeholder="Food specialty e.g. South Indian breakfast"
                     />
+                  </Field>
 
+                  <Field label="About kitchen">
                     <textarea
                       name="about"
                       value={formData.about}
                       onChange={handleChange}
                       rows="4"
-                      className="w-full bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl px-4 py-4 outline-none focus:border-[#41D3BD] resize-none text-[#111827]"
+                      className={`${INPUT} min-h-32 resize-none`}
                       placeholder="Tell customers about your cooking style..."
                     />
+                  </Field>
 
-                    <label className="flex items-start gap-3 bg-[#FFFFF2] border border-[#D7F5EF] rounded-2xl p-4 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        name="acceptScheduledOrders"
-                        checked={formData.acceptScheduledOrders}
-                        onChange={handleChange}
-                        className="mt-1 accent-[#41D3BD]"
-                      />
+                  <label className={`flex cursor-pointer items-start gap-3 p-4 ${SOFT_CARD}`}>
+                    <input
+                      type="checkbox"
+                      name="acceptScheduledOrders"
+                      checked={formData.acceptScheduledOrders}
+                      onChange={handleChange}
+                      className="mt-1 accent-[#41D3BD]"
+                    />
 
-                      <div>
-                        <p className="text-[#111827] font-black">
-                          Accept scheduled orders
-                        </p>
-
-                        <p className="text-[#51615D] text-sm mt-1">
-                          Customers can choose date and time for later orders.
-                        </p>
-                      </div>
-                    </label>
-
-                    <div className="bg-[#41D3BD]/12 border border-[#41D3BD]/25 rounded-2xl p-4">
-                      <p className="text-[#073B35] font-black text-sm">
-                        Location shown to customers
+                    <div>
+                      <p className="font-black text-[#111827]">
+                        Accept scheduled orders
                       </p>
 
-                      <p className="text-[#51615D] text-xs mt-1 leading-relaxed">
-                        Your tower/flat and door number may be shown on food
-                        cards and food details so customers can identify the
-                        seller kitchen.
+                      <p className="mt-1 text-sm font-semibold text-[#51615D]">
+                        Customers can choose date and time for later orders.
                       </p>
                     </div>
+                  </label>
+
+                  <div className="rounded-2xl border border-[#BDEFE6] bg-[#41D3BD]/12 p-4">
+                    <p className="text-sm font-black text-[#073B35]">
+                      Location shown to customers
+                    </p>
+
+                    <p className="mt-1 text-xs font-semibold leading-relaxed text-[#51615D]">
+                      Your tower/flat and door number may be shown on food cards
+                      and food details so customers can identify the seller
+                      kitchen.
+                    </p>
                   </div>
                 </>
-              )}
+              ) : null}
 
               <button
                 type="submit"
                 disabled={loading}
-                className="block w-full mt-2 bg-[#073B35] disabled:opacity-50 text-white font-black py-4 rounded-2xl text-center shadow-lg shadow-[#073B35]/15 active:scale-[0.99]"
+                className="block w-full rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.99] disabled:opacity-50"
               >
                 {loading
                   ? "Please wait..."
@@ -661,7 +789,7 @@ export default function SellerLogin() {
               </button>
             </form>
 
-            <p className="text-[#8AA5A0] text-xs mt-5 leading-relaxed">
+            <p className="mt-5 text-xs font-semibold leading-relaxed text-[#8AA5A0]">
               Seller dashboard access is available only for accounts approved by
               the app owner.
             </p>
@@ -669,5 +797,30 @@ export default function SellerLogin() {
         </section>
       </div>
     </main>
+  );
+}
+
+function Field({ label, error, children }) {
+  return (
+    <label className="block">
+      {error ? (
+        <p className="mb-2 text-sm font-black text-red-600">{error}</p>
+      ) : null}
+
+      <span className="mb-2 block text-xs font-black uppercase tracking-wide text-[#51615D]">
+        {label}
+      </span>
+
+      {children}
+    </label>
+  );
+}
+
+function HeroTile({ icon, title }) {
+  return (
+    <div className="rounded-2xl border border-white/15 bg-white/10 p-3 text-center">
+      <p className="text-2xl">{icon}</p>
+      <p className="mt-2 text-xs font-black text-white">{title}</p>
+    </div>
   );
 }

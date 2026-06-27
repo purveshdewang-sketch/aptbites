@@ -39,9 +39,13 @@ import { supabase } from "./lib/supabaseClient";
 
 function LoadingScreen() {
   return (
-    <div className="min-h-screen bg-[#FFFFF2] flex items-center justify-center text-[#073B35] font-black">
-      Loading...
-    </div>
+    <main className="flex min-h-screen items-center justify-center bg-[#FFFFF2] px-4 text-[#111827]">
+      <div className="rounded-[28px] border border-[#D7F5EF] bg-white/90 px-8 py-7 text-center shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-4 border-[#D7F5EF] border-t-[#073B35] animate-spin" />
+
+        <p className="mt-4 font-black text-[#073B35]">Loading...</p>
+      </div>
+    </main>
   );
 }
 
@@ -52,12 +56,18 @@ function shouldShowCustomerBottomNav(pathname) {
     "/reset-password",
     "/seller-dashboard",
     "/seller-helper",
+    "/seller-registration",
     "/owner-dashboard",
     "/owner-accounting",
     "/owner-seller-applications",
     "/care-agent",
     "/order-chat",
     "/food",
+    "/cart",
+    "/checkout",
+    "/privacy-policy",
+    "/terms",
+    "/refund-policy",
   ];
 
   return !hiddenRoutes.some((route) => pathname.startsWith(route));
@@ -88,8 +98,8 @@ function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[900] border-t border-[#E8F4F1] bg-[#FFFFF2]/95 backdrop-blur-xl">
-      <div className="mx-auto grid h-[70px] max-w-md grid-cols-4 px-2 pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-[900] border-t border-[#D7F5EF] bg-[#FFFFF2]/95 shadow-[0_-8px_24px_rgba(7,59,53,0.06)] backdrop-blur-xl">
+      <div className="mx-auto grid h-[72px] max-w-md grid-cols-4 px-2 pb-[env(safe-area-inset-bottom)]">
         {navItems.map((item) => (
           <NavLink
             key={item.path}
@@ -106,14 +116,15 @@ function BottomNav() {
             {({ isActive }) => (
               <>
                 <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-2xl transition-all ${
+                  className={`flex h-8 w-8 items-center justify-center rounded-2xl border transition-all ${
                     isActive
-                      ? "bg-[#D7F5EF] shadow-[4px_4px_10px_rgba(7,59,53,0.08),-4px_-4px_10px_rgba(255,255,255,0.9)]"
-                      : ""
+                      ? "border-[#BDEFE6] bg-[#D7F5EF] shadow-[4px_4px_10px_rgba(7,59,53,0.08),-4px_-4px_10px_rgba(255,255,255,0.9)]"
+                      : "border-transparent"
                   }`}
                 >
                   {item.icon}
                 </div>
+
                 <span>{item.label}</span>
               </>
             )}
@@ -128,14 +139,24 @@ function FloatingHelpButton() {
   const location = useLocation();
 
   const hiddenRoutes = [
-    "/seller-dashboard",
-    "/food",
     "/customer-login",
     "/seller-login",
     "/reset-password",
-    "/care-agent",
+    "/seller-dashboard",
     "/seller-helper",
+    "/seller-registration",
+    "/owner-dashboard",
+    "/owner-accounting",
+    "/owner-seller-applications",
+    "/care-agent",
+    "/customer-care",
     "/order-chat",
+    "/food",
+    "/cart",
+    "/checkout",
+    "/privacy-policy",
+    "/terms",
+    "/refund-policy",
   ];
 
   const shouldHide = hiddenRoutes.some((route) =>
@@ -145,15 +166,6 @@ function FloatingHelpButton() {
   if (shouldHide) return null;
 
   const bottomNavVisible = shouldShowCustomerBottomNav(location.pathname);
-
-  const sellerDashboardPage = location.pathname.startsWith("/seller-dashboard");
-
-const needsHigherPosition =
-  bottomNavVisible ||
-  sellerDashboardPage ||
-  location.pathname === "/cart" ||
-  location.pathname === "/checkout" ||
-  location.pathname.startsWith("/food/");
 
   const sellerPages = [
     "/seller-dashboard",
@@ -170,12 +182,12 @@ const needsHigherPosition =
   return (
     <Link
       to={isSellerPage ? "/seller-helper" : "/care-agent"}
-      className={`fixed right-4 z-[999] font-black px-4 py-3 rounded-full shadow-2xl active:scale-95 transition-all ${
-        sellerDashboardPage ? "bottom-28" : needsHigherPosition ? "bottom-24" : "bottom-5"
+      className={`fixed right-4 z-[999] rounded-full border px-4 py-3 font-black shadow-2xl transition-all active:scale-95 ${
+        bottomNavVisible ? "bottom-24" : "bottom-5"
       } ${
         isSellerPage
-          ? "bg-[#FFB703] hover:bg-[#FFC533] text-[#111827]"
-          : "bg-[#073B35] hover:bg-[#0B5149] text-white border border-[#41D3BD]/30"
+          ? "border-[#FFB703] bg-[#FFB703] text-[#111827] hover:bg-[#FFC533]"
+          : "border-[#41D3BD]/30 bg-[#073B35] text-white hover:bg-[#0B5149]"
       }`}
     >
       {isSellerPage ? "👨‍🍳 Seller Help" : "💬 Help"}
@@ -340,14 +352,14 @@ function ComingSoonPage({ title, description }) {
       <div className="mx-auto max-w-md">
         <h1 className="text-2xl font-black text-[#111827]">{title}</h1>
 
-        <div className="mt-5 rounded-[28px] border border-[#E8F4F1] bg-white/90 p-6 shadow-[8px_8px_22px_rgba(7,59,53,0.07),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+        <div className="mt-5 rounded-[28px] border border-[#D7F5EF] bg-white/90 p-6 shadow-[8px_8px_22px_rgba(7,59,53,0.07),-8px_-8px_22px_rgba(255,255,255,0.95)]">
           <p className="text-sm font-semibold leading-relaxed text-[#51615D]">
             {description}
           </p>
 
           <Link
             to="/profile"
-            className="mt-6 block rounded-2xl bg-[#073B35] py-4 text-center text-sm font-black text-white active:scale-[0.98]"
+            className="mt-6 block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center text-sm font-black text-white active:scale-[0.98]"
           >
             Back to Profile
           </Link>
