@@ -507,7 +507,6 @@ async function getSellerFoods(supabaseAdmin: any, sellerId: string) {
         "type",
         "seller",
         "seller_kitchen_name",
-        "seller_id",
         "user_id",
         "seller_online",
         "delivery_available",
@@ -517,7 +516,7 @@ async function getSellerFoods(supabaseAdmin: any, sellerId: string) {
         "created_at",
       ].join(", ")
     )
-    .or(`seller_id.eq.${sellerId},user_id.eq.${sellerId}`)
+    .eq("user_id", sellerId)
     .order("id", { ascending: false })
     .limit(50);
 
@@ -746,7 +745,7 @@ When a seller asks why food is not visible, check:
 1. stock
 2. seller_online
 3. delivery_available or pickup_available
-4. food seller_id/user_id
+4. food user_id
 5. category/type/image completeness if available
 
 Do not answer owner-only questions except by saying owner access is required.

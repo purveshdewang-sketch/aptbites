@@ -49,9 +49,6 @@ const QUICK_ACTIONS = [
 const CARD =
   "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
-const SOFT_CARD =
-  "rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
-
 const INPUT =
   "w-full rounded-2xl border border-[#BDEFE6] bg-white px-4 py-4 text-sm font-semibold text-[#111827] outline-none placeholder:text-[#8AA5A0] focus:border-[#41D3BD]";
 
@@ -77,7 +74,8 @@ export default function SellerHelper() {
 
   const [loading, setLoading] = useState(true);
   const [aiThinking, setAiThinking] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [sellerDataError, setSellerDataError] = useState("");
+  const [aiErrorMessage, setAiErrorMessage] = useState("");
 
   useEffect(() => {
     loadSellerData();
@@ -94,7 +92,7 @@ export default function SellerHelper() {
     }
 
     setLoading(true);
-    setErrorMessage("");
+    setSellerDataError("");
 
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
@@ -105,7 +103,7 @@ export default function SellerHelper() {
     const { data: foods, error: foodsError } = await supabase
       .from("foods")
       .select("*")
-      .or(`user_id.eq.${user.id},seller_id.eq.${user.id}`)
+      .eq("user_id", user.id)
       .order("id", { ascending: false });
 
     const { data: orders, error: ordersError } = await supabase
@@ -115,7 +113,7 @@ export default function SellerHelper() {
       .order("id", { ascending: false });
 
     if (profileError || foodsError || ordersError) {
-      setErrorMessage(
+      setSellerDataError(
         profileError?.message || foodsError?.message || ordersError?.message
       );
     }
@@ -262,7 +260,7 @@ export default function SellerHelper() {
     if (!userText) return;
 
     setInput("");
-    setErrorMessage("");
+    setAiErrorMessage("");
     setAiThinking(true);
     addMessage("user", userText);
 
@@ -295,12 +293,8 @@ export default function SellerHelper() {
 
         const fallback = generateLocalFallbackAnswer(userText);
 
-        addMessage(
-          "assistant",
-          `${fallback}\n\nAI note: ${detailedMessage}`
-        );
-
-        setErrorMessage(detailedMessage);
+        addMessage("assistant", `${fallback}\n\nAI note: ${detailedMessage}`);
+        setAiErrorMessage(detailedMessage);
         setAiThinking(false);
         return;
       }
@@ -316,7 +310,7 @@ export default function SellerHelper() {
           `${fallback}\n\nAI note: ${String(detailedMessage)}`
         );
 
-        setErrorMessage(String(detailedMessage));
+        setAiErrorMessage(String(detailedMessage));
         setAiThinking(false);
         return;
       }
@@ -332,12 +326,8 @@ export default function SellerHelper() {
 
       const fallback = generateLocalFallbackAnswer(userText);
 
-      addMessage(
-        "assistant",
-        `${fallback}\n\nAI note: ${detailedMessage}`
-      );
-
-      setErrorMessage(detailedMessage);
+      addMessage("assistant", `${fallback}\n\nAI note: ${detailedMessage}`);
+      setAiErrorMessage(detailedMessage);
     }
 
     setAiThinking(false);
@@ -743,12 +733,6 @@ Try: “Why is my food not visible?”`;
           <StatCard label="Low Stock" value={stats.lowStockFoods.length} muted />
         </section>
 
-        {errorMessage ? (
-          <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-black text-red-600">
-            {errorMessage}
-          </div>
-        ) : null}
-
         <section className={`mt-5 p-5 ${CARD}`}>
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -771,6 +755,18 @@ Try: “Why is my food not visible?”`;
           </div>
 
           <div className="mt-5 space-y-3">
+            {sellerDataError ? (
+              <div className="rounded-2xl border border-red-200 bg-red-50 p-4">
+                <p className="text-sm font-black text-red-600">
+                  Kitchen health could not load completely.
+                </p>
+
+                <p className="mt-1 text-xs font-semibold text-red-500">
+                  {sellerDataError}
+                </p>
+              </div>
+            ) : null}
+
             <HealthRow
               label="Kitchen online"
               active={stats.profile?.seller_online !== false}
@@ -852,6 +848,18 @@ Try: “Why is my food not visible?”`;
               </div>
             ) : null}
 
+            {aiErrorMessage ? (
+              <div className="mb-3 rounded-2xl border border-red-200 bg-red-50 p-4">
+                <p className="text-sm font-black text-red-600">
+                  Nefo AI could not reply.
+                </p>
+
+                <p className="mt-1 text-xs font-semibold text-red-500">
+                  {aiErrorMessage}
+                </p>
+              </div>
+            ) : null}
+
             <div className="h-[420px] space-y-3 overflow-y-auto rounded-3xl border border-[#BDEFE6] bg-white p-3">
               {messages.map((msg, index) => (
                 <div
@@ -875,7 +883,7 @@ Try: “Why is my food not visible?”`;
               {aiThinking ? (
                 <div className="flex justify-start">
                   <div className="rounded-2xl rounded-bl-md border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-3 text-sm font-black text-[#073B35]">
-                    Nefo AI is checking seller data...
+                    Finding the best fix...
                   </div>
                 </div>
               ) : null}
