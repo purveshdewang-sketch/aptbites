@@ -61,12 +61,11 @@ export default function SellerHelper() {
   const chatEndRef = useRef(null);
 
   const [input, setInput] = useState("");
-  const [conversationState, setConversationState] = useState(null);
   const [messages, setMessages] = useState([
     {
       role: "assistant",
       text:
-        "👨‍🍳 Hi! I’m your Seller Assistant. Tell me what problem you are facing. I can help with photo upload, dish saving, orders, stock, earnings, payout setup, visibility, and dashboard issues.",
+        "👨‍🍳 Hi! I’m Nefo AI Seller Assistant. I can check your live seller data, dishes, stock, orders, payout setup, kitchen visibility, and dashboard issues.",
     },
   ]);
 
@@ -77,6 +76,8 @@ export default function SellerHelper() {
   });
 
   const [loading, setLoading] = useState(true);
+  const [aiThinking, setAiThinking] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     loadSellerData();
@@ -84,7 +85,7 @@ export default function SellerHelper() {
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, aiThinking]);
 
   async function loadSellerData() {
     if (!user) {
@@ -93,24 +94,31 @@ export default function SellerHelper() {
     }
 
     setLoading(true);
+    setErrorMessage("");
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", user.id)
       .maybeSingle();
 
-    const { data: foods } = await supabase
+    const { data: foods, error: foodsError } = await supabase
       .from("foods")
       .select("*")
-      .eq("user_id", user.id)
+      .or(`user_id.eq.${user.id},seller_id.eq.${user.id}`)
       .order("id", { ascending: false });
 
-    const { data: orders } = await supabase
+    const { data: orders, error: ordersError } = await supabase
       .from("orders")
       .select("*")
       .eq("seller_id", user.id)
       .order("id", { ascending: false });
+
+    if (profileError || foodsError || ordersError) {
+      setErrorMessage(
+        profileError?.message || foodsError?.message || ordersError?.message
+      );
+    }
 
     setSellerData({
       profile,
@@ -233,80 +241,143 @@ export default function SellerHelper() {
     setMessages((current) => [...current, { role, text }]);
   }
 
-  function sendMessage(customText = "") {
-    const userText = customText || input;
-
-    if (!userText.trim()) return;
-
-    const answer = generateAnswer(userText);
-
-    addMessage("user", userText);
-    addMessage("assistant", answer);
-
-    setInput("");
+  function getAiHistory() {
+    return messages
+      .slice(-8)
+      .map((message) => ({
+        role: message.role === "assistant" ? "assistant" : "user",
+        content: message.text,
+      }))
+      .filter((message) => message.content?.trim());
   }
 
-  function generateAnswer(text) {
+  async function askSellerAi(customText = "") {
+    if (!user) {
+      alert("Please login before using Seller Assistant.");
+      return;
+    }
+
+    const userText = String(customText || input || "").trim();
+
+    if (!userText) return;
+
+    setInput("");
+    setErrorMessage("");
+    setAiThinking(true);
+    addMessage("user", userText);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("nefo-ai-agent", {
+        body: {
+          role: "seller",
+          message: userText,
+          history: getAiHistory(),
+        },
+      });
+
+      if (error) {
+        let detailedMessage =
+          error.message ||
+          "Nefo AI Seller Assistant is not available right now.";
+
+        try {
+          if (error.context) {
+            const errorBody = await error.context.json();
+            detailedMessage =
+              errorBody?.details ||
+              errorBody?.error ||
+              errorBody?.message ||
+              detailedMessage;
+          }
+        } catch {
+          // Keep default error message.
+        }
+
+        const fallback = generateLocalFallbackAnswer(userText);
+
+        addMessage(
+          "assistant",
+          `${fallback}\n\nAI note: ${detailedMessage}`
+        );
+
+        setErrorMessage(detailedMessage);
+        setAiThinking(false);
+        return;
+      }
+
+      if (data?.error) {
+        const detailedMessage =
+          data.details || data.error || "Nefo AI returned an error.";
+
+        const fallback = generateLocalFallbackAnswer(userText);
+
+        addMessage(
+          "assistant",
+          `${fallback}\n\nAI note: ${String(detailedMessage)}`
+        );
+
+        setErrorMessage(String(detailedMessage));
+        setAiThinking(false);
+        return;
+      }
+
+      addMessage(
+        "assistant",
+        data?.reply ||
+          "I could not generate a clear answer. Please ask again with more details."
+      );
+    } catch (error) {
+      const detailedMessage =
+        error?.message || "Could not connect to Nefo AI Seller Assistant.";
+
+      const fallback = generateLocalFallbackAnswer(userText);
+
+      addMessage(
+        "assistant",
+        `${fallback}\n\nAI note: ${detailedMessage}`
+      );
+
+      setErrorMessage(detailedMessage);
+    }
+
+    setAiThinking(false);
+  }
+
+  function generateLocalFallbackAnswer(text) {
     const question = text.toLowerCase().trim();
 
-    if (conversationState?.type === "photo_upload_followup") {
-      return handlePhotoUploadFollowup(question);
-    }
-
-    if (conversationState?.type === "dish_save_followup") {
-      return handleDishSaveFollowup(question);
-    }
-
-    if (conversationState?.type === "dashboard_followup") {
-      return handleDashboardFollowup(question);
-    }
-
     if (detectPhotoUploadIssue(question)) {
-      setConversationState({ type: "photo_upload_followup" });
+      return `Photo upload check:
 
-      return `I can help with food photo upload.
+1. Use JPG, PNG, or WEBP only.
+2. Try a smaller image below 3 MB.
+3. Check camera/gallery permission.
+4. Refresh the app.
+5. Try Upload from gallery instead of Camera.
 
-What exactly happens when you upload?
-
-1. Nothing happens after selecting image
-2. Upload keeps loading
-3. Error message appears
-4. Image preview shows but final upload fails
-5. Camera does not open
-
-Reply with 1, 2, 3, 4, or 5.`;
+If it still fails, send Nefo support your phone model and screenshot.`;
     }
 
     if (detectDishSaveIssue(question)) {
-      setConversationState({ type: "dish_save_followup" });
+      return `Dish saving check:
 
-      return `I can help with dish saving.
+1. Fill dish name, price, stock, kitchen name, ready time, and category.
+2. Add a valid food photo.
+3. Make sure price and stock are numbers.
+4. Refresh and try again.
+5. If image uploads but dish does not save, try a smaller image.
 
-What exactly happens?
-
-1. Add Dish button does nothing
-2. It keeps loading
-3. A message/error appears
-4. Photo uploads but dish does not save
-5. Dish saves but does not appear in marketplace
-
-Reply with 1, 2, 3, 4, or 5.`;
+If the same issue continues, send Nefo support a screenshot of the filled dish form.`;
     }
 
     if (detectDashboardIssue(question)) {
-      setConversationState({ type: "dashboard_followup" });
+      return `Seller dashboard check:
 
-      return `I can help with seller dashboard issues.
-
-What problem are you facing?
-
-1. Page is blank
-2. Orders are not showing
-3. Buttons are not working
-4. Settings are not updating
-5. Page looks old or changes are missing
-
-Reply with 1, 2, 3, 4, 5, or describe the issue.`;
+1. Refresh the app.
+2. Logout and login again.
+3. Confirm your seller account is approved.
+4. Check internet connection.
+5. If the app looks old, rebuild and reinstall the Android APK.`;
     }
 
     if (detectOrderLowIssue(question)) return diagnoseOrders();
@@ -381,7 +452,8 @@ Reply with 1, 2, 3, 4, 5, or describe the issue.`;
       question.includes("earn") ||
       question.includes("earning") ||
       question.includes("income") ||
-      question.includes("revenue")
+      question.includes("revenue") ||
+      question.includes("money")
     );
   }
 
@@ -428,239 +500,13 @@ Reply with 1, 2, 3, 4, 5, or describe the issue.`;
     );
   }
 
-  function handlePhotoUploadFollowup(answer) {
-    if (answer === "1" || answer.includes("nothing")) {
-      return `If nothing happens after selecting an image:
-
-1. Try Upload instead of Camera.
-2. Use JPG, PNG, or WEBP only.
-3. Close and reopen the app.
-4. Check photo/gallery permission.
-5. Try a smaller image.
-
-If it still happens, tell Nefo support your phone model and whether you used Camera or Upload.`;
-    }
-
-    if (answer === "2" || answer.includes("loading")) {
-      return `If upload keeps loading:
-
-1. Check your internet connection.
-2. Try a JPG image below 3 MB.
-3. Refresh the app.
-4. Login again.
-5. Try Upload from gallery instead of Camera.
-
-If it still keeps loading, contact Nefo support and share a screenshot.`;
-    }
-
-    if (answer === "3" || answer.includes("error")) {
-      return `If an error appears:
-
-Please copy or screenshot the exact error.
-
-Quick fixes:
-1. Use JPG, PNG, or WEBP only.
-2. Keep image size below 3 MB.
-3. Refresh the app.
-4. Login again.
-5. Try a different photo.
-
-If the same error continues, send the screenshot to Nefo support.`;
-    }
-
-    if (answer === "4" || answer.includes("preview")) {
-      return `If preview shows but final upload fails:
-
-The phone selected the image correctly, but final save did not complete.
-
-Try this:
-1. Use a JPG image below 3 MB.
-2. Check internet connection.
-3. Refresh the app.
-4. Login again.
-5. Try another photo.
-
-If it still fails, contact Nefo support with a screenshot.`;
-    }
-
-    if (answer === "5" || answer.includes("camera")) {
-      return `If camera does not open:
-
-1. Check camera permission for the app/browser.
-2. Try Upload from gallery instead.
-3. Restart the app.
-4. Try taking the photo separately and uploading from gallery.
-5. Make sure your browser/app has camera access enabled.
-
-If it still fails, use gallery upload for now.`;
-    }
-
-    return `For photo upload issues, tell me which case matches:
-
-1. Nothing happens
-2. Upload keeps loading
-3. Error appears
-4. Preview shows but final upload fails
-5. Camera does not open`;
-  }
-
-  function handleDishSaveFollowup(answer) {
-    if (answer === "1" || answer.includes("nothing")) {
-      return `If Add Dish button does nothing:
-
-1. Check all required fields are filled.
-2. Add a dish photo.
-3. Check price and stock are numbers.
-4. Refresh the app.
-5. Try again after login.
-
-Required fields:
-• Dish name
-• Price
-• Stock
-• Kitchen name
-• Ready time
-• Photo`;
-    }
-
-    if (answer === "2" || answer.includes("loading")) {
-      return `If dish keeps loading while saving:
-
-1. Check internet connection.
-2. Use a smaller food photo.
-3. Refresh and try again.
-4. Logout and login again.
-5. Avoid tapping Add Dish multiple times.
-
-If it keeps loading every time, send Nefo support a screenshot.`;
-    }
-
-    if (answer === "3" || answer.includes("error")) {
-      return `If a message/error appears:
-
-Please screenshot or copy the exact message.
-
-Basic fixes:
-1. Fill every required field.
-2. Use JPG/PNG/WEBP image.
-3. Keep image below 3 MB.
-4. Check internet.
-5. Try again after refreshing.`;
-    }
-
-    if (answer === "4" || answer.includes("photo")) {
-      return `If photo uploads but dish does not save:
-
-Check these fields:
-1. Dish name
-2. Price
-3. Kitchen name
-4. Ready time
-5. Stock
-6. Category
-
-Then tap Add Dish again.
-
-If it still does not save, send Nefo support a screenshot of the filled dish form.`;
-    }
-
-    if (answer === "5" || answer.includes("marketplace")) {
-      return `If dish saves but does not appear in marketplace:
-
-Check:
-1. Kitchen is Online.
-2. Dish stock is more than 0.
-3. Dish image is visible.
-4. Seller account is approved.
-5. Refresh marketplace.
-
-If stock is 0, customers will see it as unavailable or sold out.`;
-    }
-
-    return `For dish saving issues, tell me which case matches:
-
-1. Add Dish button does nothing
-2. It keeps loading
-3. Error appears
-4. Photo uploads but dish does not save
-5. Dish saves but does not appear in marketplace`;
-  }
-
-  function handleDashboardFollowup(answer) {
-    if (answer === "1" || answer.includes("blank")) {
-      return `If the seller dashboard is blank:
-
-1. Refresh the app.
-2. Logout and login again.
-3. Check your internet connection.
-4. Make sure your seller account is approved.
-5. Try opening again after a few minutes.
-
-If it still shows blank, send Nefo support a screenshot.`;
-    }
-
-    if (answer === "2" || answer.includes("orders")) {
-      return `If orders are not showing:
-
-1. Check if your kitchen is Online.
-2. Check if your dishes are in stock.
-3. Refresh Seller Dashboard.
-4. Logout and login again.
-5. Ask customer to confirm their order was placed.
-
-If an order is still missing, contact Nefo support with customer name or order number.`;
-    }
-
-    if (answer === "3" || answer.includes("button")) {
-      return `If buttons are not working:
-
-1. Refresh the app.
-2. Check your internet.
-3. Logout and login again.
-4. Try again after a few seconds.
-5. Tell Nefo support which button is failing.
-
-Example: Accept Order, Add Dish, Save Profile, Complete Order.`;
-    }
-
-    if (answer === "4" || answer.includes("setting")) {
-      return `If settings are not updating:
-
-1. Change one setting at a time.
-2. Wait for confirmation message.
-3. Refresh Seller Dashboard.
-4. Check if the setting stayed updated.
-5. Logout and login again.
-
-If it still fails, send Nefo support a screenshot.`;
-    }
-
-    if (answer === "5" || answer.includes("old") || answer.includes("missing")) {
-      return `If changes are missing or the page looks old:
-
-1. Refresh the app.
-2. Close and reopen the app.
-3. Clear browser cache if using web.
-4. If using Android APK, rebuild and reinstall the APK.
-5. Confirm you are opening the latest app version.
-
-This usually happens when the website is updated but the Android app has not been synced/rebuilt.`;
-    }
-
-    return `Tell me which dashboard issue you mean:
-
-1. Page is blank
-2. Orders are not showing
-3. Buttons are not working
-4. Settings are not updating
-5. Page looks old or changes are missing`;
-  }
-
   function diagnoseOrders() {
     const problems = [];
 
     if (stats.profile?.seller_online === false) {
-      problems.push("Your kitchen is offline. Turn it online from Seller Dashboard.");
+      problems.push(
+        "Your kitchen is offline. Turn it online from Seller Dashboard."
+      );
     }
 
     if (!stats.profile?.delivery_available && !stats.profile?.pickup_available) {
@@ -700,7 +546,7 @@ This usually happens when the website is updated but the Android app has not bee
     }\nSold out dishes: ${stats.soldOutFoods.length}\n\n${
       stats.activeFoods.length === 0
         ? "Main issue: No active stocked dishes. Add stock to make dishes visible."
-        : "Your stocked dishes should be visible if your kitchen is online."
+        : "Your stocked dishes should be visible if your kitchen is online and delivery/pickup is enabled."
     }`;
   }
 
@@ -815,7 +661,7 @@ This usually happens when the website is updated but the Android app has not bee
 • Payout/bank setup
 • Sales improvement tips
 
-Try: “Food image is not uploading.”`;
+Try: “Why is my food not visible?”`;
   }
 
   if (!user) {
@@ -871,7 +717,7 @@ Try: “Food image is not uploading.”`;
 
           <div className="min-w-0 flex-1">
             <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
-              Seller Help
+              Nefo AI Seller
             </p>
 
             <h1 className="mt-1 text-3xl font-black leading-tight text-[#073B35]">
@@ -880,7 +726,7 @@ Try: “Food image is not uploading.”`;
             </h1>
 
             <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
-              Get help for uploads, orders, visibility, payouts, stock, and
+              AI help for uploads, orders, visibility, payout, stock, and
               dashboard issues.
             </p>
           </div>
@@ -896,6 +742,12 @@ Try: “Food image is not uploading.”`;
           <StatCard label="Orders" value={stats.orders.length} />
           <StatCard label="Low Stock" value={stats.lowStockFoods.length} muted />
         </section>
+
+        {errorMessage ? (
+          <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-black text-red-600">
+            {errorMessage}
+          </div>
+        ) : null}
 
         <section className={`mt-5 p-5 ${CARD}`}>
           <div className="flex items-center justify-between gap-3">
@@ -962,8 +814,9 @@ Try: “Food image is not uploading.”`;
               <button
                 key={item.label}
                 type="button"
-                onClick={() => sendMessage(item.prompt)}
-                className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4 text-left text-[#073B35] transition-all active:scale-[0.98]"
+                onClick={() => askSellerAi(item.prompt)}
+                disabled={aiThinking}
+                className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4 text-left text-[#073B35] transition-all active:scale-[0.98] disabled:opacity-50"
               >
                 <div className="text-2xl">{item.icon}</div>
 
@@ -979,14 +832,14 @@ Try: “Food image is not uploading.”`;
           <div className="border-b border-[#174E47] bg-[#073B35] p-4 text-white">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#41D3BD] bg-[#41D3BD] text-2xl text-[#073B35]">
-                👨‍🍳
+                🤖
               </div>
 
               <div className="min-w-0">
-                <p className="text-xl font-black">Seller Assistant</p>
+                <p className="text-xl font-black">Nefo AI Seller</p>
 
                 <p className="mt-0.5 text-xs font-semibold text-[#D7F5EF]">
-                  Support agent for kitchen issues
+                  Live support for kitchen operations
                 </p>
               </div>
             </div>
@@ -1019,6 +872,14 @@ Try: “Food image is not uploading.”`;
                 </div>
               ))}
 
+              {aiThinking ? (
+                <div className="flex justify-start">
+                  <div className="rounded-2xl rounded-bl-md border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-3 text-sm font-black text-[#073B35]">
+                    Nefo AI is checking seller data...
+                  </div>
+                </div>
+              ) : null}
+
               <div ref={chatEndRef} />
             </div>
 
@@ -1027,18 +888,19 @@ Try: “Food image is not uploading.”`;
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 onKeyDown={(event) => {
-                  if (event.key === "Enter") sendMessage();
+                  if (event.key === "Enter" && !aiThinking) askSellerAi();
                 }}
-                placeholder="Type seller issue..."
+                placeholder="Ask about orders, stock, payout..."
                 className={INPUT}
               />
 
               <button
                 type="button"
-                onClick={() => sendMessage()}
-                className="shrink-0 rounded-2xl border border-[#073B35] bg-[#073B35] px-5 font-black text-white active:scale-95"
+                onClick={() => askSellerAi()}
+                disabled={aiThinking || !input.trim()}
+                className="shrink-0 rounded-2xl border border-[#073B35] bg-[#073B35] px-5 font-black text-white active:scale-95 disabled:opacity-50"
               >
-                Send
+                {aiThinking ? "..." : "Send"}
               </button>
             </div>
           </div>
