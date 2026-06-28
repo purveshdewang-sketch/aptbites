@@ -104,22 +104,24 @@ export default function Cart() {
 
   const dateOptions = useMemo(() => buildDateOptions(), []);
   const timeOptions = useMemo(() => buildTimeOptions(), []);
-
   const storedTiming = useMemo(() => getStoredTiming(), []);
 
   const [orderTiming, setOrderTiming] = useState(
     storedTiming?.orderTiming || "now"
   );
   const [scheduledDate, setScheduledDate] = useState(
-    storedTiming?.scheduledDate || dateOptions[0]?.value || toDateValue(new Date())
+    storedTiming?.scheduledDate ||
+      dateOptions[0]?.value ||
+      toDateValue(new Date())
   );
   const [scheduledTime, setScheduledTime] = useState(
     storedTiming?.scheduledTime || getDefaultTimeValue(timeOptions)
   );
   const [errors, setErrors] = useState({});
 
-  const platformFee = cartItems.length > 0 ? 10 : 0;
-  const finalTotal = cartTotal + platformFee;
+  // Cart page should show only food total.
+  // Platform fee is not added in Cart.
+  const finalTotal = cartTotal;
 
   const totalQuantity = useMemo(() => {
     return cartItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
@@ -184,25 +186,26 @@ export default function Cart() {
         <div className="mx-auto max-w-md">
           <header className="flex items-start justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-black tracking-tight text-[#111827]">
+              <h1 className="text-3xl font-black tracking-tight text-[#111827]">
                 Your Cart
               </h1>
-              <p className="mt-1 text-xs font-bold text-[#51615D]">
+
+              <p className="mt-1 text-sm font-bold text-[#51615D]">
                 No items added yet
               </p>
             </div>
 
             <Link
               to="/profile"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
               aria-label="Profile"
             >
               <HeartIcon />
             </Link>
           </header>
 
-          <section className="mt-6 rounded-[30px] border border-[#E8F4F1] bg-white/90 p-8 text-center shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#41D3BD]/12 text-4xl">
+          <section className="mt-6 rounded-[30px] border border-[#D7F5EF] bg-white/90 p-8 text-center shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 text-4xl">
               🛒
             </div>
 
@@ -216,7 +219,7 @@ export default function Cart() {
 
             <Link
               to="/marketplace"
-              className="mt-6 block rounded-2xl bg-[#073B35] py-4 text-center text-sm font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.98]"
+              className="mt-6 block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center text-sm font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.98]"
             >
               Explore Food
             </Link>
@@ -227,15 +230,15 @@ export default function Cart() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FFFFF2] px-4 py-5 pb-28 text-[#111827]">
+    <main className="min-h-screen bg-[#FFFFF2] px-4 py-5 pb-36 text-[#111827]">
       <div className="mx-auto max-w-md">
         <header className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-black tracking-tight text-[#111827]">
+            <h1 className="text-3xl font-black tracking-tight text-[#111827]">
               Your Cart
             </h1>
 
-            <p className="mt-1 text-xs font-bold text-[#51615D]">
+            <p className="mt-1 text-sm font-bold text-[#51615D]">
               {totalQuantity} {totalQuantity === 1 ? "item" : "items"} from{" "}
               {kitchenCount} {kitchenCount === 1 ? "kitchen" : "kitchens"}
             </p>
@@ -243,24 +246,24 @@ export default function Cart() {
 
           <button
             type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[#0B8F80] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+            className="flex h-12 w-12 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#0B8F80] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
             aria-label="Saved kitchens"
           >
             <HeartIcon />
           </button>
         </header>
 
-        <section className="mt-5 overflow-hidden rounded-[28px] border border-[#E8F4F1] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+        <section className="mt-5 overflow-hidden rounded-[30px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
           <div className="divide-y divide-[#E8F4F1]">
             {cartItems.map((item) => {
               const kitchenName = getKitchenName(item);
 
               return (
-                <article key={item.id} className="p-3">
+                <article key={item.id} className="p-4">
                   <div className="flex items-center gap-3">
                     <Link
                       to={`/food/${item.id}`}
-                      className="h-[58px] w-[58px] shrink-0 overflow-hidden rounded-2xl bg-[#D7F5EF]"
+                      className="h-[64px] w-[64px] shrink-0 overflow-hidden rounded-2xl border border-[#D7F5EF] bg-[#D7F5EF]"
                     >
                       {item.image ? (
                         <img
@@ -277,38 +280,38 @@ export default function Cart() {
 
                     <div className="min-w-0 flex-1">
                       <Link to={`/food/${item.id}`}>
-                        <h2 className="truncate text-sm font-black leading-tight text-[#111827]">
+                        <h2 className="truncate text-base font-black leading-tight text-[#111827]">
                           {item.name}
                         </h2>
                       </Link>
 
-                      <p className="mt-0.5 truncate text-[11px] font-semibold text-[#51615D]">
+                      <p className="mt-1 truncate text-sm font-semibold text-[#51615D]">
                         {kitchenName}
                       </p>
 
-                      <p className="mt-0.5 text-xs font-black text-[#073B35]">
+                      <p className="mt-1 text-sm font-black text-[#073B35]">
                         ₹{item.price}
                       </p>
                     </div>
 
-                    <div className="flex shrink-0 items-center gap-2">
+                    <div className="flex shrink-0 items-center gap-3">
                       <button
                         type="button"
                         onClick={() => decreaseQuantity(item.id)}
-                        className="flex h-7 w-7 items-center justify-center rounded-full bg-[#F4FFFC] text-base font-black text-[#073B35] shadow-inner active:scale-95"
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-[#D7F5EF] bg-[#F4FFFC] text-lg font-black text-[#073B35] shadow-inner active:scale-95"
                         aria-label={`Decrease ${item.name}`}
                       >
                         −
                       </button>
 
-                      <span className="min-w-4 text-center text-sm font-black text-[#111827]">
+                      <span className="min-w-4 text-center text-base font-black text-[#111827]">
                         {item.quantity}
                       </span>
 
                       <button
                         type="button"
                         onClick={() => increaseQuantity(item.id)}
-                        className="flex h-7 w-7 items-center justify-center rounded-full bg-[#F4FFFC] text-base font-black text-[#073B35] shadow-inner active:scale-95"
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-[#D7F5EF] bg-[#F4FFFC] text-lg font-black text-[#073B35] shadow-inner active:scale-95"
                         aria-label={`Increase ${item.name}`}
                       >
                         +
@@ -320,20 +323,20 @@ export default function Cart() {
             })}
           </div>
 
-          <div className="border-t border-[#E8F4F1] px-4 py-3">
+          <div className="border-t border-[#E8F4F1] px-5 py-4">
             <div className="flex items-center justify-between gap-3">
               <Link
                 to="/marketplace"
-                className="inline-flex items-center gap-2 text-xs font-black text-[#0B8F80] active:scale-95"
+                className="inline-flex items-center gap-2 text-sm font-black text-[#073B35] active:scale-95"
               >
-                <span className="text-base leading-none">+</span>
+                <span className="text-lg leading-none">+</span>
                 <span>Add more items</span>
               </Link>
 
               <button
                 type="button"
                 onClick={clearCart}
-                className="text-xs font-black text-red-500 active:scale-95"
+                className="text-sm font-black text-red-500 active:scale-95"
               >
                 Clear
               </button>
@@ -341,45 +344,45 @@ export default function Cart() {
           </div>
         </section>
 
-        <section className="mt-5">
-          <p className="text-[11px] font-black uppercase tracking-wide text-[#0B8F80]">
+        <section className="mt-7">
+          <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
             Order Timing
           </p>
 
-          <h2 className="mt-1 text-base font-black text-[#111827]">
+          <h2 className="mt-2 text-2xl font-black text-[#111827]">
             When should we prepare it?
           </h2>
 
-          <div className="mt-3 space-y-3">
+          <div className="mt-5 space-y-4">
             <button
               type="button"
               onClick={() => {
                 setOrderTiming("now");
                 setErrors({});
               }}
-              className={`w-full rounded-2xl border p-4 text-left transition-all active:scale-[0.99] ${
+              className={`w-full rounded-[24px] border p-5 text-left transition-all active:scale-[0.99] ${
                 orderTiming === "now"
                   ? "border-[#F6C85F] bg-[#FFF8E8] shadow-[5px_5px_14px_rgba(7,59,53,0.05),-5px_-5px_14px_rgba(255,255,255,0.95)]"
-                  : "border-[#E8F4F1] bg-white/90"
+                  : "border-[#D7F5EF] bg-white/90 shadow-[5px_5px_14px_rgba(7,59,53,0.05),-5px_-5px_14px_rgba(255,255,255,0.95)]"
               }`}
             >
-              <div className="flex items-start gap-3">
+              <div className="flex items-center gap-4">
                 <div
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full border ${
                     orderTiming === "now"
-                      ? "bg-[#FFF0BE] text-[#D99000]"
-                      : "bg-[#F4FFFC] text-[#073B35]"
+                      ? "border-[#FFE7A3] bg-[#FFF0BE] text-[#D99000]"
+                      : "border-[#D7F5EF] bg-[#F4FFFC] text-[#073B35]"
                   }`}
                 >
                   ⚡
                 </div>
 
-                <div>
-                  <p className="text-sm font-black text-[#111827]">
+                <div className="min-w-0">
+                  <p className="text-lg font-black text-[#111827]">
                     Order Now
                   </p>
 
-                  <p className="mt-0.5 text-[11px] font-semibold text-[#51615D]">
+                  <p className="mt-1 text-sm font-semibold text-[#51615D]">
                     Place the order immediately.
                   </p>
                 </div>
@@ -392,26 +395,26 @@ export default function Cart() {
                 setOrderTiming("scheduled");
                 setErrors({});
               }}
-              className={`w-full rounded-2xl border p-4 text-left transition-all active:scale-[0.99] ${
+              className={`w-full rounded-[24px] border p-5 text-left transition-all active:scale-[0.99] ${
                 orderTiming === "scheduled"
                   ? "border-[#073B35] bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
-                  : "border-[#E8F4F1] bg-white/90 text-[#111827]"
+                  : "border-[#D7F5EF] bg-white/90 text-[#111827] shadow-[5px_5px_14px_rgba(7,59,53,0.05),-5px_-5px_14px_rgba(255,255,255,0.95)]"
               }`}
             >
-              <div className="flex items-start gap-3">
+              <div className="flex items-center gap-4">
                 <div
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full border ${
                     orderTiming === "scheduled"
-                      ? "bg-white/15 text-white"
-                      : "bg-[#F4FFFC] text-[#073B35]"
+                      ? "border-white/10 bg-white/15 text-white"
+                      : "border-[#D7F5EF] bg-[#F4FFFC] text-[#073B35]"
                   }`}
                 >
                   🕒
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <p
-                    className={`text-sm font-black ${
+                    className={`text-lg font-black ${
                       orderTiming === "scheduled" ? "text-white" : "text-[#111827]"
                     }`}
                   >
@@ -419,58 +422,38 @@ export default function Cart() {
                   </p>
 
                   <p
-                    className={`mt-0.5 text-[11px] font-semibold ${
+                    className={`mt-1 text-sm font-semibold ${
                       orderTiming === "scheduled"
                         ? "text-white/75"
                         : "text-[#51615D]"
                     }`}
                   >
-                    Choose date and time.
+                    {orderTiming === "scheduled"
+                      ? `${selectedDateLabel} • ${selectedTimeLabel}`
+                      : "Choose date and time."}
                   </p>
                 </div>
               </div>
             </button>
 
             {orderTiming === "scheduled" ? (
-              <div className="space-y-2">
+              <div className="rounded-[24px] border border-[#D7F5EF] bg-white/90 p-4 shadow-[5px_5px_14px_rgba(7,59,53,0.05),-5px_-5px_14px_rgba(255,255,255,0.95)]">
                 <div>
+                  <label className="mb-2 block text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                    Date
+                  </label>
+
                   {errors.scheduledDate ? (
-                    <p className="mb-1 text-xs font-black text-red-500">
+                    <p className="mb-2 text-xs font-black text-red-500">
                       {errors.scheduledDate}
                     </p>
                   ) : null}
 
                   <div className="relative">
-                    <select
-                      value={scheduledDate}
-                      onChange={(event) => {
-                        setScheduledDate(event.target.value);
-                        setErrors((current) => ({
-                          ...current,
-                          scheduledDate: "",
-                        }));
-                      }}
-                      className="w-full appearance-none rounded-2xl border border-[#E8F4F1] bg-white/90 px-4 py-3 pr-10 text-sm font-black text-[#111827] outline-none focus:border-[#41D3BD]"
-                    >
-                      {dateOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-
                     <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#51615D]">
                       <CalendarIcon />
                     </div>
 
-                    <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#51615D]">
-                      <ChevronDownIcon />
-                    </div>
-
-                    <div className="pointer-events-none absolute left-11 top-1/2 -translate-y-1/2 text-sm font-black text-[#111827]">
-                      {selectedDateLabel}
-                    </div>
-
                     <select
                       value={scheduledDate}
                       onChange={(event) => {
@@ -480,7 +463,7 @@ export default function Cart() {
                           scheduledDate: "",
                         }));
                       }}
-                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                      className="h-14 w-full appearance-none rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] py-0 pl-12 pr-12 text-sm font-black text-[#111827] outline-none focus:border-[#41D3BD]"
                       aria-label="Select date"
                     >
                       {dateOptions.map((option) => (
@@ -489,47 +472,29 @@ export default function Cart() {
                         </option>
                       ))}
                     </select>
+
+                    <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#51615D]">
+                      <ChevronDownIcon />
+                    </div>
                   </div>
                 </div>
 
-                <div>
+                <div className="mt-4">
+                  <label className="mb-2 block text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                    Time
+                  </label>
+
                   {errors.scheduledTime ? (
-                    <p className="mb-1 text-xs font-black text-red-500">
+                    <p className="mb-2 text-xs font-black text-red-500">
                       {errors.scheduledTime}
                     </p>
                   ) : null}
 
                   <div className="relative">
-                    <select
-                      value={scheduledTime}
-                      onChange={(event) => {
-                        setScheduledTime(event.target.value);
-                        setErrors((current) => ({
-                          ...current,
-                          scheduledTime: "",
-                        }));
-                      }}
-                      className="w-full appearance-none rounded-2xl border border-[#E8F4F1] bg-white/90 px-4 py-3 pr-10 text-sm font-black text-[#111827] outline-none focus:border-[#41D3BD]"
-                    >
-                      {timeOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-
                     <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#51615D]">
                       <ClockIcon />
                     </div>
 
-                    <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#51615D]">
-                      <ChevronDownIcon />
-                    </div>
-
-                    <div className="pointer-events-none absolute left-11 top-1/2 -translate-y-1/2 text-sm font-black text-[#111827]">
-                      {selectedTimeLabel}
-                    </div>
-
                     <select
                       value={scheduledTime}
                       onChange={(event) => {
@@ -539,7 +504,7 @@ export default function Cart() {
                           scheduledTime: "",
                         }));
                       }}
-                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                      className="h-14 w-full appearance-none rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] py-0 pl-12 pr-12 text-sm font-black text-[#111827] outline-none focus:border-[#41D3BD]"
                       aria-label="Select time"
                     >
                       {timeOptions.map((option) => (
@@ -548,6 +513,10 @@ export default function Cart() {
                         </option>
                       ))}
                     </select>
+
+                    <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#51615D]">
+                      <ChevronDownIcon />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -556,9 +525,9 @@ export default function Cart() {
         </section>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-[950] border-t border-[#E8F4F1] bg-[#FFFFF2]/95 px-4 pb-4 pt-3 backdrop-blur-xl">
+      <div className="fixed bottom-0 left-0 right-0 z-[950] border-t border-[#E8F4F1] bg-[#FFFFF2]/95 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl">
         <div className="mx-auto flex max-w-md items-center gap-3">
-          <div className="shrink-0 rounded-2xl border border-[#E8F4F1] bg-white/90 px-4 py-3 text-left shadow-[4px_4px_12px_rgba(7,59,53,0.06),-4px_-4px_12px_rgba(255,255,255,0.95)]">
+          <div className="shrink-0 rounded-2xl border border-[#D7F5EF] bg-white/90 px-4 py-3 text-left shadow-[4px_4px_12px_rgba(7,59,53,0.06),-4px_-4px_12px_rgba(255,255,255,0.95)]">
             <p className="text-[10px] font-black uppercase text-[#51615D]">
               Total
             </p>
@@ -569,7 +538,7 @@ export default function Cart() {
           <button
             type="button"
             onClick={handleCheckout}
-            className="h-[58px] flex-1 rounded-2xl bg-[#073B35] text-center text-sm font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.98]"
+            className="h-[58px] flex-1 rounded-2xl border border-[#073B35] bg-[#073B35] text-center text-sm font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.98]"
           >
             Checkout • ₹{finalTotal}
           </button>
