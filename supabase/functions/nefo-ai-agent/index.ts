@@ -27,15 +27,16 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
-    const openaiModel = Deno.env.get("OPENAI_MODEL") || "gpt-5.4-mini";
+    const nvidiaApiKey = Deno.env.get("NVIDIA_API_KEY");
+    const nvidiaModel =
+      Deno.env.get("NVIDIA_MODEL") || "stepfun-ai/step-3.7-flash";
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!openaiApiKey) {
+    if (!nvidiaApiKey) {
       return jsonResponse(
-        { error: "OPENAI_API_KEY is missing in Supabase secrets." },
+        { error: "NVIDIA_API_KEY is missing in Supabase secrets." },
         500
       );
     }
@@ -119,69 +120,69 @@ Deno.serve(async (req) => {
 
     const systemPrompt = buildSystemPrompt(requestedRole);
 
-    const aiPayload = {
-      model: openaiModel,
-      input: [
+    const nvidiaPayload = {
+      model: nvidiaModel,
+      messages: [
         {
           role: "system",
-          content: [
-            {
-              type: "input_text",
-              text: systemPrompt,
-            },
-          ],
+          content: systemPrompt,
         },
         {
           role: "user",
           content: [
-            {
-              type: "input_text",
-              text: [
-                "LIVE NEFO APP CONTEXT:",
-                JSON.stringify(liveContext, null, 2),
-                "",
-                "RECENT CHAT HISTORY:",
-                JSON.stringify(history, null, 2),
-                "",
-                "USER QUESTION:",
-                message,
-              ].join("\n"),
-            },
-          ],
+            "LIVE NEFO APP CONTEXT:",
+            JSON.stringify(liveContext, null, 2),
+            "",
+            "RECENT CHAT HISTORY:",
+            JSON.stringify(history, null, 2),
+            "",
+            "USER QUESTION:",
+            message,
+          ].join("\n"),
         },
       ],
-      max_output_tokens: 900,
+      temperature: 0.3,
+      top_p: 0.8,
+      max_tokens: 900,
+      stream: false,
     };
 
-    const openaiResponse = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${openaiApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(aiPayload),
-    });
+    const nvidiaResponse = await fetch(
+      "https://integrate.api.nvidia.com/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${nvidiaApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(nvidiaPayload),
+      }
+    );
 
-    const aiData = await openaiResponse.json().catch(() => ({}));
+    const aiData = await nvidiaResponse.json().catch(() => ({}));
 
-    if (!openaiResponse.ok) {
+    if (!nvidiaResponse.ok) {
       return jsonResponse(
         {
-          error: "OpenAI request failed.",
-          details: aiData?.error?.message || aiData,
+          error: "NVIDIA AI request failed.",
+          details:
+            aiData?.error?.message ||
+            aiData?.message ||
+            JSON.stringify(aiData),
         },
         500
       );
     }
 
-    const reply = extractResponseText(aiData);
+    const reply = extractNvidiaText(aiData);
 
     return jsonResponse({
       reply:
         reply ||
         "I could not generate a clear answer. Please ask again with more details.",
       role: requestedRole,
-      model: openaiModel,
+      model: nvidiaModel,
+      provider: "nvidia",
       context_used: {
         has_profile: Boolean(profile),
         order_count: liveContext.orders?.length || 0,
@@ -771,22 +772,23 @@ Do not perform approvals, rejection, refunds, or payout changes unless a future 
 `;
 }
 
-function extractResponseText(data: any) {
-  if (typeof data?.output_text === "string") {
-    return data.output_text.trim();
+function extractNvidiaText(data: any) {
+  const content = data?.choices?.[0]?.message?.content;
+
+  if (typeof content === "string") {
+    return content.trim();
   }
 
-  const output = Array.isArray(data?.output) ? data.output : [];
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => {
+        if (typeof part === "string") return part;
+        if (typeof part?.text === "string") return part.text;
+        return "";
+      })
+      .join("\n")
+      .trim();
+  }
 
-  const text = output
-    .flatMap((item: any) => item?.content || [])
-    .map((content: any) => {
-      if (typeof content?.text === "string") return content.text;
-      if (typeof content?.value === "string") return content.value;
-      return "";
-    })
-    .join("\n")
-    .trim();
-
-  return text;
+  return "";
 }
