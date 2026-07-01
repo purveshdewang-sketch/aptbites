@@ -1,5 +1,4 @@
 import { Link, useLocation } from "react-router-dom";
-import { useCart } from "../../../context/CartContext";
 
 export default function BottomNavigation({
   mode = "customer",
@@ -8,13 +7,12 @@ export default function BottomNavigation({
   className = "",
 }) {
   const location = useLocation();
-  const { cartCount } = useCart();
 
   const customerItems = [
     { label: "Home", icon: "🏠", path: "/" },
-    { label: "Food", icon: "🍲", path: "/marketplace" },
-    { label: "Cart", icon: "🛒", path: "/cart", badge: cartCount },
+    { label: "Search", icon: "🔍", path: "/marketplace" },
     { label: "Orders", icon: "📦", path: "/orders", badge: orderCount },
+    { label: "Favorites", icon: "♡", path: "/favorites" },
     { label: "Profile", icon: "👤", path: "/profile" },
   ];
 
@@ -73,7 +71,7 @@ export default function BottomNavigation({
       `}
     >
       <div className="border-t border-[#D7F5EF] bg-[#FFFFF2]/95 shadow-[0_-8px_24px_rgba(7,59,53,0.08)] backdrop-blur-xl">
-        <div className="mx-auto grid h-[72px] max-w-md grid-cols-5 px-1 pb-[env(safe-area-inset-bottom)]">
+        <div className="mx-auto grid h-[74px] max-w-md grid-cols-5 px-1 pb-[env(safe-area-inset-bottom)]">
           {items.map((item) => {
             const active = isActive(item.path);
             const badge = Number(item.badge || 0);
@@ -82,7 +80,7 @@ export default function BottomNavigation({
               <Link
                 key={`${item.label}-${item.path}`}
                 to={item.path}
-                className="relative flex h-[72px] flex-col items-center justify-center gap-1 rounded-2xl transition-all active:scale-95"
+                className="relative flex h-[74px] flex-col items-center justify-center gap-1 rounded-2xl transition-all active:scale-95"
                 aria-label={item.label}
               >
                 <div
@@ -104,7 +102,15 @@ export default function BottomNavigation({
                     }
                   `}
                 >
-                  <span className="text-xl leading-none">{item.icon}</span>
+                  <span
+                    className={`text-xl leading-none ${
+                      item.label === "Favorites" && active
+                        ? "text-red-500"
+                        : ""
+                    }`}
+                  >
+                    {item.label === "Favorites" && active ? "♥" : item.icon}
+                  </span>
 
                   {badge > 0 ? (
                     <span className="absolute -right-1.5 -top-1.5 flex h-[19px] min-w-[19px] items-center justify-center rounded-full border border-[#073B35] bg-[#41D3BD] px-1 text-[10px] font-black text-[#073B35]">

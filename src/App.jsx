@@ -32,6 +32,7 @@ import Terms from "./pages/Terms";
 import RefundPolicy from "./pages/RefundPolicy";
 import SellerHelper from "./pages/SellerHelper";
 import OrderChat from "./pages/OrderChat";
+import Favorites from "./pages/Favorites";
 import ScrollToTop from "./components/ScrollToTop";
 
 import { useAuth } from "./context/AuthContext";
@@ -91,6 +92,11 @@ function BottomNav() {
       icon: <OrdersIcon />,
     },
     {
+      label: "Favorites",
+      path: "/favorites",
+      icon: <FavoriteIcon />,
+    },
+    {
       label: "Profile",
       path: "/profile",
       icon: <ProfileIcon />,
@@ -99,7 +105,7 @@ function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-[900] border-t border-[#D7F5EF] bg-[#FFFFF2]/95 shadow-[0_-8px_24px_rgba(7,59,53,0.06)] backdrop-blur-xl">
-      <div className="mx-auto grid h-[72px] max-w-md grid-cols-4 px-2 pb-[env(safe-area-inset-bottom)]">
+      <div className="mx-auto grid h-[74px] max-w-md grid-cols-5 px-1 pb-[env(safe-area-inset-bottom)]">
         {navItems.map((item) => (
           <NavLink
             key={item.path}
@@ -125,7 +131,7 @@ function BottomNav() {
                   {item.icon}
                 </div>
 
-                <span>{item.label}</span>
+                <span className="leading-none">{item.label}</span>
               </>
             )}
           </NavLink>
@@ -431,6 +437,15 @@ function AppRoutes() {
       />
 
       <Route
+        path="/favorites"
+        element={
+          <ProtectedRoute>
+            <Favorites />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/food/:id"
         element={
           <ProtectedRoute>
@@ -653,6 +668,20 @@ function OrdersIcon() {
       <path d="M6 7h12v14H6z" />
       <path d="M9 12h6" />
       <path d="M9 16h6" />
+    </svg>
+  );
+}
+
+function FavoriteIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" />
     </svg>
   );
 }

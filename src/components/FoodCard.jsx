@@ -2,17 +2,56 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 
+const FAVORITES_STORAGE_KEY = "Nefo_favorite_foods";
+
 const CARD =
   "rounded-[26px] border border-[#D7F5EF] bg-white/95 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
 const SOFT_BADGE =
   "rounded-full border border-[#BDEFE6] bg-[#FFFFF2] font-black text-[#073B35]";
 
+function getFavoriteId(item) {
+  return String(item?.id || "");
+}
+
+function readFavorites() {
+  try {
+    const saved = localStorage.getItem(FAVORITES_STORAGE_KEY);
+    const parsed = saved ? JSON.parse(saved) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveFavorites(favorites) {
+  localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
+  window.dispatchEvent(new CustomEvent("Nefo_favorites_updated"));
+}
+
+function isItemFavorite(item) {
+  const itemId = getFavoriteId(item);
+  if (!itemId) return false;
+
+  return readFavorites().some(
+    (favorite) => getFavoriteId(favorite) === itemId
+  );
+}
+
+function buildFavoriteItem(item) {
+  return {
+    ...item,
+    seller_id: item.seller_id || item.user_id,
+    favorite_saved_at: new Date().toISOString(),
+  };
+}
+
 export default function FoodCard({ item }) {
   const { cartItems, addToCart, increaseQuantity, decreaseQuantity } =
     useCart();
 
-  const [showToast, setShowToast] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [favorite, setFavorite] = useState(() => isItemFavorite(item));
 
   const cartItem = cartItems.find((cartItem) => cartItem.id === item.id);
   const quantity = cartItem ? cartItem.quantity : 0;
@@ -36,6 +75,26 @@ export default function FoodCard({ item }) {
   const isSoldOut = stock <= 0;
   const isBlocked = kitchenIsClosed || isSoldOut || fulfillmentUnavailable;
 
+  function showToast({
+    icon = "✅",
+    title = "Done",
+    message = "",
+    actionLabel = "",
+    href = "",
+  }) {
+    setToast({
+      icon,
+      title,
+      message,
+      actionLabel,
+      href,
+    });
+
+    setTimeout(() => {
+      setToast(null);
+    }, 1500);
+  }
+
   function handleAddToCart(event) {
     event.preventDefault();
     event.stopPropagation();
@@ -53,11 +112,65 @@ export default function FoodCard({ item }) {
     if (isSoldOut) return;
 
     addToCart(item);
-    setShowToast(true);
 
-    setTimeout(() => {
-      setShowToast(false);
-    }, 1400);
+    showToast({
+      icon: "✅",
+      title: "Added to cart",
+      message: `${item.name} added successfully.`,
+      actionLabel: "View Cart",
+      href: "/cart",
+    });
+  }
+
+  function handleToggleFavorite(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const itemId = getFavoriteId(item);
+    if (!itemId) return;
+
+    const currentFavorites = readFavorites();
+    const alreadyFavorite = currentFavorites.some(
+      (favoriteItem) => getFavoriteId(favoriteItem) === itemId
+    );
+
+    if (alreadyFavorite) {
+      const nextFavorites = currentFavorites.filter(
+        (favoriteItem) => getFavoriteId(favoriteItem) !== itemId
+      );
+
+      saveFavorites(nextFavorites);
+      setFavorite(false);
+
+      showToast({
+        icon: "♡",
+        title: "Removed from favorites",
+        message: `${item.name} removed from your favorites.`,
+        actionLabel: "View Favorites",
+        href: "/favorites",
+      });
+
+      return;
+    }
+
+    const favoriteItem = buildFavoriteItem(item);
+    const nextFavorites = [
+      favoriteItem,
+      ...currentFavorites.filter(
+        (favoriteItem) => getFavoriteId(favoriteItem) !== itemId
+      ),
+    ];
+
+    saveFavorites(nextFavorites);
+    setFavorite(true);
+
+    showToast({
+      icon: "❤️",
+      title: "Added to favorites",
+      message: `${item.name} saved to your favorites.`,
+      actionLabel: "View Favorites",
+      href: "/favorites",
+    });
   }
 
   function handleDecrease(event) {
@@ -148,28 +261,32 @@ export default function FoodCard({ item }) {
 
   return (
     <>
-      {showToast ? (
+      {toast ? (
         <div className="fixed left-3 right-3 top-24 z-[999] rounded-[24px] border border-[#BDEFE6] bg-white p-4 shadow-2xl shadow-[#073B35]/20 sm:left-1/2 sm:right-auto sm:w-[340px] sm:-translate-x-1/2">
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[#BDEFE6] bg-[#41D3BD]/15 text-xl">
-              ✅
+              {toast.icon}
             </div>
 
             <div className="min-w-0 flex-1">
-              <p className="font-black text-[#073B35]">Added to cart</p>
+              <p className="font-black text-[#073B35]">{toast.title}</p>
 
-              <p className="mt-1 truncate text-sm font-semibold text-[#51615D]">
-                {item.name} added successfully.
-              </p>
+              {toast.message ? (
+                <p className="mt-1 truncate text-sm font-semibold text-[#51615D]">
+                  {toast.message}
+                </p>
+              ) : null}
             </div>
           </div>
 
-          <Link
-            to="/cart"
-            className="mt-4 block rounded-2xl border border-[#073B35] bg-[#073B35] py-3 text-center font-black text-white"
-          >
-            View Cart
-          </Link>
+          {toast.href && toast.actionLabel ? (
+            <Link
+              to={toast.href}
+              className="mt-4 block rounded-2xl border border-[#073B35] bg-[#073B35] py-3 text-center font-black text-white"
+            >
+              {toast.actionLabel}
+            </Link>
+          ) : null}
         </div>
       ) : null}
 
@@ -205,6 +322,19 @@ export default function FoodCard({ item }) {
                     {item.type || "Veg"}
                   </span>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={handleToggleFavorite}
+                  className={`absolute right-2 top-2 z-30 flex h-8 w-8 items-center justify-center rounded-full border text-base shadow-lg active:scale-95 ${
+                    favorite
+                      ? "border-red-100 bg-white text-red-500"
+                      : "border-[#BDEFE6] bg-white/95 text-[#073B35]"
+                  }`}
+                  aria-label={favorite ? "Remove from favorites" : "Add to favorites"}
+                >
+                  {favorite ? "♥" : "♡"}
+                </button>
 
                 {demandLabel &&
                 !kitchenIsClosed &&
@@ -362,7 +492,20 @@ export default function FoodCard({ item }) {
                 ) : null}
               </div>
 
-              <div className="absolute right-3 top-3 z-20">
+              <button
+                type="button"
+                onClick={handleToggleFavorite}
+                className={`absolute right-3 top-3 z-30 flex h-11 w-11 items-center justify-center rounded-full border text-xl shadow-lg active:scale-95 ${
+                  favorite
+                    ? "border-red-100 bg-white text-red-500"
+                    : "border-[#BDEFE6] bg-white/95 text-[#073B35]"
+                }`}
+                aria-label={favorite ? "Remove from favorites" : "Add to favorites"}
+              >
+                {favorite ? "♥" : "♡"}
+              </button>
+
+              <div className="absolute right-3 top-16 z-20">
                 {kitchenIsClosed ? (
                   <span className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-black text-white shadow-sm">
                     CLOSED
