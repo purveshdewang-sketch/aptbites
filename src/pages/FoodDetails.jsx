@@ -4,6 +4,8 @@ import FoodCard from "../components/FoodCard";
 import { supabase } from "../lib/supabaseClient";
 import { useCart } from "../context/CartContext";
 
+const FAVORITES_STORAGE_KEY = "Nefo_favorite_foods";
+
 const KITCHEN_MENU_CATEGORIES = [
   "Meals",
   "Breakfast",
@@ -13,6 +15,42 @@ const KITCHEN_MENU_CATEGORIES = [
   "Tiffin",
   "Specials",
 ];
+
+function getFavoriteId(item) {
+  return String(item?.id || "");
+}
+
+function readFavorites() {
+  try {
+    const saved = localStorage.getItem(FAVORITES_STORAGE_KEY);
+    const parsed = saved ? JSON.parse(saved) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveFavorites(favorites) {
+  localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
+  window.dispatchEvent(new CustomEvent("Nefo_favorites_updated"));
+}
+
+function isItemFavorite(item) {
+  const itemId = getFavoriteId(item);
+  if (!itemId) return false;
+
+  return readFavorites().some(
+    (favoriteItem) => getFavoriteId(favoriteItem) === itemId
+  );
+}
+
+function buildFavoriteItem(item) {
+  return {
+    ...item,
+    seller_id: item.seller_id || item.user_id,
+    favorite_saved_at: new Date().toISOString(),
+  };
+}
 
 export default function FoodDetails() {
   const { id } = useParams();
@@ -30,7 +68,7 @@ export default function FoodDetails() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [liked, setLiked] = useState(false);
-  const [showShareToast, setShowShareToast] = useState(false);
+  const [toast, setToast] = useState(null);
 
   const cartItem = cartItems.find(
     (cartItem) => String(cartItem.id) === String(id)
@@ -48,7 +86,6 @@ export default function FoodDetails() {
   }, [cartCount, cartItems]);
 
   const stock = Number(food?.stock || 0);
-  const category = food?.category || "Meals";
   const kitchenName =
     food?.seller_kitchen_name || food?.seller || "Home Kitchen";
   const sellerDoorNo = food?.seller_door_no || "";
@@ -94,6 +131,41 @@ export default function FoodDetails() {
       supabase.removeChannel(profilesChannel);
     };
   }, [id]);
+
+  useEffect(() => {
+    function syncFavoriteState() {
+      if (!food) return;
+      setLiked(isItemFavorite(food));
+    }
+
+    window.addEventListener("Nefo_favorites_updated", syncFavoriteState);
+    window.addEventListener("storage", syncFavoriteState);
+
+    return () => {
+      window.removeEventListener("Nefo_favorites_updated", syncFavoriteState);
+      window.removeEventListener("storage", syncFavoriteState);
+    };
+  }, [food]);
+
+  function showToast({
+    icon = "✅",
+    title = "Done",
+    message = "",
+    actionLabel = "",
+    href = "",
+  }) {
+    setToast({
+      icon,
+      title,
+      message,
+      actionLabel,
+      href,
+    });
+
+    setTimeout(() => {
+      setToast(null);
+    }, 1500);
+  }
 
   async function fetchKitchenProfile(kitchenId) {
     if (!kitchenId) {
@@ -187,7 +259,8 @@ export default function FoodDetails() {
       seller_id: kitchenId,
       seller_online: kitchenProfile.seller_online,
       seller_kitchen_name: finalKitchenName,
-      seller_door_no: kitchenProfile.seller_door_no || foodData.seller_door_no || "",
+      seller_door_no:
+        kitchenProfile.seller_door_no || foodData.seller_door_no || "",
       seller_about: kitchenProfile.seller_about || foodData.seller_about || "",
       seller_specialty:
         kitchenProfile.seller_specialty || foodData.seller_specialty || "",
@@ -196,6 +269,7 @@ export default function FoodDetails() {
     };
 
     setFood(enrichedFood);
+    setLiked(isItemFavorite(enrichedFood));
     setKitchenOnline(kitchenProfile.seller_online);
     setDeliveryAvailable(kitchenProfile.delivery_available);
     setPickupAvailable(kitchenProfile.pickup_available);
@@ -243,7 +317,8 @@ export default function FoodDetails() {
           item.seller_kitchen_name ||
           item.seller ||
           finalKitchenName,
-        seller_door_no: kitchenProfile.seller_door_no || item.seller_door_no || "",
+        seller_door_no:
+          kitchenProfile.seller_door_no || item.seller_door_no || "",
         delivery_available: kitchenProfile.delivery_available,
         pickup_available: kitchenProfile.pickup_available,
       }));
@@ -321,30 +396,54 @@ export default function FoodDetails() {
     decreaseQuantity(food.id);
   }
 
-  async function handleShare() {
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: food?.name || "Nefo food",
-          text: `Check out ${food?.name || "this dish"} on Nefo`,
-          url: window.location.href,
-        });
-        return;
-      }
+  function handleToggleFavorite() {
+    if (!food) return;
 
-      await navigator.clipboard.writeText(window.location.href);
-      setShowShareToast(true);
+    const itemId = getFavoriteId(food);
+    if (!itemId) return;
 
-      setTimeout(() => {
-        setShowShareToast(false);
-      }, 1400);
-    } catch {
-      setShowShareToast(true);
+    const currentFavorites = readFavorites();
+    const alreadyFavorite = currentFavorites.some(
+      (favoriteItem) => getFavoriteId(favoriteItem) === itemId
+    );
 
-      setTimeout(() => {
-        setShowShareToast(false);
-      }, 1400);
+    if (alreadyFavorite) {
+      const nextFavorites = currentFavorites.filter(
+        (favoriteItem) => getFavoriteId(favoriteItem) !== itemId
+      );
+
+      saveFavorites(nextFavorites);
+      setLiked(false);
+
+      showToast({
+        icon: "♡",
+        title: "Removed from favorites",
+        message: `${food.name} removed from your favorites.`,
+        actionLabel: "View Favorites",
+        href: "/favorites",
+      });
+
+      return;
     }
+
+    const favoriteItem = buildFavoriteItem(food);
+    const nextFavorites = [
+      favoriteItem,
+      ...currentFavorites.filter(
+        (favoriteItem) => getFavoriteId(favoriteItem) !== itemId
+      ),
+    ];
+
+    saveFavorites(nextFavorites);
+    setLiked(true);
+
+    showToast({
+      icon: "❤️",
+      title: "Added to favorites",
+      message: `${food.name} saved to your favorites.`,
+      actionLabel: "View Favorites",
+      href: "/favorites",
+    });
   }
 
   function getAvailabilityText() {
@@ -427,9 +526,32 @@ export default function FoodDetails() {
 
   return (
     <main className="min-h-screen bg-[#FFFFF2] pb-32 text-[#111827]">
-      {showShareToast ? (
-        <div className="fixed left-4 right-4 top-5 z-[999] mx-auto max-w-md rounded-[22px] border border-[#E8F4F1] bg-white/95 px-4 py-3 text-center text-sm font-black text-[#073B35] shadow-2xl shadow-[#073B35]/15">
-          Link copied
+      {toast ? (
+        <div className="fixed left-4 right-4 top-5 z-[999] mx-auto max-w-md rounded-[24px] border border-[#BDEFE6] bg-white p-4 shadow-2xl shadow-[#073B35]/20">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[#BDEFE6] bg-[#41D3BD]/15 text-xl">
+              {toast.icon}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <p className="font-black text-[#073B35]">{toast.title}</p>
+
+              {toast.message ? (
+                <p className="mt-1 truncate text-sm font-semibold text-[#51615D]">
+                  {toast.message}
+                </p>
+              ) : null}
+            </div>
+          </div>
+
+          {toast.href && toast.actionLabel ? (
+            <Link
+              to={toast.href}
+              className="mt-4 block rounded-2xl border border-[#073B35] bg-[#073B35] py-3 text-center font-black text-white"
+            >
+              {toast.actionLabel}
+            </Link>
+          ) : null}
         </div>
       ) : null}
 
@@ -445,25 +567,16 @@ export default function FoodDetails() {
               <BackIcon />
             </button>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setLiked((current) => !current)}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[#073B35] shadow-lg shadow-black/10 backdrop-blur active:scale-95"
-                aria-label="Save dish"
-              >
-                <HeartIcon filled={liked} />
-              </button>
-
-              <button
-                type="button"
-                onClick={handleShare}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[#073B35] shadow-lg shadow-black/10 backdrop-blur active:scale-95"
-                aria-label="Share dish"
-              >
-                <ShareIcon />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleToggleFavorite}
+              className={`flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-lg shadow-black/10 backdrop-blur active:scale-95 ${
+                liked ? "text-red-500" : "text-[#073B35]"
+              }`}
+              aria-label={liked ? "Remove from favorites" : "Save dish"}
+            >
+              <HeartIcon filled={liked} />
+            </button>
           </div>
 
           <div className="h-[295px] w-full overflow-hidden">
@@ -802,24 +915,6 @@ function HeartIcon({ filled }) {
       strokeWidth="2.2"
     >
       <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" />
-    </svg>
-  );
-}
-
-function ShareIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-    >
-      <circle cx="18" cy="5" r="3" />
-      <circle cx="6" cy="12" r="3" />
-      <circle cx="18" cy="19" r="3" />
-      <path d="M8.6 10.8l6.8-4.6" />
-      <path d="M8.6 13.2l6.8 4.6" />
     </svg>
   );
 }
