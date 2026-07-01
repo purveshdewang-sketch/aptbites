@@ -80,7 +80,12 @@ export default function Profile() {
   const displayEmail = user?.email || "";
 
   const displayPhone = useMemo(() => {
-    return formData.phone?.trim() || user?.phone || user?.user_metadata?.phone || "";
+    return (
+      formData.phone?.trim() ||
+      user?.phone ||
+      user?.user_metadata?.phone ||
+      ""
+    );
   }, [formData.phone, user]);
 
   const addressLines = useMemo(() => {
@@ -90,7 +95,9 @@ export default function Profile() {
     const flat = formData.flat?.trim();
 
     const lineOne = apartment || "No address added";
-    const lineTwo = [block, flatNo ? `Flat ${flatNo}` : flat].filter(Boolean).join(", ");
+    const lineTwo = [block, flatNo ? `Flat ${flatNo}` : flat]
+      .filter(Boolean)
+      .join(", ");
 
     return {
       lineOne,
@@ -254,7 +261,9 @@ export default function Profile() {
     setSaving(true);
     setMessage("");
 
-    const nextBankDetailsCompleted = isSeller ? currentBankDetailsComplete : false;
+    const nextBankDetailsCompleted = isSeller
+      ? currentBankDetailsComplete
+      : false;
 
     const profilePayload = {
       id: user.id,
@@ -405,24 +414,24 @@ export default function Profile() {
 
   if (!user) {
     return (
-      <main className="min-h-screen bg-[#FFFFF2] px-4 py-8 pb-28 text-[#111827]">
+      <main className="min-h-screen bg-[#FFF8EC] px-4 py-8 pb-28 text-[#181411]">
         <div className="mx-auto flex min-h-[70vh] max-w-md items-center justify-center">
-          <div className="w-full rounded-[2rem] border border-[#E8F4F1] bg-white/90 p-7 text-center shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.9)]">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#41D3BD] text-3xl font-black text-white">
+          <div className="w-full rounded-[2rem] border border-[#EADFCE] bg-white/90 p-7 text-center shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.9)]">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#C86B37] bg-[#CF743D] text-3xl font-black text-white">
               N
             </div>
 
-            <h1 className="mt-5 text-2xl font-black text-[#111827]">
+            <h1 className="mt-5 text-2xl font-black text-[#181411]">
               Sign in required
             </h1>
 
-            <p className="mt-2 text-sm font-semibold text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold text-[#6B6258]">
               Please sign in to view your profile.
             </p>
 
             <Link
               to="/customer-login"
-              className="mt-6 block rounded-2xl bg-[#073B35] py-4 text-center text-sm font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.98]"
+              className="mt-6 block rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 text-center text-sm font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-[0.98]"
             >
               Sign In
             </Link>
@@ -433,14 +442,14 @@ export default function Profile() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FFFFF2] px-4 py-5 pb-28 text-[#111827]">
+    <main className="min-h-screen bg-[#FFF8EC] px-4 py-5 pb-32 text-[#181411]">
       <div className="mx-auto max-w-md">
-        <h1 className="mb-4 text-xl font-black tracking-tight text-[#111827]">
+        <h1 className="mb-4 text-xl font-black tracking-tight text-[#3F5128]">
           My Profile
         </h1>
 
         {message ? (
-          <div className="mb-4 rounded-2xl border border-[#D7F5EF] bg-white/90 px-4 py-3 text-sm font-bold text-[#073B35] shadow-sm">
+          <div className="mb-4 rounded-2xl border border-[#D8C9B3] bg-white/90 px-4 py-3 text-sm font-bold text-[#3F5128] shadow-sm">
             {message}
           </div>
         ) : null}
@@ -449,23 +458,23 @@ export default function Profile() {
           <ProfileLoading />
         ) : (
           <>
-            <section className="rounded-[26px] border border-[#E8F4F1] bg-white/90 p-4 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+            <section className="rounded-[26px] border border-[#EADFCE] bg-white/90 p-4 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
               <div className="flex items-center gap-4">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#41D3BD] text-xl font-black text-white shadow-inner">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-[#C86B37] bg-[#CF743D] text-xl font-black text-white shadow-inner">
                   {getInitials()}
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <h2 className="truncate text-base font-black text-[#073B35]">
+                  <h2 className="truncate text-base font-black text-[#3F5128]">
                     {displayName}
                   </h2>
 
-                  <p className="truncate text-xs font-semibold text-[#51615D]">
+                  <p className="truncate text-xs font-semibold text-[#6B6258]">
                     {displayEmail}
                   </p>
 
                   {displayPhone ? (
-                    <p className="mt-1 text-xs font-bold text-[#51615D]">
+                    <p className="mt-1 text-xs font-bold text-[#6B6258]">
                       {displayPhone}
                     </p>
                   ) : null}
@@ -473,68 +482,68 @@ export default function Profile() {
               </div>
             </section>
 
-            <section className="mt-4 rounded-[24px] border border-[#E8F4F1] bg-white/90 p-4 shadow-[8px_8px_22px_rgba(7,59,53,0.06),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+            <section className="mt-4 rounded-[24px] border border-[#EADFCE] bg-white/90 p-4 shadow-[8px_8px_22px_rgba(63,81,40,0.06),-8px_-8px_22px_rgba(255,255,255,0.95)]">
               <div className="mb-2 flex items-start justify-between gap-3">
-                <h3 className="text-sm font-black text-[#111827]">
+                <h3 className="text-sm font-black text-[#181411]">
                   My Address
                 </h3>
 
                 <button
                   type="button"
                   onClick={openEditSection}
-                  className="text-xs font-black text-[#0B8F80] active:scale-95"
+                  className="text-xs font-black text-[#CF743D] active:scale-95"
                 >
                   Edit
                 </button>
               </div>
 
-              <div className="space-y-1 text-xs font-semibold leading-relaxed text-[#51615D]">
+              <div className="space-y-1 text-xs font-semibold leading-relaxed text-[#6B6258]">
                 <p>{addressLines.lineOne}</p>
                 {addressLines.lineTwo ? <p>{addressLines.lineTwo}</p> : null}
               </div>
             </section>
 
             {isSeller && !sellerOnboardingComplete ? (
-              <section className="mt-4 rounded-[24px] bg-[#073B35] p-4 text-white shadow-lg shadow-[#073B35]/15">
-                <p className="text-xs font-black uppercase tracking-wide text-[#41D3BD]">
-                  Seller setup required
-                </p>
+              <section className="relative mt-4 overflow-hidden rounded-[24px] border border-[#4D612F] bg-[#3F5128] p-4 text-white shadow-lg shadow-[#3F5128]/15">
+                <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/10" />
 
-                <h2 className="mt-1 text-lg font-black">
-                  Complete bank details
-                </h2>
-
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/15">
-                  <div
-                    className="h-full rounded-full bg-[#41D3BD]"
-                    style={{ width: `${sellerProgress}%` }}
-                  />
-                </div>
-
-                <div className="mt-3 flex items-center justify-between">
-                  <p className="text-xs font-bold text-[#D7F5EF]">
-                    {sellerProgress}% complete
+                <div className="relative z-10">
+                  <p className="text-xs font-black uppercase tracking-wide text-[#F3C06E]">
+                    Seller setup required
                   </p>
 
-                  <button
-                    type="button"
-                    onClick={scrollToBankDetails}
-                    className="rounded-full bg-[#41D3BD] px-4 py-2 text-xs font-black text-[#073B35]"
-                  >
-                    Add Details
-                  </button>
+                  <h2 className="mt-1 text-lg font-black">
+                    Complete bank details
+                  </h2>
+
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/15">
+                    <div
+                      className="h-full rounded-full bg-[#CF743D]"
+                      style={{ width: `${sellerProgress}%` }}
+                    />
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between">
+                    <p className="text-xs font-bold text-white/75">
+                      {sellerProgress}% complete
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={scrollToBankDetails}
+                      className="rounded-full border border-[#CF743D] bg-[#CF743D] px-4 py-2 text-xs font-black text-white"
+                    >
+                      Add Details
+                    </button>
+                  </div>
                 </div>
               </section>
             ) : null}
 
-            <section className="mt-4 overflow-hidden rounded-[24px] border border-[#E8F4F1] bg-white/90 px-4 py-1 shadow-[8px_8px_22px_rgba(7,59,53,0.06),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+            <section className="mt-4 overflow-hidden rounded-[24px] border border-[#EADFCE] bg-white/90 px-4 py-1 shadow-[8px_8px_22px_rgba(63,81,40,0.06),-8px_-8px_22px_rgba(255,255,255,0.95)]">
               <ProfileRow icon={<OrdersIcon />} label="My Orders" to="/orders" />
               <Divider />
-              <ProfileRow
-                icon={<HeartIcon />}
-                label="Saved Kitchens"
-                to="/saved-kitchens"
-              />
+              <ProfileRow icon={<HeartIcon />} label="Favorites" to="/favorites" />
               <Divider />
               <ProfileRow
                 icon={<CardIcon />}
@@ -548,11 +557,15 @@ export default function Profile() {
                 to="/customer-care"
               />
               <Divider />
-              <ProfileRow icon={<LogoutIcon />} label="Logout" onClick={handleLogout} />
+              <ProfileRow
+                icon={<LogoutIcon />}
+                label="Logout"
+                onClick={handleLogout}
+              />
             </section>
 
             {isSeller ? (
-              <section className="mt-4 overflow-hidden rounded-[24px] border border-[#E8F4F1] bg-white/90 px-4 py-1 shadow-[8px_8px_22px_rgba(7,59,53,0.06),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+              <section className="mt-4 overflow-hidden rounded-[24px] border border-[#EADFCE] bg-white/90 px-4 py-1 shadow-[8px_8px_22px_rgba(63,81,40,0.06),-8px_-8px_22px_rgba(255,255,255,0.95)]">
                 <ProfileRow
                   icon={<KitchenIcon />}
                   label={
@@ -580,14 +593,14 @@ export default function Profile() {
             {editMode ? (
               <section
                 ref={editSectionRef}
-                className="mt-5 scroll-mt-5 rounded-[28px] border border-[#E8F4F1] bg-white/90 p-4 shadow-[8px_8px_22px_rgba(7,59,53,0.07),-8px_-8px_22px_rgba(255,255,255,0.95)]"
+                className="mt-5 scroll-mt-5 rounded-[28px] border border-[#EADFCE] bg-white/90 p-4 shadow-[8px_8px_22px_rgba(63,81,40,0.07),-8px_-8px_22px_rgba(255,255,255,0.95)]"
               >
                 <div className="mb-5 flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                    <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
                       Edit Profile
                     </p>
-                    <h2 className="mt-1 text-xl font-black text-[#111827]">
+                    <h2 className="mt-1 text-xl font-black text-[#181411]">
                       Account details
                     </h2>
                   </div>
@@ -595,7 +608,7 @@ export default function Profile() {
                   <button
                     type="button"
                     onClick={() => setEditMode(false)}
-                    className="rounded-full bg-[#F4FFFC] px-3 py-2 text-xs font-black text-[#073B35]"
+                    className="rounded-full border border-[#EADFCE] bg-[#FFFDF7] px-3 py-2 text-xs font-black text-[#3F5128]"
                   >
                     Close
                   </button>
@@ -664,10 +677,7 @@ export default function Profile() {
 
                   {isSeller ? (
                     <>
-                      <div
-                        id="seller-bank-details"
-                        className="scroll-mt-6"
-                      />
+                      <div id="seller-bank-details" className="scroll-mt-6" />
 
                       <FormSection title="Seller Bank Details">
                         <div
@@ -774,7 +784,7 @@ export default function Profile() {
                         />
 
                         <div>
-                          <label className="mb-2 block text-xs font-black uppercase tracking-wide text-[#51615D]">
+                          <label className="mb-2 block text-xs font-black uppercase tracking-wide text-[#6B6258]">
                             About Your Kitchen
                           </label>
 
@@ -783,7 +793,7 @@ export default function Profile() {
                             value={formData.seller_about}
                             onChange={handleChange}
                             rows="4"
-                            className="w-full resize-none rounded-2xl border border-[#D7F5EF] bg-[#FFFFF2] px-4 py-4 text-base text-[#111827] outline-none focus:border-[#41D3BD]"
+                            className="w-full resize-none rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-base text-[#181411] outline-none placeholder:text-[#9A8E80] focus:border-[#CF743D]"
                             placeholder="Tell customers about your kitchen..."
                           />
                         </div>
@@ -816,7 +826,7 @@ export default function Profile() {
                   ) : null}
 
                   <FormSection title="Password">
-                    <p className="text-sm font-semibold leading-relaxed text-[#51615D]">
+                    <p className="text-sm font-semibold leading-relaxed text-[#6B6258]">
                       We will send a secure password reset link to your registered
                       email.
                     </p>
@@ -825,7 +835,7 @@ export default function Profile() {
                       type="button"
                       onClick={handlePasswordReset}
                       disabled={resettingPassword}
-                      className="w-full rounded-2xl border border-[#41D3BD]/60 py-4 text-sm font-black text-[#073B35] transition-all active:scale-[0.98] disabled:opacity-50"
+                      className="w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 text-sm font-black text-[#3F5128] transition-all active:scale-[0.98] disabled:opacity-50"
                     >
                       {resettingPassword ? "Sending..." : "Send Reset Link"}
                     </button>
@@ -838,11 +848,11 @@ export default function Profile() {
                       (!profileChanged &&
                         bankDetailsCompleted === currentBankDetailsComplete)
                     }
-                    className={`mt-5 w-full rounded-2xl py-4 text-sm font-black transition-all active:scale-[0.98] disabled:opacity-60 ${
+                    className={`mt-5 w-full rounded-2xl border py-4 text-sm font-black transition-all active:scale-[0.98] disabled:opacity-60 ${
                       profileChanged ||
                       bankDetailsCompleted !== currentBankDetailsComplete
-                        ? "bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
-                        : "cursor-not-allowed bg-[#D7F5EF] text-[#8AA5A0]"
+                        ? "border-[#3F5128] bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15"
+                        : "cursor-not-allowed border-[#EADFCE] bg-[#F1E8DC] text-[#9A8E80]"
                     }`}
                   >
                     {saving
@@ -867,9 +877,9 @@ export default function Profile() {
 function ProfileLoading() {
   return (
     <div className="space-y-4">
-      <div className="h-24 animate-pulse rounded-[26px] bg-white/90 shadow-sm" />
-      <div className="h-24 animate-pulse rounded-[24px] bg-white/90 shadow-sm" />
-      <div className="h-64 animate-pulse rounded-[24px] bg-white/90 shadow-sm" />
+      <div className="h-24 animate-pulse rounded-[26px] border border-[#EADFCE] bg-white/90 shadow-sm" />
+      <div className="h-24 animate-pulse rounded-[24px] border border-[#EADFCE] bg-white/90 shadow-sm" />
+      <div className="h-64 animate-pulse rounded-[24px] border border-[#EADFCE] bg-white/90 shadow-sm" />
     </div>
   );
 }
@@ -878,11 +888,11 @@ function ProfileRow({ icon, label, to, onClick }) {
   const row = (
     <div className="flex items-center justify-between py-3">
       <div className="flex items-center gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#F4FFFC] text-[#073B35]">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#EADFCE] bg-[#FFFDF7] text-[#3F5128]">
           {icon}
         </div>
 
-        <span className="text-sm font-bold text-[#111827]">{label}</span>
+        <span className="text-sm font-bold text-[#181411]">{label}</span>
       </div>
 
       <ChevronIcon />
@@ -909,13 +919,13 @@ function ProfileRow({ icon, label, to, onClick }) {
 }
 
 function Divider() {
-  return <div className="border-t border-[#E8F4F1]" />;
+  return <div className="border-t border-[#EADFCE]" />;
 }
 
 function FormSection({ title, children }) {
   return (
-    <section className="mt-5 border-t border-[#E8F4F1] pt-5 first:mt-0 first:border-t-0 first:pt-0">
-      <h3 className="mb-4 text-base font-black text-[#111827]">{title}</h3>
+    <section className="mt-5 border-t border-[#EADFCE] pt-5 first:mt-0 first:border-t-0 first:pt-0">
+      <h3 className="mb-4 text-base font-black text-[#181411]">{title}</h3>
       <div className="space-y-4">{children}</div>
     </section>
   );
@@ -932,7 +942,7 @@ function InputField({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-xs font-black uppercase tracking-wide text-[#51615D]">
+      <label className="mb-2 block text-xs font-black uppercase tracking-wide text-[#6B6258]">
         {label}
       </label>
 
@@ -941,10 +951,10 @@ function InputField({
         onChange={onChange}
         disabled={disabled}
         readOnly={readOnly}
-        className={`w-full rounded-2xl border border-[#D7F5EF] px-4 py-4 text-base outline-none focus:border-[#41D3BD] ${
+        className={`w-full rounded-2xl border border-[#D8C9B3] px-4 py-4 text-base outline-none placeholder:text-[#9A8E80] focus:border-[#CF743D] ${
           disabled
-            ? "cursor-not-allowed bg-[#EAF7F4] text-[#51615D]"
-            : "bg-[#FFFFF2] text-[#111827]"
+            ? "cursor-not-allowed bg-[#F1E8DC] text-[#6B6258]"
+            : "bg-[#FFFDF7] text-[#181411]"
         } ${className}`}
         {...props}
       />
@@ -954,18 +964,18 @@ function InputField({
 
 function CheckField({ name, checked, onChange, title, text }) {
   return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#D7F5EF] bg-[#FFFFF2] p-4">
+    <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-4">
       <input
         type="checkbox"
         name={name}
         checked={checked}
         onChange={onChange}
-        className="mt-1 accent-[#41D3BD]"
+        className="mt-1 accent-[#CF743D]"
       />
 
       <div>
-        <p className="text-sm font-black text-[#111827]">{title}</p>
-        <p className="mt-1 text-xs font-semibold leading-relaxed text-[#51615D]">
+        <p className="text-sm font-black text-[#181411]">{title}</p>
+        <p className="mt-1 text-xs font-semibold leading-relaxed text-[#6B6258]">
           {text}
         </p>
       </div>
@@ -977,7 +987,7 @@ function ChevronIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="h-4 w-4 text-[#7A8783]"
+      className="h-4 w-4 text-[#9A8E80]"
       fill="none"
       stroke="currentColor"
       strokeWidth="2.2"

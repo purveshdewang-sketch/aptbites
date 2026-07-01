@@ -5,10 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 
 const CARD =
-  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
-
-const SOFT_CARD =
-  "rounded-[24px] border border-[#E8F4F1] bg-white/90 shadow-[6px_6px_16px_rgba(7,59,53,0.06),-6px_-6px_16px_rgba(255,255,255,0.95)]";
+  "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
 export default function OrderHistory() {
   const { user } = useAuth();
@@ -93,7 +90,7 @@ export default function OrderHistory() {
       return "border-red-200 bg-red-50 text-red-600";
     }
 
-    return "border-[#BDEFE6] bg-[#DFF8EF] text-[#087A51]";
+    return "border-green-200 bg-green-50 text-green-700";
   }
 
   function getOrderItems(order) {
@@ -190,33 +187,33 @@ export default function OrderHistory() {
 
   if (!user) {
     return (
-      <main className="min-h-screen bg-[#FFFFF2] px-4 py-5 pb-28 text-[#111827]">
+      <main className="min-h-screen bg-[#FFF8EC] px-4 py-5 pb-28 text-[#181411]">
         <div className="mx-auto max-w-md">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
             aria-label="Go back"
           >
             <BackIcon />
           </button>
 
           <section className={`mt-6 p-8 text-center ${CARD}`}>
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 text-4xl">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#D8C9B3] bg-[#FFF0DF] text-4xl">
               📜
             </div>
 
-            <h1 className="mt-5 text-2xl font-black text-[#111827]">
+            <h1 className="mt-5 text-2xl font-black text-[#181411]">
               Sign in to view history
             </h1>
 
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               Your completed, picked-up, and cancelled orders will appear here.
             </p>
 
             <Link
               to="/customer-login"
-              className="mt-6 block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center text-sm font-black text-white"
+              className="mt-6 block rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 text-center text-sm font-black text-white"
             >
               Sign In
             </Link>
@@ -227,29 +224,29 @@ export default function OrderHistory() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-32 text-[#111827]">
+    <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-32 text-[#181411]">
       <div className="mx-auto max-w-md">
         <header className="flex items-start gap-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
             aria-label="Go back"
           >
             <BackIcon />
           </button>
 
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+            <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
               Order History
             </p>
 
-            <h1 className="mt-1 text-3xl font-black leading-tight text-[#073B35]">
+            <h1 className="mt-1 text-3xl font-black leading-tight text-[#3F5128]">
               Past orders
-              <span className="block text-[#111827]">and reorders</span>
+              <span className="block text-[#181411]">and reorders</span>
             </h1>
 
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               View delivered, picked-up, and cancelled Nefo orders.
             </p>
           </div>
@@ -265,9 +262,9 @@ export default function OrderHistory() {
           <div className="mt-5 space-y-4">
             {[1, 2, 3].map((item) => (
               <div key={item} className={`animate-pulse p-5 ${CARD}`}>
-                <div className="h-5 w-1/3 rounded-full bg-[#D7F5EF]" />
-                <div className="mt-4 h-4 w-2/3 rounded-full bg-[#D7F5EF]" />
-                <div className="mt-5 h-24 rounded-2xl border border-[#D7F5EF] bg-[#FFFFF2]" />
+                <div className="h-5 w-1/3 rounded-full bg-[#EADFCE]" />
+                <div className="mt-4 h-4 w-2/3 rounded-full bg-[#EADFCE]" />
+                <div className="mt-5 h-24 rounded-2xl border border-[#EADFCE] bg-[#FFFDF7]" />
               </div>
             ))}
           </div>
@@ -287,29 +284,29 @@ export default function OrderHistory() {
 
         {!loading && !errorMessage && orders.length === 0 ? (
           <section className={`mt-5 p-8 text-center ${CARD}`}>
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 text-4xl">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#D8C9B3] bg-[#FFF0DF] text-4xl">
               📜
             </div>
 
-            <h2 className="mt-5 text-2xl font-black text-[#111827]">
+            <h2 className="mt-5 text-2xl font-black text-[#181411]">
               No order history yet
             </h2>
 
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               Completed and cancelled orders will appear here.
             </p>
 
             <div className="mt-6 grid grid-cols-1 gap-3">
               <Link
                 to="/orders"
-                className="rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center text-sm font-black text-white active:scale-95"
+                className="rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 text-center text-sm font-black text-white active:scale-95"
               >
                 View Active Orders
               </Link>
 
               <Link
                 to="/marketplace"
-                className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] py-4 text-center text-sm font-black text-[#073B35] active:scale-95"
+                className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 text-center text-sm font-black text-[#3F5128] active:scale-95"
               >
                 Explore Marketplace
               </Link>
@@ -326,23 +323,23 @@ export default function OrderHistory() {
 
               return (
                 <article key={order.id} className={`overflow-hidden ${CARD}`}>
-                  <div className="border-b border-[#E8F4F1] p-4">
+                  <div className="border-b border-[#EADFCE] p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-xs font-black uppercase tracking-wide text-[#51615D]">
+                        <p className="text-xs font-black uppercase tracking-wide text-[#6B6258]">
                           Order #{getShortOrderId(order)}
                         </p>
 
-                        <h2 className="mt-1 text-3xl font-black text-[#073B35]">
+                        <h2 className="mt-1 text-3xl font-black text-[#3F5128]">
                           ₹{order.total_amount || 0}
                         </h2>
 
-                        <p className="mt-1 truncate text-sm font-semibold text-[#51615D]">
+                        <p className="mt-1 truncate text-sm font-semibold text-[#6B6258]">
                           {order.delivery_type || "Delivery"} •{" "}
                           {order.flat || "Address not available"}
                         </p>
 
-                        <p className="mt-2 text-xs font-bold text-[#8AA5A0]">
+                        <p className="mt-2 text-xs font-bold text-[#9A8E80]">
                           {getOrderDate(order)}
                         </p>
                       </div>
@@ -358,20 +355,20 @@ export default function OrderHistory() {
                   </div>
 
                   <div className="p-4">
-                    <div className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-3">
+                    <div className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-3">
                       <div className="mb-3 flex items-center justify-between">
-                        <p className="text-sm font-black text-[#111827]">
+                        <p className="text-sm font-black text-[#181411]">
                           Items
                         </p>
 
-                        <p className="text-xs font-bold text-[#51615D]">
+                        <p className="text-xs font-bold text-[#6B6258]">
                           {orderItems.length} item
                           {orderItems.length === 1 ? "" : "s"}
                         </p>
                       </div>
 
                       {orderItems.length === 0 ? (
-                        <p className="text-sm font-semibold text-[#51615D]">
+                        <p className="text-sm font-semibold text-[#6B6258]">
                           No item details available for this order.
                         </p>
                       ) : (
@@ -382,16 +379,16 @@ export default function OrderHistory() {
                               className="flex items-center justify-between gap-4"
                             >
                               <div className="min-w-0">
-                                <p className="truncate text-sm font-black text-[#111827]">
+                                <p className="truncate text-sm font-black text-[#181411]">
                                   {item.name}
                                 </p>
 
-                                <p className="mt-0.5 text-xs font-semibold text-[#51615D]">
+                                <p className="mt-0.5 text-xs font-semibold text-[#6B6258]">
                                   Qty {item.quantity} × ₹{item.price}
                                 </p>
                               </div>
 
-                              <p className="shrink-0 text-sm font-black text-[#073B35]">
+                              <p className="shrink-0 text-sm font-black text-[#3F5128]">
                                 ₹
                                 {Number(item.price || 0) *
                                   Number(item.quantity || 0)}
@@ -402,7 +399,7 @@ export default function OrderHistory() {
                       )}
                     </div>
 
-                    <div className="mt-3 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4 space-y-3">
+                    <div className="mt-3 space-y-3 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-4">
                       <SummaryRow
                         label="Subtotal"
                         value={`₹${order.subtotal_amount || 0}`}
@@ -420,37 +417,37 @@ export default function OrderHistory() {
                         value={`₹${order.platform_fee || 0}`}
                       />
 
-                      <div className="flex items-center justify-between border-t border-[#D7F5EF] pt-3">
-                        <p className="font-black text-[#073B35]">Total</p>
-                        <p className="font-black text-[#073B35]">
+                      <div className="flex items-center justify-between border-t border-[#EADFCE] pt-3">
+                        <p className="font-black text-[#3F5128]">Total</p>
+                        <p className="font-black text-[#3F5128]">
                           ₹{order.total_amount || 0}
                         </p>
                       </div>
                     </div>
 
-                    <div className="mt-3 rounded-2xl border border-[#BDEFE6] bg-white p-4">
-                      <p className="text-xs font-black uppercase tracking-wide text-[#51615D]">
+                    <div className="mt-3 rounded-2xl border border-[#EADFCE] bg-white p-4">
+                      <p className="text-xs font-black uppercase tracking-wide text-[#6B6258]">
                         Payment
                       </p>
 
-                      <p className="mt-1 text-sm font-black text-[#111827]">
+                      <p className="mt-1 text-sm font-black text-[#181411]">
                         {getPaymentLabel(order)}
                       </p>
 
                       {order.payment_reference ? (
-                        <p className="mt-1 truncate text-xs font-semibold text-[#51615D]">
+                        <p className="mt-1 truncate text-xs font-semibold text-[#6B6258]">
                           Ref: {order.payment_reference}
                         </p>
                       ) : null}
                     </div>
 
                     {order.scheduled_order && order.scheduled_for ? (
-                      <div className="mt-3 rounded-2xl border border-[#BDEFE6] bg-[#41D3BD]/12 p-4">
-                        <p className="text-sm font-black text-[#073B35]">
+                      <div className="mt-3 rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF] p-4">
+                        <p className="text-sm font-black text-[#3F5128]">
                           Scheduled order
                         </p>
 
-                        <p className="mt-1 text-xs font-semibold text-[#51615D]">
+                        <p className="mt-1 text-xs font-semibold text-[#6B6258]">
                           {new Date(order.scheduled_for).toLocaleString(
                             "en-IN",
                             {
@@ -467,7 +464,7 @@ export default function OrderHistory() {
                     ) : null}
 
                     {order.notes ? (
-                      <p className="mt-3 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4 text-sm font-semibold text-[#51615D]">
+                      <p className="mt-3 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-4 text-sm font-semibold text-[#6B6258]">
                         Note: {order.notes}
                       </p>
                     ) : null}
@@ -481,7 +478,7 @@ export default function OrderHistory() {
                         <button
                           type="button"
                           onClick={() => handleReorder(order)}
-                          className="rounded-2xl border border-[#073B35] bg-[#073B35] py-3 text-sm font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.98]"
+                          className="rounded-2xl border border-[#3F5128] bg-[#3F5128] py-3 text-sm font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-[0.98]"
                         >
                           Re-order
                         </button>
@@ -489,13 +486,13 @@ export default function OrderHistory() {
 
                       <Link
                         to={`/customer-care?order_id=${order.id}`}
-                        className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] py-3 text-center text-sm font-black text-[#073B35] active:scale-[0.98]"
+                        className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-3 text-center text-sm font-black text-[#3F5128] active:scale-[0.98]"
                       >
                         Need Help
                       </Link>
                     </div>
 
-                    <p className="mt-4 text-xs leading-relaxed text-[#51615D]">
+                    <p className="mt-4 text-xs leading-relaxed text-[#6B6258]">
                       Exact kitchen door/location is not shown publicly. Pickup
                       coordination happens through Nefo after confirmation.
                     </p>
@@ -513,22 +510,22 @@ export default function OrderHistory() {
 function SummaryRow({ label, value }) {
   return (
     <div className="flex items-center justify-between text-sm">
-      <p className="text-[#51615D]">{label}</p>
-      <p className="font-bold text-[#111827]">{value}</p>
+      <p className="text-[#6B6258]">{label}</p>
+      <p className="font-bold text-[#181411]">{value}</p>
     </div>
   );
 }
 
 function StatTile({ label, value, strong = false, muted = false }) {
   return (
-    <div className="rounded-[22px] border border-[#D7F5EF] bg-white/90 p-3 shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
-      <p className="text-[10px] font-black uppercase text-[#7A8A86]">
+    <div className="rounded-[22px] border border-[#EADFCE] bg-white/90 p-3 shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
+      <p className="text-[10px] font-black uppercase text-[#6B6258]">
         {label}
       </p>
 
       <p
         className={`mt-1 text-xl font-black ${
-          muted ? "text-[#8AA5A0]" : strong ? "text-[#073B35]" : "text-[#111827]"
+          muted ? "text-[#9A8E80]" : strong ? "text-[#3F5128]" : "text-[#181411]"
         }`}
       >
         {value}

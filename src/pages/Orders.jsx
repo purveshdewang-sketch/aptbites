@@ -405,28 +405,28 @@ export default function Orders() {
 
   if (!user) {
     return (
-      <main className="min-h-screen bg-[#FFFFF2] px-4 py-5 pb-28 text-[#111827]">
+      <main className="min-h-screen bg-[#FFF8EC] px-4 py-5 pb-28 text-[#181411]">
         <div className="mx-auto max-w-md">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
           >
             <BackIcon />
           </button>
 
-          <section className="mt-6 rounded-[30px] border border-[#E8F4F1] bg-white/90 p-8 text-center shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
-            <h1 className="text-2xl font-black text-[#111827]">
+          <section className="mt-6 rounded-[30px] border border-[#EADFCE] bg-white/90 p-8 text-center shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+            <h1 className="text-2xl font-black text-[#181411]">
               Sign in to view orders
             </h1>
 
-            <p className="mt-2 text-sm font-semibold text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold text-[#6B6258]">
               Your active orders will appear here after checkout.
             </p>
 
             <Link
               to="/customer-login"
-              className="mt-6 block rounded-2xl bg-[#073B35] py-4 text-center text-sm font-black text-white shadow-lg shadow-[#073B35]/15"
+              className="mt-6 block rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 text-center text-sm font-black text-white shadow-lg shadow-[#3F5128]/15"
             >
               Sign In
             </Link>
@@ -437,7 +437,7 @@ export default function Orders() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-28 text-[#111827]">
+    <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-28 text-[#181411]">
       <div className="mx-auto max-w-md">
         {cancelMessage ? (
           <div className="mb-4 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-black text-green-700">
@@ -445,9 +445,7 @@ export default function Orders() {
           </div>
         ) : null}
 
-        {loading ? (
-          <OrdersLoading />
-        ) : null}
+        {loading ? <OrdersLoading /> : null}
 
         {!loading && errorMessage ? (
           <section className="rounded-[30px] border border-red-100 bg-red-50 p-6 shadow-sm">
@@ -463,34 +461,34 @@ export default function Orders() {
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
             >
               <BackIcon />
             </button>
 
-            <div className="mt-6 rounded-[30px] border border-[#E8F4F1] bg-white/90 p-8 text-center shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#41D3BD]/12 text-4xl">
+            <div className="mt-6 rounded-[30px] border border-[#EADFCE] bg-white/90 p-8 text-center shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#D8C9B3] bg-[#FFF0DF] text-4xl">
                 🍲
               </div>
 
-              <h1 className="mt-5 text-2xl font-black text-[#111827]">
+              <h1 className="mt-5 text-2xl font-black text-[#181411]">
                 No active orders
               </h1>
 
-              <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+              <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
                 Your running or scheduled orders will appear here after checkout.
               </p>
 
               <Link
                 to="/marketplace"
-                className="mt-6 block rounded-2xl bg-[#073B35] py-4 text-center text-sm font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.98]"
+                className="mt-6 block rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 text-center text-sm font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-[0.98]"
               >
                 Explore Marketplace
               </Link>
 
               <Link
                 to="/customer-care"
-                className="mt-3 block rounded-2xl border border-[#E8F4F1] bg-[#FFFFF2] py-4 text-center text-sm font-black text-[#073B35] active:scale-[0.98]"
+                className="mt-3 block rounded-2xl border border-[#EADFCE] bg-[#FFFDF7] py-4 text-center text-sm font-black text-[#3F5128] active:scale-[0.98]"
               >
                 Need Help?
               </Link>
@@ -563,26 +561,26 @@ function OrderTrackingCard({
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+          className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
           aria-label="Go back"
         >
           <BackIcon />
         </button>
 
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-lg font-black leading-tight text-[#111827]">
+          <h1 className="truncate text-lg font-black leading-tight text-[#181411]">
             {getOrderTitle(order)}
           </h1>
 
-          <p className="mt-1 truncate text-xs font-bold text-[#51615D]">
+          <p className="mt-1 truncate text-xs font-bold text-[#6B6258]">
             {formatPlacedDateTime(order.created_at)}
           </p>
         </div>
       </header>
 
-      <section className="mt-4 rounded-[30px] border border-[#E8F4F1] bg-white/90 p-4 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+      <section className="mt-4 rounded-[30px] border border-[#EADFCE] bg-white/90 p-4 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
         {isScheduledOrder(order) && autoStatus === "confirmed" ? (
-          <div className="mb-4 rounded-2xl border border-[#41D3BD]/25 bg-[#41D3BD]/12 px-4 py-3 text-xs font-black text-[#073B35]">
+          <div className="mb-4 rounded-2xl border border-[#CF743D]/25 bg-[#FFF0DF] px-4 py-3 text-xs font-black text-[#3F5128]">
             Scheduled for {formatScheduledDateTime(order.scheduled_for)}
           </div>
         ) : null}
@@ -600,7 +598,7 @@ function OrderTrackingCard({
                   {!isLast ? (
                     <div
                       className={`absolute left-1/2 top-8 h-full w-px -translate-x-1/2 ${
-                        isDone ? "bg-[#41D3BD]" : "bg-[#E8F4F1]"
+                        isDone ? "bg-[#CF743D]" : "bg-[#F1E8DC]"
                       }`}
                     />
                   ) : null}
@@ -609,9 +607,9 @@ function OrderTrackingCard({
                     className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 ${
                       isDone
                         ? isCurrent && index === 2
-                          ? "border-[#073B35] bg-[#073B35] text-white"
-                          : "border-[#41D3BD] bg-white text-[#41D3BD]"
-                        : "border-[#E8F4F1] bg-[#FFFFF2] text-transparent"
+                          ? "border-[#3F5128] bg-[#3F5128] text-white"
+                          : "border-[#CF743D] bg-white text-[#CF743D]"
+                        : "border-[#F1E8DC] bg-[#FFF8EC] text-transparent"
                     }`}
                   >
                     {isDone ? (
@@ -633,14 +631,14 @@ function OrderTrackingCard({
                     <div className="min-w-0">
                       <p
                         className={`truncate text-sm font-black ${
-                          isDone ? "text-[#111827]" : "text-[#9AA7A3]"
+                          isDone ? "text-[#181411]" : "text-[#9A8E80]"
                         }`}
                       >
                         {step.label}
                       </p>
 
                       {subtext ? (
-                        <p className="mt-0.5 text-[10px] font-black text-[#0B8F80]">
+                        <p className="mt-0.5 text-[10px] font-black text-[#CF743D]">
                           {subtext}
                         </p>
                       ) : null}
@@ -648,7 +646,7 @@ function OrderTrackingCard({
 
                     <p
                       className={`shrink-0 text-[11px] font-bold ${
-                        isDone ? "text-[#51615D]" : "text-[#9AA7A3]"
+                        isDone ? "text-[#6B6258]" : "text-[#9A8E80]"
                       }`}
                     >
                       {getStepTime(order, index)}
@@ -662,42 +660,42 @@ function OrderTrackingCard({
 
         <Link
           to={`/order-chat/${order.id}`}
-          className="mt-4 flex items-center justify-between gap-3 rounded-[22px] border border-[#E8F4F1] bg-white p-3 shadow-[4px_4px_12px_rgba(7,59,53,0.05),-4px_-4px_12px_rgba(255,255,255,0.95)] active:scale-[0.99]"
+          className="mt-4 flex items-center justify-between gap-3 rounded-[22px] border border-[#EADFCE] bg-white p-3 shadow-[4px_4px_12px_rgba(63,81,40,0.05),-4px_-4px_12px_rgba(255,255,255,0.95)] active:scale-[0.99]"
         >
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FFE5C7] text-sm font-black text-[#073B35]">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#D8C9B3] bg-[#FFF0DF] text-sm font-black text-[#3F5128]">
               {getPartnerInitial(order)}
             </div>
 
             <div className="min-w-0">
-              <p className="truncate text-sm font-black text-[#111827]">
+              <p className="truncate text-sm font-black text-[#181411]">
                 {getPartnerName(order)}
               </p>
 
-              <p className="truncate text-xs font-semibold text-[#51615D]">
+              <p className="truncate text-xs font-semibold text-[#6B6258]">
                 {getPartnerRole(order)}
               </p>
             </div>
           </div>
 
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F4FFFC] text-[#073B35]">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#EADFCE] bg-[#FFFDF7] text-[#3F5128]">
             <PhoneIcon />
           </div>
         </Link>
 
-        <div className="mt-4 rounded-[22px] border border-[#E8F4F1] bg-[#FFFFF2] p-4 shadow-inner">
-          <p className="text-xs font-bold text-[#51615D]">
+        <div className="mt-4 rounded-[22px] border border-[#EADFCE] bg-[#FFFDF7] p-4 shadow-inner">
+          <p className="text-xs font-bold text-[#6B6258]">
             {getArrivalLabel(order)}
           </p>
 
-          <p className="mt-1 text-3xl font-black leading-none text-[#111827]">
+          <p className="mt-1 text-3xl font-black leading-none text-[#181411]">
             {getEtaText(order)}
           </p>
         </div>
 
         {orderItems.length > 0 ? (
-          <details className="mt-4 rounded-[22px] border border-[#E8F4F1] bg-white px-4 py-3">
-            <summary className="cursor-pointer text-sm font-black text-[#073B35]">
+          <details className="mt-4 rounded-[22px] border border-[#EADFCE] bg-white px-4 py-3">
+            <summary className="cursor-pointer text-sm font-black text-[#3F5128]">
               View order items
             </summary>
 
@@ -708,16 +706,16 @@ function OrderTrackingCard({
                   className="flex items-center justify-between gap-3 text-sm"
                 >
                   <div className="min-w-0">
-                    <p className="truncate font-black text-[#111827]">
+                    <p className="truncate font-black text-[#181411]">
                       {item.name}
                     </p>
 
-                    <p className="text-xs font-semibold text-[#51615D]">
+                    <p className="text-xs font-semibold text-[#6B6258]">
                       Qty {item.quantity} × ₹{item.price}
                     </p>
                   </div>
 
-                  <p className="shrink-0 font-black text-[#073B35]">
+                  <p className="shrink-0 font-black text-[#3F5128]">
                     ₹{Number(item.price || 0) * Number(item.quantity || 0)}
                   </p>
                 </div>
@@ -737,14 +735,14 @@ function OrderTrackingCard({
 
           <Link
             to={`/customer-care?order_id=${order.id}`}
-            className="rounded-2xl border border-[#E8F4F1] bg-[#FFFFF2] py-3 text-center text-xs font-black text-[#073B35] active:scale-95"
+            className="rounded-2xl border border-[#EADFCE] bg-[#FFFDF7] py-3 text-center text-xs font-black text-[#3F5128] active:scale-95"
           >
             Need Help
           </Link>
         </div>
       </section>
 
-      <p className="mt-4 text-center text-sm font-black text-[#073B35]">
+      <p className="mt-4 text-center text-sm font-black text-[#3F5128]">
         Order Tracking
       </p>
     </article>
@@ -754,8 +752,8 @@ function OrderTrackingCard({
 function OrdersLoading() {
   return (
     <div className="space-y-4">
-      <div className="h-12 w-2/3 animate-pulse rounded-2xl bg-white/90 shadow-sm" />
-      <div className="h-[420px] animate-pulse rounded-[30px] bg-white/90 shadow-sm" />
+      <div className="h-12 w-2/3 animate-pulse rounded-2xl border border-[#EADFCE] bg-white/90 shadow-sm" />
+      <div className="h-[420px] animate-pulse rounded-[30px] border border-[#EADFCE] bg-white/90 shadow-sm" />
     </div>
   );
 }

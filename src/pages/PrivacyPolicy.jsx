@@ -3,10 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 const SUPPORT_EMAIL = "nefosupport@gmail.com";
 
 const CARD =
-  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+  "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
 const SOFT_CARD =
-  "rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
+  "rounded-[24px] border border-[#D8C9B3] bg-[#FFFDF7] shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
 
 const sections = [
   {
@@ -54,29 +54,29 @@ export default function PrivacyPolicy() {
   const navigate = useNavigate();
 
   return (
-    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-32 text-[#111827]">
+    <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-32 text-[#181411]">
       <div className="mx-auto max-w-md">
         <header className="flex items-start gap-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
             aria-label="Go back"
           >
             <BackIcon />
           </button>
 
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+            <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
               Nefo Policy
             </p>
 
-            <h1 className="mt-1 text-3xl font-black leading-tight text-[#073B35]">
+            <h1 className="mt-1 text-3xl font-black leading-tight text-[#3F5128]">
               Privacy
-              <span className="block text-[#111827]">Policy</span>
+              <span className="block text-[#181411]">Policy</span>
             </h1>
 
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               Nefo respects your privacy. This policy explains what information
               we collect and how it is used to operate orders, support, and
               community kitchen services.
@@ -86,16 +86,16 @@ export default function PrivacyPolicy() {
 
         <section className={`mt-5 p-5 ${CARD}`}>
           <div className="flex items-start gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#BDEFE6] bg-[#41D3BD]/12 text-2xl">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF] text-2xl">
               🔒
             </div>
 
             <div>
-              <p className="font-black text-[#073B35]">
+              <p className="font-black text-[#3F5128]">
                 Privacy-safe coordination
               </p>
 
-              <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+              <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
                 Nefo should avoid publicly exposing exact kitchen door/location
                 details. Order and pickup coordination should happen through
                 controlled app or support flows.
@@ -108,16 +108,16 @@ export default function PrivacyPolicy() {
           {sections.map((section, index) => (
             <article key={section.title} className={`p-5 ${CARD}`}>
               <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#BDEFE6] bg-[#41D3BD]/12 font-black text-[#073B35]">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF] font-black text-[#3F5128]">
                   {index + 1}
                 </div>
 
                 <div className="min-w-0">
-                  <h2 className="text-xl font-black leading-tight text-[#073B35]">
+                  <h2 className="text-xl font-black leading-tight text-[#3F5128]">
                     {section.title}
                   </h2>
 
-                  <p className="mt-3 text-sm font-semibold leading-relaxed text-[#51615D]">
+                  <p className="mt-3 text-sm font-semibold leading-relaxed text-[#6B6258]">
                     {section.text}
                   </p>
                 </div>
@@ -127,39 +127,44 @@ export default function PrivacyPolicy() {
         </section>
 
         <section className={`mt-5 overflow-hidden ${CARD}`}>
-          <div className="bg-[#073B35] p-5 text-white">
-            <p className="text-xs font-black uppercase tracking-wide text-[#41D3BD]">
-              Need privacy help?
-            </p>
+          <div className="relative overflow-hidden bg-[#3F5128] p-5 text-white">
+            <div className="absolute -right-10 -top-12 h-40 w-40 rounded-full bg-white/10" />
+            <div className="absolute -bottom-12 -left-12 h-36 w-36 rounded-full bg-[#CF743D]/20" />
 
-            <h2 className="mt-2 text-2xl font-black">
-              Contact Nefo Support
-            </h2>
+            <div className="relative z-10">
+              <p className="text-xs font-black uppercase tracking-wide text-[#F3C06E]">
+                Need privacy help?
+              </p>
 
-            <p className="mt-3 text-sm font-semibold leading-relaxed text-[#D7F5EF]">
-              Contact support for privacy questions, account correction, order
-              concerns, or data-related requests.
-            </p>
+              <h2 className="mt-2 text-2xl font-black">
+                Contact Nefo Support
+              </h2>
 
-            <a
-              href={`mailto:${SUPPORT_EMAIL}`}
-              className="mt-4 inline-block break-all font-black text-[#41D3BD]"
-            >
-              {SUPPORT_EMAIL}
-            </a>
+              <p className="mt-3 text-sm font-semibold leading-relaxed text-white/75">
+                Contact support for privacy questions, account correction, order
+                concerns, or data-related requests.
+              </p>
+
+              <a
+                href={`mailto:${SUPPORT_EMAIL}`}
+                className="mt-4 inline-block break-all font-black text-[#F3C06E]"
+              >
+                {SUPPORT_EMAIL}
+              </a>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-3 p-4">
             <Link
               to="/customer-care"
-              className="rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-95"
+              className="rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 text-center font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-95"
             >
               Customer Care
             </Link>
 
             <Link
               to="/terms"
-              className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] py-4 text-center font-black text-[#073B35] active:scale-95"
+              className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 text-center font-black text-[#3F5128] active:scale-95"
             >
               Terms & Conditions
             </Link>
@@ -167,11 +172,11 @@ export default function PrivacyPolicy() {
         </section>
 
         <section className={`mt-5 p-4 ${SOFT_CARD}`}>
-          <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+          <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
             Note
           </p>
 
-          <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+          <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
             This policy is written for the Nefo app’s operating flow. Legal
             review is recommended before commercial launch.
           </p>

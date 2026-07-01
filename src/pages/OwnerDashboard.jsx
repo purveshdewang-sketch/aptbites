@@ -5,13 +5,13 @@ import { supabase } from "../lib/supabaseClient";
 const PLATFORM_FEE = 10;
 
 const CARD =
-  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+  "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
 const SOFT_CARD =
-  "rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
+  "rounded-[24px] border border-[#D8C9B3] bg-[#FFFDF7] shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
 
 const INPUT =
-  "w-full rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-4 text-sm font-black text-[#111827] outline-none focus:border-[#41D3BD] focus:bg-white";
+  "w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-sm font-black text-[#181411] outline-none focus:border-[#CF743D] focus:bg-white";
 
 export default function OwnerDashboard() {
   const navigate = useNavigate();
@@ -248,7 +248,7 @@ export default function OwnerDashboard() {
       return "border-red-200 bg-red-50 text-red-600";
     }
 
-    return "border-[#BDEFE6] bg-[#41D3BD]/12 text-[#073B35]";
+    return "border-[#D8C9B3] bg-[#FFF0DF] text-[#3F5128]";
   }
 
   const filteredOrders = useMemo(() => {
@@ -475,29 +475,29 @@ export default function OwnerDashboard() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-32 text-[#111827]">
+    <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-32 text-[#181411]">
       <div className="mx-auto max-w-md">
         <header className="flex items-start gap-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
             aria-label="Go back"
           >
             <BackIcon />
           </button>
 
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+            <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
               Owner Dashboard
             </p>
 
-            <h1 className="mt-1 text-3xl font-black leading-tight text-[#073B35]">
+            <h1 className="mt-1 text-3xl font-black leading-tight text-[#3F5128]">
               Orders
-              <span className="block text-[#111827]">& payments</span>
+              <span className="block text-[#181411]">& payments</span>
             </h1>
 
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               Daily control center for orders, UPI references, platform fees,
               seller performance, and operational records.
             </p>
@@ -507,21 +507,21 @@ export default function OwnerDashboard() {
         <section className="mt-5 grid grid-cols-2 gap-3">
           <Link
             to="/marketplace"
-            className="rounded-2xl border border-[#BDEFE6] bg-white px-4 py-4 text-center text-sm font-black text-[#073B35] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] active:scale-95"
+            className="rounded-2xl border border-[#D8C9B3] bg-white px-4 py-4 text-center text-sm font-black text-[#3F5128] shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] active:scale-95"
           >
             Marketplace
           </Link>
 
           <Link
             to="/owner-accounting"
-            className="rounded-2xl border border-[#41D3BD] bg-[#41D3BD] px-4 py-4 text-center text-sm font-black text-[#073B35] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] active:scale-95"
+            className="rounded-2xl border border-[#CF743D] bg-[#CF743D] px-4 py-4 text-center text-sm font-black text-white shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] active:scale-95"
           >
             Accounting
           </Link>
 
           <Link
             to="/owner-seller-applications"
-            className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-4 text-center text-sm font-black text-[#073B35] active:scale-95"
+            className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-center text-sm font-black text-[#3F5128] active:scale-95"
           >
             Applications
           </Link>
@@ -529,16 +529,16 @@ export default function OwnerDashboard() {
           <button
             type="button"
             onClick={downloadCSV}
-            className="rounded-2xl border border-[#073B35] bg-[#073B35] px-4 py-4 text-sm font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-95"
+            className="rounded-2xl border border-[#3F5128] bg-[#3F5128] px-4 py-4 text-sm font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-95"
           >
             CSV Export
           </button>
         </section>
 
-        <section className="mt-5 rounded-[28px] border border-[#073B35] bg-[#073B35] p-5 text-white shadow-xl shadow-[#073B35]/15">
+        <section className="mt-5 rounded-[28px] border border-[#3F5128] bg-[#3F5128] p-5 text-white shadow-xl shadow-[#3F5128]/15">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-black uppercase tracking-wide text-[#41D3BD]">
+              <p className="text-xs font-black uppercase tracking-wide text-[#F3C06E]">
                 Nefo AI Insights
               </p>
 
@@ -547,7 +547,7 @@ export default function OwnerDashboard() {
               </h2>
             </div>
 
-            <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black text-[#D7F5EF]">
+            <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black text-white/75">
               Live
             </span>
           </div>
@@ -567,7 +567,7 @@ export default function OwnerDashboard() {
         </section>
 
         <section className={`mt-5 p-4 ${CARD}`}>
-          <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+          <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
             Filters
           </p>
 
@@ -599,7 +599,7 @@ export default function OwnerDashboard() {
             <button
               type="button"
               onClick={() => fetchOwnerData()}
-              className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-5 py-4 font-black text-[#073B35] active:scale-95"
+              className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-5 py-4 font-black text-[#3F5128] active:scale-95"
             >
               Refresh
             </button>
@@ -608,9 +608,9 @@ export default function OwnerDashboard() {
 
         {loading ? (
           <section className={`mt-5 p-8 text-center ${CARD}`}>
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-4 border-[#D7F5EF] border-t-[#073B35] animate-spin" />
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-4 border-[#EADFCE] border-t-[#3F5128] animate-spin" />
 
-            <p className="mt-4 font-bold text-[#51615D]">
+            <p className="mt-4 font-bold text-[#6B6258]">
               Loading owner dashboard...
             </p>
           </section>
@@ -653,23 +653,23 @@ export default function OwnerDashboard() {
             <section className={`mt-5 p-5 ${CARD}`}>
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                  <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
                     Seller Report
                   </p>
 
-                  <h2 className="mt-1 text-2xl font-black text-[#111827]">
+                  <h2 className="mt-1 text-2xl font-black text-[#181411]">
                     Seller-wise sales
                   </h2>
                 </div>
 
-                <p className="shrink-0 text-sm font-black text-[#51615D]">
+                <p className="shrink-0 text-sm font-black text-[#6B6258]">
                   {sellerWiseReport.length}
                 </p>
               </div>
 
               {sellerWiseReport.length === 0 ? (
                 <div className={`mt-6 p-6 text-center ${SOFT_CARD}`}>
-                  <p className="font-bold text-[#51615D]">
+                  <p className="font-bold text-[#6B6258]">
                     No seller data found.
                   </p>
                 </div>
@@ -678,20 +678,20 @@ export default function OwnerDashboard() {
                   {sellerWiseReport.map((seller) => (
                     <article
                       key={seller.sellerId}
-                      className="rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] p-4"
+                      className="rounded-[24px] border border-[#D8C9B3] bg-[#FFFDF7] p-4"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="truncate font-black text-[#111827]">
+                          <p className="truncate font-black text-[#181411]">
                             {seller.sellerName}
                           </p>
 
-                          <p className="mt-1 text-xs font-semibold text-[#51615D]">
+                          <p className="mt-1 text-xs font-semibold text-[#6B6258]">
                             {seller.orders} orders
                           </p>
                         </div>
 
-                        <p className="shrink-0 text-xl font-black text-[#073B35]">
+                        <p className="shrink-0 text-xl font-black text-[#3F5128]">
                           ₹{seller.grossSales}
                         </p>
                       </div>
@@ -705,12 +705,12 @@ export default function OwnerDashboard() {
                         />
                       </div>
 
-                      <div className="mt-3 rounded-2xl border border-[#BDEFE6] bg-white p-3">
-                        <p className="text-xs font-black uppercase text-[#51615D]">
+                      <div className="mt-3 rounded-2xl border border-[#D8C9B3] bg-white p-3">
+                        <p className="text-xs font-black uppercase text-[#6B6258]">
                           Platform Fee
                         </p>
 
-                        <p className="mt-1 font-black text-[#073B35]">
+                        <p className="mt-1 font-black text-[#3F5128]">
                           ₹{seller.platformFee}
                         </p>
                       </div>
@@ -723,23 +723,23 @@ export default function OwnerDashboard() {
             <section className={`mt-5 p-5 ${CARD}`}>
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                  <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
                     Order Register
                   </p>
 
-                  <h2 className="mt-1 text-2xl font-black text-[#111827]">
+                  <h2 className="mt-1 text-2xl font-black text-[#181411]">
                     Orders + payments
                   </h2>
                 </div>
 
-                <p className="shrink-0 text-sm font-black text-[#51615D]">
+                <p className="shrink-0 text-sm font-black text-[#6B6258]">
                   {filteredOrders.length}
                 </p>
               </div>
 
               {filteredOrders.length === 0 ? (
                 <div className={`mt-6 p-8 text-center ${SOFT_CARD}`}>
-                  <p className="font-bold text-[#51615D]">
+                  <p className="font-bold text-[#6B6258]">
                     No orders found for selected filters.
                   </p>
                 </div>
@@ -748,25 +748,25 @@ export default function OwnerDashboard() {
                   {filteredOrders.map((order) => (
                     <article
                       key={order.id}
-                      className="rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] p-4"
+                      className="rounded-[24px] border border-[#D8C9B3] bg-[#FFFDF7] p-4"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-[#51615D]">
+                          <p className="text-sm font-bold text-[#6B6258]">
                             Order #{order.id}
                           </p>
 
-                          <h3 className="mt-1 text-3xl font-black text-[#073B35]">
+                          <h3 className="mt-1 text-3xl font-black text-[#3F5128]">
                             ₹{order.total_amount}
                           </h3>
                         </div>
 
-                        <p className="shrink-0 text-right text-xs font-semibold leading-relaxed text-[#51615D]">
+                        <p className="shrink-0 text-right text-xs font-semibold leading-relaxed text-[#6B6258]">
                           {formatDateTime(order.created_at)}
                         </p>
                       </div>
 
-                      <div className="mt-4 space-y-2 rounded-2xl border border-[#BDEFE6] bg-white p-4">
+                      <div className="mt-4 space-y-2 rounded-2xl border border-[#D8C9B3] bg-white p-4">
                         <DetailLine
                           label="Customer"
                           value={`${order.customer_name || "-"} • ${
@@ -808,19 +808,19 @@ export default function OwnerDashboard() {
                             Payment Reference
                           </p>
 
-                          <p className="mt-1 break-all font-bold text-[#111827]">
+                          <p className="mt-1 break-all font-bold text-[#181411]">
                             {order.payment_reference}
                           </p>
                         </div>
                       ) : null}
 
                       {order.scheduled_order ? (
-                        <div className="mt-4 rounded-2xl border border-[#BDEFE6] bg-[#41D3BD]/12 p-4">
-                          <p className="text-xs font-black uppercase text-[#073B35]">
+                        <div className="mt-4 rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF] p-4">
+                          <p className="text-xs font-black uppercase text-[#3F5128]">
                             Scheduled For
                           </p>
 
-                          <p className="mt-1 font-bold text-[#111827]">
+                          <p className="mt-1 font-bold text-[#181411]">
                             {formatDateTime(order.scheduled_for)}
                           </p>
                         </div>
@@ -839,24 +839,24 @@ export default function OwnerDashboard() {
 
 function StatCard({ title, value }) {
   return (
-    <div className="rounded-[22px] border border-[#D7F5EF] bg-white/90 p-4 shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
-      <p className="text-[10px] font-black uppercase tracking-wide text-[#7A8A86]">
+    <div className="rounded-[22px] border border-[#EADFCE] bg-white/90 p-4 shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
+      <p className="text-[10px] font-black uppercase tracking-wide text-[#6B6258]">
         {title}
       </p>
 
-      <p className="mt-2 text-xl font-black text-[#073B35]">{value}</p>
+      <p className="mt-2 text-xl font-black text-[#3F5128]">{value}</p>
     </div>
   );
 }
 
 function SmallMetric({ label, value }) {
   return (
-    <div className="rounded-2xl border border-[#BDEFE6] bg-white p-3">
-      <p className="text-[10px] font-black uppercase text-[#51615D]">
+    <div className="rounded-2xl border border-[#D8C9B3] bg-white p-3">
+      <p className="text-[10px] font-black uppercase text-[#6B6258]">
         {label}
       </p>
 
-      <p className="mt-1 font-black text-[#073B35]">{value}</p>
+      <p className="mt-1 font-black text-[#3F5128]">{value}</p>
     </div>
   );
 }
@@ -864,8 +864,8 @@ function SmallMetric({ label, value }) {
 function DetailLine({ label, value }) {
   return (
     <div className="text-sm">
-      <span className="font-black text-[#073B35]">{label}: </span>
-      <span className="font-semibold text-[#51615D]">{value || "-"}</span>
+      <span className="font-black text-[#3F5128]">{label}: </span>
+      <span className="font-semibold text-[#6B6258]">{value || "-"}</span>
     </div>
   );
 }

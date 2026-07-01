@@ -40,11 +40,11 @@ import { supabase } from "./lib/supabaseClient";
 
 function LoadingScreen() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#FFFFF2] px-4 text-[#111827]">
-      <div className="rounded-[28px] border border-[#D7F5EF] bg-white/90 px-8 py-7 text-center shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-4 border-[#D7F5EF] border-t-[#073B35] animate-spin" />
+    <main className="flex min-h-screen items-center justify-center bg-[#FFF8EC] px-4 text-[#181411]">
+      <div className="rounded-[28px] border border-[#EADFCE] bg-white/90 px-8 py-7 text-center shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-4 border-[#EADFCE] border-t-[#3F5128] animate-spin" />
 
-        <p className="mt-4 font-black text-[#073B35]">Loading...</p>
+        <p className="mt-4 font-black text-[#3F5128]">Loading...</p>
       </div>
     </main>
   );
@@ -104,8 +104,8 @@ function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[900] border-t border-[#D7F5EF] bg-[#FFFFF2]/95 shadow-[0_-8px_24px_rgba(7,59,53,0.06)] backdrop-blur-xl">
-      <div className="mx-auto grid h-[74px] max-w-md grid-cols-5 px-1 pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-[900] border-t border-[#EADFCE] bg-[#FFF8EC]/95 shadow-[0_-8px_24px_rgba(63,81,40,0.08)] backdrop-blur-xl">
+      <div className="mx-auto grid h-[76px] max-w-md grid-cols-5 px-1 pb-[env(safe-area-inset-bottom)]">
         {navItems.map((item) => (
           <NavLink
             key={item.path}
@@ -114,21 +114,29 @@ function BottomNav() {
             className={({ isActive }) =>
               `flex flex-col items-center justify-center gap-1 rounded-2xl text-[10px] font-black transition-all ${
                 isActive
-                  ? "text-[#073B35]"
-                  : "text-[#7A8783] hover:text-[#073B35]"
+                  ? "text-[#3F5128]"
+                  : "text-[#6B6258] hover:text-[#3F5128]"
               }`
             }
           >
             {({ isActive }) => (
               <>
                 <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-2xl border transition-all ${
+                  className={`flex h-9 w-9 items-center justify-center rounded-2xl border transition-all ${
                     isActive
-                      ? "border-[#BDEFE6] bg-[#D7F5EF] shadow-[4px_4px_10px_rgba(7,59,53,0.08),-4px_-4px_10px_rgba(255,255,255,0.9)]"
-                      : "border-transparent"
+                      ? "border-[#D8C9B3] bg-[#FFF0DF] shadow-[4px_4px_10px_rgba(63,81,40,0.08),-4px_-4px_10px_rgba(255,255,255,0.9)]"
+                      : "border-transparent bg-transparent"
                   }`}
                 >
-                  {item.icon}
+                  <span
+                    className={
+                      item.label === "Favorites" && isActive
+                        ? "text-[#CF743D]"
+                        : ""
+                    }
+                  >
+                    {item.icon}
+                  </span>
                 </div>
 
                 <span className="leading-none">{item.label}</span>
@@ -192,8 +200,8 @@ function FloatingHelpButton() {
         bottomNavVisible ? "bottom-24" : "bottom-5"
       } ${
         isSellerPage
-          ? "border-[#FFB703] bg-[#FFB703] text-[#111827] hover:bg-[#FFC533]"
-          : "border-[#41D3BD]/30 bg-[#073B35] text-white hover:bg-[#0B5149]"
+          ? "border-[#CF743D] bg-[#CF743D] text-white hover:bg-[#B85F2C]"
+          : "border-[#3F5128] bg-[#3F5128] text-white hover:bg-[#4D612F]"
       }`}
     >
       {isSellerPage ? "👨‍🍳 Seller Help" : "💬 Help"}
@@ -354,18 +362,18 @@ function AdminOnlyRoute({ children }) {
 
 function ComingSoonPage({ title, description }) {
   return (
-    <main className="min-h-screen bg-[#FFFFF2] px-4 py-6 pb-28 text-[#111827]">
+    <main className="min-h-screen bg-[#FFF8EC] px-4 py-6 pb-28 text-[#181411]">
       <div className="mx-auto max-w-md">
-        <h1 className="text-2xl font-black text-[#111827]">{title}</h1>
+        <h1 className="text-2xl font-black text-[#181411]">{title}</h1>
 
-        <div className="mt-5 rounded-[28px] border border-[#D7F5EF] bg-white/90 p-6 shadow-[8px_8px_22px_rgba(7,59,53,0.07),-8px_-8px_22px_rgba(255,255,255,0.95)]">
-          <p className="text-sm font-semibold leading-relaxed text-[#51615D]">
+        <div className="mt-5 rounded-[28px] border border-[#EADFCE] bg-white/90 p-6 shadow-[8px_8px_22px_rgba(63,81,40,0.07),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+          <p className="text-sm font-semibold leading-relaxed text-[#6B6258]">
             {description}
           </p>
 
           <Link
             to="/profile"
-            className="mt-6 block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center text-sm font-black text-white active:scale-[0.98]"
+            className="mt-6 block rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 text-center text-sm font-black text-white active:scale-[0.98]"
           >
             Back to Profile
           </Link>

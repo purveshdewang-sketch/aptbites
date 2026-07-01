@@ -47,10 +47,10 @@ const QUICK_ACTIONS = [
 ];
 
 const CARD =
-  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+  "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
 const INPUT =
-  "w-full rounded-2xl border border-[#BDEFE6] bg-white px-4 py-4 text-sm font-semibold text-[#111827] outline-none placeholder:text-[#8AA5A0] focus:border-[#41D3BD]";
+  "w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-sm font-semibold text-[#181411] outline-none placeholder:text-[#9A8E80] focus:border-[#CF743D] focus:bg-white";
 
 export default function SellerHelper() {
   const { user } = useAuth();
@@ -656,33 +656,33 @@ Try: “Why is my food not visible?”`;
 
   if (!user) {
     return (
-      <main className="min-h-screen bg-[#FFFFF2] px-4 py-5 pb-28 text-[#111827]">
+      <main className="min-h-screen bg-[#FFF8EC] px-4 py-5 pb-28 text-[#181411]">
         <div className="mx-auto max-w-md">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
             aria-label="Go back"
           >
             <BackIcon />
           </button>
 
           <section className={`mt-6 p-8 text-center ${CARD}`}>
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 text-4xl">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#D8C9B3] bg-[#FFF0DF] text-4xl">
               👨‍🍳
             </div>
 
-            <h1 className="mt-5 text-2xl font-black text-[#111827]">
+            <h1 className="mt-5 text-2xl font-black text-[#181411]">
               Sign in as seller
             </h1>
 
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               Seller Assistant is available only for approved seller accounts.
             </p>
 
             <Link
               to="/seller-login"
-              className="mt-6 block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center text-sm font-black text-white"
+              className="mt-6 block rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 text-center text-sm font-black text-white"
             >
               Seller Login
             </Link>
@@ -693,29 +693,29 @@ Try: “Why is my food not visible?”`;
   }
 
   return (
-    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-32 text-[#111827]">
+    <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-32 text-[#181411]">
       <div className="mx-auto max-w-md">
         <header className="flex items-start gap-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
             aria-label="Go back"
           >
             <BackIcon />
           </button>
 
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+            <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
               Nefo AI Seller
             </p>
 
-            <h1 className="mt-1 text-3xl font-black leading-tight text-[#073B35]">
+            <h1 className="mt-1 text-3xl font-black leading-tight text-[#3F5128]">
               Smart seller
-              <span className="block text-[#111827]">assistant</span>
+              <span className="block text-[#181411]">assistant</span>
             </h1>
 
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               AI help for uploads, orders, visibility, payout, stock, and
               dashboard issues.
             </p>
@@ -736,11 +736,11 @@ Try: “Why is my food not visible?”`;
         <section className={`mt-5 p-5 ${CARD}`}>
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+              <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
                 Kitchen Health
               </p>
 
-              <h2 className="mt-1 text-2xl font-black text-[#111827]">
+              <h2 className="mt-1 text-2xl font-black text-[#181411]">
                 Live checks
               </h2>
             </div>
@@ -748,7 +748,7 @@ Try: “Why is my food not visible?”`;
             <button
               type="button"
               onClick={loadSellerData}
-              className="shrink-0 rounded-full border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-2 text-xs font-black text-[#073B35] active:scale-95"
+              className="shrink-0 rounded-full border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-2 text-xs font-black text-[#3F5128] active:scale-95"
             >
               Refresh
             </button>
@@ -797,11 +797,11 @@ Try: “Why is my food not visible?”`;
         </section>
 
         <section className={`mt-5 p-5 ${CARD}`}>
-          <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+          <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
             Quick Help
           </p>
 
-          <h2 className="mt-1 text-2xl font-black text-[#111827]">
+          <h2 className="mt-1 text-2xl font-black text-[#181411]">
             Common seller issues
           </h2>
 
@@ -812,7 +812,7 @@ Try: “Why is my food not visible?”`;
                 type="button"
                 onClick={() => askSellerAi(item.prompt)}
                 disabled={aiThinking}
-                className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4 text-left text-[#073B35] transition-all active:scale-[0.98] disabled:opacity-50"
+                className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-4 text-left text-[#3F5128] transition-all active:scale-[0.98] disabled:opacity-50"
               >
                 <div className="text-2xl">{item.icon}</div>
 
@@ -825,25 +825,25 @@ Try: “Why is my food not visible?”`;
         </section>
 
         <section className={`mt-5 overflow-hidden ${CARD}`}>
-          <div className="border-b border-[#174E47] bg-[#073B35] p-4 text-white">
+          <div className="border-b border-[#4D612F] bg-[#3F5128] p-4 text-white">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#41D3BD] bg-[#41D3BD] text-2xl text-[#073B35]">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#CF743D] bg-[#CF743D] text-2xl text-white">
                 🤖
               </div>
 
               <div className="min-w-0">
                 <p className="text-xl font-black">Nefo AI Seller</p>
 
-                <p className="mt-0.5 text-xs font-semibold text-[#D7F5EF]">
+                <p className="mt-0.5 text-xs font-semibold text-white/70">
                   Live support for kitchen operations
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-[#FFFFF2] p-4">
+          <div className="bg-[#FFFDF7] p-4">
             {loading ? (
-              <div className="mb-3 rounded-2xl border border-[#BDEFE6] bg-white p-4 font-bold text-[#51615D]">
+              <div className="mb-3 rounded-2xl border border-[#D8C9B3] bg-white p-4 font-bold text-[#6B6258]">
                 Loading seller data...
               </div>
             ) : null}
@@ -860,7 +860,7 @@ Try: “Why is my food not visible?”`;
               </div>
             ) : null}
 
-            <div className="h-[420px] space-y-3 overflow-y-auto rounded-3xl border border-[#BDEFE6] bg-white p-3">
+            <div className="h-[420px] space-y-3 overflow-y-auto rounded-3xl border border-[#D8C9B3] bg-white p-3">
               {messages.map((msg, index) => (
                 <div
                   key={`${msg.role}-${index}`}
@@ -871,8 +871,8 @@ Try: “Why is my food not visible?”`;
                   <div
                     className={`max-w-[88%] whitespace-pre-line rounded-2xl border px-4 py-3 text-sm leading-relaxed ${
                       msg.role === "user"
-                        ? "rounded-br-md border-[#073B35] bg-[#073B35] text-white"
-                        : "rounded-bl-md border-[#BDEFE6] bg-[#FFFFF2] text-[#51615D]"
+                        ? "rounded-br-md border-[#3F5128] bg-[#3F5128] text-white"
+                        : "rounded-bl-md border-[#D8C9B3] bg-[#FFF8EC] text-[#6B6258]"
                     }`}
                   >
                     {msg.text}
@@ -882,7 +882,7 @@ Try: “Why is my food not visible?”`;
 
               {aiThinking ? (
                 <div className="flex justify-start">
-                  <div className="rounded-2xl rounded-bl-md border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-3 text-sm font-black text-[#073B35]">
+                  <div className="rounded-2xl rounded-bl-md border border-[#D8C9B3] bg-[#FFF8EC] px-4 py-3 text-sm font-black text-[#3F5128]">
                     Finding the best fix...
                   </div>
                 </div>
@@ -906,7 +906,7 @@ Try: “Why is my food not visible?”`;
                 type="button"
                 onClick={() => askSellerAi()}
                 disabled={aiThinking || !input.trim()}
-                className="shrink-0 rounded-2xl border border-[#073B35] bg-[#073B35] px-5 font-black text-white active:scale-95 disabled:opacity-50"
+                className="shrink-0 rounded-2xl border border-[#3F5128] bg-[#3F5128] px-5 font-black text-white active:scale-95 disabled:opacity-50"
               >
                 {aiThinking ? "..." : "Send"}
               </button>
@@ -916,7 +916,7 @@ Try: “Why is my food not visible?”`;
 
         <Link
           to="/seller-dashboard"
-          className="mt-5 block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-95"
+          className="mt-5 block rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 text-center font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-95"
         >
           Back to Seller Dashboard
         </Link>
@@ -927,14 +927,14 @@ Try: “Why is my food not visible?”`;
 
 function StatCard({ label, value, strong = false, muted = false }) {
   return (
-    <div className="rounded-[22px] border border-[#D7F5EF] bg-white/90 p-3 shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
-      <p className="text-[10px] font-black uppercase text-[#7A8A86]">
+    <div className="rounded-[22px] border border-[#EADFCE] bg-white/90 p-3 shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
+      <p className="text-[10px] font-black uppercase text-[#6B6258]">
         {label}
       </p>
 
       <p
         className={`mt-1 text-xl font-black ${
-          muted ? "text-[#8AA5A0]" : strong ? "text-[#073B35]" : "text-[#111827]"
+          muted ? "text-[#9A8E80]" : strong ? "text-[#3F5128]" : "text-[#181411]"
         }`}
       >
         {value}
@@ -945,8 +945,8 @@ function StatCard({ label, value, strong = false, muted = false }) {
 
 function HealthRow({ label, active, value }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-3">
-      <p className="text-sm font-bold text-[#51615D]">{label}</p>
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-3">
+      <p className="text-sm font-bold text-[#6B6258]">{label}</p>
 
       <p
         className={`text-sm font-black ${

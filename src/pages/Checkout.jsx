@@ -9,13 +9,13 @@ const Nefo_UPI_ID = "cropg1agroresearch@sbi";
 const Nefo_PAYEE_NAME = "Nefo";
 
 const CARD =
-  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+  "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
 const SOFT_CARD =
-  "rounded-[24px] border border-[#E8F4F1] bg-white/90 shadow-[6px_6px_16px_rgba(7,59,53,0.06),-6px_-6px_16px_rgba(255,255,255,0.95)]";
+  "rounded-[24px] border border-[#EADFCE] bg-white/90 shadow-[6px_6px_16px_rgba(63,81,40,0.06),-6px_-6px_16px_rgba(255,255,255,0.95)]";
 
 const INPUT =
-  "w-full rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-4 text-base font-semibold text-[#111827] outline-none placeholder:text-[#8AA5A0] focus:border-[#41D3BD] focus:bg-white disabled:cursor-not-allowed disabled:bg-[#EAF7F4] disabled:text-[#51615D]";
+  "w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-base font-semibold text-[#181411] outline-none placeholder:text-[#9A8E80] focus:border-[#CF743D] focus:bg-white disabled:cursor-not-allowed disabled:bg-[#F1E8DC] disabled:text-[#6B6258]";
 
 export default function Checkout() {
   const { cartItems, cartTotal, clearCart } = useCart();
@@ -751,29 +751,29 @@ export default function Checkout() {
 
   if (orderPlaced) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#FFFFF2] px-4 py-8 text-[#111827]">
+      <main className="flex min-h-screen items-center justify-center bg-[#FFF8EC] px-4 py-8 text-[#181411]">
         <div className={`w-full max-w-md p-7 text-center ${CARD}`}>
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 text-4xl">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#D8C9B3] bg-[#FFF0DF] text-4xl">
             🎉
           </div>
 
-          <p className="mt-6 text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+          <p className="mt-6 text-xs font-black uppercase tracking-wide text-[#CF743D]">
             {orderTiming === "scheduled" ? "Order Scheduled" : "Order Confirmed"}
           </p>
 
-          <h1 className="mt-3 text-3xl font-black leading-tight text-[#111827]">
+          <h1 className="mt-3 text-3xl font-black leading-tight text-[#181411]">
             {orderTiming === "scheduled"
               ? "Your order has been scheduled."
               : "Your food is now being prepared."}
           </h1>
 
-          <p className="mt-4 text-sm font-semibold leading-relaxed text-[#51615D]">
+          <p className="mt-4 text-sm font-semibold leading-relaxed text-[#6B6258]">
             Redirecting you to live order tracking.
           </p>
 
           <Link
             to="/orders"
-            className="mt-7 block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 font-black text-white active:scale-95"
+            className="mt-7 block rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 font-black text-white active:scale-95"
           >
             Track My Order
           </Link>
@@ -784,32 +784,32 @@ export default function Checkout() {
 
   if (cartItems.length === 0) {
     return (
-      <main className="min-h-screen bg-[#FFFFF2] px-4 py-5 pb-28 text-[#111827]">
+      <main className="min-h-screen bg-[#FFF8EC] px-4 py-5 pb-28 text-[#181411]">
         <div className="mx-auto max-w-md">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
           >
             <BackIcon />
           </button>
 
           <section className={`mt-6 p-8 text-center ${CARD}`}>
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 text-4xl">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#D8C9B3] bg-[#FFF0DF] text-4xl">
               🛒
             </div>
 
-            <h1 className="mt-5 text-2xl font-black text-[#111827]">
+            <h1 className="mt-5 text-2xl font-black text-[#181411]">
               Your cart is empty
             </h1>
 
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               Add dishes from the marketplace before checkout.
             </p>
 
             <Link
               to="/marketplace"
-              className="mt-6 block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center text-sm font-black text-white"
+              className="mt-6 block rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 text-center text-sm font-black text-white"
             >
               Explore Marketplace
             </Link>
@@ -820,29 +820,29 @@ export default function Checkout() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-40 text-[#111827]">
+    <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-40 text-[#181411]">
       <div className="mx-auto max-w-md">
         <header className="flex items-start gap-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
             aria-label="Go back"
           >
             <BackIcon />
           </button>
 
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+            <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
               Checkout
             </p>
 
-            <h1 className="mt-1 text-3xl font-black leading-tight text-[#073B35]">
+            <h1 className="mt-1 text-3xl font-black leading-tight text-[#3F5128]">
               Complete
-              <span className="block text-[#111827]">your order</span>
+              <span className="block text-[#181411]">your order</span>
             </h1>
 
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               Confirm details, pay by UPI, then upload screenshot or reference.
             </p>
           </div>
@@ -857,7 +857,7 @@ export default function Checkout() {
         <button
           type="button"
           onClick={() => setShowMobileSummary((current) => !current)}
-          className="mt-4 flex w-full items-center justify-between rounded-2xl border border-[#BDEFE6] bg-white/90 px-4 py-4 text-left font-black text-[#073B35] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] active:scale-[0.99]"
+          className="mt-4 flex w-full items-center justify-between rounded-2xl border border-[#D8C9B3] bg-white/90 px-4 py-4 text-left font-black text-[#3F5128] shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] active:scale-[0.99]"
         >
           <span>Order Summary</span>
           <span>{showMobileSummary ? "Hide" : `₹${totalAmount}`}</span>
@@ -920,12 +920,12 @@ export default function Checkout() {
               </Field>
 
               <div>
-                <p className="mb-3 text-xs font-black uppercase tracking-wide text-[#51615D]">
+                <p className="mb-3 text-xs font-black uppercase tracking-wide text-[#6B6258]">
                   Delivery option
                 </p>
 
                 {checkingKitchenSettings ? (
-                  <div className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4 text-sm font-bold text-[#51615D]">
+                  <div className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-4 text-sm font-bold text-[#6B6258]">
                     Checking kitchen delivery options...
                   </div>
                 ) : checkoutBlocked ? (
@@ -1044,7 +1044,7 @@ export default function Checkout() {
             {orderTiming === "scheduled" ? (
               <div className="mt-5 space-y-5">
                 <div>
-                  <p className="mb-3 text-xs font-black uppercase tracking-wide text-[#51615D]">
+                  <p className="mb-3 text-xs font-black uppercase tracking-wide text-[#6B6258]">
                     Select date
                   </p>
 
@@ -1062,14 +1062,14 @@ export default function Checkout() {
                           }}
                           className={`min-w-[92px] shrink-0 rounded-2xl border px-3 py-3 text-left active:scale-95 ${
                             active
-                              ? "border-[#073B35] bg-[#073B35] text-white"
-                              : "border-[#BDEFE6] bg-[#FFFFF2] text-[#073B35]"
+                              ? "border-[#3F5128] bg-[#3F5128] text-white"
+                              : "border-[#D8C9B3] bg-[#FFFDF7] text-[#3F5128]"
                           }`}
                         >
                           <p className="text-xs font-black">{option.day}</p>
                           <p
                             className={`mt-1 text-sm font-bold ${
-                              active ? "text-white/75" : "text-[#51615D]"
+                              active ? "text-white/75" : "text-[#6B6258]"
                             }`}
                           >
                             {option.date}
@@ -1081,12 +1081,12 @@ export default function Checkout() {
                 </div>
 
                 <div>
-                  <p className="mb-3 text-xs font-black uppercase tracking-wide text-[#51615D]">
+                  <p className="mb-3 text-xs font-black uppercase tracking-wide text-[#6B6258]">
                     Select time
                   </p>
 
                   {!scheduledDate ? (
-                    <div className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4 text-sm font-bold text-[#51615D]">
+                    <div className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-4 text-sm font-bold text-[#6B6258]">
                       Select date first.
                     </div>
                   ) : getTimeOptions().length === 0 ? (
@@ -1105,8 +1105,8 @@ export default function Checkout() {
                             onClick={() => setScheduledTime(option.value)}
                             className={`h-12 rounded-2xl border text-sm font-black active:scale-95 ${
                               active
-                                ? "border-[#41D3BD] bg-[#41D3BD] text-[#073B35]"
-                                : "border-[#BDEFE6] bg-[#FFFFF2] text-[#073B35]"
+                                ? "border-[#CF743D] bg-[#CF743D] text-white"
+                                : "border-[#D8C9B3] bg-[#FFFDF7] text-[#3F5128]"
                             }`}
                           >
                             {option.label}
@@ -1118,11 +1118,11 @@ export default function Checkout() {
                 </div>
 
                 {formattedSchedule ? (
-                  <div className="rounded-2xl border border-[#BDEFE6] bg-[#41D3BD]/12 p-4">
-                    <p className="text-sm font-black text-[#073B35]">
+                  <div className="rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF] p-4">
+                    <p className="text-sm font-black text-[#3F5128]">
                       Selected schedule
                     </p>
-                    <p className="mt-1 text-base font-bold text-[#111827]">
+                    <p className="mt-1 text-base font-bold text-[#181411]">
                       {formattedSchedule}
                     </p>
                   </div>
@@ -1132,7 +1132,7 @@ export default function Checkout() {
           </CardSection>
 
           <section className={`overflow-hidden ${CARD}`}>
-            <div className="border-b border-[#174E47] bg-[#073B35] p-5 text-white">
+            <div className="border-b border-[#4D612F] bg-[#3F5128] p-5 text-white">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-black uppercase tracking-wide text-white/60">
@@ -1151,7 +1151,7 @@ export default function Checkout() {
                     Payable
                   </p>
 
-                  <p className="text-4xl font-black text-[#41D3BD]">
+                  <p className="text-4xl font-black text-[#F3C06E]">
                     ₹{totalAmount}
                   </p>
                 </div>
@@ -1159,7 +1159,7 @@ export default function Checkout() {
 
               <div className="mt-5 rounded-2xl border border-white/15 bg-white/10 px-4 py-3">
                 <p className="font-black">UPI payment only</p>
-                <p className="mt-1 break-all text-xs font-bold text-[#41D3BD]">
+                <p className="mt-1 break-all text-xs font-bold text-[#F3C06E]">
                   {Nefo_UPI_ID}
                 </p>
               </div>
@@ -1169,7 +1169,7 @@ export default function Checkout() {
               <div className="grid grid-cols-1 gap-3">
                 <a
                   href={upiPaymentLink}
-                  className="block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.98]"
+                  className="block rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 text-center font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-[0.98]"
                 >
                   Pay via UPI App
                 </a>
@@ -1177,19 +1177,19 @@ export default function Checkout() {
                 <button
                   type="button"
                   onClick={() => setShowQr((current) => !current)}
-                  className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] py-4 font-black text-[#073B35] active:scale-[0.98]"
+                  className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 font-black text-[#3F5128] active:scale-[0.98]"
                 >
                   {showQr ? "Hide QR" : "Scan QR"}
                 </button>
               </div>
 
               {showQr ? (
-                <div className="mt-5 rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] p-5 text-center">
-                  <p className="text-sm font-black uppercase tracking-wide text-[#0B8F80]">
+                <div className="mt-5 rounded-[24px] border border-[#D8C9B3] bg-[#FFFDF7] p-5 text-center">
+                  <p className="text-sm font-black uppercase tracking-wide text-[#CF743D]">
                     Scan & Pay
                   </p>
 
-                  <div className="mx-auto mt-4 w-fit rounded-3xl border border-[#D7F5EF] bg-white p-4">
+                  <div className="mx-auto mt-4 w-fit rounded-3xl border border-[#EADFCE] bg-white p-4">
                     <img
                       src={qrCodeUrl}
                       alt="Nefo UPI QR Code"
@@ -1197,11 +1197,11 @@ export default function Checkout() {
                     />
                   </div>
 
-                  <p className="mt-4 font-black text-[#073B35]">
+                  <p className="mt-4 font-black text-[#3F5128]">
                     ₹{totalAmount}
                   </p>
 
-                  <p className="mt-1 break-all text-sm text-[#51615D]">
+                  <p className="mt-1 break-all text-sm text-[#6B6258]">
                     {Nefo_UPI_ID}
                   </p>
                 </div>
@@ -1212,7 +1212,7 @@ export default function Checkout() {
                   <a
                     key={app}
                     href={upiPaymentLink}
-                    className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] py-4 text-center font-black text-[#073B35]"
+                    className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 text-center font-black text-[#3F5128]"
                   >
                     {app}
                   </a>
@@ -1223,7 +1223,7 @@ export default function Checkout() {
                 <button
                   type="button"
                   onClick={() => copyToClipboard(Nefo_UPI_ID, "UPI ID")}
-                  className="rounded-2xl border border-[#BDEFE6] bg-white py-4 font-black text-[#073B35]"
+                  className="rounded-2xl border border-[#D8C9B3] bg-white py-4 font-black text-[#3F5128]"
                 >
                   Copy UPI ID
                 </button>
@@ -1231,20 +1231,20 @@ export default function Checkout() {
                 <button
                   type="button"
                   onClick={() => copyToClipboard(totalAmount, "Amount")}
-                  className="rounded-2xl border border-[#BDEFE6] bg-white py-4 font-black text-[#073B35]"
+                  className="rounded-2xl border border-[#D8C9B3] bg-white py-4 font-black text-[#3F5128]"
                 >
                   Copy Amount
                 </button>
               </div>
 
               {paymentMessage ? (
-                <p className="mt-3 text-center text-sm font-bold text-[#0B8F80]">
+                <p className="mt-3 text-center text-sm font-bold text-[#CF743D]">
                   {paymentMessage}
                 </p>
               ) : null}
 
-              <div className="mt-5 border-t border-[#D7F5EF] pt-5">
-                <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+              <div className="mt-5 border-t border-[#EADFCE] pt-5">
+                <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
                   Payment proof
                 </p>
 
@@ -1260,29 +1260,29 @@ export default function Checkout() {
                   <button
                     type="button"
                     onClick={() => paymentProofInputRef.current?.click()}
-                    className="mt-3 flex min-h-[128px] w-full flex-col items-center justify-center rounded-3xl border-2 border-dashed border-[#41D3BD] bg-[#FFFFF2] text-[#073B35] active:scale-[0.99]"
+                    className="mt-3 flex min-h-[128px] w-full flex-col items-center justify-center rounded-3xl border-2 border-dashed border-[#CF743D] bg-[#FFFDF7] text-[#3F5128] active:scale-[0.99]"
                   >
                     <span className="text-4xl">📷</span>
                     <span className="mt-3 font-black">
                       Upload Payment Screenshot
                     </span>
-                    <span className="mt-1 text-xs text-[#51615D]">
+                    <span className="mt-1 text-xs text-[#6B6258]">
                       JPG, PNG, WEBP up to 5 MB
                     </span>
                   </button>
                 ) : (
-                  <div className="mt-3 rounded-3xl border border-[#BDEFE6] bg-[#FFFFF2] p-3">
+                  <div className="mt-3 rounded-3xl border border-[#D8C9B3] bg-[#FFFDF7] p-3">
                     <img
                       src={paymentProofPreview}
                       alt="Payment proof preview"
-                      className="max-h-72 w-full rounded-2xl border border-[#D7F5EF] bg-white object-contain"
+                      className="max-h-72 w-full rounded-2xl border border-[#EADFCE] bg-white object-contain"
                     />
 
                     <div className="mt-3 grid grid-cols-2 gap-3">
                       <button
                         type="button"
                         onClick={() => paymentProofInputRef.current?.click()}
-                        className="rounded-2xl border border-[#073B35] bg-[#073B35] py-3 font-black text-white"
+                        className="rounded-2xl border border-[#3F5128] bg-[#3F5128] py-3 font-black text-white"
                       >
                         Replace
                       </button>
@@ -1307,7 +1307,7 @@ export default function Checkout() {
                   />
                 </Field>
 
-                <p className="mt-3 text-xs leading-relaxed text-[#51615D]">
+                <p className="mt-3 text-xs leading-relaxed text-[#6B6258]">
                   Upload screenshot after payment. Transaction reference is
                   optional but useful for verification.
                 </p>
@@ -1331,23 +1331,23 @@ export default function Checkout() {
         </section>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-[950] border-t border-[#D7F5EF] bg-[#FFFFF2]/95 px-4 py-3 backdrop-blur-xl">
+      <div className="fixed bottom-0 left-0 right-0 z-[950] border-t border-[#EADFCE] bg-[#FFF8EC]/95 px-4 py-3 backdrop-blur-xl">
         <div className="mx-auto flex max-w-md items-center gap-3">
           <button
             type="button"
             onClick={() => setShowMobileSummary((current) => !current)}
-            className="shrink-0 rounded-2xl border border-[#D7F5EF] bg-white px-4 py-3 text-left shadow-sm"
+            className="shrink-0 rounded-2xl border border-[#EADFCE] bg-white px-4 py-3 text-left shadow-sm"
           >
-            <p className="text-[10px] font-black uppercase text-[#51615D]">
+            <p className="text-[10px] font-black uppercase text-[#6B6258]">
               Total
             </p>
-            <p className="text-xl font-black text-[#073B35]">₹{totalAmount}</p>
+            <p className="text-xl font-black text-[#3F5128]">₹{totalAmount}</p>
           </button>
 
           <button
             onClick={handlePlaceOrder}
             disabled={loading || checkoutBlocked}
-            className="flex-1 rounded-2xl border border-[#073B35] bg-[#073B35] py-4 font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex-1 rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading
               ? "Checking..."
@@ -1367,15 +1367,15 @@ function CardSection({ number, title, subtitle, children }) {
   return (
     <section className={`p-5 ${CARD}`}>
       <div className="flex items-start gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-[#073B35] bg-[#073B35] font-black text-white shadow-lg shadow-[#073B35]/15">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-[#3F5128] bg-[#3F5128] font-black text-white shadow-lg shadow-[#3F5128]/15">
           {number}
         </div>
 
         <div className="min-w-0">
-          <h2 className="text-xl font-black text-[#111827]">{title}</h2>
+          <h2 className="text-xl font-black text-[#181411]">{title}</h2>
 
           {subtitle ? (
-            <p className="mt-1 text-sm font-semibold leading-relaxed text-[#51615D]">
+            <p className="mt-1 text-sm font-semibold leading-relaxed text-[#6B6258]">
               {subtitle}
             </p>
           ) : null}
@@ -1404,16 +1404,16 @@ function OrderSummaryCard({
     <section className={`p-5 ${CARD}`}>
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+          <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
             Order Summary
           </p>
 
-          <h2 className="mt-1 text-2xl font-black text-[#111827]">
+          <h2 className="mt-1 text-2xl font-black text-[#181411]">
             Your food
           </h2>
         </div>
 
-        <div className="rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 px-3 py-1.5 text-xs font-black text-[#073B35]">
+        <div className="rounded-full border border-[#D8C9B3] bg-[#FFF0DF] px-3 py-1.5 text-xs font-black text-[#3F5128]">
           {cartItems.length} items
         </div>
       </div>
@@ -1422,31 +1422,31 @@ function OrderSummaryCard({
         {cartItems.map((item) => (
           <div
             key={item.id}
-            className="flex gap-3 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-3"
+            className="flex gap-3 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-3"
           >
             <img
               src={item.image}
               alt={item.name}
-              className="h-16 w-16 shrink-0 rounded-2xl border border-[#D7F5EF] bg-[#D7F5EF] object-cover"
+              className="h-16 w-16 shrink-0 rounded-2xl border border-[#EADFCE] bg-[#FFF0DF] object-cover"
             />
 
             <div className="min-w-0 flex-1">
               <div className="flex justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-black text-[#111827]">
+                  <p className="truncate text-sm font-black text-[#181411]">
                     {item.name}
                   </p>
 
-                  <p className="mt-1 truncate text-xs text-[#51615D]">
+                  <p className="mt-1 truncate text-xs text-[#6B6258]">
                     Kitchen: {getKitchenName(item)}
                   </p>
 
-                  <p className="mt-1 text-xs font-semibold text-[#51615D]">
+                  <p className="mt-1 text-xs font-semibold text-[#6B6258]">
                     Qty {item.quantity}
                   </p>
                 </div>
 
-                <p className="shrink-0 text-sm font-black text-[#073B35]">
+                <p className="shrink-0 text-sm font-black text-[#3F5128]">
                   ₹{Number(item.price || 0) * Number(item.quantity || 1)}
                 </p>
               </div>
@@ -1455,13 +1455,13 @@ function OrderSummaryCard({
         ))}
       </div>
 
-      <div className="mt-5 space-y-3 border-t border-[#D7F5EF] pt-5">
+      <div className="mt-5 space-y-3 border-t border-[#EADFCE] pt-5">
         {orderTiming === "scheduled" && formattedSchedule ? (
-          <div className="rounded-2xl border border-[#BDEFE6] bg-[#41D3BD]/12 p-4">
-            <p className="text-sm font-black text-[#073B35]">
+          <div className="rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF] p-4">
+            <p className="text-sm font-black text-[#3F5128]">
               Scheduled Order
             </p>
-            <p className="mt-1 text-sm text-[#51615D]">{formattedSchedule}</p>
+            <p className="mt-1 text-sm text-[#6B6258]">{formattedSchedule}</p>
           </div>
         ) : null}
 
@@ -1484,27 +1484,27 @@ function OrderSummaryCard({
           </div>
         ) : null}
 
-        <div className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4">
-          <p className="text-xs font-black uppercase text-[#51615D]">Payment</p>
+        <div className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-4">
+          <p className="text-xs font-black uppercase text-[#6B6258]">Payment</p>
 
-          <p className="mt-1 font-black text-[#111827]">UPI Payment Only</p>
+          <p className="mt-1 font-black text-[#181411]">UPI Payment Only</p>
 
           {paymentProofFile ? (
-            <p className="mt-2 truncate text-xs font-bold text-[#0B8F80]">
+            <p className="mt-2 truncate text-xs font-bold text-[#CF743D]">
               Screenshot selected
             </p>
           ) : paymentReference ? (
-            <p className="mt-2 truncate text-xs font-bold text-[#0B8F80]">
+            <p className="mt-2 truncate text-xs font-bold text-[#CF743D]">
               Ref: {paymentReference}
             </p>
           ) : (
-            <p className="mt-2 text-xs font-bold text-[#073B35]">
+            <p className="mt-2 text-xs font-bold text-[#3F5128]">
               Screenshot or reference required
             </p>
           )}
         </div>
 
-        <div className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4 space-y-3">
+        <div className="space-y-3 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-4">
           <SummaryRow label="Subtotal" value={`₹${subtotalAmount}`} />
 
           <SummaryRow
@@ -1514,21 +1514,21 @@ function OrderSummaryCard({
 
           <SummaryRow label="Platform Fee" value={`₹${PLATFORM_FEE}`} />
 
-          <div className="flex items-end justify-between border-t border-[#D7F5EF] pt-4">
+          <div className="flex items-end justify-between border-t border-[#EADFCE] pt-4">
             <div>
-              <p className="text-sm text-[#51615D]">Total Amount</p>
-              <p className="mt-1 text-xs text-[#51615D]">
+              <p className="text-sm text-[#6B6258]">Total Amount</p>
+              <p className="mt-1 text-xs text-[#6B6258]">
                 Fresh homemade food
               </p>
             </div>
 
-            <p className="text-3xl font-black text-[#073B35]">
+            <p className="text-3xl font-black text-[#3F5128]">
               ₹{totalAmount}
             </p>
           </div>
         </div>
 
-        <p className="text-xs leading-relaxed text-[#51615D]">
+        <p className="text-xs leading-relaxed text-[#6B6258]">
           From your community. Exact kitchen door/location is not shown publicly.
         </p>
       </div>
@@ -1539,8 +1539,8 @@ function OrderSummaryCard({
 function SummaryRow({ label, value }) {
   return (
     <div className="flex items-center justify-between text-sm">
-      <p className="text-[#51615D]">{label}</p>
-      <p className="font-bold text-[#111827]">{value}</p>
+      <p className="text-[#6B6258]">{label}</p>
+      <p className="font-bold text-[#181411]">{value}</p>
     </div>
   );
 }
@@ -1548,7 +1548,7 @@ function SummaryRow({ label, value }) {
 function Field({ label, children }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-xs font-black uppercase tracking-wide text-[#51615D]">
+      <span className="mb-2 block text-xs font-black uppercase tracking-wide text-[#6B6258]">
         {label}
       </span>
       {children}
@@ -1563,14 +1563,14 @@ function OptionButton({ active, onClick, title, subtitle }) {
       onClick={onClick}
       className={`rounded-2xl border p-4 text-left active:scale-95 ${
         active
-          ? "border-[#073B35] bg-[#073B35] text-white"
-          : "border-[#BDEFE6] bg-[#FFFFF2] text-[#073B35]"
+          ? "border-[#3F5128] bg-[#3F5128] text-white"
+          : "border-[#D8C9B3] bg-[#FFFDF7] text-[#3F5128]"
       }`}
     >
       <p className="font-black">{title}</p>
       <p
         className={`mt-1 text-xs font-semibold ${
-          active ? "text-white/70" : "text-[#51615D]"
+          active ? "text-white/70" : "text-[#6B6258]"
         }`}
       >
         {subtitle}
@@ -1587,14 +1587,14 @@ function OptionPanel({ active, onClick, title, subtitle, disabled = false }) {
       disabled={disabled}
       className={`rounded-2xl border p-4 text-left active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 ${
         active
-          ? "border-[#073B35] bg-[#073B35] text-white"
-          : "border-[#BDEFE6] bg-[#FFFFF2] text-[#073B35]"
+          ? "border-[#3F5128] bg-[#3F5128] text-white"
+          : "border-[#D8C9B3] bg-[#FFFDF7] text-[#3F5128]"
       }`}
     >
       <p className="text-base font-black">{title}</p>
       <p
         className={`mt-1 text-sm font-semibold ${
-          active ? "text-white/70" : "text-[#51615D]"
+          active ? "text-white/70" : "text-[#6B6258]"
         }`}
       >
         {subtitle}
@@ -1605,14 +1605,14 @@ function OptionPanel({ active, onClick, title, subtitle, disabled = false }) {
 
 function StatTile({ label, value, strong = false }) {
   return (
-    <div className="rounded-[22px] border border-[#D7F5EF] bg-white/90 p-3 shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
-      <p className="text-[10px] font-black uppercase text-[#7A8A86]">
+    <div className="rounded-[22px] border border-[#EADFCE] bg-white/90 p-3 shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
+      <p className="text-[10px] font-black uppercase text-[#6B6258]">
         {label}
       </p>
 
       <p
         className={`mt-1 text-xl font-black ${
-          strong ? "text-[#073B35]" : "text-[#111827]"
+          strong ? "text-[#3F5128]" : "text-[#181411]"
         }`}
       >
         {value}
@@ -1634,4 +1634,4 @@ function BackIcon() {
       <path d="M12 19l-7-7 7-7" />
     </svg>
   );
-} 
+}

@@ -3,13 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 
 const CARD =
-  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+  "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
 const SOFT_CARD =
-  "rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
+  "rounded-[24px] border border-[#D8C9B3] bg-[#FFFDF7] shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
 
 const INPUT =
-  "w-full rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-4 text-base font-semibold text-[#111827] outline-none placeholder:text-[#8AA5A0] focus:border-[#41D3BD] focus:bg-white";
+  "w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-base font-semibold text-[#181411] outline-none placeholder:text-[#9A8E80] focus:border-[#CF743D] focus:bg-white";
 
 export default function CustomerLogin() {
   const navigate = useNavigate();
@@ -330,11 +330,11 @@ export default function CustomerLogin() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-28 text-[#111827]">
+    <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-28 text-[#181411]">
       <div className="mx-auto max-w-md">
         <header className="flex items-center justify-between gap-3">
           <Link to="/" className="flex min-w-0 items-center gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#D7F5EF] bg-white/90 shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#EADFCE] bg-white/90 shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]">
               <img
                 src="/Nefo-logo.png"
                 alt="Nefo"
@@ -343,8 +343,8 @@ export default function CustomerLogin() {
             </div>
 
             <div className="min-w-0">
-              <p className="text-xl font-black text-[#073B35]">Nefo</p>
-              <p className="text-[10px] font-black uppercase tracking-wide text-[#51615D]">
+              <p className="text-xl font-black text-[#3F5128]">Nefo</p>
+              <p className="text-[10px] font-black uppercase tracking-wide text-[#6B6258]">
                 Homemade nearby food
               </p>
             </div>
@@ -352,37 +352,42 @@ export default function CustomerLogin() {
 
           <Link
             to="/"
-            className="shrink-0 rounded-full border border-[#BDEFE6] bg-white px-4 py-2 text-xs font-black text-[#073B35] active:scale-95"
+            className="shrink-0 rounded-full border border-[#D8C9B3] bg-white px-4 py-2 text-xs font-black text-[#3F5128] active:scale-95"
           >
             Home
           </Link>
         </header>
 
         <section className={`mt-5 overflow-hidden ${CARD}`}>
-          <div className="bg-[#073B35] p-5 text-white">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-[#41D3BD]">
-              <span>🌿</span>
-              <span>Community kitchens</span>
-            </div>
+          <div className="relative overflow-hidden bg-[#3F5128] p-5 text-white">
+            <div className="absolute -right-10 -top-12 h-40 w-40 rounded-full bg-white/10" />
+            <div className="absolute -bottom-12 -left-12 h-36 w-36 rounded-full bg-[#CF743D]/20" />
 
-            <h1 className="mt-5 text-4xl font-black leading-[0.95] tracking-tight">
-              Fresh food,
-              <span className="block text-[#41D3BD]">closer to home.</span>
-            </h1>
+            <div className="relative z-10">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-[#F3C06E]">
+                <span>🌿</span>
+                <span>Community kitchens</span>
+              </div>
 
-            <p className="mt-4 text-sm font-semibold leading-relaxed text-[#D7F5EF]">
-              Sign in to order homemade food or manage your Nefo kitchen panel.
-            </p>
+              <h1 className="mt-5 text-4xl font-black leading-[0.95] tracking-tight">
+                Fresh food,
+                <span className="block text-[#F3C06E]">closer to home.</span>
+              </h1>
 
-            <div className="mt-5 grid grid-cols-3 gap-2">
-              <HeroTile icon="🍲" title="Fresh" />
-              <HeroTile icon="🏠" title="Local" />
-              <HeroTile icon="🔒" title="Private" />
+              <p className="mt-4 text-sm font-semibold leading-relaxed text-white/75">
+                Sign in to order homemade food or manage your Nefo kitchen panel.
+              </p>
+
+              <div className="mt-5 grid grid-cols-3 gap-2">
+                <HeroTile icon="🍲" title="Fresh" />
+                <HeroTile icon="🏠" title="Local" />
+                <HeroTile icon="🔒" title="Private" />
+              </div>
             </div>
           </div>
 
           <div className="p-5">
-            <div className="grid grid-cols-2 gap-2 rounded-3xl border border-[#BDEFE6] bg-[#FFFFF2] p-2">
+            <div className="grid grid-cols-2 gap-2 rounded-3xl border border-[#D8C9B3] bg-[#FFFDF7] p-2">
               <RoleButton
                 active={selectedRole === "customer"}
                 onClick={() => {
@@ -405,13 +410,13 @@ export default function CustomerLogin() {
             </div>
 
             <div className="mt-6">
-              <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+              <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
                 {selectedRole === "seller"
                   ? "Kitchen access"
                   : "Customer access"}
               </p>
 
-              <h2 className="mt-2 text-3xl font-black leading-tight text-[#111827]">
+              <h2 className="mt-2 text-3xl font-black leading-tight text-[#181411]">
                 {isSignUp
                   ? `Create ${
                       selectedRole === "seller" ? "seller" : "customer"
@@ -419,7 +424,7 @@ export default function CustomerLogin() {
                   : "Welcome back"}
               </h2>
 
-              <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+              <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
                 {selectedRole === "seller"
                   ? "Manage dishes, stock, scheduling, and realtime neighbourhood orders."
                   : "Order homemade food from trusted kitchens inside your community."}
@@ -435,8 +440,8 @@ export default function CustomerLogin() {
             ) : null}
 
             {message ? (
-              <div className="mt-5 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4">
-                <p className="text-sm font-black text-[#073B35]">{message}</p>
+              <div className="mt-5 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-4">
+                <p className="text-sm font-black text-[#3F5128]">{message}</p>
               </div>
             ) : null}
 
@@ -500,7 +505,7 @@ export default function CustomerLogin() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-black text-[#0B8F80]"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-black text-[#CF743D]"
                   >
                     {showPassword ? "Hide" : "Show"}
                   </button>
@@ -513,7 +518,7 @@ export default function CustomerLogin() {
                     type="button"
                     onClick={handleForgotPassword}
                     disabled={resettingPassword}
-                    className="text-sm font-black text-[#0B8F80] disabled:opacity-50"
+                    className="text-sm font-black text-[#CF743D] disabled:opacity-50"
                   >
                     {resettingPassword
                       ? "Sending reset link..."
@@ -524,7 +529,7 @@ export default function CustomerLogin() {
 
               {isSignUp ? (
                 <section className={`p-5 ${SOFT_CARD}`}>
-                  <p className="mb-4 font-black text-[#073B35]">
+                  <p className="mb-4 font-black text-[#3F5128]">
                     Apartment Address
                   </p>
 
@@ -569,7 +574,7 @@ export default function CustomerLogin() {
                     </Field>
                   </div>
 
-                  <p className="mt-4 text-xs font-semibold leading-relaxed text-[#51615D]">
+                  <p className="mt-4 text-xs font-semibold leading-relaxed text-[#6B6258]">
                     Address is used for order coordination. Kitchen/customer
                     door details are not shown publicly.
                   </p>
@@ -579,7 +584,7 @@ export default function CustomerLogin() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-2xl border border-[#073B35] bg-[#073B35] py-4 font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.99] disabled:opacity-50"
+                className="w-full rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-[0.99] disabled:opacity-50"
               >
                 {loading
                   ? "Please wait..."
@@ -596,7 +601,7 @@ export default function CustomerLogin() {
                 setMessage("");
                 clearErrors();
               }}
-              className="mt-5 w-full rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] py-4 text-sm font-black text-[#073B35] active:scale-95"
+              className="mt-5 w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 text-sm font-black text-[#3F5128] active:scale-95"
             >
               {isSignUp
                 ? "Already have an account? Sign In"
@@ -616,8 +621,8 @@ function RoleButton({ active, onClick, label }) {
       onClick={onClick}
       className={`rounded-2xl border py-3 text-sm font-black transition-all active:scale-95 ${
         active
-          ? "border-[#073B35] bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
-          : "border-transparent bg-transparent text-[#51615D]"
+          ? "border-[#3F5128] bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15"
+          : "border-transparent bg-transparent text-[#6B6258]"
       }`}
     >
       {label}
@@ -637,13 +642,13 @@ function HeroTile({ icon, title }) {
 function Field({ label, error, children }) {
   return (
     <label className="block">
+      <span className="mb-2 block text-xs font-black uppercase tracking-wide text-[#6B6258]">
+        {label}
+      </span>
+
       {error ? (
         <p className="mb-2 text-sm font-black text-red-600">{error}</p>
       ) : null}
-
-      <span className="mb-2 block text-xs font-black uppercase tracking-wide text-[#51615D]">
-        {label}
-      </span>
 
       {children}
     </label>

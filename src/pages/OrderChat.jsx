@@ -4,10 +4,10 @@ import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../context/AuthContext";
 
 const CARD =
-  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+  "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
 const SOFT_CARD =
-  "rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
+  "rounded-[24px] border border-[#D8C9B3] bg-[#FFFDF7] shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
 
 export default function OrderChat() {
   const { orderId } = useParams();
@@ -259,10 +259,10 @@ export default function OrderChat() {
     }
 
     if (value === "completed" || value === "delivered") {
-      return "border-[#BDEFE6] bg-[#DFF8EF] text-[#087A51]";
+      return "border-green-200 bg-green-50 text-green-700";
     }
 
-    return "border-[#BDEFE6] bg-[#41D3BD]/12 text-[#073B35]";
+    return "border-[#D8C9B3] bg-[#FFF0DF] text-[#3F5128]";
   }
 
   function getHeaderTitle() {
@@ -283,33 +283,33 @@ export default function OrderChat() {
 
   if (!user) {
     return (
-      <main className="min-h-screen bg-[#FFFFF2] px-4 py-5 pb-28 text-[#111827]">
+      <main className="min-h-screen bg-[#FFF8EC] px-4 py-5 pb-28 text-[#181411]">
         <div className="mx-auto max-w-md">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
             aria-label="Go back"
           >
             <BackIcon />
           </button>
 
           <section className={`mt-6 p-8 text-center ${CARD}`}>
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 text-4xl">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#D8C9B3] bg-[#FFF0DF] text-4xl">
               💬
             </div>
 
-            <h1 className="mt-5 text-2xl font-black text-[#111827]">
+            <h1 className="mt-5 text-2xl font-black text-[#181411]">
               Sign in to open chat
             </h1>
 
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               Order chat is available only to the customer and kitchen.
             </p>
 
             <Link
               to="/customer-login"
-              className="mt-6 block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center text-sm font-black text-white"
+              className="mt-6 block rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 text-center text-sm font-black text-white"
             >
               Sign In
             </Link>
@@ -320,32 +320,32 @@ export default function OrderChat() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-[#FFFFF2] text-[#111827]">
-      <header className="sticky top-0 z-50 border-b border-[#D7F5EF] bg-[#FFFFF2]/95 backdrop-blur-xl">
+    <main className="flex min-h-screen flex-col bg-[#FFF8EC] text-[#181411]">
+      <header className="sticky top-0 z-50 border-b border-[#EADFCE] bg-[#FFF8EC]/95 backdrop-blur-xl">
         <div className="mx-auto max-w-md px-4 py-3">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
               aria-label="Go back"
             >
               <BackIcon />
             </button>
 
             <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+              <p className="truncate text-xs font-black uppercase tracking-wide text-[#CF743D]">
                 Order #{getShortOrderId()}
               </p>
 
-              <h1 className="truncate text-lg font-black text-[#111827]">
+              <h1 className="truncate text-lg font-black text-[#181411]">
                 {order ? getHeaderTitle() : "Order Chat"}
               </h1>
             </div>
 
             <Link
               to={getBackLink()}
-              className="shrink-0 rounded-full border border-[#BDEFE6] bg-white px-4 py-2 text-xs font-black text-[#073B35] active:scale-95"
+              className="shrink-0 rounded-full border border-[#D8C9B3] bg-white px-4 py-2 text-xs font-black text-[#3F5128] active:scale-95"
             >
               Done
             </Link>
@@ -356,9 +356,9 @@ export default function OrderChat() {
       {loading ? (
         <section className="flex flex-1 items-center justify-center px-4">
           <div className={`w-full max-w-md p-8 text-center ${CARD}`}>
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-4 border-[#D7F5EF] border-t-[#073B35] animate-spin" />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-4 border-[#EADFCE] border-t-[#3F5128] animate-spin" />
 
-            <p className="mt-5 font-black text-[#073B35]">
+            <p className="mt-5 font-black text-[#3F5128]">
               Loading order chat...
             </p>
           </div>
@@ -372,7 +372,7 @@ export default function OrderChat() {
               ⚠️
             </div>
 
-            <h2 className="mt-4 text-2xl font-black text-[#111827]">
+            <h2 className="mt-4 text-2xl font-black text-[#181411]">
               Chat unavailable
             </h2>
 
@@ -383,7 +383,7 @@ export default function OrderChat() {
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="mt-6 w-full rounded-2xl border border-[#073B35] bg-[#073B35] py-3 font-black text-white active:scale-95"
+              className="mt-6 w-full rounded-2xl border border-[#3F5128] bg-[#3F5128] py-3 font-black text-white active:scale-95"
             >
               Go Back
             </button>
@@ -397,20 +397,20 @@ export default function OrderChat() {
             <div className={`p-4 ${CARD}`}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-black uppercase tracking-wide text-[#51615D]">
+                  <p className="text-xs font-black uppercase tracking-wide text-[#6B6258]">
                     Order Summary
                   </p>
 
-                  <h2 className="mt-1 text-3xl font-black text-[#073B35]">
+                  <h2 className="mt-1 text-3xl font-black text-[#3F5128]">
                     ₹{order.total_amount || 0}
                   </h2>
 
-                  <p className="mt-1 truncate text-xs font-semibold text-[#51615D]">
+                  <p className="mt-1 truncate text-xs font-semibold text-[#6B6258]">
                     {order.delivery_type || "Delivery"} •{" "}
                     {order.flat || "Address not available"}
                   </p>
 
-                  <p className="mt-2 text-xs font-bold text-[#8AA5A0]">
+                  <p className="mt-2 text-xs font-bold text-[#9A8E80]">
                     {formatDate(order.created_at)}
                   </p>
                 </div>
@@ -429,13 +429,13 @@ export default function OrderChat() {
                   {orderItems.map((item) => (
                     <div
                       key={`${item.id || item.name}-${item.name}`}
-                      className="shrink-0 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-3 py-2"
+                      className="shrink-0 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-3 py-2"
                     >
-                      <p className="max-w-[150px] truncate text-xs font-black text-[#111827]">
+                      <p className="max-w-[150px] truncate text-xs font-black text-[#181411]">
                         {item.name}
                       </p>
 
-                      <p className="mt-0.5 text-[11px] font-semibold text-[#51615D]">
+                      <p className="mt-0.5 text-[11px] font-semibold text-[#6B6258]">
                         Qty {item.quantity || 1}
                       </p>
                     </div>
@@ -457,15 +457,15 @@ export default function OrderChat() {
             {messages.length === 0 ? (
               <div className="flex min-h-[320px] flex-1 items-center justify-center">
                 <div className={`w-full p-8 text-center ${SOFT_CARD}`}>
-                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 text-4xl">
+                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#D8C9B3] bg-[#FFF0DF] text-4xl">
                     💬
                   </div>
 
-                  <h2 className="mt-5 text-2xl font-black text-[#111827]">
+                  <h2 className="mt-5 text-2xl font-black text-[#181411]">
                     Start order chat
                   </h2>
 
-                  <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+                  <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
                     Use this chat only for this order. Avoid sharing private
                     addresses or external payment details.
                   </p>
@@ -486,8 +486,8 @@ export default function OrderChat() {
                       <div
                         className={`max-w-[82%] rounded-[22px] border px-4 py-3 shadow-sm ${
                           isMine
-                            ? "rounded-br-md border-[#073B35] bg-[#073B35] text-white"
-                            : "rounded-bl-md border-[#BDEFE6] bg-white text-[#111827]"
+                            ? "rounded-br-md border-[#3F5128] bg-[#3F5128] text-white"
+                            : "rounded-bl-md border-[#D8C9B3] bg-white text-[#181411]"
                         }`}
                       >
                         <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
@@ -496,7 +496,7 @@ export default function OrderChat() {
 
                         <p
                           className={`mt-1 text-right text-[10px] ${
-                            isMine ? "text-white/65" : "text-[#51615D]"
+                            isMine ? "text-white/65" : "text-[#6B6258]"
                           }`}
                         >
                           {formatTime(message.created_at)}
@@ -511,7 +511,7 @@ export default function OrderChat() {
             )}
           </section>
 
-          <footer className="fixed bottom-0 left-0 right-0 z-[950] border-t border-[#D7F5EF] bg-[#FFFFF2]/95 backdrop-blur-xl">
+          <footer className="fixed bottom-0 left-0 right-0 z-[950] border-t border-[#EADFCE] bg-[#FFF8EC]/95 backdrop-blur-xl">
             <div className="mx-auto max-w-md px-4 pb-4 pt-3">
               <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-3 scrollbar-hide">
                 {quickReplies.map((reply) => (
@@ -520,7 +520,7 @@ export default function OrderChat() {
                     type="button"
                     onClick={() => sendMessage(reply)}
                     disabled={sending}
-                    className="shrink-0 rounded-full border border-[#BDEFE6] bg-white px-4 py-2.5 text-xs font-black text-[#073B35] shadow-sm active:scale-95 disabled:opacity-60"
+                    className="shrink-0 rounded-full border border-[#D8C9B3] bg-white px-4 py-2.5 text-xs font-black text-[#3F5128] shadow-sm active:scale-95 disabled:opacity-60"
                   >
                     {reply}
                   </button>
@@ -533,14 +533,14 @@ export default function OrderChat() {
                   onChange={(event) => setMessageText(event.target.value)}
                   placeholder="Type message..."
                   rows={1}
-                  className="min-h-[54px] max-h-32 flex-1 resize-none rounded-3xl border border-[#BDEFE6] bg-white px-4 py-3 text-sm font-semibold text-[#111827] outline-none placeholder:text-[#8AA5A0] focus:border-[#41D3BD]"
+                  className="min-h-[54px] max-h-32 flex-1 resize-none rounded-3xl border border-[#D8C9B3] bg-white px-4 py-3 text-sm font-semibold text-[#181411] outline-none placeholder:text-[#9A8E80] focus:border-[#CF743D]"
                 />
 
                 <button
                   type="button"
                   onClick={() => sendMessage()}
                   disabled={sending || !messageText.trim()}
-                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-[#073B35] bg-[#073B35] text-xl font-black text-white shadow-lg shadow-[#073B35]/20 active:scale-95 disabled:opacity-50"
+                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-[#3F5128] bg-[#3F5128] text-xl font-black text-white shadow-lg shadow-[#3F5128]/20 active:scale-95 disabled:opacity-50"
                   aria-label="Send message"
                 >
                   <SendIcon />

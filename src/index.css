@@ -1,20 +1,31 @@
 @import "tailwindcss";
 
-/* Nefo global theme */
+/* Nefo global theme — Harvest Olive */
 :root {
-  --qb-bg: #fffff2;
+  --qb-bg: #fff8ec;
   --qb-card: #ffffff;
-  --qb-card-soft: #f8fffb;
-  --qb-primary: #41d3bd;
-  --qb-primary-dark: #1a9f8d;
-  --qb-deep: #073b35;
-  --qb-hover: #0b5149;
-  --qb-border: #d7f5ef;
-  --qb-border-strong: #bdefe6;
-  --qb-border-soft: #e8f4f1;
-  --qb-text: #111827;
-  --qb-muted: #51615d;
+  --qb-card-soft: #fffdf7;
+
+  --qb-primary: #6f7f43;
+  --qb-primary-dark: #586936;
+  --qb-deep: #3f5128;
+  --qb-hover: #4d612f;
+
+  --qb-accent: #cf743d;
+  --qb-accent-dark: #b85f2c;
+  --qb-accent-soft: #fff0df;
+
+  --qb-border: #eadfce;
+  --qb-border-strong: #d8c9b3;
+  --qb-border-soft: #f1e8dc;
+
+  --qb-text: #181411;
+  --qb-muted: #6b6258;
+  --qb-muted-soft: #9a8e80;
+
   --qb-danger: #dc2626;
+  --qb-success: #3f7d42;
+  --qb-warning: #b7791f;
 }
 
 * {
@@ -33,7 +44,10 @@ body {
   min-width: 320px;
   min-height: 100vh;
   overflow-x: hidden;
-  background: var(--qb-bg);
+  background:
+    radial-gradient(circle at top left, rgba(207, 116, 61, 0.08), transparent 34%),
+    radial-gradient(circle at top right, rgba(111, 127, 67, 0.08), transparent 32%),
+    var(--qb-bg);
   color: var(--qb-text);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
@@ -43,7 +57,9 @@ body {
 
 #root {
   min-height: 100vh;
-  background: var(--qb-bg);
+  background:
+    radial-gradient(circle at top left, rgba(207, 116, 61, 0.06), transparent 30%),
+    var(--qb-bg);
 }
 
 button,
@@ -84,7 +100,7 @@ select {
 
 input::placeholder,
 textarea::placeholder {
-  color: #8aa5a0;
+  color: var(--qb-muted-soft);
 }
 
 input:focus,
@@ -92,13 +108,13 @@ textarea:focus,
 select:focus,
 button:focus-visible,
 a:focus-visible {
-  outline: 2px solid var(--qb-primary);
+  outline: 2px solid var(--qb-accent);
   outline-offset: 2px;
 }
 
 ::selection {
-  background: var(--qb-primary);
-  color: var(--qb-deep);
+  background: var(--qb-accent);
+  color: white;
 }
 
 .scrollbar-hide {
@@ -129,6 +145,133 @@ a:focus-visible {
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
+}
+
+/* Fast global overrides for old hard-coded Nefo colors */
+.bg-\[\#FFFFF2\],
+.bg-\[\#fffff2\] {
+  background-color: var(--qb-bg) !important;
+}
+
+.bg-\[\#F4FFFC\],
+.bg-\[\#f4fffc\],
+.bg-\[\#F8FFFB\],
+.bg-\[\#f8fffb\] {
+  background-color: var(--qb-card-soft) !important;
+}
+
+.bg-\[\#073B35\],
+.bg-\[\#073b35\] {
+  background-color: var(--qb-deep) !important;
+}
+
+.bg-\[\#0B5149\],
+.bg-\[\#0b5149\] {
+  background-color: var(--qb-hover) !important;
+}
+
+.bg-\[\#41D3BD\],
+.bg-\[\#41d3bd\] {
+  background-color: var(--qb-accent) !important;
+}
+
+.bg-\[\#D7F5EF\],
+.bg-\[\#d7f5ef\] {
+  background-color: var(--qb-accent-soft) !important;
+}
+
+.bg-\[\#E8F4F1\],
+.bg-\[\#e8f4f1\] {
+  background-color: var(--qb-border-soft) !important;
+}
+
+.bg-\[\#BDEFE6\],
+.bg-\[\#bdefe6\] {
+  background-color: var(--qb-border-strong) !important;
+}
+
+.text-\[\#073B35\],
+.text-\[\#073b35\] {
+  color: var(--qb-deep) !important;
+}
+
+.text-\[\#0B5149\],
+.text-\[\#0b5149\],
+.text-\[\#0B8F80\],
+.text-\[\#0b8f80\] {
+  color: var(--qb-primary-dark) !important;
+}
+
+.text-\[\#41D3BD\],
+.text-\[\#41d3bd\] {
+  color: var(--qb-accent) !important;
+}
+
+.text-\[\#111827\] {
+  color: var(--qb-text) !important;
+}
+
+.text-\[\#51615D\],
+.text-\[\#51615d\],
+.text-\[\#7A8A86\],
+.text-\[\#7a8a86\],
+.text-\[\#7A8783\],
+.text-\[\#7a8783\] {
+  color: var(--qb-muted) !important;
+}
+
+.text-\[\#8AA5A0\],
+.text-\[\#8aa5a0\],
+.text-\[\#9AA7A3\],
+.text-\[\#9aa7a3\] {
+  color: var(--qb-muted-soft) !important;
+}
+
+.border-\[\#D7F5EF\],
+.border-\[\#d7f5ef\] {
+  border-color: var(--qb-border) !important;
+}
+
+.border-\[\#BDEFE6\],
+.border-\[\#bdefe6\] {
+  border-color: var(--qb-border-strong) !important;
+}
+
+.border-\[\#E8F4F1\],
+.border-\[\#e8f4f1\] {
+  border-color: var(--qb-border-soft) !important;
+}
+
+.border-\[\#073B35\],
+.border-\[\#073b35\] {
+  border-color: var(--qb-deep) !important;
+}
+
+.border-\[\#41D3BD\],
+.border-\[\#41d3bd\] {
+  border-color: var(--qb-accent) !important;
+}
+
+/* Common opacity utility overrides from older mint theme */
+.bg-\[\#41D3BD\]\/12,
+.bg-\[\#41d3bd\]\/12,
+.bg-\[\#41D3BD\]\/15,
+.bg-\[\#41d3bd\]\/15 {
+  background-color: rgba(207, 116, 61, 0.12) !important;
+}
+
+.bg-\[\#073B35\]\/10,
+.bg-\[\#073b35\]\/10,
+.bg-\[\#073B35\]\/15,
+.bg-\[\#073b35\]\/15 {
+  background-color: rgba(63, 81, 40, 0.12) !important;
+}
+
+.border-\[\#41D3BD\]\/30,
+.border-\[\#41d3bd\]\/30,
+.border-\[\#41D3BD\]\/35,
+.border-\[\#41d3bd\]\/35 {
+  border-color: rgba(207, 116, 61, 0.35) !important;
 }
 
 /* Better mobile app feel */

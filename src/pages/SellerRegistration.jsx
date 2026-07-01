@@ -29,13 +29,10 @@ const EMPTY_ERRORS = {
 };
 
 const CARD =
-  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
-
-const SOFT_CARD =
-  "rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
+  "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
 const INPUT =
-  "w-full rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-4 text-base font-semibold text-[#111827] outline-none placeholder:text-[#8AA5A0] focus:border-[#41D3BD] focus:bg-white";
+  "w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-base font-semibold text-[#181411] outline-none placeholder:text-[#9A8E80] focus:border-[#CF743D] focus:bg-white";
 
 export default function SellerRegistration() {
   const { user } = useAuth();
@@ -62,7 +59,7 @@ export default function SellerRegistration() {
 
     setLoading(true);
     setErrorMessage("");
-    setFieldErrors(EMPTY_ERRORS);
+    setFieldErrors({ ...EMPTY_ERRORS });
 
     const { data: profileData } = await supabase
       .from("profiles")
@@ -196,7 +193,7 @@ export default function SellerRegistration() {
     setSaving(true);
     setMessage("");
     setErrorMessage("");
-    setFieldErrors(EMPTY_ERRORS);
+    setFieldErrors({ ...EMPTY_ERRORS });
 
     const payload = {
       user_id: user.id,
@@ -289,7 +286,7 @@ export default function SellerRegistration() {
 
               <Link
                 to="/seller-dashboard"
-                className="mt-4 inline-flex rounded-2xl border border-[#073B35] bg-[#073B35] px-5 py-3 font-black text-white active:scale-95"
+                className="mt-4 inline-flex rounded-2xl border border-[#3F5128] bg-[#3F5128] px-5 py-3 font-black text-white active:scale-95"
               >
                 Open Seller Dashboard
               </Link>
@@ -351,16 +348,16 @@ export default function SellerRegistration() {
     }
 
     return (
-      <section className="rounded-[24px] border border-[#BDEFE6] bg-[#41D3BD]/12 p-5">
+      <section className="rounded-[24px] border border-[#D8C9B3] bg-[#FFF0DF] p-5">
         <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#BDEFE6] bg-white text-2xl">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#D8C9B3] bg-white text-2xl">
             🍱
           </div>
 
           <div>
-            <p className="font-black text-[#073B35]">Apply to sell on Nefo</p>
+            <p className="font-black text-[#3F5128]">Apply to sell on Nefo</p>
 
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               Submit your kitchen details. The owner will review and approve
               before you can sell.
             </p>
@@ -372,33 +369,33 @@ export default function SellerRegistration() {
 
   if (!user && !loading) {
     return (
-      <main className="min-h-screen bg-[#FFFFF2] px-4 py-5 pb-28 text-[#111827]">
+      <main className="min-h-screen bg-[#FFF8EC] px-4 py-5 pb-28 text-[#181411]">
         <div className="mx-auto max-w-md">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
             aria-label="Go back"
           >
             <BackIcon />
           </button>
 
           <section className={`mt-6 p-8 text-center ${CARD}`}>
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 text-4xl">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#D8C9B3] bg-[#FFF0DF] text-4xl">
               🍱
             </div>
 
-            <h1 className="mt-5 text-2xl font-black text-[#111827]">
+            <h1 className="mt-5 text-2xl font-black text-[#181411]">
               Sign in to apply
             </h1>
 
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               You need a Nefo account before applying as a seller.
             </p>
 
             <Link
               to="/customer-login"
-              className="mt-6 block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center text-sm font-black text-white"
+              className="mt-6 block rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 text-center text-sm font-black text-white"
             >
               Sign In / Create Account
             </Link>
@@ -409,29 +406,29 @@ export default function SellerRegistration() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-32 text-[#111827]">
+    <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-32 text-[#181411]">
       <div className="mx-auto max-w-md">
         <header className="flex items-start gap-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
             aria-label="Go back"
           >
             <BackIcon />
           </button>
 
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+            <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
               Seller Application
             </p>
 
-            <h1 className="mt-1 text-3xl font-black leading-tight text-[#073B35]">
+            <h1 className="mt-1 text-3xl font-black leading-tight text-[#3F5128]">
               Apply to sell
-              <span className="block text-[#111827]">on Nefo</span>
+              <span className="block text-[#181411]">on Nefo</span>
             </h1>
 
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               Tell us about your home kitchen. Once approved, your Seller
               Dashboard will be unlocked.
             </p>
@@ -442,24 +439,24 @@ export default function SellerRegistration() {
 
         {loading ? (
           <section className={`mt-5 p-8 text-center ${CARD}`}>
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-4 border-[#D7F5EF] border-t-[#073B35] animate-spin" />
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-4 border-[#EADFCE] border-t-[#3F5128] animate-spin" />
 
-            <p className="mt-4 font-bold text-[#51615D]">
+            <p className="mt-4 font-bold text-[#6B6258]">
               Loading application...
             </p>
           </section>
         ) : (
           <form onSubmit={handleSubmit} className={`mt-5 p-5 ${CARD}`}>
             <div>
-              <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+              <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
                 Kitchen Details
               </p>
 
-              <h2 className="mt-1 text-2xl font-black text-[#111827]">
+              <h2 className="mt-1 text-2xl font-black text-[#181411]">
                 Registration form
               </h2>
 
-              <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+              <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
                 Fill the required details carefully. These will be reviewed by
                 the owner/admin.
               </p>
@@ -568,7 +565,7 @@ export default function SellerRegistration() {
               <button
                 type="submit"
                 disabled={saving || profileStatus === "approved"}
-                className="rounded-2xl border border-[#073B35] bg-[#073B35] px-6 py-4 font-black text-white shadow-lg shadow-[#073B35]/15 transition-all active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-2xl border border-[#3F5128] bg-[#3F5128] px-6 py-4 font-black text-white shadow-lg shadow-[#3F5128]/15 transition-all active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {saving
                   ? "Submitting..."
@@ -583,13 +580,13 @@ export default function SellerRegistration() {
 
               <Link
                 to="/marketplace"
-                className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-6 py-4 text-center font-black text-[#073B35] active:scale-95"
+                className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-6 py-4 text-center font-black text-[#3F5128] active:scale-95"
               >
                 Back to Marketplace
               </Link>
             </div>
 
-            <p className="mt-5 text-xs font-semibold leading-relaxed text-[#8AA5A0]">
+            <p className="mt-5 text-xs font-semibold leading-relaxed text-[#9A8E80]">
               After approval, use Seller Login to access your Seller Dashboard.
             </p>
           </form>
@@ -602,13 +599,13 @@ export default function SellerRegistration() {
 function Input({ label, name, value, onChange, placeholder = "", error = "" }) {
   return (
     <label className="block">
+      <span className="mb-2 block text-xs font-black uppercase tracking-wide text-[#6B6258]">
+        {label}
+      </span>
+
       {error ? (
         <p className="mb-2 text-sm font-black text-red-600">{error}</p>
       ) : null}
-
-      <span className="mb-2 block text-xs font-black uppercase tracking-wide text-[#51615D]">
-        {label}
-      </span>
 
       <input
         name={name}
@@ -631,13 +628,13 @@ function Textarea({
 }) {
   return (
     <label className="block">
+      <span className="mb-2 block text-xs font-black uppercase tracking-wide text-[#6B6258]">
+        {label}
+      </span>
+
       {error ? (
         <p className="mb-2 text-sm font-black text-red-600">{error}</p>
       ) : null}
-
-      <span className="mb-2 block text-xs font-black uppercase tracking-wide text-[#51615D]">
-        {label}
-      </span>
 
       <textarea
         name={name}
@@ -645,7 +642,9 @@ function Textarea({
         onChange={onChange}
         placeholder={placeholder}
         rows={4}
-        className={`${INPUT} min-h-32 resize-none ${error ? "border-red-300" : ""}`}
+        className={`${INPUT} min-h-32 resize-none ${
+          error ? "border-red-300" : ""
+        }`}
       />
     </label>
   );

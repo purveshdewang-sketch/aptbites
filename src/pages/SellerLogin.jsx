@@ -3,13 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 
 const CARD =
-  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+  "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
 const SOFT_CARD =
-  "rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
+  "rounded-[24px] border border-[#D8C9B3] bg-[#FFFDF7] shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
 
 const INPUT =
-  "w-full rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-4 text-base font-semibold text-[#111827] outline-none placeholder:text-[#8AA5A0] focus:border-[#41D3BD] focus:bg-white";
+  "w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-base font-semibold text-[#181411] outline-none placeholder:text-[#9A8E80] focus:border-[#CF743D] focus:bg-white";
 
 export default function SellerLogin() {
   const navigate = useNavigate();
@@ -299,7 +299,9 @@ export default function SellerLogin() {
       seller_about: formData.about.trim(),
     };
 
-    const { error } = await supabase.from("profiles").upsert(sellerProfilePayload);
+    const { error } = await supabase
+      .from("profiles")
+      .upsert(sellerProfilePayload);
 
     if (error) {
       throw new Error(`Seller details could not be saved: ${error.message}`);
@@ -464,13 +466,13 @@ export default function SellerLogin() {
 
   if (checkingSession) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#FFFFF2] px-4 py-8 text-[#111827]">
+      <main className="flex min-h-screen items-center justify-center bg-[#FFF8EC] px-4 py-8 text-[#181411]">
         <div className={`w-full max-w-md p-8 text-center ${CARD}`}>
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 text-3xl">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#D8C9B3] bg-[#FFF0DF] text-3xl">
             👨‍🍳
           </div>
 
-          <p className="mt-4 font-bold text-[#51615D]">
+          <p className="mt-4 font-bold text-[#6B6258]">
             Checking seller account...
           </p>
         </div>
@@ -479,11 +481,11 @@ export default function SellerLogin() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-28 text-[#111827]">
+    <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-28 text-[#181411]">
       <div className="mx-auto max-w-md">
         <header className="flex items-center justify-between gap-3">
           <Link to="/" className="flex min-w-0 items-center gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#D7F5EF] bg-white/90 shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#EADFCE] bg-white/90 shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]">
               <img
                 src="/Nefo-logo.png"
                 alt="Nefo"
@@ -492,8 +494,8 @@ export default function SellerLogin() {
             </div>
 
             <div className="min-w-0">
-              <p className="text-xl font-black text-[#073B35]">Nefo</p>
-              <p className="text-[10px] font-black uppercase tracking-wide text-[#51615D]">
+              <p className="text-xl font-black text-[#3F5128]">Nefo</p>
+              <p className="text-[10px] font-black uppercase tracking-wide text-[#6B6258]">
                 Seller Login
               </p>
             </div>
@@ -501,46 +503,51 @@ export default function SellerLogin() {
 
           <Link
             to="/"
-            className="shrink-0 rounded-full border border-[#BDEFE6] bg-white px-4 py-2 text-xs font-black text-[#073B35] active:scale-95"
+            className="shrink-0 rounded-full border border-[#D8C9B3] bg-white px-4 py-2 text-xs font-black text-[#3F5128] active:scale-95"
           >
             Home
           </Link>
         </header>
 
         <section className={`mt-5 overflow-hidden ${CARD}`}>
-          <div className="bg-[#073B35] p-5 text-white">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-[#41D3BD]">
-              <span>👨‍🍳</span>
-              <span>Seller portal</span>
-            </div>
+          <div className="relative overflow-hidden bg-[#3F5128] p-5 text-white">
+            <div className="absolute -right-10 -top-12 h-40 w-40 rounded-full bg-white/10" />
+            <div className="absolute -bottom-12 -left-12 h-36 w-36 rounded-full bg-[#CF743D]/20" />
 
-            <h1 className="mt-5 text-4xl font-black leading-[0.95] tracking-tight">
-              Run your
-              <span className="block text-[#41D3BD]">kitchen panel.</span>
-            </h1>
+            <div className="relative z-10">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-[#F3C06E]">
+                <span>👨‍🍳</span>
+                <span>Seller portal</span>
+              </div>
 
-            <p className="mt-4 text-sm font-semibold leading-relaxed text-[#D7F5EF]">
-              Sign in as an approved seller, manage dishes, stock, orders, and
-              scheduling.
-            </p>
+              <h1 className="mt-5 text-4xl font-black leading-[0.95] tracking-tight">
+                Run your
+                <span className="block text-[#F3C06E]">kitchen panel.</span>
+              </h1>
 
-            <div className="mt-5 grid grid-cols-3 gap-2">
-              <HeroTile icon="🛎️" title="Orders" />
-              <HeroTile icon="🍲" title="Menu" />
-              <HeroTile icon="📊" title="Sales" />
+              <p className="mt-4 text-sm font-semibold leading-relaxed text-white/75">
+                Sign in as an approved seller, manage dishes, stock, orders, and
+                scheduling.
+              </p>
+
+              <div className="mt-5 grid grid-cols-3 gap-2">
+                <HeroTile icon="🛎️" title="Orders" />
+                <HeroTile icon="🍲" title="Menu" />
+                <HeroTile icon="📊" title="Sales" />
+              </div>
             </div>
           </div>
 
           <div className="p-5">
-            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+            <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
               Seller access
             </p>
 
-            <h2 className="mt-2 text-3xl font-black leading-tight text-[#111827]">
+            <h2 className="mt-2 text-3xl font-black leading-tight text-[#181411]">
               {currentUser ? "Review details" : "Welcome"}
             </h2>
 
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               {currentUser
                 ? "Confirm or update your kitchen profile before opening the dashboard."
                 : "Sign in with your approved seller account to manage your kitchen."}
@@ -555,8 +562,8 @@ export default function SellerLogin() {
             ) : null}
 
             {message ? (
-              <div className="mt-5 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4">
-                <p className="text-sm font-black text-[#073B35]">{message}</p>
+              <div className="mt-5 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-4">
+                <p className="text-sm font-black text-[#3F5128]">{message}</p>
               </div>
             ) : null}
 
@@ -564,14 +571,14 @@ export default function SellerLogin() {
               <div className="mt-4 grid grid-cols-1 gap-3">
                 <Link
                   to="/seller-registration"
-                  className="rounded-2xl border border-[#41D3BD] bg-[#41D3BD]/15 px-4 py-3 text-center font-black text-[#073B35]"
+                  className="rounded-2xl border border-[#CF743D] bg-[#FFF0DF] px-4 py-3 text-center font-black text-[#3F5128]"
                 >
                   Open Seller Registration
                 </Link>
 
                 <Link
                   to="/customer-login"
-                  className="rounded-2xl border border-[#BDEFE6] bg-white px-4 py-3 text-center font-black text-[#51615D]"
+                  className="rounded-2xl border border-[#D8C9B3] bg-white px-4 py-3 text-center font-black text-[#6B6258]"
                 >
                   Customer Login
                 </Link>
@@ -612,7 +619,7 @@ export default function SellerLogin() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-black text-[#0B8F80]"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-black text-[#CF743D]"
                       >
                         {showPassword ? "Hide" : "Show"}
                       </button>
@@ -624,7 +631,7 @@ export default function SellerLogin() {
                       type="button"
                       onClick={handleForgotPassword}
                       disabled={resettingPassword}
-                      className="text-sm font-black text-[#0B8F80] disabled:opacity-50"
+                      className="text-sm font-black text-[#CF743D] disabled:opacity-50"
                     >
                       {resettingPassword
                         ? "Sending reset link..."
@@ -633,7 +640,7 @@ export default function SellerLogin() {
 
                     <Link
                       to="/customer-login"
-                      className="text-sm font-bold text-[#51615D]"
+                      className="text-sm font-bold text-[#6B6258]"
                     >
                       Customer login
                     </Link>
@@ -644,18 +651,18 @@ export default function SellerLogin() {
               {currentUser && sellerVerified ? (
                 <>
                   <section className={`p-4 ${SOFT_CARD}`}>
-                    <p className="text-sm font-black text-[#073B35]">
+                    <p className="text-sm font-black text-[#3F5128]">
                       Signed in as seller
                     </p>
 
-                    <p className="mt-1 truncate text-sm font-semibold text-[#51615D]">
+                    <p className="mt-1 truncate text-sm font-semibold text-[#6B6258]">
                       {currentUser.email}
                     </p>
 
                     <button
                       type="button"
                       onClick={handleUseAnotherAccount}
-                      className="mt-3 text-sm font-black text-[#0B8F80]"
+                      className="mt-3 text-sm font-black text-[#CF743D]"
                     >
                       Use another account
                     </button>
@@ -748,26 +755,26 @@ export default function SellerLogin() {
                       name="acceptScheduledOrders"
                       checked={formData.acceptScheduledOrders}
                       onChange={handleChange}
-                      className="mt-1 accent-[#41D3BD]"
+                      className="mt-1 accent-[#CF743D]"
                     />
 
                     <div>
-                      <p className="font-black text-[#111827]">
+                      <p className="font-black text-[#181411]">
                         Accept scheduled orders
                       </p>
 
-                      <p className="mt-1 text-sm font-semibold text-[#51615D]">
+                      <p className="mt-1 text-sm font-semibold text-[#6B6258]">
                         Customers can choose date and time for later orders.
                       </p>
                     </div>
                   </label>
 
-                  <div className="rounded-2xl border border-[#BDEFE6] bg-[#41D3BD]/12 p-4">
-                    <p className="text-sm font-black text-[#073B35]">
+                  <div className="rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF] p-4">
+                    <p className="text-sm font-black text-[#3F5128]">
                       Location shown to customers
                     </p>
 
-                    <p className="mt-1 text-xs font-semibold leading-relaxed text-[#51615D]">
+                    <p className="mt-1 text-xs font-semibold leading-relaxed text-[#6B6258]">
                       Your tower/flat and door number may be shown on food cards
                       and food details so customers can identify the seller
                       kitchen.
@@ -779,7 +786,7 @@ export default function SellerLogin() {
               <button
                 type="submit"
                 disabled={loading}
-                className="block w-full rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.99] disabled:opacity-50"
+                className="block w-full rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 text-center font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-[0.99] disabled:opacity-50"
               >
                 {loading
                   ? "Please wait..."
@@ -789,7 +796,7 @@ export default function SellerLogin() {
               </button>
             </form>
 
-            <p className="mt-5 text-xs font-semibold leading-relaxed text-[#8AA5A0]">
+            <p className="mt-5 text-xs font-semibold leading-relaxed text-[#9A8E80]">
               Seller dashboard access is available only for accounts approved by
               the app owner.
             </p>
@@ -803,13 +810,13 @@ export default function SellerLogin() {
 function Field({ label, error, children }) {
   return (
     <label className="block">
+      <span className="mb-2 block text-xs font-black uppercase tracking-wide text-[#6B6258]">
+        {label}
+      </span>
+
       {error ? (
         <p className="mb-2 text-sm font-black text-red-600">{error}</p>
       ) : null}
-
-      <span className="mb-2 block text-xs font-black uppercase tracking-wide text-[#51615D]">
-        {label}
-      </span>
 
       {children}
     </label>

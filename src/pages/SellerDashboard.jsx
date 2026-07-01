@@ -14,13 +14,13 @@ const FOOD_CATEGORIES = [
 ];
 
 const CARD =
-  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+  "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
 const SOFT_CARD =
-  "rounded-[24px] border border-[#E8F4F1] bg-white/90 shadow-[6px_6px_16px_rgba(7,59,53,0.06),-6px_-6px_16px_rgba(255,255,255,0.95)]";
+  "rounded-[24px] border border-[#D8C9B3] bg-[#FFFDF7] shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
 
 const INPUT =
-  "w-full rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-4 text-base font-semibold text-[#111827] outline-none placeholder:text-[#8AA5A0] focus:border-[#41D3BD] focus:bg-white";
+  "w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-base font-semibold text-[#181411] outline-none placeholder:text-[#9A8E80] focus:border-[#CF743D] focus:bg-white";
 
 export default function SellerDashboard() {
   const { user } = useAuth();
@@ -1142,18 +1142,18 @@ export default function SellerDashboard() {
     const currentStatus = normalizeStatus(status);
 
     if (currentStatus === "completed") {
-      return "bg-[#DFF8EF] text-[#087A51]";
+      return "bg-green-50 text-green-700 border border-green-200";
     }
 
     if (currentStatus === "cancelled") {
-      return "bg-red-50 text-red-600";
+      return "bg-red-50 text-red-600 border border-red-200";
     }
 
     if (currentStatus === "pending") {
-      return "bg-yellow-50 text-yellow-700";
+      return "bg-yellow-50 text-yellow-700 border border-yellow-200";
     }
 
-    return "bg-[#DFF8EF] text-[#087A51]";
+    return "bg-[#FFF0DF] text-[#3F5128] border border-[#D8C9B3]";
   }
 
   const activeSellerOrders = sellerOrders.filter((order) => {
@@ -1245,21 +1245,21 @@ export default function SellerDashboard() {
 
   if (!user) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#FFFFF2] px-4 py-10 text-[#111827]">
+      <main className="flex min-h-screen items-center justify-center bg-[#FFF8EC] px-4 py-10 text-[#181411]">
         <div className={`w-full max-w-md p-7 text-center ${CARD}`}>
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#41D3BD]/12 text-3xl">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#D8C9B3] bg-[#FFF0DF] text-3xl">
             👨‍🍳
           </div>
 
           <h1 className="mt-5 text-2xl font-black">Seller login required</h1>
 
-          <p className="mt-3 text-[#51615D]">
+          <p className="mt-3 text-[#6B6258]">
             Please sign in before managing food dishes.
           </p>
 
           <Link
             to="/seller-login"
-            className="mt-6 block rounded-2xl bg-[#073B35] py-4 font-black text-white"
+            className="mt-6 block rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 font-black text-white"
           >
             Seller Sign In
           </Link>
@@ -1270,13 +1270,13 @@ export default function SellerDashboard() {
 
   if (profileLoading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#FFFFF2] px-4 py-10 text-[#111827]">
+      <main className="flex min-h-screen items-center justify-center bg-[#FFF8EC] px-4 py-10 text-[#181411]">
         <div className={`w-full max-w-md p-8 text-center ${CARD}`}>
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#41D3BD]/12 text-3xl">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#D8C9B3] bg-[#FFF0DF] text-3xl">
             👨‍🍳
           </div>
 
-          <p className="mt-4 font-bold text-[#51615D]">
+          <p className="mt-4 font-bold text-[#6B6258]">
             Loading kitchen profile...
           </p>
         </div>
@@ -1286,22 +1286,24 @@ export default function SellerDashboard() {
 
   if (!bankDetailsCompleted) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#FFFFF2] px-4 py-10 text-[#111827]">
+      <main className="flex min-h-screen items-center justify-center bg-[#FFF8EC] px-4 py-10 text-[#181411]">
         <div className={`w-full max-w-md p-7 text-center ${CARD}`}>
           <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-yellow-200 bg-yellow-50 text-4xl">
             🏦
           </div>
 
-          <h1 className="mt-6 text-3xl font-black">Complete bank details</h1>
+          <h1 className="mt-6 text-3xl font-black text-[#181411]">
+            Complete bank details
+          </h1>
 
-          <p className="mt-3 leading-relaxed text-[#51615D]">
+          <p className="mt-3 leading-relaxed text-[#6B6258]">
             Payout bank details are required before opening Seller Dashboard.
           </p>
 
           <button
             type="button"
             onClick={() => navigate("/profile")}
-            className="mt-7 w-full rounded-2xl bg-[#073B35] py-4 font-black text-white"
+            className="mt-7 w-full rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 font-black text-white"
           >
             Complete Profile
           </button>
@@ -1312,14 +1314,14 @@ export default function SellerDashboard() {
 
   if (!sellerProfileComplete) {
     return (
-      <main className="min-h-screen bg-[#FFFFF2] px-4 py-6 pb-28 text-[#111827]">
+      <main className="min-h-screen bg-[#FFF8EC] px-4 py-6 pb-28 text-[#181411]">
         <div className="mx-auto max-w-md">
           <section className={`p-5 ${CARD}`}>
-            <p className="text-xs font-black uppercase tracking-wide text-[#1A9F8D]">
+            <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
               Seller Setup
             </p>
 
-            <h1 className="mt-2 text-3xl font-black leading-tight text-[#073B35]">
+            <h1 className="mt-2 text-3xl font-black leading-tight text-[#3F5128]">
               Complete your kitchen profile
             </h1>
 
@@ -1337,29 +1339,27 @@ export default function SellerDashboard() {
                 />
               </Field>
 
-              <div className="grid grid-cols-1 gap-4">
-                <Field label="Tower / Flat">
-                  <input
-                    name="flat"
-                    value={sellerSetupData.flat}
-                    onChange={handleSellerSetupChange}
-                    required
-                    className={INPUT}
-                    placeholder="Tower / Flat"
-                  />
-                </Field>
+              <Field label="Tower / Flat">
+                <input
+                  name="flat"
+                  value={sellerSetupData.flat}
+                  onChange={handleSellerSetupChange}
+                  required
+                  className={INPUT}
+                  placeholder="Tower / Flat"
+                />
+              </Field>
 
-                <Field label="Phone number">
-                  <input
-                    name="phone"
-                    value={sellerSetupData.phone}
-                    onChange={handleSellerSetupChange}
-                    required
-                    className={INPUT}
-                    placeholder="Phone Number"
-                  />
-                </Field>
-              </div>
+              <Field label="Phone number">
+                <input
+                  name="phone"
+                  value={sellerSetupData.phone}
+                  onChange={handleSellerSetupChange}
+                  required
+                  className={INPUT}
+                  placeholder="Phone Number"
+                />
+              </Field>
 
               <Field label="Specialty">
                 <input
@@ -1411,13 +1411,13 @@ export default function SellerDashboard() {
               <div className={`p-4 ${SOFT_CARD}`}>
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="font-black">Packing charge</p>
-                    <p className="mt-1 text-sm text-[#51615D]">
+                    <p className="font-black text-[#181411]">Packing charge</p>
+                    <p className="mt-1 text-sm text-[#6B6258]">
                       Added at checkout.
                     </p>
                   </div>
 
-                  <div className="rounded-2xl bg-[#073B35] px-4 py-2 font-black text-white">
+                  <div className="rounded-2xl bg-[#3F5128] px-4 py-2 font-black text-white">
                     ₹{sellerSetupData.packing_charge}
                   </div>
                 </div>
@@ -1430,14 +1430,14 @@ export default function SellerDashboard() {
                   step="1"
                   value={sellerSetupData.packing_charge}
                   onChange={handleSellerSetupChange}
-                  className="mt-5 w-full accent-[#41D3BD]"
+                  className="mt-5 w-full accent-[#CF743D]"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={profileSaving}
-                className="w-full rounded-2xl bg-[#073B35] py-4 font-black text-white disabled:opacity-50"
+                className="w-full rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 font-black text-white disabled:opacity-50"
               >
                 {profileSaving ? "Saving..." : "Save and Continue"}
               </button>
@@ -1454,7 +1454,7 @@ export default function SellerDashboard() {
         <path
           d="M4 62 C 28 58, 30 44, 52 50 S 82 64, 104 54 S 132 34, 156 44 S 184 62, 206 38 S 238 32, 256 10"
           fill="none"
-          stroke="#41D3BD"
+          stroke="#CF743D"
           strokeWidth="6"
           strokeLinecap="round"
         />
@@ -1466,17 +1466,17 @@ export default function SellerDashboard() {
     const status = getAutoStatus(order);
 
     return (
-      <div className="flex items-center justify-between gap-3 border-b border-[#E8F4F1] py-3 last:border-b-0">
+      <div className="flex items-center justify-between gap-3 border-b border-[#EADFCE] py-3 last:border-b-0">
         <div className="min-w-0">
-          <p className="truncate text-xs font-black text-[#111827]">
+          <p className="truncate text-xs font-black text-[#181411]">
             #{order.id}
           </p>
-          <p className="truncate text-[11px] text-[#51615D]">
+          <p className="truncate text-[11px] text-[#6B6258]">
             {order.customer_name || "Customer"}
           </p>
         </div>
 
-        <p className="shrink-0 text-xs font-black text-[#111827]">
+        <p className="shrink-0 text-xs font-black text-[#181411]">
           ₹{order.total_amount || order.subtotal_amount || 0}
         </p>
 
@@ -1499,10 +1499,10 @@ export default function SellerDashboard() {
         <div className={`p-4 ${CARD}`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-base font-black text-[#073B35]">
+              <p className="text-base font-black text-[#3F5128]">
                 {sellerOnline ? "Online" : "Offline"}
               </p>
-              <p className="mt-1 text-xs font-semibold text-[#51615D]">
+              <p className="mt-1 text-xs font-semibold text-[#6B6258]">
                 Customers can {sellerOnline ? "order now" : "not order now"}.
               </p>
             </div>
@@ -1511,8 +1511,9 @@ export default function SellerDashboard() {
               type="button"
               onClick={toggleSellerOnline}
               className={`relative h-9 w-16 rounded-full transition-all ${
-                sellerOnline ? "bg-[#41D3BD]" : "bg-[#D7F5EF]"
+                sellerOnline ? "bg-[#CF743D]" : "bg-[#EADFCE]"
               }`}
+              aria-label="Toggle seller online status"
             >
               <span
                 className={`absolute top-1 h-7 w-7 rounded-full bg-white shadow-md transition-all ${
@@ -1531,13 +1532,13 @@ export default function SellerDashboard() {
         </div>
 
         <section className={`p-5 ${CARD}`}>
-          <p className="text-sm font-black text-[#51615D]">Today’s Revenue</p>
+          <p className="text-sm font-black text-[#6B6258]">Today’s Revenue</p>
 
-          <h2 className="mt-2 text-4xl font-black text-[#111827]">
+          <h2 className="mt-2 text-4xl font-black text-[#181411]">
             ₹{todayEarnings}
           </h2>
 
-          <p className="mt-2 text-sm font-black text-[#1A9F8D]">
+          <p className="mt-2 text-sm font-black text-[#CF743D]">
             +18% vs yesterday
           </p>
 
@@ -1546,14 +1547,14 @@ export default function SellerDashboard() {
 
         <section className={`p-4 ${CARD}`}>
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-black text-[#111827]">
+            <h2 className="text-lg font-black text-[#181411]">
               Recent Orders
             </h2>
 
             <button
               type="button"
               onClick={() => setActiveTab("orders")}
-              className="text-sm font-black text-[#1A9F8D]"
+              className="text-sm font-black text-[#CF743D]"
             >
               See All
             </button>
@@ -1561,9 +1562,9 @@ export default function SellerDashboard() {
 
           <div className="mt-2">
             {ordersLoading ? (
-              <p className="py-4 text-sm text-[#51615D]">Loading orders...</p>
+              <p className="py-4 text-sm text-[#6B6258]">Loading orders...</p>
             ) : recentOrders.length === 0 ? (
-              <p className="py-4 text-sm text-[#51615D]">No orders yet.</p>
+              <p className="py-4 text-sm text-[#6B6258]">No orders yet.</p>
             ) : (
               recentOrders.map((order) => (
                 <RecentOrderRow key={order.id} order={order} />
@@ -1576,8 +1577,8 @@ export default function SellerDashboard() {
           <button
             type="button"
             onClick={toggleAcceptScheduledOrders}
-            className={`rounded-[22px] border border-[#E8F4F1] bg-white/90 py-4 text-sm font-black shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] ${
-              acceptScheduledOrders ? "text-[#073B35]" : "text-[#8AA5A0]"
+            className={`rounded-[22px] border border-[#EADFCE] bg-white/90 py-4 text-sm font-black shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] ${
+              acceptScheduledOrders ? "text-[#3F5128]" : "text-[#9A8E80]"
             }`}
           >
             {acceptScheduledOrders ? "🕒 Schedule ON" : "🕒 Schedule OFF"}
@@ -1586,8 +1587,8 @@ export default function SellerDashboard() {
           <button
             type="button"
             onClick={toggleNotificationSound}
-            className={`rounded-[22px] border border-[#E8F4F1] bg-white/90 py-4 text-sm font-black shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] ${
-              audioReady ? "text-[#073B35]" : "text-[#8AA5A0]"
+            className={`rounded-[22px] border border-[#EADFCE] bg-white/90 py-4 text-sm font-black shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] ${
+              audioReady ? "text-[#3F5128]" : "text-[#9A8E80]"
             }`}
           >
             {audioReady ? "🔔 Sound ON" : "🔕 Sound OFF"}
@@ -1601,23 +1602,23 @@ export default function SellerDashboard() {
     return (
       <section className="space-y-4">
         <div className={`p-5 ${CARD}`}>
-          <p className="text-xs font-black uppercase tracking-wide text-[#1A9F8D]">
+          <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
             Kitchen Orders
           </p>
-          <h2 className="mt-1 text-2xl font-black text-[#111827]">Orders</h2>
-          <p className="mt-1 text-sm text-[#51615D]">
+          <h2 className="mt-1 text-2xl font-black text-[#181411]">Orders</h2>
+          <p className="mt-1 text-sm text-[#6B6258]">
             Accept, chat, prepare, and complete orders.
           </p>
         </div>
 
         {ordersLoading ? (
-          <div className={`p-6 text-[#51615D] ${SOFT_CARD}`}>
+          <div className={`p-6 text-[#6B6258] ${SOFT_CARD}`}>
             Loading orders...
           </div>
         ) : activeSellerOrders.length === 0 ? (
           <div className={`p-8 text-center ${SOFT_CARD}`}>
             <div className="text-4xl">🛎️</div>
-            <p className="mt-3 font-black text-[#51615D]">
+            <p className="mt-3 font-black text-[#6B6258]">
               No active orders right now.
             </p>
           </div>
@@ -1634,24 +1635,24 @@ export default function SellerDashboard() {
               <article key={order.id} className={`p-4 ${CARD}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-[#51615D]">
+                    <p className="text-xs font-bold text-[#6B6258]">
                       Order #{order.id}
                     </p>
 
-                    <h3 className="mt-1 text-2xl font-black text-[#073B35]">
+                    <h3 className="mt-1 text-2xl font-black text-[#3F5128]">
                       ₹{order.total_amount}
                     </h3>
 
-                    <p className="mt-2 truncate text-sm text-[#51615D]">
+                    <p className="mt-2 truncate text-sm text-[#6B6258]">
                       {order.customer_name} • {order.phone}
                     </p>
 
-                    <p className="mt-1 truncate text-sm text-[#51615D]">
+                    <p className="mt-1 truncate text-sm text-[#6B6258]">
                       {order.delivery_type} • {order.flat}
                     </p>
 
                     {scheduled ? (
-                      <p className="mt-2 w-fit rounded-full border border-[#41D3BD]/25 bg-[#41D3BD]/12 px-3 py-1 text-xs font-black text-[#073B35]">
+                      <p className="mt-2 w-fit rounded-full border border-[#D8C9B3] bg-[#FFF0DF] px-3 py-1 text-xs font-black text-[#3F5128]">
                         🕒 {formatScheduledDateTime(order.scheduled_for)}
                       </p>
                     ) : null}
@@ -1668,35 +1669,35 @@ export default function SellerDashboard() {
 
                 <Link
                   to={`/order-chat/${order.id}`}
-                  className="mt-4 flex items-center justify-between rounded-2xl border border-[#41D3BD]/50 bg-[#EFFFFB] p-4"
+                  className="mt-4 flex items-center justify-between rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF] p-4"
                 >
                   <div>
-                    <p className="font-black text-[#073B35]">
+                    <p className="font-black text-[#3F5128]">
                       Chat with customer
                     </p>
-                    <p className="mt-1 text-xs text-[#51615D]">
+                    <p className="mt-1 text-xs text-[#6B6258]">
                       Confirm item changes, timing, or pickup.
                     </p>
                   </div>
-                  <span className="text-2xl font-black">›</span>
+                  <span className="text-2xl font-black text-[#3F5128]">›</span>
                 </Link>
 
-                <div className="mt-4 space-y-3 rounded-2xl border border-[#D7F5EF] bg-[#FFFFF2] p-3">
+                <div className="mt-4 space-y-3 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-3">
                   {getOrderItems(order).map((item) => (
                     <div
                       key={`${order.id}-${item.id || item.name}`}
                       className="flex items-center justify-between gap-3"
                     >
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-black">
+                        <p className="truncate text-sm font-black text-[#181411]">
                           {item.name}
                         </p>
-                        <p className="text-xs text-[#51615D]">
+                        <p className="text-xs text-[#6B6258]">
                           Qty {item.quantity} × ₹{item.price}
                         </p>
                       </div>
 
-                      <p className="shrink-0 text-sm font-black text-[#073B35]">
+                      <p className="shrink-0 text-sm font-black text-[#3F5128]">
                         ₹{Number(item.price || 0) * Number(item.quantity || 0)}
                       </p>
                     </div>
@@ -1708,7 +1709,7 @@ export default function SellerDashboard() {
                     <button
                       type="button"
                       onClick={() => acceptOrder(order.id)}
-                      className="rounded-2xl bg-green-500 py-3 font-black text-white"
+                      className="rounded-2xl bg-green-600 py-3 font-black text-white"
                     >
                       Accept
                     </button>
@@ -1729,7 +1730,7 @@ export default function SellerDashboard() {
                       <button
                         type="button"
                         onClick={() => markReadyForPickup(order.id)}
-                        className="w-full rounded-2xl bg-emerald-500 py-3 font-black text-white"
+                        className="w-full rounded-2xl bg-green-600 py-3 font-black text-white"
                       >
                         📦 Ready for Pickup
                       </button>
@@ -1738,7 +1739,7 @@ export default function SellerDashboard() {
                     <button
                       type="button"
                       onClick={() => completeOrder(order.id)}
-                      className="w-full rounded-2xl bg-[#073B35] py-3 font-black text-white"
+                      className="w-full rounded-2xl bg-[#3F5128] py-3 font-black text-white"
                     >
                       ✅ Complete Order
                     </button>
@@ -1758,15 +1759,15 @@ export default function SellerDashboard() {
         <form onSubmit={handleSubmit} className={`p-5 ${CARD}`}>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-black uppercase tracking-wide text-[#1A9F8D]">
+              <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
                 Menu Builder
               </p>
 
-              <h2 className="mt-1 text-3xl font-black leading-tight text-[#073B35]">
+              <h2 className="mt-1 text-3xl font-black leading-tight text-[#3F5128]">
                 {editingFood ? "Edit dish" : "Add new dish"}
               </h2>
 
-              <p className="mt-2 text-sm font-semibold text-[#51615D]">
+              <p className="mt-2 text-sm font-semibold text-[#6B6258]">
                 Add clear dish details so customers can order confidently.
               </p>
             </div>
@@ -1775,7 +1776,7 @@ export default function SellerDashboard() {
               <button
                 type="button"
                 onClick={resetForm}
-                className="rounded-full bg-[#FFFFF2] px-4 py-2 text-xs font-black text-[#51615D]"
+                className="rounded-full border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-2 text-xs font-black text-[#6B6258]"
               >
                 Cancel
               </button>
@@ -1880,9 +1881,9 @@ export default function SellerDashboard() {
             </Field>
 
             <div className={`p-4 ${SOFT_CARD}`}>
-              <p className="text-sm font-black text-[#111827]">Dish Image</p>
+              <p className="text-sm font-black text-[#181411]">Dish Image</p>
 
-              <p className="mt-1 text-xs font-semibold text-[#51615D]">
+              <p className="mt-1 text-xs font-semibold text-[#6B6258]">
                 Upload a clear food image. Camera works better on phone.
               </p>
 
@@ -1890,7 +1891,7 @@ export default function SellerDashboard() {
                 <button
                   type="button"
                   onClick={() => uploadImageInputRef.current?.click()}
-                  className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] py-4 text-sm font-black text-[#073B35] active:scale-95"
+                  className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 text-sm font-black text-[#3F5128] active:scale-95"
                 >
                   🖼️ Upload
                 </button>
@@ -1898,7 +1899,7 @@ export default function SellerDashboard() {
                 <button
                   type="button"
                   onClick={() => cameraImageInputRef.current?.click()}
-                  className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] py-4 text-sm font-black text-[#073B35] active:scale-95"
+                  className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 text-sm font-black text-[#3F5128] active:scale-95"
                 >
                   📸 Camera
                 </button>
@@ -1922,18 +1923,18 @@ export default function SellerDashboard() {
               />
 
               {imagePreview ? (
-                <div className="mt-4 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-3">
+                <div className="mt-4 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-3">
                   <img
                     src={imagePreview}
                     alt="Dish preview"
-                    className="h-48 w-full rounded-2xl border border-[#D7F5EF] object-cover"
+                    className="h-48 w-full rounded-2xl border border-[#EADFCE] object-cover"
                   />
 
                   <div className="mt-3 grid grid-cols-2 gap-3">
                     <button
                       type="button"
                       onClick={() => uploadImageInputRef.current?.click()}
-                      className="rounded-2xl border border-[#41D3BD]/60 py-3 font-black text-[#073B35]"
+                      className="rounded-2xl border border-[#CF743D] py-3 font-black text-[#3F5128]"
                     >
                       Change
                     </button>
@@ -1954,7 +1955,7 @@ export default function SellerDashboard() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-6 w-full rounded-2xl bg-[#073B35] px-6 py-4 font-black text-white shadow-lg shadow-[#073B35]/15 disabled:opacity-50"
+            className="mt-6 w-full rounded-2xl bg-[#3F5128] px-6 py-4 font-black text-white shadow-lg shadow-[#3F5128]/15 disabled:opacity-50"
           >
             {loading ? "Saving..." : editingFood ? "Update Dish" : "Add Dish"}
           </button>
@@ -1963,28 +1964,30 @@ export default function SellerDashboard() {
         <section>
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-wide text-[#1A9F8D]">
+              <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
                 Live Menu
               </p>
-              <h2 className="mt-1 text-3xl font-black">Your dishes</h2>
+              <h2 className="mt-1 text-3xl font-black text-[#181411]">
+                Your dishes
+              </h2>
             </div>
 
-            <div className="rounded-full border border-[#E8F4F1] bg-white/90 px-4 py-2 text-sm font-black text-[#073B35]">
+            <div className="rounded-full border border-[#EADFCE] bg-white/90 px-4 py-2 text-sm font-black text-[#3F5128]">
               {sellerFoods.length} dishes
             </div>
           </div>
 
           {foodsLoading ? (
-            <p className="text-[#51615D]">Loading your dishes...</p>
+            <p className="text-[#6B6258]">Loading your dishes...</p>
           ) : sellerFoods.length === 0 ? (
             <div className={`p-8 text-center ${SOFT_CARD}`}>
-              <p className="text-[#51615D]">No dishes added yet.</p>
+              <p className="text-[#6B6258]">No dishes added yet.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {sellerFoods.map((food) => (
                 <div key={food.id} className={`overflow-hidden ${CARD}`}>
-                  <div className="relative aspect-[4/3] bg-[#D7F5EF]">
+                  <div className="relative aspect-[4/3] bg-[#FFF0DF]">
                     <img
                       src={food.image}
                       alt={food.name}
@@ -1996,7 +1999,7 @@ export default function SellerDashboard() {
                         className={`rounded-full px-3 py-1.5 text-[11px] font-black shadow-sm ${
                           food.type === "Non-Veg"
                             ? "bg-red-500 text-white"
-                            : "bg-[#41D3BD] text-[#073B35]"
+                            : "bg-[#6F7F43] text-white"
                         }`}
                       >
                         {food.type || "Veg"}
@@ -2005,7 +2008,7 @@ export default function SellerDashboard() {
 
                     {Number(food.stock) === 0 ? (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/65">
-                        <span className="rounded-2xl bg-white px-4 py-2 font-black text-[#073B35]">
+                        <span className="rounded-2xl bg-white px-4 py-2 font-black text-[#3F5128]">
                           Sold Out
                         </span>
                       </div>
@@ -2015,17 +2018,17 @@ export default function SellerDashboard() {
                   <div className="p-4">
                     <div className="flex justify-between gap-3">
                       <div className="min-w-0">
-                        <h3 className="truncate text-lg font-black">
+                        <h3 className="truncate text-lg font-black text-[#181411]">
                           {food.name}
                         </h3>
 
-                        <p className="mt-1 truncate text-sm text-[#51615D]">
+                        <p className="mt-1 truncate text-sm text-[#6B6258]">
                           {food.category || "Meals"} • {food.time || "Soon"}
                         </p>
                       </div>
 
                       <div className="shrink-0 text-right">
-                        <p className="text-xl font-black text-[#073B35]">
+                        <p className="text-xl font-black text-[#3F5128]">
                           ₹{food.price}
                         </p>
 
@@ -2035,7 +2038,7 @@ export default function SellerDashboard() {
                               ? "text-red-500"
                               : Number(food.stock) <= 5
                               ? "text-orange-500"
-                              : "text-[#51615D]"
+                              : "text-[#6B6258]"
                           }`}
                         >
                           {Number(food.stock) <= 2
@@ -2049,7 +2052,7 @@ export default function SellerDashboard() {
                       <button
                         type="button"
                         onClick={() => startEdit(food)}
-                        className="rounded-xl bg-[#073B35] py-2.5 text-xs font-black text-white"
+                        className="rounded-xl bg-[#3F5128] py-2.5 text-xs font-black text-white"
                       >
                         Edit
                       </button>
@@ -2057,7 +2060,7 @@ export default function SellerDashboard() {
                       <button
                         type="button"
                         onClick={() => toggleStock(food)}
-                        className="rounded-xl border border-[#41D3BD]/60 py-2.5 text-xs font-black text-[#073B35]"
+                        className="rounded-xl border border-[#D8C9B3] bg-[#FFFDF7] py-2.5 text-xs font-black text-[#3F5128]"
                       >
                         {Number(food.stock) === 0 ? "In Stock" : "Sold Out"}
                       </button>
@@ -2084,17 +2087,19 @@ export default function SellerDashboard() {
     return (
       <section className="space-y-4">
         <section className={`p-5 ${CARD}`}>
-          <p className="text-xs font-black uppercase tracking-wide text-[#1A9F8D]">
+          <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
             Settings
           </p>
 
-          <h2 className="mt-1 text-2xl font-black">Kitchen controls</h2>
+          <h2 className="mt-1 text-2xl font-black text-[#181411]">
+            Kitchen controls
+          </h2>
 
           <div className="mt-5 grid grid-cols-1 gap-3">
             <button
               type="button"
               onClick={toggleDeliveryAvailable}
-              className="rounded-2xl border border-[#E8F4F1] bg-[#FFFFF2] py-4 font-black text-[#073B35]"
+              className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 font-black text-[#3F5128]"
             >
               {deliveryAvailable ? "🚚 Delivery ON" : "🚚 Delivery OFF"}
             </button>
@@ -2102,7 +2107,7 @@ export default function SellerDashboard() {
             <button
               type="button"
               onClick={togglePickupAvailable}
-              className="rounded-2xl border border-[#E8F4F1] bg-[#FFFFF2] py-4 font-black text-[#073B35]"
+              className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 font-black text-[#3F5128]"
             >
               {pickupAvailable ? "🛍️ Pickup ON" : "🛍️ Pickup OFF"}
             </button>
@@ -2110,7 +2115,7 @@ export default function SellerDashboard() {
             <button
               type="button"
               onClick={toggleAcceptScheduledOrders}
-              className="rounded-2xl border border-[#E8F4F1] bg-[#FFFFF2] py-4 font-black text-[#073B35]"
+              className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 font-black text-[#3F5128]"
             >
               {acceptScheduledOrders ? "🕒 Schedule ON" : "🕒 Schedule OFF"}
             </button>
@@ -2120,11 +2125,11 @@ export default function SellerDashboard() {
         <section className={`p-5 ${CARD}`}>
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="font-black">Packing charge</p>
-              <p className="mt-1 text-sm text-[#51615D]">Choose ₹5 to ₹15.</p>
+              <p className="font-black text-[#181411]">Packing charge</p>
+              <p className="mt-1 text-sm text-[#6B6258]">Choose ₹5 to ₹15.</p>
             </div>
 
-            <div className="rounded-2xl bg-[#073B35] px-5 py-2.5 text-xl font-black text-white">
+            <div className="rounded-2xl bg-[#3F5128] px-5 py-2.5 text-xl font-black text-white">
               ₹{packingCharge}
             </div>
           </div>
@@ -2145,12 +2150,12 @@ export default function SellerDashboard() {
             }}
             onMouseUp={(event) => updatePackingCharge(event.target.value)}
             onTouchEnd={(event) => updatePackingCharge(event.target.value)}
-            className="mt-5 w-full accent-[#41D3BD]"
+            className="mt-5 w-full accent-[#CF743D]"
           />
         </section>
 
         <section className={`p-5 ${CARD}`}>
-          <p className="font-black">Seller Analytics</p>
+          <p className="font-black text-[#181411]">Seller Analytics</p>
 
           <div className="mt-4 grid grid-cols-2 gap-3">
             <StatCard label="Gross" value={`₹${grossEarnings}`} />
@@ -2162,24 +2167,24 @@ export default function SellerDashboard() {
 
         {bestSellingItems.length > 0 ? (
           <section className={`p-5 ${CARD}`}>
-            <p className="font-black">Best selling items</p>
+            <p className="font-black text-[#181411]">Best selling items</p>
 
             <div className="mt-4 space-y-3">
               {bestSellingItems.map((item) => (
                 <div
                   key={item.name}
-                  className="flex items-center justify-between rounded-2xl border border-[#E8F4F1] bg-[#FFFFF2] p-3"
+                  className="flex items-center justify-between rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-3"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-black text-[#111827]">
+                    <p className="truncate text-sm font-black text-[#181411]">
                       {item.name}
                     </p>
-                    <p className="text-xs text-[#51615D]">
+                    <p className="text-xs text-[#6B6258]">
                       Qty sold: {item.quantity}
                     </p>
                   </div>
 
-                  <p className="shrink-0 font-black text-[#073B35]">
+                  <p className="shrink-0 font-black text-[#3F5128]">
                     ₹{item.revenue}
                   </p>
                 </div>
@@ -2192,15 +2197,15 @@ export default function SellerDashboard() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-32 text-[#111827]">
+    <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-32 text-[#181411]">
       <div className="mx-auto max-w-md">
         <header className="flex items-center justify-between pb-5 pt-2">
           <div className="min-w-0">
-            <h1 className="truncate text-3xl font-black leading-tight text-[#111827]">
+            <h1 className="truncate text-3xl font-black leading-tight text-[#181411]">
               Seller Dashboard
             </h1>
 
-            <p className="mt-1 truncate text-sm font-bold text-[#51615D]">
+            <p className="mt-1 truncate text-sm font-bold text-[#6B6258]">
               {sellerSetupData.seller_kitchen_name || "Kitchen"}
             </p>
           </div>
@@ -2209,7 +2214,8 @@ export default function SellerDashboard() {
             <button
               type="button"
               onClick={toggleNotificationSound}
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-[#E8F4F1] bg-white/90 text-lg shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-lg shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]"
+              aria-label="Toggle notification sound"
             >
               🔔
             </button>
@@ -2217,7 +2223,8 @@ export default function SellerDashboard() {
             <button
               type="button"
               onClick={() => navigate("/profile")}
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-[#41D3BD] text-lg font-black text-[#073B35] shadow-lg shadow-[#073B35]/10"
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-[#C86B37] bg-[#CF743D] text-lg font-black text-white shadow-lg shadow-[#3F5128]/10"
+              aria-label="Open profile"
             >
               {user?.email?.charAt(0)?.toUpperCase() || "S"}
             </button>
@@ -2232,7 +2239,7 @@ export default function SellerDashboard() {
         {activeTab === "more" && <MoreView />}
       </div>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#D7F5EF] bg-[#FFFFF2]/95 px-4 py-2 backdrop-blur-xl">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#EADFCE] bg-[#FFF8EC]/95 px-4 py-2 backdrop-blur-xl">
         <div className="mx-auto grid max-w-md grid-cols-4 gap-1">
           {[
             ["dashboard", "🏠", "Dashboard"],
@@ -2246,8 +2253,8 @@ export default function SellerDashboard() {
               onClick={() => setActiveTab(key)}
               className={`rounded-2xl py-2 text-[11px] font-black transition-all ${
                 activeTab === key
-                  ? "bg-[#D7F5EF] text-[#073B35]"
-                  : "text-[#51615D]"
+                  ? "bg-[#FFF0DF] text-[#3F5128]"
+                  : "text-[#6B6258]"
               }`}
             >
               <div className="text-lg leading-none">{icon}</div>
@@ -2263,7 +2270,7 @@ export default function SellerDashboard() {
 function Field({ label, children }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-xs font-black uppercase tracking-wide text-[#51615D]">
+      <span className="mb-2 block text-xs font-black uppercase tracking-wide text-[#6B6258]">
         {label}
       </span>
       {children}
@@ -2279,12 +2286,12 @@ function CheckTile({ title, text, name, checked, onChange }) {
         name={name}
         checked={checked}
         onChange={onChange}
-        className="mt-1 accent-[#41D3BD]"
+        className="mt-1 accent-[#CF743D]"
       />
 
       <div>
-        <p className="font-black text-[#111827]">{title}</p>
-        <p className="mt-1 text-sm text-[#51615D]">{text}</p>
+        <p className="font-black text-[#181411]">{title}</p>
+        <p className="mt-1 text-sm text-[#6B6258]">{text}</p>
       </div>
     </label>
   );
@@ -2292,7 +2299,7 @@ function CheckTile({ title, text, name, checked, onChange }) {
 
 function MessageBox({ message }) {
   return (
-    <div className="mb-4 rounded-2xl border border-[#D7F5EF] bg-white/90 p-3 text-xs font-bold text-[#073B35] shadow-sm">
+    <div className="mb-4 rounded-2xl border border-[#D8C9B3] bg-white/90 p-3 text-xs font-bold text-[#3F5128] shadow-sm">
       {message}
     </div>
   );
@@ -2301,8 +2308,8 @@ function MessageBox({ message }) {
 function StatCard({ label, value }) {
   return (
     <div className={`p-4 ${SOFT_CARD}`}>
-      <p className="text-[11px] font-black text-[#51615D]">{label}</p>
-      <p className="mt-3 text-3xl font-black text-[#111827]">{value}</p>
+      <p className="text-[11px] font-black text-[#6B6258]">{label}</p>
+      <p className="mt-3 text-3xl font-black text-[#181411]">{value}</p>
     </div>
   );
 }

@@ -3,10 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 const SUPPORT_EMAIL = "nefosupport@gmail.com";
 
 const CARD =
-  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+  "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
 const SOFT_CARD =
-  "rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
+  "rounded-[24px] border border-[#D8C9B3] bg-[#FFFDF7] shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
 
 const termsSections = [
   {
@@ -64,29 +64,29 @@ export default function Terms() {
   const navigate = useNavigate();
 
   return (
-    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-32 text-[#111827]">
+    <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-32 text-[#181411]">
       <div className="mx-auto max-w-md">
         <header className="flex items-start gap-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
             aria-label="Go back"
           >
             <BackIcon />
           </button>
 
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+            <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
               Nefo Policy
             </p>
 
-            <h1 className="mt-1 text-3xl font-black leading-tight text-[#073B35]">
+            <h1 className="mt-1 text-3xl font-black leading-tight text-[#3F5128]">
               Terms &
-              <span className="block text-[#111827]">Conditions</span>
+              <span className="block text-[#181411]">Conditions</span>
             </h1>
 
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               By using Nefo, you agree to these terms for using our
               neighbourhood homemade food ordering platform.
             </p>
@@ -115,16 +115,16 @@ export default function Terms() {
           {termsSections.map((section, index) => (
             <article key={section.title} className={`p-5 ${CARD}`}>
               <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#BDEFE6] bg-[#41D3BD]/12 font-black text-[#073B35]">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF] font-black text-[#3F5128]">
                   {index + 1}
                 </div>
 
                 <div className="min-w-0">
-                  <h2 className="text-xl font-black leading-tight text-[#073B35]">
+                  <h2 className="text-xl font-black leading-tight text-[#3F5128]">
                     {section.title}
                   </h2>
 
-                  <p className="mt-3 text-sm font-semibold leading-relaxed text-[#51615D]">
+                  <p className="mt-3 text-sm font-semibold leading-relaxed text-[#6B6258]">
                     {section.text}
                   </p>
                 </div>
@@ -134,15 +134,15 @@ export default function Terms() {
         </section>
 
         <section className={`mt-5 p-5 ${CARD}`}>
-          <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+          <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
             User Conduct
           </p>
 
-          <h2 className="mt-1 text-2xl font-black leading-tight text-[#111827]">
+          <h2 className="mt-1 text-2xl font-black leading-tight text-[#181411]">
             Use Nefo responsibly
           </h2>
 
-          <p className="mt-4 text-sm font-semibold leading-relaxed text-[#51615D]">
+          <p className="mt-4 text-sm font-semibold leading-relaxed text-[#6B6258]">
             Customers and sellers must use Nefo honestly and responsibly. Fake
             orders, misleading listings, false complaints, abusive behaviour, or
             misuse of payment and support systems may lead to account
@@ -151,39 +151,44 @@ export default function Terms() {
         </section>
 
         <section className={`mt-5 overflow-hidden ${CARD}`}>
-          <div className="bg-[#073B35] p-5 text-white">
-            <p className="text-xs font-black uppercase tracking-wide text-[#41D3BD]">
-              Need clarification?
-            </p>
+          <div className="relative overflow-hidden bg-[#3F5128] p-5 text-white">
+            <div className="absolute -right-10 -top-12 h-40 w-40 rounded-full bg-white/10" />
+            <div className="absolute -bottom-12 -left-12 h-36 w-36 rounded-full bg-[#CF743D]/20" />
 
-            <h2 className="mt-2 text-2xl font-black">
-              Contact Nefo Support
-            </h2>
+            <div className="relative z-10">
+              <p className="text-xs font-black uppercase tracking-wide text-[#F3C06E]">
+                Need clarification?
+              </p>
 
-            <p className="mt-3 text-sm font-semibold leading-relaxed text-[#D7F5EF]">
-              For questions about orders, refunds, privacy, seller accounts, or
-              platform rules, contact Nefo support by email.
-            </p>
+              <h2 className="mt-2 text-2xl font-black">
+                Contact Nefo Support
+              </h2>
 
-            <a
-              href={`mailto:${SUPPORT_EMAIL}`}
-              className="mt-4 inline-block break-all font-black text-[#41D3BD]"
-            >
-              {SUPPORT_EMAIL}
-            </a>
+              <p className="mt-3 text-sm font-semibold leading-relaxed text-white/75">
+                For questions about orders, refunds, privacy, seller accounts, or
+                platform rules, contact Nefo support by email.
+              </p>
+
+              <a
+                href={`mailto:${SUPPORT_EMAIL}`}
+                className="mt-4 inline-block break-all font-black text-[#F3C06E]"
+              >
+                {SUPPORT_EMAIL}
+              </a>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-3 p-4">
             <Link
               to="/customer-care"
-              className="rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-95"
+              className="rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 text-center font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-95"
             >
               Contact Customer Care
             </Link>
 
             <Link
               to="/marketplace"
-              className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] py-4 text-center font-black text-[#073B35] active:scale-95"
+              className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 text-center font-black text-[#3F5128] active:scale-95"
             >
               Back to Marketplace
             </Link>
@@ -191,15 +196,15 @@ export default function Terms() {
         </section>
 
         <section className={`mt-5 p-5 ${CARD}`}>
-          <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+          <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
             Related Policies
           </p>
 
-          <h2 className="mt-1 text-2xl font-black leading-tight text-[#111827]">
+          <h2 className="mt-1 text-2xl font-black leading-tight text-[#181411]">
             Read before ordering
           </h2>
 
-          <p className="mt-4 text-sm font-semibold leading-relaxed text-[#51615D]">
+          <p className="mt-4 text-sm font-semibold leading-relaxed text-[#6B6258]">
             These terms should be read together with Nefo’s Refund &
             Cancellation Policy and Privacy Policy.
           </p>
@@ -207,14 +212,14 @@ export default function Terms() {
           <div className="mt-5 grid grid-cols-1 gap-3">
             <Link
               to="/refund-policy"
-              className="rounded-2xl border border-[#073B35] bg-[#073B35] px-6 py-4 text-center font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-95"
+              className="rounded-2xl border border-[#3F5128] bg-[#3F5128] px-6 py-4 text-center font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-95"
             >
               Refund Policy
             </Link>
 
             <Link
               to="/privacy-policy"
-              className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-6 py-4 text-center font-black text-[#073B35] active:scale-95"
+              className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-6 py-4 text-center font-black text-[#3F5128] active:scale-95"
             >
               Privacy Policy
             </Link>
@@ -222,11 +227,11 @@ export default function Terms() {
         </section>
 
         <section className={`mt-5 p-4 ${SOFT_CARD}`}>
-          <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+          <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
             Note
           </p>
 
-          <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+          <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
             This policy is written for Nefo’s operating flow. Legal review is
             recommended before commercial launch.
           </p>
@@ -238,16 +243,16 @@ export default function Terms() {
 
 function PolicyStat({ label, value, text }) {
   return (
-    <div className="rounded-[22px] border border-[#D7F5EF] bg-white/90 p-3 shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
-      <p className="text-[10px] font-black uppercase text-[#7A8A86]">
+    <div className="rounded-[22px] border border-[#EADFCE] bg-white/90 p-3 shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
+      <p className="text-[10px] font-black uppercase text-[#6B6258]">
         {label}
       </p>
 
-      <p className="mt-1 truncate text-lg font-black text-[#073B35]">
+      <p className="mt-1 truncate text-lg font-black text-[#3F5128]">
         {value}
       </p>
 
-      <p className="mt-0.5 text-[10px] font-bold text-[#51615D]">{text}</p>
+      <p className="mt-0.5 text-[10px] font-bold text-[#6B6258]">{text}</p>
     </div>
   );
 }

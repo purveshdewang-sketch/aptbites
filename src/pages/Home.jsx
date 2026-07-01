@@ -108,8 +108,8 @@ export default function Home() {
     const { data, error } = await supabase
       .from("foods")
       .select(
-  "id, name, seller, seller_kitchen_name, price, image, category, type, stock, time, description, seller_online, delivery_available, pickup_available, demand_badge"
-)
+        "id, user_id, name, seller, seller_kitchen_name, price, image, category, type, stock, time, description, seller_online, delivery_available, pickup_available, demand_badge"
+      )
       .order("id", { ascending: false })
       .limit(24);
 
@@ -162,7 +162,10 @@ export default function Home() {
   }, [profile]);
 
   const cartCount = useMemo(() => {
-    return cartItems.reduce((total, item) => total + Number(item.quantity || 0), 0);
+    return cartItems.reduce(
+      (total, item) => total + Number(item.quantity || 0),
+      0
+    );
   }, [cartItems]);
 
   const filteredFoods = useMemo(() => {
@@ -225,24 +228,24 @@ export default function Home() {
     user && (isSeller || isAdmin) ? "/seller-dashboard" : "/seller-login";
 
   return (
-    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-28 text-[#111827]">
+    <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-32 text-[#181411]">
       {toastFood ? (
-        <div className="fixed left-3 right-3 top-5 z-[999] mx-auto max-w-md rounded-[24px] border border-[#D7F5EF] bg-white/95 p-4 shadow-2xl shadow-[#073B35]/15">
+        <div className="fixed left-3 right-3 top-5 z-[999] mx-auto max-w-md rounded-[24px] border border-[#EADFCE] bg-white/95 p-4 shadow-2xl shadow-[#3F5128]/15">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#41D3BD]/15 text-xl">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#EADFCE] bg-[#FFF0DF] text-xl">
               ✅
             </div>
 
             <div className="min-w-0 flex-1">
-              <p className="font-black text-[#073B35]">Added to cart</p>
-              <p className="truncate text-xs font-semibold text-[#51615D]">
+              <p className="font-black text-[#3F5128]">Added to cart</p>
+              <p className="truncate text-xs font-semibold text-[#6B6258]">
                 {toastFood.name} added successfully.
               </p>
             </div>
 
             <Link
               to="/cart"
-              className="rounded-full bg-[#073B35] px-4 py-2 text-xs font-black text-white"
+              className="rounded-full border border-[#3F5128] bg-[#3F5128] px-4 py-2 text-xs font-black text-white"
             >
               View
             </Link>
@@ -253,14 +256,15 @@ export default function Home() {
       <div className="mx-auto max-w-md">
         <header className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-2xl font-black leading-none tracking-tight text-[#073B35]">
+            <h1 className="text-[34px] font-black leading-none tracking-tight text-[#3F5128]">
               Nefo
             </h1>
 
             <button
               type="button"
-              className="mt-1 flex max-w-[220px] items-center gap-1 truncate text-left text-xs font-black text-[#073B35]"
+              className="mt-1 flex max-w-[230px] items-center gap-1 truncate text-left text-sm font-black text-[#6B6258]"
             >
+              <LocationIcon />
               <span className="truncate">{locationLabel}</span>
               <ChevronDownIcon />
             </button>
@@ -269,23 +273,23 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <Link
               to="/cart"
-              className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+              className="relative flex h-12 w-12 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
               aria-label="Cart"
             >
               <CartIcon />
 
               {cartCount > 0 ? (
-                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-[#41D3BD] px-1 text-[10px] font-black text-[#073B35]">
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-[#CF743D] px-1 text-[10px] font-black text-white">
                   {cartCount > 9 ? "9+" : cartCount}
                 </span>
               ) : (
-                <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full border-2 border-white bg-[#41D3BD]" />
+                <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full border-2 border-white bg-[#CF743D]" />
               )}
             </Link>
 
             <Link
               to="/profile"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#41D3BD] text-sm font-black text-white shadow-[6px_6px_16px_rgba(7,59,53,0.1),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-[#C86B37] bg-[#CF743D] text-sm font-black text-white shadow-[6px_6px_16px_rgba(63,81,40,0.1),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
               aria-label="Profile"
             >
               {getInitial()}
@@ -293,14 +297,14 @@ export default function Home() {
           </div>
         </header>
 
-        <section className="mt-4">
-          <div className="flex items-center gap-2 rounded-2xl border border-[#BDEFE6] bg-white/90 px-4 py-3 shadow-[inset_2px_2px_6px_rgba(7,59,53,0.04),inset_-2px_-2px_6px_rgba(255,255,255,0.9)]">
+        <section className="mt-5">
+          <div className="flex items-center gap-3 rounded-[20px] border border-[#D8C9B3] bg-white/80 px-4 py-3 shadow-[inset_2px_2px_6px_rgba(63,81,40,0.04),inset_-2px_-2px_6px_rgba(255,255,255,0.9)]">
             <SearchIcon />
 
             <input
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
-              className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[#111827] outline-none placeholder:text-[#8AA5A0]"
+              className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[#181411] outline-none placeholder:text-[#9A8E80]"
               placeholder="Search for food, kitchens..."
             />
           </div>
@@ -316,10 +320,10 @@ export default function Home() {
                   key={category}
                   type="button"
                   onClick={() => setActiveCategory(category)}
-                  className={`rounded-full px-4 py-2 text-[11px] font-black transition-all active:scale-95 ${
+                  className={`rounded-full border px-5 py-2.5 text-sm font-black transition-all active:scale-95 ${
                     isActive
-                      ? "bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
-                      : "bg-white/90 text-[#111827] shadow-[4px_4px_12px_rgba(7,59,53,0.06),-4px_-4px_12px_rgba(255,255,255,0.95)]"
+                      ? "border-[#3F5128] bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15"
+                      : "border-[#EADFCE] bg-white/80 text-[#6B6258] shadow-[4px_4px_12px_rgba(63,81,40,0.05),-4px_-4px_12px_rgba(255,255,255,0.95)]"
                   }`}
                 >
                   {category}
@@ -330,20 +334,28 @@ export default function Home() {
         </section>
 
         {shouldShowSellFood ? (
-          <section className="mt-4 rounded-[24px] bg-[#073B35] p-4 text-white shadow-lg shadow-[#073B35]/15">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-xs font-black uppercase tracking-wide text-[#41D3BD]">
+          <section className="relative mt-4 overflow-hidden rounded-[24px] border border-[#4D612F] bg-[#3F5128] p-5 text-white shadow-lg shadow-[#3F5128]/15">
+            <div className="absolute -right-7 -top-8 h-36 w-36 rounded-full bg-white/10" />
+            <div className="absolute bottom-0 right-3 h-24 w-40 opacity-30">
+              <MountainLineIcon />
+            </div>
+
+            <div className="relative z-10 flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs font-black uppercase tracking-wide text-[#F3C06E]">
                   Kitchen partner
                 </p>
-                <h2 className="mt-1 text-lg font-black">
+                <h2 className="mt-1 text-xl font-black">
                   {isSeller || isAdmin ? "Manage your kitchen" : "Sell on Nefo"}
                 </h2>
+                <p className="mt-1 text-sm font-semibold text-white/75">
+                  Grow your business with Nefo
+                </p>
               </div>
 
               <Link
                 to={sellFoodPath}
-                className="shrink-0 rounded-full bg-[#41D3BD] px-4 py-2 text-xs font-black text-[#073B35] active:scale-95"
+                className="shrink-0 rounded-full border border-[#CF743D] bg-[#CF743D] px-5 py-3 text-sm font-black text-white shadow-lg shadow-black/10 active:scale-95"
               >
                 {isSeller || isAdmin ? "Open" : "Start"}
               </Link>
@@ -351,17 +363,17 @@ export default function Home() {
           </section>
         ) : null}
 
-        <section className="mt-5">
+        <section className="mt-6">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-black text-[#111827]">
+            <h2 className="text-lg font-black text-[#3F5128]">
               Popular Kitchens
             </h2>
 
             <Link
               to="/marketplace"
-              className="text-xs font-black text-[#0B8F80]"
+              className="inline-flex items-center gap-1 text-xs font-black text-[#CF743D]"
             >
-              See All
+              See All <ChevronRightIcon />
             </Link>
           </div>
 
@@ -387,17 +399,17 @@ export default function Home() {
           )}
         </section>
 
-        <section className="mt-5">
+        <section className="mt-6">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-black text-[#111827]">
+            <h2 className="text-lg font-black text-[#3F5128]">
               Recommended for you
             </h2>
 
             <Link
               to="/marketplace"
-              className="text-xs font-black text-[#0B8F80]"
+              className="inline-flex items-center gap-1 text-xs font-black text-[#CF743D]"
             >
-              See All
+              See All <ChevronRightIcon />
             </Link>
           </div>
 
@@ -439,9 +451,9 @@ function KitchenCard({ kitchen }) {
   return (
     <Link
       to={firstFood ? `/food/${firstFood.id}` : "/marketplace"}
-      className="w-[122px] shrink-0 overflow-hidden rounded-[22px] border border-[#E8F4F1] bg-white/90 shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-[0.98]"
+      className="w-[128px] shrink-0 overflow-hidden rounded-[24px] border border-[#EADFCE] bg-white/90 shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-[0.98]"
     >
-      <div className="h-[92px] overflow-hidden bg-[#D7F5EF]">
+      <div className="h-[94px] overflow-hidden bg-[#FFF0DF]">
         {kitchen.image ? (
           <img
             src={kitchen.image}
@@ -455,13 +467,13 @@ function KitchenCard({ kitchen }) {
         )}
       </div>
 
-      <div className="p-2.5">
-        <h3 className="truncate text-xs font-black text-[#111827]">
+      <div className="p-3">
+        <h3 className="truncate text-sm font-black text-[#181411]">
           {kitchen.name}
         </h3>
 
-        <div className="mt-1 flex items-center gap-1 text-[10px] font-bold text-[#51615D]">
-          <span className="text-[#F59E0B]">★</span>
+        <div className="mt-1 flex items-center gap-1 text-[10px] font-bold text-[#6B6258]">
+          <span className="text-[#CF743D]">★</span>
           <span>4.8</span>
           <span>•</span>
           <span>{kitchen.items.length} items</span>
@@ -538,11 +550,11 @@ function RecommendedFoodCard({
   return (
     <Link
       to={`/food/${food.id}`}
-      className={`flex gap-3 rounded-[24px] border bg-white/90 p-3 shadow-[6px_6px_16px_rgba(7,59,53,0.07),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-[0.99] ${
-        blocked ? "border-red-100" : "border-[#E8F4F1]"
+      className={`flex gap-3 rounded-[24px] border bg-white/90 p-3 shadow-[6px_6px_16px_rgba(63,81,40,0.07),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-[0.99] ${
+        blocked ? "border-red-100" : "border-[#EADFCE]"
       }`}
     >
-      <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-[20px] bg-[#D7F5EF]">
+      <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-[20px] border border-[#EADFCE] bg-[#FFF0DF]">
         {food.image ? (
           <img
             src={food.image}
@@ -559,7 +571,7 @@ function RecommendedFoodCard({
 
         {blocked ? (
           <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-            <span className="rounded-full bg-white px-2 py-1 text-[10px] font-black text-[#073B35]">
+            <span className="rounded-full bg-white px-2 py-1 text-[10px] font-black text-[#3F5128]">
               {getButtonLabel()}
             </span>
           </div>
@@ -569,18 +581,18 @@ function RecommendedFoodCard({
       <div className="min-w-0 flex-1 py-1">
         <h3
           className={`truncate text-sm font-black ${
-            blocked ? "text-[#9AA7A3]" : "text-[#111827]"
+            blocked ? "text-[#9A8E80]" : "text-[#181411]"
           }`}
         >
           {food.name}
         </h3>
 
-        <p className="mt-0.5 truncate text-xs font-semibold text-[#51615D]">
+        <p className="mt-0.5 truncate text-xs font-semibold text-[#6B6258]">
           {food.seller_kitchen_name || food.seller || "Home Kitchen"}
         </p>
 
-        <div className="mt-1 flex items-center gap-1 text-xs font-bold text-[#51615D]">
-          <span className="text-[#F59E0B]">★</span>
+        <div className="mt-1 flex items-center gap-1 text-xs font-bold text-[#6B6258]">
+          <span className="text-[#CF743D]">★</span>
           <span>4.8</span>
           <span>•</span>
           <span>{food.time || "Soon"}</span>
@@ -588,8 +600,8 @@ function RecommendedFoodCard({
 
         <div className="mt-2 flex items-center justify-between gap-2">
           <p
-            className={`text-sm font-black ${
-              blocked ? "text-[#9AA7A3]" : "text-[#073B35]"
+            className={`text-base font-black ${
+              blocked ? "text-[#9A8E80]" : "text-[#3F5128]"
             }`}
           >
             ₹{food.price}
@@ -600,25 +612,25 @@ function RecommendedFoodCard({
               type="button"
               onClick={handleAdd}
               disabled={blocked}
-              className={`min-w-[72px] rounded-full px-4 py-2 text-[11px] font-black transition-all active:scale-95 ${
+              className={`min-w-[74px] rounded-full border px-4 py-2 text-[11px] font-black transition-all active:scale-95 ${
                 blocked
-                  ? "cursor-not-allowed bg-[#E8F4F1] text-[#8AA5A0]"
-                  : "bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
+                  ? "cursor-not-allowed border-[#EADFCE] bg-[#F1E8DC] text-[#9A8E80]"
+                  : "border-[#3F5128] bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15"
               }`}
             >
               {getButtonLabel()}
             </button>
           ) : (
-            <div className="flex items-center overflow-hidden rounded-full bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15">
+            <div className="flex items-center overflow-hidden rounded-full bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15">
               <button
                 type="button"
                 onClick={handleDecrease}
-                className="flex h-8 w-8 items-center justify-center text-base font-black active:bg-[#0B5149]"
+                className="flex h-8 w-8 items-center justify-center text-base font-black active:bg-[#4D612F]"
               >
                 −
               </button>
 
-              <span className="flex h-8 min-w-8 items-center justify-center bg-[#41D3BD] px-2 text-xs font-black text-[#073B35]">
+              <span className="flex h-8 min-w-8 items-center justify-center bg-[#CF743D] px-2 text-xs font-black text-white">
                 {quantity}
               </span>
 
@@ -629,7 +641,7 @@ function RecommendedFoodCard({
                 className={`flex h-8 w-8 items-center justify-center text-base font-black ${
                   quantity >= stock
                     ? "cursor-not-allowed opacity-40"
-                    : "active:bg-[#0B5149]"
+                    : "active:bg-[#4D612F]"
                 }`}
               >
                 +
@@ -644,23 +656,44 @@ function RecommendedFoodCard({
 
 function EmptyCard({ title, text }) {
   return (
-    <div className="rounded-[24px] border border-[#E8F4F1] bg-white/90 p-5 text-center shadow-[6px_6px_16px_rgba(7,59,53,0.06),-6px_-6px_16px_rgba(255,255,255,0.95)]">
-      <div className="text-3xl">🍲</div>
-      <h3 className="mt-3 text-base font-black text-[#111827]">{title}</h3>
-      <p className="mt-1 text-sm font-semibold text-[#51615D]">{text}</p>
+    <div className="relative overflow-hidden rounded-[24px] border border-[#EADFCE] bg-white/85 p-6 text-center shadow-[6px_6px_16px_rgba(63,81,40,0.06),-6px_-6px_16px_rgba(255,255,255,0.95)]">
+      <div className="pointer-events-none absolute -left-7 bottom-0 text-[90px] leading-none text-[#EADFCE]/70">
+        ❧
+      </div>
+      <div className="pointer-events-none absolute -right-7 bottom-0 text-[90px] leading-none text-[#EADFCE]/70">
+        ❧
+      </div>
+
+      <div className="relative z-10">
+        <div className="text-4xl">🍲</div>
+        <h3 className="mt-3 text-lg font-black text-[#181411]">{title}</h3>
+        <p className="mt-1 text-sm font-semibold text-[#6B6258]">{text}</p>
+      </div>
     </div>
   );
 }
 
 function KitchenSkeleton() {
   return (
-    <div className="h-[140px] w-[122px] shrink-0 animate-pulse rounded-[22px] bg-white/90 shadow-sm" />
+    <div className="h-[146px] w-[128px] shrink-0 animate-pulse rounded-[24px] border border-[#EADFCE] bg-white/90 shadow-sm" />
   );
 }
 
 function FoodSkeleton() {
   return (
-    <div className="h-[120px] animate-pulse rounded-[24px] bg-white/90 shadow-sm" />
+    <div className="h-[120px] animate-pulse rounded-[24px] border border-[#EADFCE] bg-white/90 shadow-sm" />
+  );
+}
+
+function LocationIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4 shrink-0 text-[#CF743D]"
+      fill="currentColor"
+    >
+      <path d="M12 2.5A7.5 7.5 0 0 0 4.5 10c0 5.25 7.5 11.5 7.5 11.5S19.5 15.25 19.5 10A7.5 7.5 0 0 0 12 2.5Zm0 10.25A2.75 2.75 0 1 1 12 7.25a2.75 2.75 0 0 1 0 5.5Z" />
+    </svg>
   );
 }
 
@@ -674,6 +707,20 @@ function ChevronDownIcon() {
       strokeWidth="2.5"
     >
       <path d="M6 9l6 6 6-6" />
+    </svg>
+  );
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-3.5 w-3.5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.8"
+    >
+      <path d="M9 6l6 6-6 6" />
     </svg>
   );
 }
@@ -699,13 +746,31 @@ function SearchIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="h-4 w-4 shrink-0 text-[#0B8F80]"
+      className="h-4 w-4 shrink-0 text-[#3F5128]"
       fill="none"
       stroke="currentColor"
       strokeWidth="2.2"
     >
       <circle cx="11" cy="11" r="7" />
       <path d="M20 20l-3.5-3.5" />
+    </svg>
+  );
+}
+
+function MountainLineIcon() {
+  return (
+    <svg
+      viewBox="0 0 220 120"
+      className="h-full w-full"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M5 92C35 58 59 44 84 67C112 23 140 16 169 58C188 36 203 42 216 68" />
+      <path d="M12 104C47 84 72 80 103 93C134 106 164 93 211 83" />
+      <path d="M52 91C72 70 94 70 113 87C134 66 154 62 177 81" />
+      <path d="M96 75L118 61L142 77" />
+      <path d="M118 61V92" />
     </svg>
   );
 }

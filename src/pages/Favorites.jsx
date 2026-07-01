@@ -5,10 +5,10 @@ import { useCart } from "../context/CartContext";
 const FAVORITES_STORAGE_KEY = "Nefo_favorite_foods";
 
 const CARD =
-  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+  "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
 const SOFT_CARD =
-  "rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
+  "rounded-[24px] border border-[#EADFCE] bg-[#FFFDF7] shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
 
 function readFavorites() {
   try {
@@ -187,49 +187,49 @@ export default function Favorites() {
 
   if (favorites.length === 0) {
     return (
-      <main className="min-h-screen bg-[#FFFFF2] px-4 py-5 pb-32 text-[#111827]">
+      <main className="min-h-screen bg-[#FFF8EC] px-4 py-5 pb-32 text-[#181411]">
         <div className="mx-auto max-w-md">
           <header className="flex items-start gap-3">
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+              className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
               aria-label="Go back"
             >
               <BackIcon />
             </button>
 
             <div>
-              <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+              <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
                 Saved Foods
               </p>
 
-              <h1 className="mt-1 text-3xl font-black text-[#073B35]">
+              <h1 className="mt-1 text-3xl font-black text-[#3F5128]">
                 Favorites
               </h1>
 
-              <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
-                Foods you heart will appear here.
+              <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
+                Foods you save with the heart button will appear here.
               </p>
             </div>
           </header>
 
           <section className={`mt-6 p-8 text-center ${CARD}`}>
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 text-4xl">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#D8C9B3] bg-[#FFF0DF] text-4xl text-[#CF743D]">
               ♡
             </div>
 
-            <h2 className="mt-5 text-2xl font-black text-[#111827]">
+            <h2 className="mt-5 text-2xl font-black text-[#181411]">
               No favorites yet
             </h2>
 
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               Tap the heart on any food to save it here.
             </p>
 
             <Link
               to="/marketplace"
-              className="mt-6 block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center text-sm font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.98]"
+              className="mt-6 block rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 text-center text-sm font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-[0.98]"
             >
               Browse Food
             </Link>
@@ -240,19 +240,19 @@ export default function Favorites() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FFFFF2] px-4 py-5 pb-32 text-[#111827]">
+    <main className="min-h-screen bg-[#FFF8EC] px-4 py-5 pb-32 text-[#181411]">
       {toast ? (
-        <div className="fixed left-3 right-3 top-24 z-[999] rounded-[24px] border border-[#BDEFE6] bg-white p-4 shadow-2xl shadow-[#073B35]/20 sm:left-1/2 sm:right-auto sm:w-[340px] sm:-translate-x-1/2">
+        <div className="fixed left-3 right-3 top-24 z-[999] rounded-[24px] border border-[#D8C9B3] bg-white p-4 shadow-2xl shadow-[#3F5128]/20 sm:left-1/2 sm:right-auto sm:w-[340px] sm:-translate-x-1/2">
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[#BDEFE6] bg-[#41D3BD]/15 text-xl">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[#EADFCE] bg-[#FFF0DF] text-xl">
               {toast.icon}
             </div>
 
             <div className="min-w-0 flex-1">
-              <p className="font-black text-[#073B35]">{toast.title}</p>
+              <p className="font-black text-[#3F5128]">{toast.title}</p>
 
               {toast.message ? (
-                <p className="mt-1 truncate text-sm font-semibold text-[#51615D]">
+                <p className="mt-1 truncate text-sm font-semibold text-[#6B6258]">
                   {toast.message}
                 </p>
               ) : null}
@@ -262,7 +262,7 @@ export default function Favorites() {
           {toast.href && toast.actionLabel ? (
             <Link
               to={toast.href}
-              className="mt-4 block rounded-2xl border border-[#073B35] bg-[#073B35] py-3 text-center font-black text-white"
+              className="mt-4 block rounded-2xl border border-[#3F5128] bg-[#3F5128] py-3 text-center font-black text-white"
             >
               {toast.actionLabel}
             </Link>
@@ -273,15 +273,15 @@ export default function Favorites() {
       <div className="mx-auto max-w-md">
         <header className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+            <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
               Saved Foods
             </p>
 
-            <h1 className="mt-1 text-3xl font-black text-[#073B35]">
+            <h1 className="mt-1 text-3xl font-black text-[#3F5128]">
               Favorites
             </h1>
 
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               {favorites.length} saved food{favorites.length === 1 ? "" : "s"} •{" "}
               {availableFavorites.length} available now
             </p>
@@ -308,7 +308,7 @@ export default function Favorites() {
                   <div className="flex gap-3">
                     <Link
                       to={`/food/${item.id}`}
-                      className="relative h-[112px] w-[112px] shrink-0 overflow-hidden rounded-[24px] border border-[#BDEFE6] bg-[#D7F5EF]"
+                      className="relative h-[112px] w-[112px] shrink-0 overflow-hidden rounded-[24px] border border-[#D8C9B3] bg-[#FFF0DF]"
                     >
                       <img
                         src={getImage(item)}
@@ -331,12 +331,12 @@ export default function Favorites() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <Link to={`/food/${item.id}`}>
-                            <h2 className="line-clamp-2 text-base font-black leading-tight text-[#111827]">
+                            <h2 className="line-clamp-2 text-base font-black leading-tight text-[#181411]">
                               {item.name}
                             </h2>
                           </Link>
 
-                          <p className="mt-1 truncate text-xs font-semibold text-[#51615D]">
+                          <p className="mt-1 truncate text-xs font-semibold text-[#6B6258]">
                             {getKitchenName(item)}
                           </p>
                         </div>
@@ -344,7 +344,7 @@ export default function Favorites() {
                         <button
                           type="button"
                           onClick={() => removeFavorite(item)}
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-red-100 bg-red-50 text-lg font-black text-red-500 active:scale-95"
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#CF743D] bg-white text-lg font-black text-[#CF743D] active:scale-95"
                           aria-label="Remove favorite"
                         >
                           ♥
@@ -352,13 +352,13 @@ export default function Favorites() {
                       </div>
 
                       <div className="mt-2 flex items-center justify-between gap-2">
-                        <p className="text-lg font-black text-[#073B35]">
+                        <p className="text-lg font-black text-[#3F5128]">
                           ₹{item.price}
                         </p>
 
                         <p
                           className={`text-xs font-black ${
-                            blocked ? "text-red-500" : "text-[#0B8F80]"
+                            blocked ? "text-red-500" : "text-[#3F5128]"
                           }`}
                         >
                           {blocked ? getBlockedLabel(item) : `${stock} left`}
@@ -367,20 +367,20 @@ export default function Favorites() {
 
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {item.delivery_available !== false ? (
-                          <span className="rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 px-2 py-1 text-[10px] font-black text-[#073B35]">
+                          <span className="rounded-full border border-[#D8C9B3] bg-[#FFF0DF] px-2 py-1 text-[10px] font-black text-[#3F5128]">
                             🚚 Delivery
                           </span>
                         ) : null}
 
                         {item.pickup_available !== false ? (
-                          <span className="rounded-full border border-[#BDEFE6] bg-[#FFFFF2] px-2 py-1 text-[10px] font-black text-[#073B35]">
+                          <span className="rounded-full border border-[#EADFCE] bg-[#FFFDF7] px-2 py-1 text-[10px] font-black text-[#3F5128]">
                             🛍️ Pickup
                           </span>
                         ) : null}
                       </div>
 
                       {item.description ? (
-                        <p className="mt-2 line-clamp-1 text-xs font-semibold text-[#51615D]">
+                        <p className="mt-2 line-clamp-1 text-xs font-semibold text-[#6B6258]">
                           {item.description}
                         </p>
                       ) : null}
@@ -395,23 +395,23 @@ export default function Favorites() {
                         disabled={blocked}
                         className={`w-full rounded-2xl border py-3 text-sm font-black transition-all active:scale-[0.98] ${
                           blocked
-                            ? "cursor-not-allowed border-red-100 bg-[#EAF7F4] text-[#9AA7A3]"
-                            : "border-[#073B35] bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
+                            ? "cursor-not-allowed border-red-100 bg-[#F1E8DC] text-[#9A8E80]"
+                            : "border-[#3F5128] bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15"
                         }`}
                       >
                         {blocked ? getBlockedLabel(item) : "+ Add to Cart"}
                       </button>
                     ) : (
-                      <div className="flex items-center justify-between overflow-hidden rounded-2xl border border-[#073B35] bg-[#073B35] font-black text-white shadow-lg shadow-[#073B35]/15">
+                      <div className="flex items-center justify-between overflow-hidden rounded-2xl border border-[#3F5128] bg-[#3F5128] font-black text-white shadow-lg shadow-[#3F5128]/15">
                         <button
                           type="button"
                           onClick={() => decreaseQuantity(item.id)}
-                          className="flex-1 py-3 text-xl active:bg-[#0B5149]"
+                          className="flex-1 py-3 text-xl active:bg-[#4D612F]"
                         >
                           −
                         </button>
 
-                        <span className="min-w-[70px] bg-[#41D3BD] px-5 py-3 text-center text-base text-[#073B35]">
+                        <span className="min-w-[70px] bg-[#CF743D] px-5 py-3 text-center text-base text-white">
                           {quantity}
                         </span>
 
@@ -422,7 +422,7 @@ export default function Favorites() {
                           className={`flex-1 py-3 text-xl ${
                             quantity >= stock
                               ? "cursor-not-allowed opacity-40"
-                              : "active:bg-[#0B5149]"
+                              : "active:bg-[#4D612F]"
                           }`}
                         >
                           +
@@ -437,15 +437,15 @@ export default function Favorites() {
         </section>
 
         <section className={`mt-5 p-5 text-center ${SOFT_CARD}`}>
-          <p className="font-black text-[#073B35]">Looking for more?</p>
+          <p className="font-black text-[#3F5128]">Looking for more?</p>
 
-          <p className="mt-1 text-sm font-semibold text-[#51615D]">
+          <p className="mt-1 text-sm font-semibold text-[#6B6258]">
             Browse nearby kitchens and save more foods.
           </p>
 
           <Link
             to="/marketplace"
-            className="mt-4 block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center text-sm font-black text-white active:scale-[0.98]"
+            className="mt-4 block rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 text-center text-sm font-black text-white active:scale-[0.98]"
           >
             Browse Food
           </Link>

@@ -16,13 +16,10 @@ const FOOD_CATEGORIES = [
 ];
 
 const CARD =
-  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+  "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
 const SOFT_CARD =
-  "rounded-[24px] border border-[#E8F4F1] bg-white/90 shadow-[6px_6px_16px_rgba(7,59,53,0.06),-6px_-6px_16px_rgba(255,255,255,0.95)]";
-
-const INPUT =
-  "w-full rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-3.5 text-sm font-semibold text-[#111827] outline-none placeholder:text-[#8AA5A0] focus:border-[#41D3BD] focus:bg-white";
+  "rounded-[24px] border border-[#EADFCE] bg-white/90 shadow-[6px_6px_16px_rgba(63,81,40,0.06),-6px_-6px_16px_rgba(255,255,255,0.95)]";
 
 export default function Marketplace() {
   const { cartCount } = useCart();
@@ -340,20 +337,20 @@ export default function Marketplace() {
     searchTerm || selectedType !== "All" || selectedCategory !== "All";
 
   return (
-    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-32 text-[#111827]">
+    <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-32 text-[#181411]">
       <div className="mx-auto max-w-md">
         <header className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+            <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
               Marketplace
             </p>
 
-            <h1 className="mt-1 text-3xl font-black leading-tight tracking-tight text-[#073B35]">
+            <h1 className="mt-1 text-3xl font-black leading-tight tracking-tight text-[#3F5128]">
               Fresh food
-              <span className="block text-[#111827]">near you</span>
+              <span className="block text-[#181411]">near you</span>
             </h1>
 
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               Meals, snacks, sweets, tiffins and daily food drops from nearby
               kitchens.
             </p>
@@ -361,13 +358,13 @@ export default function Marketplace() {
 
           <Link
             to="/cart"
-            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+            className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
             aria-label="Cart"
           >
             <CartIcon />
 
             {cartCount > 0 ? (
-              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-[#41D3BD] px-1 text-[10px] font-black text-[#073B35]">
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-[#CF743D] px-1 text-[10px] font-black text-white">
                 {cartCount > 9 ? "9+" : cartCount}
               </span>
             ) : null}
@@ -375,7 +372,7 @@ export default function Marketplace() {
         </header>
 
         <section className={`mt-5 p-4 ${CARD}`}>
-          <div className="flex items-center gap-2 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-3.5">
+          <div className="flex items-center gap-3 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-3.5">
             <SearchIcon />
 
             <input
@@ -383,7 +380,7 @@ export default function Marketplace() {
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder="Search dishes or kitchens..."
-              className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[#111827] outline-none placeholder:text-[#8AA5A0]"
+              className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[#181411] outline-none placeholder:text-[#9A8E80]"
             />
           </div>
 
@@ -392,14 +389,14 @@ export default function Marketplace() {
               <button
                 type="button"
                 onClick={() => setTypeDropdownOpen(!typeDropdownOpen)}
-                className="flex h-12 w-full items-center justify-between rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 text-sm font-black text-[#111827] active:scale-[0.99]"
+                className="flex h-12 w-full items-center justify-between rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 text-sm font-black text-[#181411] active:scale-[0.99]"
               >
                 <span>{getTypeLabel(selectedType)}</span>
                 <ChevronDownIcon open={typeDropdownOpen} />
               </button>
 
               {typeDropdownOpen ? (
-                <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl border border-[#BDEFE6] bg-white shadow-lg shadow-[#073B35]/10">
+                <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl border border-[#D8C9B3] bg-white shadow-lg shadow-[#3F5128]/10">
                   {["All", "Veg", "Non-Veg"].map((type) => (
                     <button
                       key={type}
@@ -410,8 +407,8 @@ export default function Marketplace() {
                       }}
                       className={`w-full px-4 py-3 text-left text-sm font-black ${
                         selectedType === type
-                          ? "bg-[#D7F5EF] text-[#073B35]"
-                          : "text-[#51615D]"
+                          ? "bg-[#FFF0DF] text-[#3F5128]"
+                          : "text-[#6B6258]"
                       }`}
                     >
                       {getTypeLabel(type)}
@@ -426,8 +423,8 @@ export default function Marketplace() {
               onClick={hasActiveFilters ? clearFilters : undefined}
               className={`h-12 rounded-2xl border px-4 text-sm font-black active:scale-95 ${
                 hasActiveFilters
-                  ? "border-[#BDEFE6] bg-white text-[#073B35]"
-                  : "border-[#41D3BD] bg-[#41D3BD] text-[#073B35]"
+                  ? "border-[#D8C9B3] bg-white text-[#3F5128]"
+                  : "border-[#CF743D] bg-[#CF743D] text-white"
               }`}
             >
               {hasActiveFilters ? "Clear" : "Search"}
@@ -448,8 +445,8 @@ export default function Marketplace() {
                   onClick={() => setSelectedCategory(category.label)}
                   className={`min-w-[86px] shrink-0 rounded-[22px] border px-3 py-3 text-center transition-all active:scale-95 ${
                     isActive
-                      ? "border-[#073B35] bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
-                      : "border-[#D7F5EF] bg-white/90 text-[#51615D] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]"
+                      ? "border-[#3F5128] bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15"
+                      : "border-[#EADFCE] bg-white/90 text-[#6B6258] shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]"
                   }`}
                 >
                   <div className="text-lg leading-none">{category.emoji}</div>
@@ -460,7 +457,7 @@ export default function Marketplace() {
 
                   <div
                     className={`mt-0.5 text-[10px] font-bold ${
-                      isActive ? "text-white/75" : "text-[#8AA5A0]"
+                      isActive ? "text-white/75" : "text-[#9A8E80]"
                     }`}
                   >
                     {count}
@@ -480,7 +477,7 @@ export default function Marketplace() {
         {highestSellingFood ? (
           <section className={`mt-5 overflow-hidden ${CARD}`}>
             <Link to={`/food/${highestSellingFood.id}`} className="block">
-              <div className="relative h-36 bg-[#D7F5EF]">
+              <div className="relative h-36 bg-[#FFF0DF]">
                 {highestSellingFood.image ? (
                   <img
                     src={highestSellingFood.image}
@@ -493,28 +490,28 @@ export default function Marketplace() {
                   </div>
                 )}
 
-                <div className="absolute left-3 top-3 rounded-full border border-[#41D3BD]/40 bg-[#41D3BD] px-3 py-1 text-[11px] font-black text-[#073B35]">
+                <div className="absolute left-3 top-3 rounded-full border border-[#CF743D]/40 bg-[#CF743D] px-3 py-1 text-[11px] font-black text-white">
                   🔥 Popular Today
                 </div>
               </div>
 
               <div className="p-4">
-                <h2 className="truncate text-lg font-black text-[#111827]">
+                <h2 className="truncate text-lg font-black text-[#181411]">
                   {highestSellingFood.name}
                 </h2>
 
-                <p className="mt-1 truncate text-xs font-semibold text-[#51615D]">
+                <p className="mt-1 truncate text-xs font-semibold text-[#6B6258]">
                   {highestSellingFood.seller_kitchen_name ||
                     highestSellingFood.seller ||
                     "Home Kitchen"}
                 </p>
 
                 <div className="mt-3 flex items-center justify-between gap-3">
-                  <p className="text-sm font-bold text-[#51615D]">
+                  <p className="text-sm font-bold text-[#6B6258]">
                     {getFulfillmentText(highestSellingFood)}
                   </p>
 
-                  <p className="text-lg font-black text-[#073B35]">
+                  <p className="text-lg font-black text-[#3F5128]">
                     ₹{highestSellingFood.price}
                   </p>
                 </div>
@@ -527,11 +524,11 @@ export default function Marketplace() {
           <section className="mt-5">
             <div className="mb-3 flex items-end justify-between">
               <div>
-                <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
                   Recommended
                 </p>
 
-                <h2 className="text-xl font-black text-[#111827]">
+                <h2 className="text-xl font-black text-[#181411]">
                   Popular today
                 </h2>
               </div>
@@ -545,7 +542,7 @@ export default function Marketplace() {
                     to={`/food/${food.id}`}
                     className={`w-[218px] shrink-0 overflow-hidden active:scale-[0.99] ${SOFT_CARD}`}
                   >
-                    <div className="relative h-30 bg-[#D7F5EF]">
+                    <div className="relative h-[120px] bg-[#FFF0DF]">
                       {food.image ? (
                         <img
                           src={food.image}
@@ -558,28 +555,28 @@ export default function Marketplace() {
                         </div>
                       )}
 
-                      <div className="absolute left-3 top-3 rounded-full border border-[#41D3BD]/40 bg-[#41D3BD] px-3 py-1 text-[10px] font-black text-[#073B35]">
+                      <div className="absolute left-3 top-3 rounded-full border border-[#CF743D]/40 bg-[#CF743D] px-3 py-1 text-[10px] font-black text-white">
                         {food.demand_badge?.label || "Fresh Drop"}
                       </div>
                     </div>
 
                     <div className="p-3">
-                      <h3 className="truncate text-sm font-black text-[#111827]">
+                      <h3 className="truncate text-sm font-black text-[#181411]">
                         {food.name}
                       </h3>
 
-                      <p className="mt-1 truncate text-xs font-semibold text-[#51615D]">
+                      <p className="mt-1 truncate text-xs font-semibold text-[#6B6258]">
                         {food.seller_kitchen_name ||
                           food.seller ||
                           "Home Kitchen"}
                       </p>
 
                       <div className="mt-3 flex items-center justify-between">
-                        <p className="text-base font-black text-[#073B35]">
+                        <p className="text-base font-black text-[#3F5128]">
                           ₹{food.price}
                         </p>
 
-                        <span className="rounded-full border border-[#BDEFE6] bg-[#EFFFFB] px-3 py-1 text-[11px] font-black text-[#073B35]">
+                        <span className="rounded-full border border-[#D8C9B3] bg-[#FFF8EC] px-3 py-1 text-[11px] font-black text-[#3F5128]">
                           View
                         </span>
                       </div>
@@ -594,15 +591,15 @@ export default function Marketplace() {
         <section className="mt-5">
           <div className="mb-4 flex items-end justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+              <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
                 Explore
               </p>
 
-              <h2 className="mt-1 text-2xl font-black text-[#111827]">
+              <h2 className="mt-1 text-2xl font-black text-[#181411]">
                 {getCategoryHeading()}
               </h2>
 
-              <p className="mt-1 text-sm font-semibold leading-relaxed text-[#51615D]">
+              <p className="mt-1 text-sm font-semibold leading-relaxed text-[#6B6258]">
                 {getCategorySubheading()}
               </p>
             </div>
@@ -611,7 +608,7 @@ export default function Marketplace() {
               <button
                 type="button"
                 onClick={clearFilters}
-                className="shrink-0 rounded-full border border-[#BDEFE6] bg-white px-4 py-2 text-xs font-black text-[#073B35]"
+                className="shrink-0 rounded-full border border-[#D8C9B3] bg-white px-4 py-2 text-xs font-black text-[#3F5128]"
               >
                 View All
               </button>
@@ -620,11 +617,11 @@ export default function Marketplace() {
 
           {loading ? (
             <div className={`p-8 text-center ${CARD}`}>
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-[#BDEFE6] bg-[#EFFFFB] text-2xl">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-[#D8C9B3] bg-[#FFF0DF] text-2xl">
                 🍽️
               </div>
 
-              <p className="mt-4 font-bold text-[#51615D]">
+              <p className="mt-4 font-bold text-[#6B6258]">
                 Loading fresh food drops...
               </p>
             </div>
@@ -643,11 +640,11 @@ export default function Marketplace() {
             <div className={`p-8 text-center ${CARD}`}>
               <div className="text-5xl">🍽️</div>
 
-              <p className="mt-4 font-black text-[#111827]">
+              <p className="mt-4 font-black text-[#181411]">
                 No dishes found.
               </p>
 
-              <p className="mt-2 text-sm font-semibold text-[#51615D]">
+              <p className="mt-2 text-sm font-semibold text-[#6B6258]">
                 Try another category, food type, or search term.
               </p>
 
@@ -655,7 +652,7 @@ export default function Marketplace() {
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="mt-5 rounded-2xl border border-[#41D3BD] bg-[#41D3BD] px-6 py-3 font-black text-[#073B35]"
+                  className="mt-5 rounded-2xl border border-[#CF743D] bg-[#CF743D] px-6 py-3 font-black text-white"
                 >
                   View All Food
                 </button>
@@ -676,7 +673,7 @@ export default function Marketplace() {
       {cartCount > 0 ? (
         <Link
           to="/cart"
-          className="fixed bottom-24 left-4 right-4 z-[940] mx-auto flex max-w-md items-center justify-center gap-3 rounded-2xl border border-[#073B35] bg-[#073B35] px-6 py-4 font-black text-white shadow-lg shadow-[#073B35]/20 active:scale-[0.98]"
+          className="fixed bottom-24 left-4 right-4 z-[940] mx-auto flex max-w-md items-center justify-center gap-3 rounded-2xl border border-[#3F5128] bg-[#3F5128] px-6 py-4 font-black text-white shadow-lg shadow-[#3F5128]/20 active:scale-[0.98]"
         >
           <span>🛒</span>
           <span>
@@ -690,14 +687,14 @@ export default function Marketplace() {
 
 function StatTile({ label, value, muted = false }) {
   return (
-    <div className="rounded-[22px] border border-[#D7F5EF] bg-white/90 p-3 shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
-      <p className="text-[10px] font-black uppercase text-[#7A8A86]">
+    <div className="rounded-[22px] border border-[#EADFCE] bg-white/90 p-3 shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
+      <p className="text-[10px] font-black uppercase text-[#6B6258]">
         {label}
       </p>
 
       <p
         className={`mt-1 text-2xl font-black ${
-          muted ? "text-[#8AA5A0]" : "text-[#073B35]"
+          muted ? "text-[#9A8E80]" : "text-[#3F5128]"
         }`}
       >
         {value}
@@ -710,7 +707,7 @@ function SearchIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="h-4 w-4 shrink-0 text-[#0B8F80]"
+      className="h-4 w-4 shrink-0 text-[#3F5128]"
       fill="none"
       stroke="currentColor"
       strokeWidth="2.2"
@@ -742,7 +739,7 @@ function ChevronDownIcon({ open }) {
   return (
     <svg
       viewBox="0 0 24 24"
-      className={`h-4 w-4 text-[#0B8F80] transition-transform ${
+      className={`h-4 w-4 text-[#3F5128] transition-transform ${
         open ? "rotate-180" : ""
       }`}
       fill="none"

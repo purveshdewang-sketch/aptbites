@@ -6,13 +6,13 @@ const PLATFORM_FEE = 10;
 const SELLER_COMMISSION_RATE = 0.1;
 
 const CARD =
-  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+  "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
 const SOFT_CARD =
-  "rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
+  "rounded-[24px] border border-[#D8C9B3] bg-[#FFFDF7] shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
 
 const INPUT =
-  "w-full rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-4 text-sm font-black text-[#111827] outline-none focus:border-[#41D3BD] focus:bg-white";
+  "w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-sm font-black text-[#181411] outline-none focus:border-[#CF743D] focus:bg-white";
 
 export default function OwnerAccounting() {
   const navigate = useNavigate();
@@ -340,7 +340,7 @@ export default function OwnerAccounting() {
       return "border-red-200 bg-red-50 text-red-600";
     }
 
-    return "border-[#BDEFE6] bg-[#41D3BD]/12 text-[#073B35]";
+    return "border-[#D8C9B3] bg-[#FFF0DF] text-[#3F5128]";
   }
 
   const filteredOrders = useMemo(() => {
@@ -598,29 +598,29 @@ export default function OwnerAccounting() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-32 text-[#111827]">
+    <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-32 text-[#181411]">
       <div className="mx-auto max-w-md">
         <header className="flex items-start gap-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
             aria-label="Go back"
           >
             <BackIcon />
           </button>
 
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+            <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
               Owner Accounting
             </p>
 
-            <h1 className="mt-1 text-3xl font-black leading-tight text-[#073B35]">
+            <h1 className="mt-1 text-3xl font-black leading-tight text-[#3F5128]">
               Weekly seller
-              <span className="block text-[#111827]">payouts</span>
+              <span className="block text-[#181411]">payouts</span>
             </h1>
 
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               Track seller earnings, deduct Nefo commission, view seller bank
               details, and calculate net weekly payout.
             </p>
@@ -630,14 +630,14 @@ export default function OwnerAccounting() {
         <section className="mt-5 grid grid-cols-2 gap-3">
           <Link
             to="/owner-dashboard"
-            className="rounded-2xl border border-[#BDEFE6] bg-white px-4 py-4 text-center text-sm font-black text-[#073B35] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] active:scale-95"
+            className="rounded-2xl border border-[#D8C9B3] bg-white px-4 py-4 text-center text-sm font-black text-[#3F5128] shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] active:scale-95"
           >
             Owner Dashboard
           </Link>
 
           <Link
             to="/owner-seller-applications"
-            className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-4 text-center text-sm font-black text-[#073B35] active:scale-95"
+            className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-center text-sm font-black text-[#3F5128] active:scale-95"
           >
             Applications
           </Link>
@@ -645,14 +645,14 @@ export default function OwnerAccounting() {
           <button
             type="button"
             onClick={downloadAccountingCSV}
-            className="col-span-2 rounded-2xl border border-[#073B35] bg-[#073B35] px-4 py-4 text-sm font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-95"
+            className="col-span-2 rounded-2xl border border-[#3F5128] bg-[#3F5128] px-4 py-4 text-sm font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-95"
           >
             Download Payout CSV
           </button>
         </section>
 
         <section className={`mt-5 p-4 ${CARD}`}>
-          <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+          <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
             Filters
           </p>
 
@@ -699,7 +699,7 @@ export default function OwnerAccounting() {
             <button
               type="button"
               onClick={() => fetchAccountingData()}
-              className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-5 py-4 font-black text-[#073B35] active:scale-95"
+              className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-5 py-4 font-black text-[#3F5128] active:scale-95"
             >
               Refresh
             </button>
@@ -708,9 +708,9 @@ export default function OwnerAccounting() {
 
         {loading ? (
           <section className={`mt-5 p-8 text-center ${CARD}`}>
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-4 border-[#D7F5EF] border-t-[#073B35] animate-spin" />
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-4 border-[#EADFCE] border-t-[#3F5128] animate-spin" />
 
-            <p className="mt-4 font-bold text-[#51615D]">
+            <p className="mt-4 font-bold text-[#6B6258]">
               Loading accounting data...
             </p>
           </section>
@@ -766,11 +766,11 @@ export default function OwnerAccounting() {
             </section>
 
             <section className={`mt-5 p-5 ${CARD}`}>
-              <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+              <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
                 Weekly Payout Logic
               </p>
 
-              <h2 className="mt-1 text-2xl font-black leading-tight text-[#111827]">
+              <h2 className="mt-1 text-2xl font-black leading-tight text-[#181411]">
                 {getDateFilterLabel()} payout summary
               </h2>
 
@@ -800,8 +800,8 @@ export default function OwnerAccounting() {
               </div>
             </section>
 
-            <section className="mt-5 rounded-[28px] border border-[#073B35] bg-[#073B35] p-5 text-white shadow-xl shadow-[#073B35]/15">
-              <p className="text-xs font-black uppercase tracking-wide text-[#41D3BD]">
+            <section className="mt-5 rounded-[28px] border border-[#3F5128] bg-[#3F5128] p-5 text-white shadow-xl shadow-[#3F5128]/15">
+              <p className="text-xs font-black uppercase tracking-wide text-[#F3C06E]">
                 Payout Rule
               </p>
 
@@ -809,13 +809,13 @@ export default function OwnerAccounting() {
                 Weekly payout = seller earning minus commission
               </h2>
 
-              <p className="mt-3 text-sm font-semibold leading-relaxed text-[#D7F5EF]">
+              <p className="mt-3 text-sm font-semibold leading-relaxed text-white/75">
                 For every non-cancelled order, Nefo calculates seller food
                 earning, deducts seller commission, and shows the net payout
                 amount before weekly settlement.
               </p>
 
-              <p className="mt-5 text-sm font-black text-[#41D3BD]">
+              <p className="mt-5 text-sm font-black text-[#F3C06E]">
                 Current commission: {Math.round(SELLER_COMMISSION_RATE * 100)}%
               </p>
             </section>
@@ -823,23 +823,23 @@ export default function OwnerAccounting() {
             <section className={`mt-5 p-5 ${CARD}`}>
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                  <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
                     Weekly Seller Payout Ledger
                   </p>
 
-                  <h2 className="mt-1 text-2xl font-black text-[#111827]">
+                  <h2 className="mt-1 text-2xl font-black text-[#181411]">
                     Amount to send
                   </h2>
                 </div>
 
-                <p className="shrink-0 text-sm font-black text-[#51615D]">
+                <p className="shrink-0 text-sm font-black text-[#6B6258]">
                   {sellerLedger.length}
                 </p>
               </div>
 
               {sellerLedger.length === 0 ? (
                 <div className={`mt-6 p-8 text-center ${SOFT_CARD}`}>
-                  <p className="font-bold text-[#51615D]">
+                  <p className="font-bold text-[#6B6258]">
                     No seller payout data found for selected filters.
                   </p>
                 </div>
@@ -848,20 +848,20 @@ export default function OwnerAccounting() {
                   {sellerLedger.map((seller) => (
                     <article
                       key={seller.sellerId}
-                      className="rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] p-4"
+                      className="rounded-[24px] border border-[#D8C9B3] bg-[#FFFDF7] p-4"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="truncate font-black text-[#111827]">
+                          <p className="truncate font-black text-[#181411]">
                             {seller.sellerName}
                           </p>
 
-                          <p className="mt-1 text-xs font-semibold text-[#51615D]">
+                          <p className="mt-1 text-xs font-semibold text-[#6B6258]">
                             {seller.phone || seller.email || "No contact"}
                           </p>
                         </div>
 
-                        <p className="shrink-0 text-xl font-black text-[#073B35]">
+                        <p className="shrink-0 text-xl font-black text-[#3F5128]">
                           ₹{seller.sellerNetPayout}
                         </p>
                       </div>
@@ -878,7 +878,7 @@ export default function OwnerAccounting() {
                         />
                       </div>
 
-                      <div className="mt-4 space-y-2 rounded-2xl border border-[#BDEFE6] bg-white p-4">
+                      <div className="mt-4 space-y-2 rounded-2xl border border-[#D8C9B3] bg-white p-4">
                         <DetailLine
                           label="Gross Sales"
                           value={`₹${seller.grossSales}`}
@@ -901,8 +901,8 @@ export default function OwnerAccounting() {
                         />
                       </div>
 
-                      <div className="mt-4 rounded-2xl border border-[#BDEFE6] bg-white p-4">
-                        <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                      <div className="mt-4 rounded-2xl border border-[#D8C9B3] bg-white p-4">
+                        <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
                           Bank Details
                         </p>
 
@@ -952,23 +952,23 @@ export default function OwnerAccounting() {
             <section className={`mt-5 p-5 ${CARD}`}>
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+                  <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
                     Accounting Register
                   </p>
 
-                  <h2 className="mt-1 text-2xl font-black text-[#111827]">
+                  <h2 className="mt-1 text-2xl font-black text-[#181411]">
                     Order-wise payout
                   </h2>
                 </div>
 
-                <p className="shrink-0 text-sm font-black text-[#51615D]">
+                <p className="shrink-0 text-sm font-black text-[#6B6258]">
                   {filteredOrders.length}
                 </p>
               </div>
 
               {filteredOrders.length === 0 ? (
                 <div className={`mt-6 p-8 text-center ${SOFT_CARD}`}>
-                  <p className="font-bold text-[#51615D]">
+                  <p className="font-bold text-[#6B6258]">
                     No orders found for selected filters.
                   </p>
                 </div>
@@ -980,25 +980,25 @@ export default function OwnerAccounting() {
                     return (
                       <article
                         key={order.id}
-                        className="rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] p-4"
+                        className="rounded-[24px] border border-[#D8C9B3] bg-[#FFFDF7] p-4"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <p className="text-sm font-bold text-[#51615D]">
+                            <p className="text-sm font-bold text-[#6B6258]">
                               Order #{order.id}
                             </p>
 
-                            <h3 className="mt-1 text-3xl font-black text-[#073B35]">
+                            <h3 className="mt-1 text-3xl font-black text-[#3F5128]">
                               ₹{Number(order.total_amount || 0)}
                             </h3>
                           </div>
 
-                          <p className="shrink-0 text-right text-xs font-semibold leading-relaxed text-[#51615D]">
+                          <p className="shrink-0 text-right text-xs font-semibold leading-relaxed text-[#6B6258]">
                             {formatDateTime(order.created_at)}
                           </p>
                         </div>
 
-                        <div className="mt-4 space-y-2 rounded-2xl border border-[#BDEFE6] bg-white p-4">
+                        <div className="mt-4 space-y-2 rounded-2xl border border-[#D8C9B3] bg-white p-4">
                           <DetailLine
                             label="Customer"
                             value={`${order.customer_name || "Unknown"} • ${
@@ -1018,8 +1018,8 @@ export default function OwnerAccounting() {
                           <DetailLine label="Items" value={getItemsText(order)} />
                         </div>
 
-                        <div className="mt-4 rounded-2xl border border-[#BDEFE6] bg-white p-4">
-                          <p className="text-sm font-black text-[#073B35]">
+                        <div className="mt-4 rounded-2xl border border-[#D8C9B3] bg-white p-4">
+                          <p className="text-sm font-black text-[#3F5128]">
                             Seller Bank Details
                           </p>
 
@@ -1095,7 +1095,7 @@ export default function OwnerAccounting() {
                               Payment Reference
                             </p>
 
-                            <p className="mt-1 break-all font-bold text-[#111827]">
+                            <p className="mt-1 break-all font-bold text-[#181411]">
                               {order.payment_reference}
                             </p>
                           </div>
@@ -1115,33 +1115,33 @@ export default function OwnerAccounting() {
 
 function AccountingCard({ title, value }) {
   return (
-    <div className="rounded-[22px] border border-[#D7F5EF] bg-white/90 p-4 shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
-      <p className="text-[10px] font-black uppercase tracking-wide text-[#7A8A86]">
+    <div className="rounded-[22px] border border-[#EADFCE] bg-white/90 p-4 shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
+      <p className="text-[10px] font-black uppercase tracking-wide text-[#6B6258]">
         {title}
       </p>
 
-      <p className="mt-2 text-xl font-black text-[#073B35]">{value}</p>
+      <p className="mt-2 text-xl font-black text-[#3F5128]">{value}</p>
     </div>
   );
 }
 
 function MoneyRow({ label, value }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4">
-      <p className="text-sm font-bold text-[#51615D]">{label}</p>
-      <p className="shrink-0 text-sm font-black text-[#073B35]">{value}</p>
+    <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-4">
+      <p className="text-sm font-bold text-[#6B6258]">{label}</p>
+      <p className="shrink-0 text-sm font-black text-[#3F5128]">{value}</p>
     </div>
   );
 }
 
 function SmallMetric({ label, value }) {
   return (
-    <div className="rounded-2xl border border-[#BDEFE6] bg-white p-3">
-      <p className="text-[10px] font-black uppercase text-[#51615D]">
+    <div className="rounded-2xl border border-[#D8C9B3] bg-white p-3">
+      <p className="text-[10px] font-black uppercase text-[#6B6258]">
         {label}
       </p>
 
-      <p className="mt-1 font-black text-[#073B35]">{value}</p>
+      <p className="mt-1 font-black text-[#3F5128]">{value}</p>
     </div>
   );
 }
@@ -1149,8 +1149,8 @@ function SmallMetric({ label, value }) {
 function DetailLine({ label, value }) {
   return (
     <div className="text-sm">
-      <span className="font-black text-[#073B35]">{label}: </span>
-      <span className="font-semibold text-[#51615D]">{value || "-"}</span>
+      <span className="font-black text-[#3F5128]">{label}: </span>
+      <span className="font-semibold text-[#6B6258]">{value || "-"}</span>
     </div>
   );
 }
@@ -1159,12 +1159,12 @@ function MoneyPill({ label, value, danger = false }) {
   return (
     <div
       className={`rounded-2xl border bg-white p-3 ${
-        danger ? "border-red-200" : "border-[#BDEFE6]"
+        danger ? "border-red-200" : "border-[#D8C9B3]"
       }`}
     >
       <p
         className={`text-[10px] font-black uppercase ${
-          danger ? "text-red-500" : "text-[#51615D]"
+          danger ? "text-red-500" : "text-[#6B6258]"
         }`}
       >
         {label}
@@ -1172,7 +1172,7 @@ function MoneyPill({ label, value, danger = false }) {
 
       <p
         className={`mt-1 font-black ${
-          danger ? "text-red-500" : "text-[#073B35]"
+          danger ? "text-red-500" : "text-[#3F5128]"
         }`}
       >
         {value}

@@ -3,13 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 
 const CARD =
-  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+  "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
 const SOFT_CARD =
-  "rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
+  "rounded-[24px] border border-[#D8C9B3] bg-[#FFFDF7] shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
 
 const INPUT =
-  "w-full rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-4 text-base font-semibold text-[#111827] outline-none placeholder:text-[#8AA5A0] focus:border-[#41D3BD] focus:bg-white";
+  "w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-base font-semibold text-[#181411] outline-none placeholder:text-[#9A8E80] focus:border-[#CF743D] focus:bg-white";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -40,6 +40,7 @@ export default function ResetPassword() {
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY" || session?.user) {
         setMode("update");
+        setCheckingSession(false);
       }
     });
 
@@ -57,17 +58,110 @@ export default function ResetPassword() {
     });
   }
 
+  function cleanRecoveryUrl() {
+    const cleanUrl = `${window.location.origin}${window.location.pathname}`;
+    window.history.replaceState({}, document.title, cleanUrl);
+  }
+
+  function getHashParams() {
+    const hash = window.location.hash || "";
+    const cleanHash = hash.startsWith("#") ? hash.slice(1) : hash;
+    return new URLSearchParams(cleanHash);
+  }
+
   async function checkResetSession() {
     setCheckingSession(true);
+    setMessage("");
+    clearErrors();
 
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    try {
+      const queryParams = new URLSearchParams(window.location.search);
+      const hashParams = getHashParams();
 
-    if (session?.user) {
-      setMode("update");
-    } else {
+      const urlError =
+        queryParams.get("error_description") ||
+        queryParams.get("error") ||
+        hashParams.get("error_description") ||
+        hashParams.get("error");
+
+      if (urlError) {
+        setMode("request");
+        setErrors((current) => ({
+          ...current,
+          general: decodeURIComponent(urlError).replaceAll("+", " "),
+        }));
+        setCheckingSession(false);
+        return;
+      }
+
+      const code = queryParams.get("code");
+
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+        if (error) {
+          setMode("request");
+          setErrors((current) => ({
+            ...current,
+            general: `Reset link could not be verified: ${error.message}`,
+          }));
+          setCheckingSession(false);
+          return;
+        }
+
+        cleanRecoveryUrl();
+        setMode("update");
+        setCheckingSession(false);
+        return;
+      }
+
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token");
+      const type = hashParams.get("type");
+
+      if (accessToken && refreshToken) {
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        if (error) {
+          setMode("request");
+          setErrors((current) => ({
+            ...current,
+            general: `Reset session could not be opened: ${error.message}`,
+          }));
+          setCheckingSession(false);
+          return;
+        }
+
+        cleanRecoveryUrl();
+
+        if (type === "recovery" || type === null) {
+          setMode("update");
+        }
+
+        setCheckingSession(false);
+        return;
+      }
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session?.user) {
+        setMode("update");
+      } else {
+        setMode("request");
+      }
+    } catch (error) {
       setMode("request");
+      setErrors((current) => ({
+        ...current,
+        general:
+          error?.message ||
+          "Could not check the reset link. Please request a new one.",
+      }));
     }
 
     setCheckingSession(false);
@@ -158,19 +252,19 @@ export default function ResetPassword() {
 
     setTimeout(async () => {
       await supabase.auth.signOut();
-      navigate("/customer-login");
+      navigate("/customer-login", { replace: true });
     }, 1200);
   }
 
   if (checkingSession) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#FFFFF2] px-4 py-8 text-[#111827]">
+      <main className="flex min-h-screen items-center justify-center bg-[#FFF8EC] px-4 py-8 text-[#181411]">
         <div className={`w-full max-w-md p-8 text-center ${CARD}`}>
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 text-3xl">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#D8C9B3] bg-[#FFF0DF] text-3xl">
             🔐
           </div>
 
-          <p className="mt-4 font-bold text-[#51615D]">
+          <p className="mt-4 font-bold text-[#6B6258]">
             Checking reset link...
           </p>
         </div>
@@ -179,11 +273,11 @@ export default function ResetPassword() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-28 text-[#111827]">
+    <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-28 text-[#181411]">
       <div className="mx-auto max-w-md">
         <header className="flex items-center justify-between gap-3">
           <Link to="/" className="flex min-w-0 items-center gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#D7F5EF] bg-white/90 shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#EADFCE] bg-white/90 shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]">
               <img
                 src="/Nefo-logo.png"
                 alt="Nefo"
@@ -192,10 +286,10 @@ export default function ResetPassword() {
             </div>
 
             <div className="min-w-0">
-              <p className="truncate text-xl font-black text-[#073B35]">
+              <p className="truncate text-xl font-black text-[#3F5128]">
                 Nefo
               </p>
-              <p className="text-[10px] font-black uppercase tracking-wide text-[#51615D]">
+              <p className="text-[10px] font-black uppercase tracking-wide text-[#6B6258]">
                 Password Reset
               </p>
             </div>
@@ -203,48 +297,55 @@ export default function ResetPassword() {
 
           <Link
             to="/customer-login"
-            className="shrink-0 rounded-full border border-[#BDEFE6] bg-white px-4 py-2 text-xs font-black text-[#073B35] active:scale-95"
+            className="shrink-0 rounded-full border border-[#D8C9B3] bg-white px-4 py-2 text-xs font-black text-[#3F5128] active:scale-95"
           >
             Sign In
           </Link>
         </header>
 
         <section className={`mt-5 overflow-hidden ${CARD}`}>
-          <div className="bg-[#073B35] p-5 text-white">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-[#41D3BD]">
-              <span>🔐</span>
-              <span>Password help</span>
-            </div>
+          <div className="relative overflow-hidden bg-[#3F5128] p-5 text-white">
+            <div className="absolute -right-10 -top-12 h-40 w-40 rounded-full bg-white/10" />
+            <div className="absolute -bottom-12 -left-12 h-36 w-36 rounded-full bg-[#CF743D]/20" />
 
-            <h1 className="mt-5 text-4xl font-black leading-[0.95] tracking-tight">
-              Reset your
-              <span className="block text-[#41D3BD]">password safely.</span>
-            </h1>
+            <div className="relative z-10">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-[#F3C06E]">
+                <span>🔐</span>
+                <span>Password help</span>
+              </div>
 
-            <p className="mt-4 text-sm font-semibold leading-relaxed text-[#D7F5EF]">
-              Request a secure reset link by email, then create a fresh
-              password for your Nefo account.
-            </p>
+              <h1 className="mt-5 text-4xl font-black leading-[0.95] tracking-tight">
+                Reset your
+                <span className="block text-[#F3C06E]">
+                  password safely.
+                </span>
+              </h1>
 
-            <div className="mt-5 grid grid-cols-3 gap-2">
-              <HeroTile icon="📩" title="Email" />
-              <HeroTile icon="🔒" title="Secure" />
-              <HeroTile icon="✅" title="Done" />
+              <p className="mt-4 text-sm font-semibold leading-relaxed text-white/75">
+                Request a secure reset link by email, then create a fresh
+                password for your Nefo account.
+              </p>
+
+              <div className="mt-5 grid grid-cols-3 gap-2">
+                <HeroTile icon="📩" title="Email" />
+                <HeroTile icon="🔒" title="Secure" />
+                <HeroTile icon="✅" title="Done" />
+              </div>
             </div>
           </div>
 
           <div className="p-5">
-            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+            <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
               Account security
             </p>
 
-            <h2 className="mt-2 text-3xl font-black leading-tight text-[#111827]">
+            <h2 className="mt-2 text-3xl font-black leading-tight text-[#181411]">
               {mode === "request"
                 ? "Forgot password?"
                 : "Create new password"}
             </h2>
 
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               {mode === "request"
                 ? "Enter your registered email address. We will send a secure password reset link."
                 : "Enter your new password below. Use at least 6 characters."}
@@ -259,8 +360,8 @@ export default function ResetPassword() {
             ) : null}
 
             {message ? (
-              <div className="mt-5 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4">
-                <p className="text-sm font-black text-[#073B35]">{message}</p>
+              <div className="mt-5 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-4">
+                <p className="text-sm font-black text-[#3F5128]">{message}</p>
               </div>
             ) : null}
 
@@ -277,14 +378,16 @@ export default function ResetPassword() {
                     }}
                     required
                     placeholder="Registered email address"
-                    className={`${INPUT} ${errors.email ? "border-red-300" : ""}`}
+                    className={`${INPUT} ${
+                      errors.email ? "border-red-300" : ""
+                    }`}
                   />
                 </Field>
 
                 <button
                   type="submit"
                   disabled={saving}
-                  className="w-full rounded-2xl border border-[#073B35] bg-[#073B35] py-4 font-black text-white shadow-lg shadow-[#073B35]/15 transition-all active:scale-[0.99] disabled:opacity-50"
+                  className="w-full rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 font-black text-white shadow-lg shadow-[#3F5128]/15 transition-all active:scale-[0.99] disabled:opacity-50"
                 >
                   {saving ? "Sending..." : "Send Reset Link"}
                 </button>
@@ -315,7 +418,7 @@ export default function ResetPassword() {
                     <button
                       type="button"
                       onClick={() => setShowPassword((current) => !current)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-black text-[#0B8F80]"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-black text-[#CF743D]"
                     >
                       {showPassword ? "Hide" : "Show"}
                     </button>
@@ -350,7 +453,7 @@ export default function ResetPassword() {
                       onClick={() =>
                         setShowConfirmPassword((current) => !current)
                       }
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-black text-[#0B8F80]"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-black text-[#CF743D]"
                     >
                       {showConfirmPassword ? "Hide" : "Show"}
                     </button>
@@ -360,7 +463,7 @@ export default function ResetPassword() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="w-full rounded-2xl border border-[#073B35] bg-[#073B35] py-4 font-black text-white shadow-lg shadow-[#073B35]/15 transition-all active:scale-[0.99] disabled:opacity-50"
+                  className="w-full rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 font-black text-white shadow-lg shadow-[#3F5128]/15 transition-all active:scale-[0.99] disabled:opacity-50"
                 >
                   {saving ? "Updating..." : "Update Password"}
                 </button>
@@ -368,11 +471,11 @@ export default function ResetPassword() {
             )}
 
             <section className={`mt-5 p-4 ${SOFT_CARD}`}>
-              <p className="text-sm font-black text-[#073B35]">
+              <p className="text-sm font-black text-[#3F5128]">
                 {mode === "request" ? "Check your email" : "After update"}
               </p>
 
-              <p className="mt-1 text-xs font-semibold leading-relaxed text-[#51615D]">
+              <p className="mt-1 text-xs font-semibold leading-relaxed text-[#6B6258]">
                 {mode === "request"
                   ? "Open the reset link from the same device if possible. If you do not see it, check spam or promotions."
                   : "You will be signed out automatically. Sign in again with your new password."}
@@ -390,7 +493,7 @@ export default function ResetPassword() {
                     setMessage("");
                     clearErrors();
                   }}
-                  className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] py-4 font-black text-[#073B35] active:scale-95"
+                  className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 font-black text-[#3F5128] active:scale-95"
                 >
                   Send New Link
                 </button>
@@ -398,7 +501,7 @@ export default function ResetPassword() {
 
               <Link
                 to="/customer-login"
-                className="block rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] py-4 text-center text-sm font-black text-[#073B35] active:scale-95"
+                className="block rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 text-center text-sm font-black text-[#3F5128] active:scale-95"
               >
                 Back to Sign In
               </Link>
@@ -413,13 +516,13 @@ export default function ResetPassword() {
 function Field({ label, error, children }) {
   return (
     <label className="block">
+      <span className="mb-2 block text-xs font-black uppercase tracking-wide text-[#6B6258]">
+        {label}
+      </span>
+
       {error ? (
         <p className="mb-2 text-sm font-black text-red-600">{error}</p>
       ) : null}
-
-      <span className="mb-2 block text-xs font-black uppercase tracking-wide text-[#51615D]">
-        {label}
-      </span>
 
       {children}
     </label>

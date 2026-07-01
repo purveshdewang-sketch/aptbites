@@ -61,13 +61,13 @@ const QUICK_ACTIONS = [
 ];
 
 const CARD =
-  "rounded-[28px] border border-[#D7F5EF] bg-white/90 shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+  "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
 const SOFT_CARD =
-  "rounded-[24px] border border-[#BDEFE6] bg-[#FFFFF2] shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
+  "rounded-[24px] border border-[#D8C9B3] bg-[#FFFDF7] shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]";
 
 const INPUT =
-  "w-full rounded-2xl border border-[#BDEFE6] bg-white px-4 py-4 text-sm font-semibold text-[#111827] outline-none placeholder:text-[#8AA5A0] focus:border-[#41D3BD]";
+  "w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-sm font-semibold text-[#181411] outline-none placeholder:text-[#9A8E80] focus:border-[#CF743D] focus:bg-white";
 
 export default function CustomerCareAgent() {
   const { user } = useAuth();
@@ -428,7 +428,7 @@ export default function CustomerCareAgent() {
     if (status === "cooking")
       return "border-orange-200 bg-orange-50 text-orange-700";
 
-    return "border-[#BDEFE6] bg-[#41D3BD]/12 text-[#073B35]";
+    return "border-[#D8C9B3] bg-[#FFF0DF] text-[#3F5128]";
   }
 
   function getIssueLabel(issueType) {
@@ -591,40 +591,40 @@ export default function CustomerCareAgent() {
 
   if (!user) {
     return (
-      <main className="min-h-screen bg-[#FFFFF2] px-4 py-5 pb-28 text-[#111827]">
+      <main className="min-h-screen bg-[#FFF8EC] px-4 py-5 pb-28 text-[#181411]">
         <div className="mx-auto max-w-md">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
             aria-label="Go back"
           >
             <BackIcon />
           </button>
 
           <section className={`mt-6 p-8 text-center ${CARD}`}>
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 text-4xl">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#D8C9B3] bg-[#FFF0DF] text-4xl">
               💬
             </div>
 
-            <h1 className="mt-5 text-2xl font-black text-[#111827]">
+            <h1 className="mt-5 text-2xl font-black text-[#181411]">
               Sign in for support
             </h1>
 
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               Sign in to attach orders, ask Nefo AI, and create support tickets.
             </p>
 
             <Link
               to="/customer-login"
-              className="mt-6 block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center text-sm font-black text-white"
+              className="mt-6 block rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 text-center text-sm font-black text-white"
             >
               Sign In
             </Link>
 
             <Link
               to="/"
-              className="mt-3 block rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] py-4 text-center text-sm font-black text-[#073B35]"
+              className="mt-3 block rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 text-center text-sm font-black text-[#3F5128]"
             >
               Back to Home
             </Link>
@@ -635,29 +635,29 @@ export default function CustomerCareAgent() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FFFFF2] px-4 py-4 pb-32 text-[#111827]">
+    <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-32 text-[#181411]">
       <div className="mx-auto max-w-md">
         <header className="flex items-start gap-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D7F5EF] bg-white/90 text-[#073B35] shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+            className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
             aria-label="Go back"
           >
             <BackIcon />
           </button>
 
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+            <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
               Nefo AI Care
             </p>
 
-            <h1 className="mt-1 text-3xl font-black leading-tight text-[#073B35]">
+            <h1 className="mt-1 text-3xl font-black leading-tight text-[#3F5128]">
               Ask anything
-              <span className="block text-[#111827]">about your order.</span>
+              <span className="block text-[#181411]">about your order.</span>
             </h1>
 
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               AI can check your order context, explain payment status, and help
               you create a support ticket.
             </p>
@@ -672,15 +672,15 @@ export default function CustomerCareAgent() {
 
         {latestActiveOrder ? (
           <section className={`mt-5 p-5 ${CARD}`}>
-            <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+            <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
               Current Order
             </p>
 
-            <h2 className="mt-1 text-xl font-black text-[#111827]">
+            <h2 className="mt-1 text-xl font-black text-[#181411]">
               Order #{latestActiveOrder.id}
             </h2>
 
-            <p className="mt-1 text-sm font-semibold text-[#51615D]">
+            <p className="mt-1 text-sm font-semibold text-[#6B6258]">
               {getStatusLabel(latestActiveOrder)} •{" "}
               {latestActiveOrder.delivery_type || "Delivery"} • ₹
               {latestActiveOrder.total_amount}
@@ -696,7 +696,7 @@ export default function CustomerCareAgent() {
                 );
               }}
               disabled={aiThinking}
-              className="mt-4 w-full rounded-2xl border border-[#073B35] bg-[#073B35] py-3 text-center text-sm font-black text-white active:scale-95 disabled:opacity-50"
+              className="mt-4 w-full rounded-2xl border border-[#3F5128] bg-[#3F5128] py-3 text-center text-sm font-black text-white active:scale-95 disabled:opacity-50"
             >
               Ask AI About This Order
             </button>
@@ -706,17 +706,17 @@ export default function CustomerCareAgent() {
         <section className={`mt-5 p-5 ${CARD}`}>
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+              <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
                 Step 1
               </p>
 
-              <h2 className="mt-1 text-2xl font-black text-[#111827]">
+              <h2 className="mt-1 text-2xl font-black text-[#181411]">
                 Choose issue
               </h2>
             </div>
 
             {selectedIssueType ? (
-              <span className="rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 px-3 py-1.5 text-xs font-black text-[#073B35]">
+              <span className="rounded-full border border-[#D8C9B3] bg-[#FFF0DF] px-3 py-1.5 text-xs font-black text-[#3F5128]">
                 Selected
               </span>
             ) : null}
@@ -731,8 +731,8 @@ export default function CustomerCareAgent() {
                 disabled={aiThinking}
                 className={`rounded-2xl border p-4 text-left transition-all active:scale-[0.98] disabled:opacity-60 ${
                   selectedIssueType === action.issueType
-                    ? "border-[#073B35] bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
-                    : "border-[#BDEFE6] bg-[#FFFFF2] text-[#51615D]"
+                    ? "border-[#3F5128] bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15"
+                    : "border-[#D8C9B3] bg-[#FFFDF7] text-[#6B6258]"
                 }`}
               >
                 <div className="text-2xl">{action.icon}</div>
@@ -745,7 +745,7 @@ export default function CustomerCareAgent() {
                   className={`mt-1 text-[11px] font-semibold ${
                     selectedIssueType === action.issueType
                       ? "text-white/65"
-                      : "text-[#8AA5A0]"
+                      : "text-[#9A8E80]"
                   }`}
                 >
                   {action.short}
@@ -756,11 +756,11 @@ export default function CustomerCareAgent() {
         </section>
 
         <section className={`mt-5 p-5 ${CARD}`}>
-          <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+          <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
             Step 2
           </p>
 
-          <h2 className="mt-1 text-2xl font-black text-[#111827]">
+          <h2 className="mt-1 text-2xl font-black text-[#181411]">
             Attach order
           </h2>
 
@@ -777,20 +777,20 @@ export default function CustomerCareAgent() {
           ) : null}
 
           {loadingOrders ? (
-            <div className="mt-5 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4 text-sm font-bold text-[#51615D]">
+            <div className="mt-5 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-4 text-sm font-bold text-[#6B6258]">
               Loading orders...
             </div>
           ) : orders.length === 0 ? (
             <div className={`mt-5 p-5 text-center ${SOFT_CARD}`}>
-              <p className="font-black text-[#073B35]">No orders yet</p>
+              <p className="font-black text-[#3F5128]">No orders yet</p>
 
-              <p className="mt-1 text-sm font-semibold text-[#51615D]">
+              <p className="mt-1 text-sm font-semibold text-[#6B6258]">
                 You can still ask a general app question.
               </p>
 
               <Link
                 to="/marketplace"
-                className="mt-4 block rounded-2xl border border-[#073B35] bg-[#073B35] py-3 text-center font-black text-white"
+                className="mt-4 block rounded-2xl border border-[#3F5128] bg-[#3F5128] py-3 text-center font-black text-white"
               >
                 Explore Food
               </Link>
@@ -804,8 +804,8 @@ export default function CustomerCareAgent() {
                   onClick={() => setSelectedOrderId(String(order.id))}
                   className={`w-full rounded-2xl border p-4 text-left transition-all active:scale-[0.99] ${
                     String(selectedOrderId) === String(order.id)
-                      ? "border-[#073B35] bg-[#073B35] text-white"
-                      : "border-[#BDEFE6] bg-[#FFFFF2] text-[#51615D]"
+                      ? "border-[#3F5128] bg-[#3F5128] text-white"
+                      : "border-[#D8C9B3] bg-[#FFFDF7] text-[#6B6258]"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -816,7 +816,7 @@ export default function CustomerCareAgent() {
                         className={`mt-1 text-xs font-semibold ${
                           String(selectedOrderId) === String(order.id)
                             ? "text-white/70"
-                            : "text-[#51615D]"
+                            : "text-[#6B6258]"
                         }`}
                       >
                         {formatDateTime(order.created_at)} •{" "}
@@ -831,7 +831,7 @@ export default function CustomerCareAgent() {
                     <span
                       className={`rounded-full border px-2.5 py-1 text-[10px] font-black ${
                         String(selectedOrderId) === String(order.id)
-                          ? "border-white/10 bg-white/10 text-[#41D3BD]"
+                          ? "border-white/10 bg-white/10 text-[#F3C06E]"
                           : getStatusClass(order)
                       }`}
                     >
@@ -857,15 +857,15 @@ export default function CustomerCareAgent() {
         </section>
 
         <section className={`mt-5 overflow-hidden ${CARD}`}>
-          <div className="border-b border-[#174E47] bg-[#073B35] p-4 text-white">
+          <div className="border-b border-[#4D612F] bg-[#3F5128] p-4 text-white">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#41D3BD] bg-[#41D3BD] text-2xl text-[#073B35]">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#CF743D] bg-[#CF743D] text-2xl text-white">
                 🤖
               </div>
 
               <div>
                 <p className="text-xl font-black">Nefo AI Care</p>
-                <p className="mt-0.5 text-xs font-semibold text-[#D7F5EF]">
+                <p className="mt-0.5 text-xs font-semibold text-white/70">
                   Smart support with live order context
                 </p>
               </div>
@@ -873,7 +873,7 @@ export default function CustomerCareAgent() {
           </div>
 
           {selectedOrder ? (
-            <div className="border-b border-[#D7F5EF] bg-[#FFFFF2] p-4">
+            <div className="border-b border-[#EADFCE] bg-[#FFFDF7] p-4">
               <div className="grid grid-cols-2 gap-3">
                 <InfoPill label="Order" value={`#${selectedOrder.id}`} />
                 <InfoPill
@@ -904,7 +904,7 @@ export default function CustomerCareAgent() {
             </div>
           ) : null}
 
-          <div className="bg-[#FFFFF2] p-4">
+          <div className="bg-[#FFFDF7] p-4">
             {chatError ? (
               <div className="mb-3 rounded-2xl border border-red-200 bg-red-50 p-4">
                 <p className="text-sm font-black text-red-600">
@@ -917,7 +917,7 @@ export default function CustomerCareAgent() {
               </div>
             ) : null}
 
-            <div className="h-[360px] space-y-3 overflow-y-auto rounded-3xl border border-[#BDEFE6] bg-white p-3">
+            <div className="h-[360px] space-y-3 overflow-y-auto rounded-3xl border border-[#D8C9B3] bg-white p-3">
               {chatMessages.map((message, index) => (
                 <div
                   key={`${message.sender}-${index}`}
@@ -928,8 +928,8 @@ export default function CustomerCareAgent() {
                   <div
                     className={`max-w-[86%] whitespace-pre-line rounded-2xl border px-4 py-3 text-sm leading-relaxed ${
                       message.sender === "user"
-                        ? "rounded-br-md border-[#073B35] bg-[#073B35] text-white"
-                        : "rounded-bl-md border-[#BDEFE6] bg-[#FFFFF2] text-[#51615D]"
+                        ? "rounded-br-md border-[#3F5128] bg-[#3F5128] text-white"
+                        : "rounded-bl-md border-[#D8C9B3] bg-[#FFF8EC] text-[#6B6258]"
                     }`}
                   >
                     {message.text}
@@ -939,7 +939,7 @@ export default function CustomerCareAgent() {
 
               {aiThinking ? (
                 <div className="flex justify-start">
-                  <div className="rounded-2xl rounded-bl-md border border-[#BDEFE6] bg-[#FFFFF2] px-4 py-3 text-sm font-black text-[#073B35]">
+                  <div className="rounded-2xl rounded-bl-md border border-[#D8C9B3] bg-[#FFF8EC] px-4 py-3 text-sm font-black text-[#3F5128]">
                     Finding the best answer...
                   </div>
                 </div>
@@ -949,7 +949,7 @@ export default function CustomerCareAgent() {
             </div>
 
             <div className="mt-4">
-              <p className="mb-2 text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+              <p className="mb-2 text-xs font-black uppercase tracking-wide text-[#CF743D]">
                 Step 3 • Ask AI or create ticket
               </p>
 
@@ -984,7 +984,7 @@ export default function CustomerCareAgent() {
                   type="button"
                   onClick={() => askNefoAi()}
                   disabled={aiThinking || !messageText.trim()}
-                  className="shrink-0 rounded-2xl border border-[#073B35] bg-[#073B35] px-5 font-black text-white active:scale-95 disabled:opacity-50"
+                  className="shrink-0 rounded-2xl border border-[#3F5128] bg-[#3F5128] px-5 font-black text-white active:scale-95 disabled:opacity-50"
                 >
                   {aiThinking ? "..." : "Send"}
                 </button>
@@ -994,7 +994,7 @@ export default function CustomerCareAgent() {
                 type="button"
                 onClick={createSupportTicket}
                 disabled={creatingTicket || !selectedIssueType || !messageText.trim()}
-                className="mt-3 w-full rounded-2xl border border-[#073B35] bg-[#073B35] py-4 font-black text-white shadow-lg shadow-[#073B35]/15 transition-all active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-3 w-full rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 font-black text-white shadow-lg shadow-[#3F5128]/15 transition-all active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {creatingTicket
                   ? "Creating Ticket..."
@@ -1009,16 +1009,16 @@ export default function CustomerCareAgent() {
         <section className={`mt-5 p-5 ${CARD}`}>
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-black uppercase tracking-wide text-[#0B8F80]">
+              <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
                 Ticket History
               </p>
 
-              <h2 className="mt-1 text-2xl font-black text-[#111827]">
+              <h2 className="mt-1 text-2xl font-black text-[#181411]">
                 Your tickets
               </h2>
             </div>
 
-            <span className="rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 px-3 py-1.5 text-xs font-black text-[#073B35]">
+            <span className="rounded-full border border-[#D8C9B3] bg-[#FFF0DF] px-3 py-1.5 text-xs font-black text-[#3F5128]">
               {tickets.length}
             </span>
           </div>
@@ -1036,14 +1036,14 @@ export default function CustomerCareAgent() {
           ) : null}
 
           {loadingTickets ? (
-            <div className="mt-5 rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4 text-sm font-bold text-[#51615D]">
+            <div className="mt-5 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-4 text-sm font-bold text-[#6B6258]">
               Loading tickets...
             </div>
           ) : tickets.length === 0 ? (
             <div className={`mt-5 p-5 text-center ${SOFT_CARD}`}>
-              <p className="font-black text-[#073B35]">No tickets yet</p>
+              <p className="font-black text-[#3F5128]">No tickets yet</p>
 
-              <p className="mt-1 text-sm font-semibold text-[#51615D]">
+              <p className="mt-1 text-sm font-semibold text-[#6B6258]">
                 Created tickets will appear here.
               </p>
             </div>
@@ -1052,15 +1052,15 @@ export default function CustomerCareAgent() {
               {tickets.map((ticket) => (
                 <div
                   key={ticket.id}
-                  className="rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] p-4"
+                  className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-4"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate font-black text-[#111827]">
+                      <p className="truncate font-black text-[#181411]">
                         Ticket #{ticket.id}
                       </p>
 
-                      <p className="mt-1 text-xs font-semibold text-[#51615D]">
+                      <p className="mt-1 text-xs font-semibold text-[#6B6258]">
                         {getIssueLabel(ticket.issue_type)}
                       </p>
                     </div>
@@ -1074,7 +1074,7 @@ export default function CustomerCareAgent() {
                     </span>
                   </div>
 
-                  <p className="mt-3 line-clamp-2 text-xs font-semibold leading-relaxed text-[#51615D]">
+                  <p className="mt-3 line-clamp-2 text-xs font-semibold leading-relaxed text-[#6B6258]">
                     {ticket.message}
                   </p>
                 </div>
@@ -1085,7 +1085,7 @@ export default function CustomerCareAgent() {
 
         <Link
           to="/"
-          className="mt-5 block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 text-center font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-95"
+          className="mt-5 block rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 text-center font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-95"
         >
           Back to Home
         </Link>
@@ -1096,24 +1096,24 @@ export default function CustomerCareAgent() {
 
 function MiniStat({ label, value }) {
   return (
-    <div className="rounded-[22px] border border-[#D7F5EF] bg-white/90 p-3 shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
-      <p className="text-[10px] font-black uppercase text-[#7A8A86]">
+    <div className="rounded-[22px] border border-[#EADFCE] bg-white/90 p-3 shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
+      <p className="text-[10px] font-black uppercase text-[#6B6258]">
         {label}
       </p>
 
-      <p className="mt-1 text-2xl font-black text-[#073B35]">{value}</p>
+      <p className="mt-1 text-2xl font-black text-[#3F5128]">{value}</p>
     </div>
   );
 }
 
 function InfoPill({ label, value }) {
   return (
-    <div className="rounded-2xl border border-[#BDEFE6] bg-white p-3">
-      <p className="text-[10px] font-black uppercase text-[#51615D]">
+    <div className="rounded-2xl border border-[#D8C9B3] bg-white p-3">
+      <p className="text-[10px] font-black uppercase text-[#6B6258]">
         {label}
       </p>
 
-      <p className="mt-1 truncate text-sm font-black text-[#073B35]">
+      <p className="mt-1 truncate text-sm font-black text-[#3F5128]">
         {value}
       </p>
     </div>
