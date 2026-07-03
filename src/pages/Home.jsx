@@ -25,7 +25,6 @@ const CARD =
 
 export default function Home() {
   const { user } = useAuth();
-
   const { cartItems } = useCart();
 
   const [searchParams] = useSearchParams();
@@ -532,13 +531,10 @@ export default function Home() {
       .slice(0, 8);
   }, [homeFoods]);
 
-
   const hasActiveFilters =
     Boolean(searchText.trim()) ||
     activeCategory !== "All" ||
     activeFoodType !== "All";
-
-  const shouldShowSellFood = true;
 
   const sellFoodPath =
     isSeller || isAdmin
@@ -690,83 +686,81 @@ export default function Home() {
           </div>
         </section>
 
-        {shouldShowSellFood ? (
-          <section className="relative mt-4 overflow-hidden rounded-[24px] border border-[#4D612F] bg-[#3F5128] p-5 text-white shadow-lg shadow-[#3F5128]/15">
-            <div className="absolute -right-7 -top-8 h-36 w-36 rounded-full bg-white/10" />
+        <section className="relative mt-4 overflow-hidden rounded-[24px] border border-[#4D612F] bg-[#3F5128] p-5 text-white shadow-lg shadow-[#3F5128]/15">
+          <div className="absolute -right-7 -top-8 h-36 w-36 rounded-full bg-white/10" />
 
-            <div className="absolute bottom-0 right-3 h-24 w-40 opacity-30">
-              <MountainLineIcon />
+          <div className="absolute bottom-0 right-3 h-24 w-40 opacity-30">
+            <MountainLineIcon />
+          </div>
+
+          <div className="relative z-10 flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-xs font-black uppercase tracking-wide text-[#F3C06E]">
+                Kitchen partner
+              </p>
+
+              <h2 className="mt-1 text-xl font-black">
+                {isSeller || isAdmin
+                  ? "Manage your kitchen"
+                  : "Sell on Nefo"}
+              </h2>
+
+              <p className="mt-1 text-sm font-semibold text-white/75">
+                {isSeller || isAdmin
+                  ? "Manage orders, food and availability."
+                  : "Start selling homemade food nearby."}
+              </p>
             </div>
 
-            <div className="relative z-10 flex items-center justify-between gap-4">
-              <div className="min-w-0">
-                <p className="text-xs font-black uppercase tracking-wide text-[#F3C06E]">
-                  Kitchen partner
-                </p>
-
-                <h2 className="mt-1 text-xl font-black">
-                  {isSeller || isAdmin
-                    ? "Manage your kitchen"
-                    : "Sell on Nefo"}
-                </h2>
-
-                <p className="mt-1 text-sm font-semibold text-white/75">
-                  {isSeller || isAdmin
-                    ? "Manage orders, food and availability."
-                    : "Start selling homemade food nearby."}
-                </p>
-              </div>
-
-              <Link
-                to={sellFoodPath}
-                className="shrink-0 rounded-full border border-[#CF743D] bg-[#CF743D] px-5 py-3 text-sm font-black text-white shadow-lg shadow-black/10 active:scale-95"
-              >
-                {isSeller || isAdmin ? "Open" : "Start"}
-              </Link>
-            </div>
-          </section>
-        ) : null}
+            <Link
+              to={sellFoodPath}
+              className="shrink-0 rounded-full border border-[#CF743D] bg-[#CF743D] px-5 py-3 text-sm font-black text-white shadow-lg shadow-black/10 active:scale-95"
+            >
+              {isSeller || isAdmin ? "Open" : "Start"}
+            </Link>
+          </div>
+        </section>
 
         {!hasActiveFilters ? (
           <section className="mt-6">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-lg font-black text-[#3F5128]">
-                  Popular Kitchens
-                </h2>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-lg font-black text-[#3F5128]">
+                Popular Kitchens
+              </h2>
 
-                <button
-                  type="button"
-                  onClick={scrollToAllFood}
-                  className="inline-flex items-center gap-1 text-xs font-black text-[#CF743D]"
-                >
-                  See All <ChevronRightIcon />
-                </button>
+              <button
+                type="button"
+                onClick={scrollToAllFood}
+                className="inline-flex items-center gap-1 text-xs font-black text-[#CF743D]"
+              >
+                See All <ChevronRightIcon />
+              </button>
+            </div>
+
+            {loadingFoods ? (
+              <div className="-mx-4 flex gap-3 overflow-hidden px-4">
+                <KitchenSkeleton />
+                <KitchenSkeleton />
+                <KitchenSkeleton />
               </div>
-
-              {loadingFoods ? (
-                <div className="-mx-4 flex gap-3 overflow-hidden px-4">
-                  <KitchenSkeleton />
-                  <KitchenSkeleton />
-                  <KitchenSkeleton />
+            ) : popularKitchens.length > 0 ? (
+              <div className="-mx-4 overflow-x-auto px-4 scrollbar-hide">
+                <div className="flex min-w-max gap-3">
+                  {popularKitchens.map((kitchen) => (
+                    <KitchenCard
+                      key={kitchen.id}
+                      kitchen={kitchen}
+                      onSelect={selectKitchen}
+                    />
+                  ))}
                 </div>
-              ) : popularKitchens.length > 0 ? (
-                <div className="-mx-4 overflow-x-auto px-4 scrollbar-hide">
-                  <div className="flex min-w-max gap-3">
-                    {popularKitchens.map((kitchen) => (
-                      <KitchenCard
-                        key={kitchen.id}
-                        kitchen={kitchen}
-                        onSelect={selectKitchen}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <EmptyCard
-                  title="No kitchens yet"
-                  text="Nearby kitchens will appear here after dishes are uploaded."
-                />
-              )}
+              </div>
+            ) : (
+              <EmptyCard
+                title="No kitchens yet"
+                text="Nearby kitchens will appear here after dishes are uploaded."
+              />
+            )}
           </section>
         ) : null}
 
@@ -898,7 +892,9 @@ function KitchenCard({ kitchen, onSelect }) {
 
         {kitchen.ratingCount > 0 ? (
           <div className="mt-1 flex items-center gap-1 text-[10px] font-bold text-[#6B6258]">
-            <span className="text-[#F59E0B]">★</span>
+            <span className="text-[#F59E0B]">
+              ★
+            </span>
 
             <span>
               {kitchen.ratingAverage.toFixed(1)}
@@ -933,7 +929,9 @@ function EmptyCard({ title, text }) {
       </div>
 
       <div className="relative z-10">
-        <div className="text-4xl">🍲</div>
+        <div className="text-4xl">
+          🍲
+        </div>
 
         <h3 className="mt-3 text-lg font-black text-[#181411]">
           {title}
