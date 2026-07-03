@@ -3,6 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabaseClient";
 
+const PAGE_CARD =
+  "rounded-[26px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+
 export default function Profile() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -40,6 +43,8 @@ export default function Profile() {
   const [resettingPassword, setResettingPassword] = useState(false);
   const [message, setMessage] = useState("");
 
+  const isAdmin = role === "admin";
+
   const profileChanged =
     originalFormData &&
     JSON.stringify(formData) !== JSON.stringify(originalFormData);
@@ -51,10 +56,18 @@ export default function Profile() {
       formData.bank_ifsc?.trim()
   );
 
-  const sellerOnboardingComplete =
-    isSeller && bankDetailsCompleted && currentBankDetailsComplete;
+  const effectiveBankDetailsComplete = isAdmin
+    ? true
+    : currentBankDetailsComplete;
 
-  const sellerProgress = isSeller
+  const sellerOnboardingComplete =
+    isSeller &&
+    (isAdmin ||
+      (bankDetailsCompleted === true && currentBankDetailsComplete === true));
+
+  const sellerProgress = isAdmin
+    ? 100
+    : isSeller
     ? Math.round(
         ([
           true,
@@ -95,7 +108,11 @@ export default function Profile() {
     const flat = formData.flat?.trim();
 
     const lineOne = apartment || "No address added";
-    const lineTwo = [block, flatNo ? `Flat ${flatNo}` : flat]
+
+    const lineTwo = [
+      block,
+      flatNo ? `Flat ${flatNo}` : flat,
+    ]
       .filter(Boolean)
       .join(", ");
 
@@ -157,11 +174,15 @@ export default function Profile() {
 
     const profileRole = String(
       data?.role || user?.user_metadata?.role || "customer"
-    ).toLowerCase();
+    )
+      .trim()
+      .toLowerCase();
 
     const applicationStatus = String(
       data?.seller_application_status || "not_applied"
-    ).toLowerCase();
+    )
+      .trim()
+      .toLowerCase();
 
     const sellerAllowed =
       profileRole === "admin" ||
@@ -171,23 +192,44 @@ export default function Profile() {
 
     setRole(profileRole || "customer");
     setIsSeller(sellerAllowed);
-    setBankDetailsCompleted(data?.bank_details_completed === true);
+    setBankDetailsCompleted(
+      profileRole === "admin" || data?.bank_details_completed === true
+    );
 
     const loadedProfile = {
-      full_name: data?.full_name || user?.user_metadata?.full_name || "",
-      phone: data?.phone || user?.phone || user?.user_metadata?.phone || "",
+      full_name:
+        data?.full_name || user?.user_metadata?.full_name || "",
+      phone:
+        data?.phone ||
+        user?.phone ||
+        user?.user_metadata?.phone ||
+        "",
       apartment_name:
-        data?.apartment_name || user?.user_metadata?.apartment_name || "",
-      block: data?.block || user?.user_metadata?.block || "",
-      flat_no: data?.flat_no || user?.user_metadata?.flat_no || "",
-      flat: data?.flat || user?.user_metadata?.flat || "",
+        data?.apartment_name ||
+        user?.user_metadata?.apartment_name ||
+        "",
+      block:
+        data?.block ||
+        user?.user_metadata?.block ||
+        "",
+      flat_no:
+        data?.flat_no ||
+        user?.user_metadata?.flat_no ||
+        "",
+      flat:
+        data?.flat ||
+        user?.user_metadata?.flat ||
+        "",
       seller_kitchen_name: data?.seller_kitchen_name || "",
       seller_door_no: data?.seller_door_no || "",
       seller_specialty: data?.seller_specialty || "",
       seller_about: data?.seller_about || "",
-      accept_scheduled_orders: data?.accept_scheduled_orders !== false,
-      delivery_available: data?.delivery_available !== false,
-      pickup_available: data?.pickup_available !== false,
+      accept_scheduled_orders:
+        data?.accept_scheduled_orders !== false,
+      delivery_available:
+        data?.delivery_available !== false,
+      pickup_available:
+        data?.pickup_available !== false,
       bank_account_holder: data?.bank_account_holder || "",
       bank_name: data?.bank_name || "",
       bank_account_number: data?.bank_account_number || "",
@@ -209,7 +251,9 @@ export default function Profile() {
       checked === false &&
       formData.pickup_available === false
     ) {
-      setMessage("At least one option must stay ON: Delivery or Self Pickup.");
+      setMessage(
+        "At least one option must stay ON: Delivery or Self Pickup."
+      );
       return;
     }
 
@@ -219,16 +263,21 @@ export default function Profile() {
       checked === false &&
       formData.delivery_available === false
     ) {
-      setMessage("At least one option must stay ON: Delivery or Self Pickup.");
+      setMessage(
+        "At least one option must stay ON: Delivery or Self Pickup."
+      );
       return;
     }
 
-    const nextValue = name === "bank_ifsc" ? value.toUpperCase() : value;
+    const nextValue =
+      name === "bank_ifsc" ? value.toUpperCase() : value;
 
     setFormData((currentData) => ({
       ...currentData,
       [name]: type === "checkbox" ? checked : nextValue,
     }));
+
+    setMessage("");
   }
 
   async function handleSaveProfile(event) {
@@ -236,7 +285,10 @@ export default function Profile() {
 
     if (!user) return;
 
-    if (!profileChanged && bankDetailsCompleted === currentBankDetailsComplete) {
+    if (
+      !profileChanged &&
+      bankDetailsCompleted === effectiveBankDetailsComplete
+    ) {
       setMessage("No profile changes to save.");
       return;
     }
@@ -246,14 +298,21 @@ export default function Profile() {
       formData.delivery_available === false &&
       formData.pickup_available === false
     ) {
-      setMessage("At least one option must stay ON: Delivery or Self Pickup.");
+      setMessage(
+        "At least one option must stay ON: Delivery or Self Pickup."
+      );
       return;
     }
 
-    if (isSeller && !currentBankDetailsComplete) {
+    if (
+      isSeller &&
+      !isAdmin &&
+      !currentBankDetailsComplete
+    ) {
       setMessage(
         "Please complete Account Holder Name, Bank Name, Account Number, and IFSC Code to start selling."
       );
+
       openEditSection();
       return;
     }
@@ -262,7 +321,9 @@ export default function Profile() {
     setMessage("");
 
     const nextBankDetailsCompleted = isSeller
-      ? currentBankDetailsComplete
+      ? isAdmin
+        ? true
+        : currentBankDetailsComplete
       : false;
 
     const profilePayload = {
@@ -276,25 +337,43 @@ export default function Profile() {
       flat: formData.flat.trim(),
       role,
       is_seller: isSeller,
-      bank_account_holder: formData.bank_account_holder.trim(),
+      bank_account_holder:
+        formData.bank_account_holder.trim(),
       bank_name: formData.bank_name.trim(),
-      bank_account_number: formData.bank_account_number.trim(),
-      bank_ifsc: formData.bank_ifsc.trim().toUpperCase(),
+      bank_account_number:
+        formData.bank_account_number.trim(),
+      bank_ifsc:
+        formData.bank_ifsc.trim().toUpperCase(),
       bank_upi_id: formData.bank_upi_id.trim(),
       bank_details_completed: nextBankDetailsCompleted,
     };
 
     if (isSeller) {
-      profilePayload.seller_kitchen_name = formData.seller_kitchen_name.trim();
-      profilePayload.seller_door_no = formData.seller_door_no.trim();
-      profilePayload.seller_specialty = formData.seller_specialty.trim();
-      profilePayload.seller_about = formData.seller_about.trim();
-      profilePayload.accept_scheduled_orders = formData.accept_scheduled_orders;
-      profilePayload.delivery_available = formData.delivery_available;
-      profilePayload.pickup_available = formData.pickup_available;
+      profilePayload.seller_kitchen_name =
+        formData.seller_kitchen_name.trim();
+
+      profilePayload.seller_door_no =
+        formData.seller_door_no.trim();
+
+      profilePayload.seller_specialty =
+        formData.seller_specialty.trim();
+
+      profilePayload.seller_about =
+        formData.seller_about.trim();
+
+      profilePayload.accept_scheduled_orders =
+        formData.accept_scheduled_orders;
+
+      profilePayload.delivery_available =
+        formData.delivery_available;
+
+      profilePayload.pickup_available =
+        formData.pickup_available;
     }
 
-    const { error } = await supabase.from("profiles").upsert(profilePayload);
+    const { error } = await supabase
+      .from("profiles")
+      .upsert(profilePayload);
 
     if (error) {
       setMessage(`Could not save profile: ${error.message}`);
@@ -321,17 +400,25 @@ export default function Profile() {
       block: formData.block.trim(),
       flat_no: formData.flat_no.trim(),
       flat: formData.flat.trim(),
-      seller_kitchen_name: formData.seller_kitchen_name.trim(),
+      seller_kitchen_name:
+        formData.seller_kitchen_name.trim(),
       seller_door_no: formData.seller_door_no.trim(),
-      seller_specialty: formData.seller_specialty.trim(),
+      seller_specialty:
+        formData.seller_specialty.trim(),
       seller_about: formData.seller_about.trim(),
-      accept_scheduled_orders: formData.accept_scheduled_orders,
-      delivery_available: formData.delivery_available,
-      pickup_available: formData.pickup_available,
-      bank_account_holder: formData.bank_account_holder.trim(),
+      accept_scheduled_orders:
+        formData.accept_scheduled_orders,
+      delivery_available:
+        formData.delivery_available,
+      pickup_available:
+        formData.pickup_available,
+      bank_account_holder:
+        formData.bank_account_holder.trim(),
       bank_name: formData.bank_name.trim(),
-      bank_account_number: formData.bank_account_number.trim(),
-      bank_ifsc: formData.bank_ifsc.trim().toUpperCase(),
+      bank_account_number:
+        formData.bank_account_number.trim(),
+      bank_ifsc:
+        formData.bank_ifsc.trim().toUpperCase(),
       bank_upi_id: formData.bank_upi_id.trim(),
     };
 
@@ -340,12 +427,6 @@ export default function Profile() {
     setBankDetailsCompleted(nextBankDetailsCompleted);
     setSaving(false);
     setMessage("Profile updated successfully.");
-
-    if (isSeller && nextBankDetailsCompleted) {
-      setTimeout(() => {
-        navigate("/seller-dashboard");
-      }, 900);
-    }
   }
 
   async function handlePasswordReset() {
@@ -357,11 +438,16 @@ export default function Profile() {
     setResettingPassword(true);
     setMessage("");
 
-    const redirectTo = `${window.location.origin}/profile`;
+    const redirectTo =
+      `${window.location.origin}/reset-password`;
 
-    const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-      redirectTo,
-    });
+    const { error } =
+      await supabase.auth.resetPasswordForEmail(
+        user.email,
+        {
+          redirectTo,
+        }
+      );
 
     if (error) {
       setMessage(`Password reset failed: ${error.message}`);
@@ -369,7 +455,10 @@ export default function Profile() {
       return;
     }
 
-    setMessage("Password reset link sent to your email.");
+    setMessage(
+      "Password reset link sent to your email."
+    );
+
     setResettingPassword(false);
   }
 
@@ -386,8 +475,13 @@ export default function Profile() {
       return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
     }
 
-    if (name) return name.charAt(0).toUpperCase();
-    if (user?.email) return user.email.charAt(0).toUpperCase();
+    if (name) {
+      return name.charAt(0).toUpperCase();
+    }
+
+    if (user?.email) {
+      return user.email.charAt(0).toUpperCase();
+    }
 
     return "N";
   }
@@ -407,8 +501,15 @@ export default function Profile() {
     setEditMode(true);
 
     setTimeout(() => {
-      const bankSection = document.getElementById("seller-bank-details");
-      bankSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+      const bankSection =
+        document.getElementById(
+          "seller-bank-details"
+        );
+
+      bankSection?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     }, 100);
   }
 
@@ -416,8 +517,8 @@ export default function Profile() {
     return (
       <main className="min-h-screen bg-[#FFF8EC] px-4 py-8 pb-28 text-[#181411]">
         <div className="mx-auto flex min-h-[70vh] max-w-md items-center justify-center">
-          <div className="w-full rounded-[2rem] border border-[#EADFCE] bg-white/90 p-7 text-center shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.9)]">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#C86B37] bg-[#CF743D] text-3xl font-black text-white">
+          <div className={`w-full p-7 text-center ${PAGE_CARD}`}>
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#CF743D] text-3xl font-black text-white">
               N
             </div>
 
@@ -431,7 +532,7 @@ export default function Profile() {
 
             <Link
               to="/customer-login"
-              className="mt-6 block rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 text-center text-sm font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-[0.98]"
+              className="mt-6 block rounded-2xl bg-[#3F5128] py-4 text-center text-sm font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-[0.98]"
             >
               Sign In
             </Link>
@@ -442,7 +543,7 @@ export default function Profile() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FFF8EC] px-4 py-5 pb-32 text-[#181411]">
+    <main className="min-h-screen bg-[#FFF8EC] px-4 py-5 pb-28 text-[#181411]">
       <div className="mx-auto max-w-md">
         <h1 className="mb-4 text-xl font-black tracking-tight text-[#3F5128]">
           My Profile
@@ -458,16 +559,24 @@ export default function Profile() {
           <ProfileLoading />
         ) : (
           <>
-            <section className="rounded-[26px] border border-[#EADFCE] bg-white/90 p-4 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+            <section className={`p-4 ${PAGE_CARD}`}>
               <div className="flex items-center gap-4">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-[#C86B37] bg-[#CF743D] text-xl font-black text-white shadow-inner">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#CF743D] text-xl font-black text-white shadow-inner">
                   {getInitials()}
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <h2 className="truncate text-base font-black text-[#3F5128]">
-                    {displayName}
-                  </h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="truncate text-base font-black text-[#3F5128]">
+                      {displayName}
+                    </h2>
+
+                    {isAdmin ? (
+                      <span className="rounded-full border border-[#D8C9B3] bg-[#FFF0DF] px-2 py-1 text-[9px] font-black uppercase text-[#CF743D]">
+                        Owner
+                      </span>
+                    ) : null}
+                  </div>
 
                   <p className="truncate text-xs font-semibold text-[#6B6258]">
                     {displayEmail}
@@ -482,7 +591,7 @@ export default function Profile() {
               </div>
             </section>
 
-            <section className="mt-4 rounded-[24px] border border-[#EADFCE] bg-white/90 p-4 shadow-[8px_8px_22px_rgba(63,81,40,0.06),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+            <section className={`mt-4 p-4 ${PAGE_CARD}`}>
               <div className="mb-2 flex items-start justify-between gap-3">
                 <h3 className="text-sm font-black text-[#181411]">
                   My Address
@@ -499,64 +608,83 @@ export default function Profile() {
 
               <div className="space-y-1 text-xs font-semibold leading-relaxed text-[#6B6258]">
                 <p>{addressLines.lineOne}</p>
-                {addressLines.lineTwo ? <p>{addressLines.lineTwo}</p> : null}
+
+                {addressLines.lineTwo ? (
+                  <p>{addressLines.lineTwo}</p>
+                ) : null}
               </div>
             </section>
 
-            {isSeller && !sellerOnboardingComplete ? (
-              <section className="relative mt-4 overflow-hidden rounded-[24px] border border-[#4D612F] bg-[#3F5128] p-4 text-white shadow-lg shadow-[#3F5128]/15">
-                <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/10" />
+            {isSeller &&
+            !isAdmin &&
+            !sellerOnboardingComplete ? (
+              <section className="mt-4 rounded-[24px] bg-[#3F5128] p-4 text-white shadow-lg shadow-[#3F5128]/15">
+                <p className="text-xs font-black uppercase tracking-wide text-[#F3C06E]">
+                  Seller setup required
+                </p>
 
-                <div className="relative z-10">
-                  <p className="text-xs font-black uppercase tracking-wide text-[#F3C06E]">
-                    Seller setup required
+                <h2 className="mt-1 text-lg font-black">
+                  Complete bank details
+                </h2>
+
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/15">
+                  <div
+                    className="h-full rounded-full bg-[#CF743D]"
+                    style={{
+                      width: `${sellerProgress}%`,
+                    }}
+                  />
+                </div>
+
+                <div className="mt-3 flex items-center justify-between">
+                  <p className="text-xs font-bold text-white/75">
+                    {sellerProgress}% complete
                   </p>
 
-                  <h2 className="mt-1 text-lg font-black">
-                    Complete bank details
-                  </h2>
-
-                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/15">
-                    <div
-                      className="h-full rounded-full bg-[#CF743D]"
-                      style={{ width: `${sellerProgress}%` }}
-                    />
-                  </div>
-
-                  <div className="mt-3 flex items-center justify-between">
-                    <p className="text-xs font-bold text-white/75">
-                      {sellerProgress}% complete
-                    </p>
-
-                    <button
-                      type="button"
-                      onClick={scrollToBankDetails}
-                      className="rounded-full border border-[#CF743D] bg-[#CF743D] px-4 py-2 text-xs font-black text-white"
-                    >
-                      Add Details
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={scrollToBankDetails}
+                    className="rounded-full bg-[#CF743D] px-4 py-2 text-xs font-black text-white"
+                  >
+                    Add Details
+                  </button>
                 </div>
               </section>
             ) : null}
 
-            <section className="mt-4 overflow-hidden rounded-[24px] border border-[#EADFCE] bg-white/90 px-4 py-1 shadow-[8px_8px_22px_rgba(63,81,40,0.06),-8px_-8px_22px_rgba(255,255,255,0.95)]">
-              <ProfileRow icon={<OrdersIcon />} label="My Orders" to="/orders" />
+            <section className={`mt-4 overflow-hidden px-4 py-1 ${PAGE_CARD}`}>
+              <ProfileRow
+                icon={<OrdersIcon />}
+                label="My Orders"
+                to="/orders"
+              />
+
               <Divider />
-              <ProfileRow icon={<HeartIcon />} label="Favorites" to="/favorites" />
+
+              <ProfileRow
+                icon={<HeartIcon />}
+                label="Favorites"
+                to="/favorites"
+              />
+
               <Divider />
+
               <ProfileRow
                 icon={<CardIcon />}
                 label="Payment Methods"
                 to="/payment-methods"
               />
+
               <Divider />
+
               <ProfileRow
                 icon={<HelpIcon />}
                 label="Help & Support"
                 to="/customer-care"
               />
+
               <Divider />
+
               <ProfileRow
                 icon={<LogoutIcon />}
                 label="Logout"
@@ -564,8 +692,46 @@ export default function Profile() {
               />
             </section>
 
+            {isAdmin ? (
+              <section className={`mt-4 overflow-hidden px-4 py-1 ${PAGE_CARD}`}>
+                <div className="py-3">
+                  <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
+                    Owner Controls
+                  </p>
+
+                  <p className="mt-1 text-xs font-semibold text-[#6B6258]">
+                    Manage Nefo operations, accounting, and sellers.
+                  </p>
+                </div>
+
+                <Divider />
+
+                <ProfileRow
+                  icon={<OrdersIcon />}
+                  label="Owner Dashboard"
+                  to="/owner-dashboard"
+                />
+
+                <Divider />
+
+                <ProfileRow
+                  icon={<CardIcon />}
+                  label="Owner Accounting"
+                  to="/owner-accounting"
+                />
+
+                <Divider />
+
+                <ProfileRow
+                  icon={<KitchenIcon />}
+                  label="Seller Applications"
+                  to="/owner-seller-applications"
+                />
+              </section>
+            ) : null}
+
             {isSeller ? (
-              <section className="mt-4 overflow-hidden rounded-[24px] border border-[#EADFCE] bg-white/90 px-4 py-1 shadow-[8px_8px_22px_rgba(63,81,40,0.06),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+              <section className={`mt-4 overflow-hidden px-4 py-1 ${PAGE_CARD}`}>
                 <ProfileRow
                   icon={<KitchenIcon />}
                   label={
@@ -581,7 +747,9 @@ export default function Profile() {
                     }
                   }}
                 />
+
                 <Divider />
+
                 <ProfileRow
                   icon={<HelpIcon />}
                   label="Seller Assistant"
@@ -593,13 +761,14 @@ export default function Profile() {
             {editMode ? (
               <section
                 ref={editSectionRef}
-                className="mt-5 scroll-mt-5 rounded-[28px] border border-[#EADFCE] bg-white/90 p-4 shadow-[8px_8px_22px_rgba(63,81,40,0.07),-8px_-8px_22px_rgba(255,255,255,0.95)]"
+                className={`mt-5 scroll-mt-5 p-4 ${PAGE_CARD}`}
               >
                 <div className="mb-5 flex items-start justify-between gap-3">
                   <div>
                     <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
                       Edit Profile
                     </p>
+
                     <h2 className="mt-1 text-xl font-black text-[#181411]">
                       Account details
                     </h2>
@@ -608,13 +777,16 @@ export default function Profile() {
                   <button
                     type="button"
                     onClick={() => setEditMode(false)}
-                    className="rounded-full border border-[#EADFCE] bg-[#FFFDF7] px-3 py-2 text-xs font-black text-[#3F5128]"
+                    className="rounded-full bg-[#FFF0DF] px-3 py-2 text-xs font-black text-[#3F5128]"
                   >
                     Close
                   </button>
                 </div>
 
-                <form id="profile-form" onSubmit={handleSaveProfile}>
+                <form
+                  id="profile-form"
+                  onSubmit={handleSaveProfile}
+                >
                   <FormSection title="Personal Information">
                     <InputField
                       label="Full Name"
@@ -677,11 +849,15 @@ export default function Profile() {
 
                   {isSeller ? (
                     <>
-                      <div id="seller-bank-details" className="scroll-mt-6" />
+                      <div
+                        id="seller-bank-details"
+                        className="scroll-mt-6"
+                      />
 
                       <FormSection title="Seller Bank Details">
                         <div
                           className={`rounded-2xl border p-4 ${
+                            isAdmin ||
                             currentBankDetailsComplete
                               ? "border-green-200 bg-green-50"
                               : "border-yellow-200 bg-yellow-50"
@@ -689,62 +865,83 @@ export default function Profile() {
                         >
                           <p
                             className={`text-sm font-black ${
+                              isAdmin ||
                               currentBankDetailsComplete
                                 ? "text-green-700"
                                 : "text-yellow-700"
                             }`}
                           >
-                            {currentBankDetailsComplete
+                            {isAdmin
+                              ? "Bank details optional for owner"
+                              : currentBankDetailsComplete
                               ? "Bank details complete"
                               : "Bank details required"}
                           </p>
 
                           <p
                             className={`mt-1 text-xs font-semibold leading-relaxed ${
+                              isAdmin ||
                               currentBankDetailsComplete
                                 ? "text-green-700"
                                 : "text-yellow-700"
                             }`}
                           >
-                            Account Holder Name, Bank Name, Account Number, and
-                            IFSC Code are mandatory for seller payout.
+                            {isAdmin
+                              ? "Owner access is not blocked by missing seller payout details."
+                              : "Account Holder Name, Bank Name, Account Number, and IFSC Code are mandatory for seller payout."}
                           </p>
                         </div>
 
                         <InputField
-                          label="Account Holder Name *"
+                          label={
+                            isAdmin
+                              ? "Account Holder Name"
+                              : "Account Holder Name *"
+                          }
                           name="bank_account_holder"
                           value={formData.bank_account_holder}
                           onChange={handleChange}
-                          required={isSeller}
+                          required={isSeller && !isAdmin}
                           placeholder="Account Holder Name"
                         />
 
                         <InputField
-                          label="Bank Name *"
+                          label={
+                            isAdmin
+                              ? "Bank Name"
+                              : "Bank Name *"
+                          }
                           name="bank_name"
                           value={formData.bank_name}
                           onChange={handleChange}
-                          required={isSeller}
+                          required={isSeller && !isAdmin}
                           placeholder="Bank Name"
                         />
 
                         <InputField
-                          label="Account Number *"
+                          label={
+                            isAdmin
+                              ? "Account Number"
+                              : "Account Number *"
+                          }
                           name="bank_account_number"
                           value={formData.bank_account_number}
                           onChange={handleChange}
-                          required={isSeller}
+                          required={isSeller && !isAdmin}
                           inputMode="numeric"
                           placeholder="Account Number"
                         />
 
                         <InputField
-                          label="IFSC Code *"
+                          label={
+                            isAdmin
+                              ? "IFSC Code"
+                              : "IFSC Code *"
+                          }
                           name="bank_ifsc"
                           value={formData.bank_ifsc}
                           onChange={handleChange}
-                          required={isSeller}
+                          required={isSeller && !isAdmin}
                           placeholder="IFSC Code"
                           className="uppercase"
                         />
@@ -793,14 +990,16 @@ export default function Profile() {
                             value={formData.seller_about}
                             onChange={handleChange}
                             rows="4"
-                            className="w-full resize-none rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-base text-[#181411] outline-none placeholder:text-[#9A8E80] focus:border-[#CF743D]"
+                            className="w-full resize-none rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-base text-[#181411] outline-none focus:border-[#CF743D]"
                             placeholder="Tell customers about your kitchen..."
                           />
                         </div>
 
                         <CheckField
                           name="accept_scheduled_orders"
-                          checked={formData.accept_scheduled_orders}
+                          checked={
+                            formData.accept_scheduled_orders
+                          }
                           onChange={handleChange}
                           title="Accept scheduled orders"
                           text="Customers can choose date and time for later orders."
@@ -808,7 +1007,9 @@ export default function Profile() {
 
                         <CheckField
                           name="delivery_available"
-                          checked={formData.delivery_available}
+                          checked={
+                            formData.delivery_available
+                          }
                           onChange={handleChange}
                           title="Delivery available"
                           text="Customers can choose doorstep delivery."
@@ -816,7 +1017,9 @@ export default function Profile() {
 
                         <CheckField
                           name="pickup_available"
-                          checked={formData.pickup_available}
+                          checked={
+                            formData.pickup_available
+                          }
                           onChange={handleChange}
                           title="Self pickup available"
                           text="Customers can choose self pickup."
@@ -827,8 +1030,7 @@ export default function Profile() {
 
                   <FormSection title="Password">
                     <p className="text-sm font-semibold leading-relaxed text-[#6B6258]">
-                      We will send a secure password reset link to your registered
-                      email.
+                      We will send a secure password reset link to your registered email.
                     </p>
 
                     <button
@@ -837,7 +1039,9 @@ export default function Profile() {
                       disabled={resettingPassword}
                       className="w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 text-sm font-black text-[#3F5128] transition-all active:scale-[0.98] disabled:opacity-50"
                     >
-                      {resettingPassword ? "Sending..." : "Send Reset Link"}
+                      {resettingPassword
+                        ? "Sending..."
+                        : "Send Reset Link"}
                     </button>
                   </FormSection>
 
@@ -846,22 +1050,23 @@ export default function Profile() {
                     disabled={
                       saving ||
                       (!profileChanged &&
-                        bankDetailsCompleted === currentBankDetailsComplete)
+                        bankDetailsCompleted ===
+                          effectiveBankDetailsComplete)
                     }
-                    className={`mt-5 w-full rounded-2xl border py-4 text-sm font-black transition-all active:scale-[0.98] disabled:opacity-60 ${
+                    className={`mt-5 w-full rounded-2xl py-4 text-sm font-black transition-all active:scale-[0.98] disabled:opacity-60 ${
                       profileChanged ||
-                      bankDetailsCompleted !== currentBankDetailsComplete
-                        ? "border-[#3F5128] bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15"
-                        : "cursor-not-allowed border-[#EADFCE] bg-[#F1E8DC] text-[#9A8E80]"
+                      bankDetailsCompleted !==
+                        effectiveBankDetailsComplete
+                        ? "bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15"
+                        : "cursor-not-allowed bg-[#F1E8DC] text-[#9A8E80]"
                     }`}
                   >
                     {saving
                       ? "Saving..."
                       : profileChanged ||
-                        bankDetailsCompleted !== currentBankDetailsComplete
-                      ? isSeller && currentBankDetailsComplete
-                        ? "Save & Open Seller Dashboard"
-                        : "Save Profile"
+                        bankDetailsCompleted !==
+                          effectiveBankDetailsComplete
+                      ? "Save Profile"
                       : "No Changes"}
                   </button>
                 </form>
@@ -877,14 +1082,19 @@ export default function Profile() {
 function ProfileLoading() {
   return (
     <div className="space-y-4">
-      <div className="h-24 animate-pulse rounded-[26px] border border-[#EADFCE] bg-white/90 shadow-sm" />
-      <div className="h-24 animate-pulse rounded-[24px] border border-[#EADFCE] bg-white/90 shadow-sm" />
-      <div className="h-64 animate-pulse rounded-[24px] border border-[#EADFCE] bg-white/90 shadow-sm" />
+      <div className="h-24 animate-pulse rounded-[26px] bg-white/90 shadow-sm" />
+      <div className="h-24 animate-pulse rounded-[24px] bg-white/90 shadow-sm" />
+      <div className="h-64 animate-pulse rounded-[24px] bg-white/90 shadow-sm" />
     </div>
   );
 }
 
-function ProfileRow({ icon, label, to, onClick }) {
+function ProfileRow({
+  icon,
+  label,
+  to,
+  onClick,
+}) {
   const row = (
     <div className="flex items-center justify-between py-3">
       <div className="flex items-center gap-3">
@@ -892,7 +1102,9 @@ function ProfileRow({ icon, label, to, onClick }) {
           {icon}
         </div>
 
-        <span className="text-sm font-bold text-[#181411]">{label}</span>
+        <span className="text-sm font-bold text-[#181411]">
+          {label}
+        </span>
       </div>
 
       <ChevronIcon />
@@ -901,7 +1113,10 @@ function ProfileRow({ icon, label, to, onClick }) {
 
   if (to) {
     return (
-      <Link to={to} className="block active:scale-[0.99]">
+      <Link
+        to={to}
+        className="block active:scale-[0.99]"
+      >
         {row}
       </Link>
     );
@@ -919,14 +1134,21 @@ function ProfileRow({ icon, label, to, onClick }) {
 }
 
 function Divider() {
-  return <div className="border-t border-[#EADFCE]" />;
+  return (
+    <div className="border-t border-[#EADFCE]" />
+  );
 }
 
 function FormSection({ title, children }) {
   return (
     <section className="mt-5 border-t border-[#EADFCE] pt-5 first:mt-0 first:border-t-0 first:pt-0">
-      <h3 className="mb-4 text-base font-black text-[#181411]">{title}</h3>
-      <div className="space-y-4">{children}</div>
+      <h3 className="mb-4 text-base font-black text-[#181411]">
+        {title}
+      </h3>
+
+      <div className="space-y-4">
+        {children}
+      </div>
     </section>
   );
 }
@@ -951,7 +1173,7 @@ function InputField({
         onChange={onChange}
         disabled={disabled}
         readOnly={readOnly}
-        className={`w-full rounded-2xl border border-[#D8C9B3] px-4 py-4 text-base outline-none placeholder:text-[#9A8E80] focus:border-[#CF743D] ${
+        className={`w-full rounded-2xl border border-[#D8C9B3] px-4 py-4 text-base outline-none focus:border-[#CF743D] ${
           disabled
             ? "cursor-not-allowed bg-[#F1E8DC] text-[#6B6258]"
             : "bg-[#FFFDF7] text-[#181411]"
@@ -962,7 +1184,13 @@ function InputField({
   );
 }
 
-function CheckField({ name, checked, onChange, title, text }) {
+function CheckField({
+  name,
+  checked,
+  onChange,
+  title,
+  text,
+}) {
   return (
     <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-4">
       <input
@@ -974,7 +1202,10 @@ function CheckField({ name, checked, onChange, title, text }) {
       />
 
       <div>
-        <p className="text-sm font-black text-[#181411]">{title}</p>
+        <p className="text-sm font-black text-[#181411]">
+          {title}
+        </p>
+
         <p className="mt-1 text-xs font-semibold leading-relaxed text-[#6B6258]">
           {text}
         </p>
@@ -1037,7 +1268,13 @@ function CardIcon() {
       stroke="currentColor"
       strokeWidth="2"
     >
-      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <rect
+        x="3"
+        y="5"
+        width="18"
+        height="14"
+        rx="2"
+      />
       <path d="M3 10h18" />
     </svg>
   );
