@@ -365,7 +365,6 @@ export default function CustomerLogin() {
 
             <div className="relative z-10">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-[#F3C06E]">
-                <span>🌿</span>
                 <span>Community kitchens</span>
               </div>
 
@@ -421,8 +420,8 @@ export default function CustomerLogin() {
                   ? `Create ${
                       selectedRole === "seller" ? "seller" : "customer"
                     } account`
-                  : "Welcome back"}
-              </h2>
+                  : "Welcome"}
+              </h2> 
 
               <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
                 {selectedRole === "seller"
