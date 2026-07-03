@@ -33,7 +33,9 @@ import RefundPolicy from "./pages/RefundPolicy";
 import SellerHelper from "./pages/SellerHelper";
 import OrderChat from "./pages/OrderChat";
 import Favorites from "./pages/Favorites";
+
 import ScrollToTop from "./components/ScrollToTop";
+import GlobalBackHandler from "./components/GlobalBackHandler";
 
 import { useAuth } from "./context/AuthContext";
 import { supabase } from "./lib/supabaseClient";
@@ -42,7 +44,7 @@ function LoadingScreen() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#FFF8EC] px-4 text-[#181411]">
       <div className="rounded-[28px] border border-[#EADFCE] bg-white/90 px-8 py-7 text-center shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-4 border-[#EADFCE] border-t-[#3F5128] animate-spin" />
+        <div className="mx-auto flex h-14 w-14 animate-spin items-center justify-center rounded-full border-4 border-[#EADFCE] border-t-[#3F5128]" />
 
         <p className="mt-4 font-black text-[#3F5128]">Loading...</p>
       </div>
@@ -179,7 +181,9 @@ function FloatingHelpButton() {
 
   if (shouldHide) return null;
 
-  const bottomNavVisible = shouldShowCustomerBottomNav(location.pathname);
+  const bottomNavVisible = shouldShowCustomerBottomNav(
+    location.pathname
+  );
 
   const sellerPages = [
     "/seller-dashboard",
@@ -235,18 +239,22 @@ function SellerOnlyRoute({ children }) {
           setSellerAllowed(false);
           setCheckingRole(false);
         }
+
         return;
       }
 
       setCheckingRole(true);
 
-      const metadataRole = String(user?.user_metadata?.role || "").toLowerCase();
+      const metadataRole = String(
+        user?.user_metadata?.role || ""
+      ).toLowerCase();
 
       if (metadataRole === "admin") {
         if (!cancelled) {
           setSellerAllowed(true);
           setCheckingRole(false);
         }
+
         return;
       }
 
@@ -264,7 +272,10 @@ function SellerOnlyRoute({ children }) {
         return;
       }
 
-      const profileRole = String(data?.role || "").toLowerCase();
+      const profileRole = String(
+        data?.role || ""
+      ).toLowerCase();
+
       const applicationStatus = String(
         data?.seller_application_status || "not_applied"
       ).toLowerCase();
@@ -288,8 +299,14 @@ function SellerOnlyRoute({ children }) {
   }, [user, authLoading]);
 
   if (authLoading || checkingRole) return <LoadingScreen />;
-  if (!user) return <Navigate to="/customer-login" replace />;
-  if (!sellerAllowed) return <Navigate to="/seller-registration" replace />;
+
+  if (!user) {
+    return <Navigate to="/customer-login" replace />;
+  }
+
+  if (!sellerAllowed) {
+    return <Navigate to="/seller-registration" replace />;
+  }
 
   return children;
 }
@@ -311,18 +328,22 @@ function AdminOnlyRoute({ children }) {
           setAdminAllowed(false);
           setCheckingRole(false);
         }
+
         return;
       }
 
       setCheckingRole(true);
 
-      const metadataRole = String(user?.user_metadata?.role || "").toLowerCase();
+      const metadataRole = String(
+        user?.user_metadata?.role || ""
+      ).toLowerCase();
 
       if (metadataRole === "admin") {
         if (!cancelled) {
           setAdminAllowed(true);
           setCheckingRole(false);
         }
+
         return;
       }
 
@@ -340,7 +361,9 @@ function AdminOnlyRoute({ children }) {
         return;
       }
 
-      const profileRole = String(data?.role || "").toLowerCase();
+      const profileRole = String(
+        data?.role || ""
+      ).toLowerCase();
 
       setAdminAllowed(profileRole === "admin");
       setCheckingRole(false);
@@ -354,8 +377,14 @@ function AdminOnlyRoute({ children }) {
   }, [user, authLoading]);
 
   if (authLoading || checkingRole) return <LoadingScreen />;
-  if (!user) return <Navigate to="/customer-login" replace />;
-  if (!adminAllowed) return <Navigate to="/" replace />;
+
+  if (!user) {
+    return <Navigate to="/customer-login" replace />;
+  }
+
+  if (!adminAllowed) {
+    return <Navigate to="/" replace />;
+  }
 
   return children;
 }
@@ -364,7 +393,9 @@ function ComingSoonPage({ title, description }) {
   return (
     <main className="min-h-screen bg-[#FFF8EC] px-4 py-6 pb-28 text-[#181411]">
       <div className="mx-auto max-w-md">
-        <h1 className="text-2xl font-black text-[#181411]">{title}</h1>
+        <h1 className="text-2xl font-black text-[#181411]">
+          {title}
+        </h1>
 
         <div className="mt-5 rounded-[28px] border border-[#EADFCE] bg-white/90 p-6 shadow-[8px_8px_22px_rgba(63,81,40,0.07),-8px_-8px_22px_rgba(255,255,255,0.95)]">
           <p className="text-sm font-semibold leading-relaxed text-[#6B6258]">
@@ -610,10 +641,15 @@ function AppRoutes() {
 
 function AppShell() {
   const location = useLocation();
-  const showBottomNav = shouldShowCustomerBottomNav(location.pathname);
+
+  const showBottomNav = shouldShowCustomerBottomNav(
+    location.pathname
+  );
 
   return (
     <>
+      <GlobalBackHandler />
+
       <ScrollToTop />
 
       <AppRoutes />
