@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+} from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 
 const CARD =
@@ -11,35 +14,106 @@ const SOFT_CARD =
 const INPUT =
   "w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-base font-semibold text-[#181411] outline-none placeholder:text-[#9A8E80] focus:border-[#CF743D] focus:bg-white";
 
+function isEmailIdentifier(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+    String(value || "").trim()
+  );
+}
+
+function normalizePhone(value) {
+  let digits = String(value || "").replace(/\D/g, "");
+
+  if (
+    digits.length === 12 &&
+    digits.startsWith("91")
+  ) {
+    digits = digits.slice(2);
+  }
+
+  if (
+    digits.length === 11 &&
+    digits.startsWith("0")
+  ) {
+    digits = digits.slice(1);
+  }
+
+  return digits;
+}
+
+async function getFunctionErrorMessage(error) {
+  try {
+    const response = error?.context;
+
+    if (
+      response &&
+      typeof response.json === "function"
+    ) {
+      const body = await response.json();
+
+      return (
+        body?.error ||
+        body?.message ||
+        error?.message
+      );
+    }
+  } catch {
+    // Use the normal error message below.
+  }
+
+  return (
+    error?.message ||
+    "Mobile login could not be completed."
+  );
+}
+
 export default function CustomerLogin() {
   const navigate = useNavigate();
 
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [selectedRole, setSelectedRole] = useState("customer");
-  const [showPassword, setShowPassword] = useState(false);
+  const [isSignUp, setIsSignUp] =
+    useState(false);
 
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    fullName: "",
-    phone: "",
-    apartmentName: "",
-    block: "",
-    flatNo: "",
-  });
+  const [
+    selectedRole,
+    setSelectedRole,
+  ] = useState("customer");
 
-  const [loading, setLoading] = useState(false);
-  const [resettingPassword, setResettingPassword] = useState(false);
-  const [message, setMessage] = useState("");
-  const [errors, setErrors] = useState({
-    email: "",
-    password: "",
-    fullName: "",
-    phone: "",
-    apartmentName: "",
-    flatNo: "",
-    general: "",
-  });
+  const [
+    showPassword,
+    setShowPassword,
+  ] = useState(false);
+
+  const [formData, setFormData] =
+    useState({
+      email: "",
+      password: "",
+      fullName: "",
+      phone: "",
+      apartmentName: "",
+      block: "",
+      flatNo: "",
+    });
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [
+    resettingPassword,
+    setResettingPassword,
+  ] = useState(false);
+
+  const [message, setMessage] =
+    useState("");
+
+  const [errors, setErrors] =
+    useState({
+      email: "",
+      password: "",
+      fullName: "",
+      phone: "",
+      apartmentName: "",
+      flatNo: "",
+      general: "",
+    });
 
   function clearErrors() {
     setErrors({
@@ -54,18 +128,21 @@ export default function CustomerLogin() {
   }
 
   function handleChange(event) {
-    const { name, value } = event.target;
+    const { name, value } =
+      event.target;
 
     setFormData((currentData) => ({
       ...currentData,
       [name]: value,
     }));
 
-    setErrors((currentErrors) => ({
-      ...currentErrors,
-      [name]: "",
-      general: "",
-    }));
+    setErrors(
+      (currentErrors) => ({
+        ...currentErrors,
+        [name]: "",
+        general: "",
+      })
+    );
 
     setMessage("");
   }
@@ -85,31 +162,61 @@ export default function CustomerLogin() {
   }
 
   function setLoginError(errorMessage) {
-    const cleanMessage = String(errorMessage || "").toLowerCase();
+    const cleanMessage = String(
+      errorMessage || ""
+    ).toLowerCase();
 
     if (
-      cleanMessage.includes("invalid login credentials") ||
-      cleanMessage.includes("invalid")
+      cleanMessage.includes(
+        "invalid login credentials"
+      ) ||
+      cleanMessage.includes(
+        "invalid email"
+      ) ||
+      cleanMessage.includes(
+        "invalid mobile"
+      ) ||
+      cleanMessage.includes(
+        "invalid phone"
+      ) ||
+      cleanMessage.includes(
+        "invalid password"
+      )
     ) {
-      setErrors((currentErrors) => ({
-        ...currentErrors,
-        password: "Invalid email or password.",
-      }));
+      setErrors(
+        (currentErrors) => ({
+          ...currentErrors,
+          password:
+            "Invalid email/mobile number or password.",
+        })
+      );
+
       return;
     }
 
-    if (cleanMessage.includes("email")) {
-      setErrors((currentErrors) => ({
-        ...currentErrors,
-        email: errorMessage,
-      }));
+    if (
+      cleanMessage.includes("email") ||
+      cleanMessage.includes("mobile") ||
+      cleanMessage.includes("phone")
+    ) {
+      setErrors(
+        (currentErrors) => ({
+          ...currentErrors,
+          email: errorMessage,
+        })
+      );
+
       return;
     }
 
-    setErrors((currentErrors) => ({
-      ...currentErrors,
-      general: errorMessage || "Something went wrong. Please try again.",
-    }));
+    setErrors(
+      (currentErrors) => ({
+        ...currentErrors,
+        general:
+          errorMessage ||
+          "Something went wrong. Please try again.",
+      })
+    );
   }
 
   function validateSignUpFields() {
@@ -124,46 +231,118 @@ export default function CustomerLogin() {
     };
 
     if (!formData.fullName.trim()) {
-      nextErrors.fullName = "Full name is required.";
+      nextErrors.fullName =
+        "Full name is required.";
     }
 
     if (!formData.phone.trim()) {
-      nextErrors.phone = "Phone number is required.";
-    } else if (cleanPhone(formData.phone).length < 10) {
-      nextErrors.phone = "Please enter a valid phone number.";
+      nextErrors.phone =
+        "Phone number is required.";
+    } else if (
+      cleanPhone(formData.phone).length < 10
+    ) {
+      nextErrors.phone =
+        "Please enter a valid phone number.";
     }
 
-    if (!formData.apartmentName.trim()) {
-      nextErrors.apartmentName = "Apartment name is required.";
+    if (
+      !formData.apartmentName.trim()
+    ) {
+      nextErrors.apartmentName =
+        "Apartment name is required.";
     }
 
     if (!formData.flatNo.trim()) {
-      nextErrors.flatNo = "Flat number is required.";
+      nextErrors.flatNo =
+        "Door or flat number is required.";
     }
 
     if (!formData.email.trim()) {
-      nextErrors.email = "Email address is required.";
+      nextErrors.email =
+        "Email address is required.";
+    } else if (
+      !isEmailIdentifier(formData.email)
+    ) {
+      nextErrors.email =
+        "Please enter a valid email address.";
     }
 
     if (!formData.password.trim()) {
-      nextErrors.password = "Password is required.";
+      nextErrors.password =
+        "Password is required.";
     }
 
     setErrors(nextErrors);
 
-    return !Object.values(nextErrors).some(Boolean);
+    return !Object.values(
+      nextErrors
+    ).some(Boolean);
+  }
+
+  function validateLoginFields() {
+    const nextErrors = {
+      email: "",
+      password: "",
+      fullName: "",
+      phone: "",
+      apartmentName: "",
+      flatNo: "",
+      general: "",
+    };
+
+    const identifier =
+      formData.email.trim();
+
+    if (!identifier) {
+      nextErrors.email =
+        "Email address or mobile number is required.";
+    } else if (
+      !isEmailIdentifier(identifier) &&
+      normalizePhone(identifier).length !== 10
+    ) {
+      nextErrors.email =
+        "Enter a valid email address or 10-digit mobile number.";
+    }
+
+    if (!formData.password.trim()) {
+      nextErrors.password =
+        "Password is required.";
+    }
+
+    setErrors(nextErrors);
+
+    return !Object.values(
+      nextErrors
+    ).some(Boolean);
   }
 
   async function handleForgotPassword() {
     clearErrors();
 
-    const email = formData.email.trim();
+    const identifier =
+      formData.email.trim();
 
-    if (!email) {
-      setErrors((currentErrors) => ({
-        ...currentErrors,
-        email: "Enter your email first, then tap Forgot Password.",
-      }));
+    if (!identifier) {
+      setErrors(
+        (currentErrors) => ({
+          ...currentErrors,
+          email:
+            "Enter your registered email address first.",
+        })
+      );
+
+      return;
+    }
+
+    if (!isEmailIdentifier(identifier)) {
+      setErrors(
+        (currentErrors) => ({
+          ...currentErrors,
+          email:
+            "Password reset requires your registered email address.",
+        })
+      );
+
       return;
     }
 
@@ -172,21 +351,162 @@ export default function CustomerLogin() {
 
     const redirectTo = `${window.location.origin}/reset-password`;
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo,
-    });
+    const { error } =
+      await supabase.auth.resetPasswordForEmail(
+        identifier.toLowerCase(),
+        {
+          redirectTo,
+        }
+      );
 
     if (error) {
-      setErrors((currentErrors) => ({
-        ...currentErrors,
-        email: `Password reset failed: ${error.message}`,
-      }));
+      setErrors(
+        (currentErrors) => ({
+          ...currentErrors,
+          email: `Password reset failed: ${error.message}`,
+        })
+      );
+
       setResettingPassword(false);
       return;
     }
 
-    setMessage("Password reset link sent to your email.");
+    setMessage(
+      "Password reset link sent to your email."
+    );
+
     setResettingPassword(false);
+  }
+
+  async function signInWithIdentifier() {
+    const identifier =
+      formData.email.trim();
+
+    const password =
+      formData.password;
+
+    if (isEmailIdentifier(identifier)) {
+      return supabase.auth.signInWithPassword({
+        email: identifier.toLowerCase(),
+        password,
+      });
+    }
+
+    const normalizedPhone =
+      normalizePhone(identifier);
+
+    const {
+      data: functionData,
+      error: functionError,
+    } = await supabase.functions.invoke(
+      "phone-login",
+      {
+        body: {
+          phone: normalizedPhone,
+          password,
+        },
+      }
+    );
+
+    if (functionError) {
+      const errorMessage =
+        await getFunctionErrorMessage(
+          functionError
+        );
+
+      return {
+        data: null,
+        error: new Error(errorMessage),
+      };
+    }
+
+    const accessToken =
+      functionData?.access_token;
+
+    const refreshToken =
+      functionData?.refresh_token;
+
+    if (
+      !accessToken ||
+      !refreshToken
+    ) {
+      return {
+        data: null,
+        error: new Error(
+          "Mobile login could not create a session."
+        ),
+      };
+    }
+
+    return supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+  }
+
+  async function handleSuccessfulLogin(user) {
+    if (selectedRole === "customer") {
+      navigate("/", {
+        replace: true,
+      });
+
+      return;
+    }
+
+    const {
+      data: profile,
+      error: profileError,
+    } = await supabase
+      .from("profiles")
+      .select(
+        "role, is_seller, seller_application_status"
+      )
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      setErrors(
+        (currentErrors) => ({
+          ...currentErrors,
+          general:
+            "Seller access could not be verified.",
+        })
+      );
+
+      return;
+    }
+
+    const profileRole = String(
+      profile?.role || ""
+    ).toLowerCase();
+
+    const applicationStatus = String(
+      profile?.seller_application_status ||
+        "not_applied"
+    ).toLowerCase();
+
+    const isAdmin =
+      profileRole === "admin";
+
+    const isApprovedSeller =
+      profileRole === "seller" &&
+      profile?.is_seller === true &&
+      applicationStatus === "approved";
+
+    if (
+      isAdmin ||
+      isApprovedSeller
+    ) {
+      navigate("/seller-dashboard", {
+        replace: true,
+      });
+
+      return;
+    }
+
+    navigate("/seller-registration", {
+      replace: true,
+    });
   }
 
   async function handleAuth(event) {
@@ -198,142 +518,220 @@ export default function CustomerLogin() {
 
     try {
       if (isSignUp) {
-        if (!validateSignUpFields()) {
+        if (
+          !validateSignUpFields()
+        ) {
           setLoading(false);
           return;
         }
 
-        const cleanedPhone = cleanPhone(formData.phone);
-        const flatAddress = buildFlatAddress();
+        const cleanedPhone =
+          cleanPhone(formData.phone);
 
-        const { data, error } = await supabase.auth.signUp({
-          email: formData.email.trim(),
-          password: formData.password,
-          options: {
-            data: {
-              full_name: formData.fullName.trim(),
-              phone: cleanedPhone,
-              apartment_name: formData.apartmentName.trim(),
-              block: formData.block.trim(),
-              flat_no: formData.flatNo.trim(),
-              flat: flatAddress,
-              role: selectedRole,
+        const flatAddress =
+          buildFlatAddress();
+
+        const { data, error } =
+          await supabase.auth.signUp({
+            email:
+              formData.email
+                .trim()
+                .toLowerCase(),
+
+            password:
+              formData.password,
+
+            options: {
+              data: {
+                full_name:
+                  formData.fullName.trim(),
+
+                phone: cleanedPhone,
+
+                apartment_name:
+                  formData.apartmentName.trim(),
+
+                block:
+                  formData.block.trim(),
+
+                flat_no:
+                  formData.flatNo.trim(),
+
+                flat: flatAddress,
+
+                role:
+                  selectedRole,
+              },
             },
-          },
-        });
+          });
 
         if (error) {
-          setLoginError(error.message);
+          setLoginError(
+            error.message
+          );
+
           setLoading(false);
           return;
         }
 
-        const newUser = data?.user;
+        const newUser =
+          data?.user;
 
         if (newUser) {
-          const { error: profileError } = await supabase
+          const {
+            error: profileError,
+          } = await supabase
             .from("profiles")
             .upsert({
               id: newUser.id,
-              full_name: formData.fullName.trim(),
+
+              full_name:
+                formData.fullName.trim(),
+
               phone: cleanedPhone,
-              email: formData.email.trim(),
-              apartment_name: formData.apartmentName.trim(),
-              block: formData.block.trim(),
-              flat_no: formData.flatNo.trim(),
+
+              email:
+                formData.email
+                  .trim()
+                  .toLowerCase(),
+
+              apartment_name:
+                formData.apartmentName.trim(),
+
+              block:
+                formData.block.trim(),
+
+              flat_no:
+                formData.flatNo.trim(),
+
               flat: flatAddress,
-              role: selectedRole,
-              is_seller: selectedRole === "seller",
+
+              role:
+                selectedRole,
+
+              is_seller:
+                selectedRole ===
+                "seller",
             });
 
           if (profileError) {
-            setErrors((currentErrors) => ({
-              ...currentErrors,
-              general: `Profile save failed: ${profileError.message}`,
-            }));
+            setErrors(
+              (currentErrors) => ({
+                ...currentErrors,
+
+                general: `Profile save failed: ${profileError.message}`,
+              })
+            );
+
             setLoading(false);
             return;
           }
         }
 
-        navigate(
-          selectedRole === "seller" ? "/seller-dashboard" : "/marketplace"
-        );
-      } else {
-        if (!formData.email.trim()) {
-          setErrors((currentErrors) => ({
-            ...currentErrors,
-            email: "Email address is required.",
-          }));
-          setLoading(false);
-          return;
+        if (
+          selectedRole === "seller"
+        ) {
+          navigate(
+            "/seller-registration",
+            {
+              replace: true,
+            }
+          );
+        } else {
+          navigate("/", {
+            replace: true,
+          });
         }
 
-        if (!formData.password.trim()) {
-          setErrors((currentErrors) => ({
-            ...currentErrors,
-            password: "Password is required.",
-          }));
-          setLoading(false);
-          return;
-        }
-
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: formData.email.trim(),
-          password: formData.password,
-        });
-
-        if (error) {
-          setLoginError(error.message);
-          setLoading(false);
-          return;
-        }
-
-        const user = data?.user;
-
-        if (!user) {
-          setErrors((currentErrors) => ({
-            ...currentErrors,
-            general: "Login failed.",
-          }));
-          setLoading(false);
-          return;
-        }
-
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role, is_seller")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        const profileRole = String(profile?.role || "").toLowerCase();
-
-        const isSeller =
-          profileRole === "seller" ||
-          profileRole === "admin" ||
-          profile?.is_seller === true;
-
-        navigate(
-          isSeller || selectedRole === "seller"
-            ? "/seller-dashboard"
-            : "/marketplace"
-        );
+        setLoading(false);
+        return;
       }
+
+      if (!validateLoginFields()) {
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } =
+        await signInWithIdentifier();
+
+      if (error) {
+        setLoginError(
+          error.message
+        );
+
+        setLoading(false);
+        return;
+      }
+
+      const loggedInUser =
+        data?.user ||
+        data?.session?.user;
+
+      if (!loggedInUser) {
+        setErrors(
+          (currentErrors) => ({
+            ...currentErrors,
+            general:
+              "Login failed. Please try again.",
+          })
+        );
+
+        setLoading(false);
+        return;
+      }
+
+      await handleSuccessfulLogin(
+        loggedInUser
+      );
     } catch (error) {
-      setErrors((currentErrors) => ({
-        ...currentErrors,
-        general: error.message || "Something went wrong. Please try again.",
-      }));
+      setErrors(
+        (currentErrors) => ({
+          ...currentErrors,
+
+          general:
+            error?.message ||
+            "Something went wrong. Please try again.",
+        })
+      );
     }
 
     setLoading(false);
   }
 
+  function switchRole(nextRole) {
+    setSelectedRole(nextRole);
+    setMessage("");
+    clearErrors();
+  }
+
+  function toggleSignUpMode() {
+    setIsSignUp(
+      (currentValue) =>
+        !currentValue
+    );
+
+    setMessage("");
+    clearErrors();
+  }
+
+  const identifierLabel = isSignUp
+    ? "Email address"
+    : "Email address or mobile number";
+
+  const identifierPlaceholder =
+    isSignUp
+      ? "Email address"
+      : "Email or mobile number";
+
   return (
     <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-28 text-[#181411]">
       <div className="mx-auto max-w-md">
         <header className="flex items-center justify-between gap-3">
-          <Link to="/" className="flex min-w-0 items-center gap-3">
+          <Link
+            to="/"
+            className="flex min-w-0 items-center gap-3"
+          >
             <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#EADFCE] bg-white/90 shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]">
               <img
                 src="/Nefo-logo.png"
@@ -343,7 +741,10 @@ export default function CustomerLogin() {
             </div>
 
             <div className="min-w-0">
-              <p className="text-xl font-black text-[#3F5128]">Nefo</p>
+              <p className="text-xl font-black text-[#3F5128]">
+                Nefo
+              </p>
+
               <p className="text-[10px] font-black uppercase tracking-wide text-[#6B6258]">
                 Homemade nearby food
               </p>
@@ -358,29 +759,45 @@ export default function CustomerLogin() {
           </Link>
         </header>
 
-        <section className={`mt-5 overflow-hidden ${CARD}`}>
+        <section
+          className={`mt-5 overflow-hidden ${CARD}`}
+        >
           <div className="relative overflow-hidden bg-[#3F5128] p-5 text-white">
             <div className="absolute -right-10 -top-12 h-40 w-40 rounded-full bg-white/10" />
+
             <div className="absolute -bottom-12 -left-12 h-36 w-36 rounded-full bg-[#CF743D]/20" />
 
             <div className="relative z-10">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-[#F3C06E]">
-                <span>Community kitchens</span>
+                <span>
+                  Community kitchens
+                </span>
               </div>
 
               <h1 className="mt-5 text-4xl font-black leading-[0.95] tracking-tight">
                 Fresh food,
-                <span className="block text-[#F3C06E]">closer to home.</span>
+
+                <span className="block text-[#F3C06E]">
+                  closer to home.
+                </span>
               </h1>
 
               <p className="mt-4 text-sm font-semibold leading-relaxed text-white/75">
-                Sign in to order homemade food or manage your Nefo kitchen panel.
+                Sign in to order
+                homemade food or manage
+                your Nefo kitchen panel.
               </p>
 
-              <div className="mt-5 grid grid-cols-3 gap-2">
-                <HeroTile icon="🍲" title="Fresh" />
-                <HeroTile icon="🏠" title="Local" />
-                <HeroTile icon="🔒" title="Private" />
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <HeroTile
+                  icon="🍲"
+                  title="Fresh"
+                />
+
+                <HeroTile
+                  icon="🏠"
+                  title="Local"
+                />
               </div>
             </div>
           </div>
@@ -388,29 +805,34 @@ export default function CustomerLogin() {
           <div className="p-5">
             <div className="grid grid-cols-2 gap-2 rounded-3xl border border-[#D8C9B3] bg-[#FFFDF7] p-2">
               <RoleButton
-                active={selectedRole === "customer"}
-                onClick={() => {
-                  setSelectedRole("customer");
-                  setMessage("");
-                  clearErrors();
-                }}
+                active={
+                  selectedRole ===
+                  "customer"
+                }
+                onClick={() =>
+                  switchRole(
+                    "customer"
+                  )
+                }
                 label="Customer"
               />
 
               <RoleButton
-                active={selectedRole === "seller"}
-                onClick={() => {
-                  setSelectedRole("seller");
-                  setMessage("");
-                  clearErrors();
-                }}
+                active={
+                  selectedRole ===
+                  "seller"
+                }
+                onClick={() =>
+                  switchRole("seller")
+                }
                 label="Seller"
               />
             </div>
 
             <div className="mt-6">
               <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
-                {selectedRole === "seller"
+                {selectedRole ===
+                "seller"
                   ? "Kitchen access"
                   : "Customer access"}
               </p>
@@ -418,13 +840,17 @@ export default function CustomerLogin() {
               <h2 className="mt-2 text-3xl font-black leading-tight text-[#181411]">
                 {isSignUp
                   ? `Create ${
-                      selectedRole === "seller" ? "seller" : "customer"
+                      selectedRole ===
+                      "seller"
+                        ? "seller"
+                        : "customer"
                     } account`
                   : "Welcome"}
-              </h2> 
+              </h2>
 
               <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
-                {selectedRole === "seller"
+                {selectedRole ===
+                "seller"
                   ? "Manage dishes, stock, scheduling, and realtime neighbourhood orders."
                   : "Order homemade food from trusted kitchens inside your community."}
               </p>
@@ -440,73 +866,156 @@ export default function CustomerLogin() {
 
             {message ? (
               <div className="mt-5 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-4">
-                <p className="text-sm font-black text-[#3F5128]">{message}</p>
+                <p className="text-sm font-black text-[#3F5128]">
+                  {message}
+                </p>
               </div>
             ) : null}
 
-            <form onSubmit={handleAuth} className="mt-6 space-y-4">
+            <form
+              onSubmit={handleAuth}
+              className="mt-6 space-y-4"
+            >
               {isSignUp ? (
                 <>
-                  <Field label="Full name" error={errors.fullName}>
+                  <Field
+                    label="Full name"
+                    error={
+                      errors.fullName
+                    }
+                  >
                     <input
                       name="fullName"
-                      value={formData.fullName}
-                      onChange={handleChange}
+                      value={
+                        formData.fullName
+                      }
+                      onChange={
+                        handleChange
+                      }
                       required
+                      autoComplete="name"
                       placeholder="Full name"
                       className={`${INPUT} ${
-                        errors.fullName ? "border-red-300" : ""
+                        errors.fullName
+                          ? "border-red-300"
+                          : ""
                       }`}
                     />
                   </Field>
 
-                  <Field label="Phone number" error={errors.phone}>
+                  <Field
+                    label="Phone number"
+                    error={
+                      errors.phone
+                    }
+                  >
                     <input
                       name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
+                      value={
+                        formData.phone
+                      }
+                      onChange={
+                        handleChange
+                      }
                       required
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
                       placeholder="Phone number"
                       className={`${INPUT} ${
-                        errors.phone ? "border-red-300" : ""
+                        errors.phone
+                          ? "border-red-300"
+                          : ""
                       }`}
                     />
                   </Field>
                 </>
               ) : null}
 
-              <Field label="Email address" error={errors.email}>
+              <Field
+                label={identifierLabel}
+                error={errors.email}
+              >
                 <input
-                  type="email"
+                  type={
+                    isSignUp
+                      ? "email"
+                      : "text"
+                  }
                   name="email"
-                  value={formData.email}
-                  onChange={handleChange}
+                  value={
+                    formData.email
+                  }
+                  onChange={
+                    handleChange
+                  }
                   required
-                  placeholder="Email address"
-                  className={`${INPUT} ${errors.email ? "border-red-300" : ""}`}
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck="false"
+                  autoComplete={
+                    isSignUp
+                      ? "email"
+                      : "username"
+                  }
+                  placeholder={
+                    identifierPlaceholder
+                  }
+                  className={`${INPUT} ${
+                    errors.email
+                      ? "border-red-300"
+                      : ""
+                  }`}
                 />
               </Field>
 
-              <Field label="Password" error={errors.password}>
+              <Field
+                label="Password"
+                error={
+                  errors.password
+                }
+              >
                 <div className="relative">
                   <input
-                    type={showPassword ? "text" : "password"}
+                    type={
+                      showPassword
+                        ? "text"
+                        : "password"
+                    }
                     name="password"
-                    value={formData.password}
-                    onChange={handleChange}
+                    value={
+                      formData.password
+                    }
+                    onChange={
+                      handleChange
+                    }
                     required
+                    autoComplete={
+                      isSignUp
+                        ? "new-password"
+                        : "current-password"
+                    }
                     placeholder="Password"
                     className={`${INPUT} pr-20 ${
-                      errors.password ? "border-red-300" : ""
+                      errors.password
+                        ? "border-red-300"
+                        : ""
                     }`}
                   />
 
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={() =>
+                      setShowPassword(
+                        (current) =>
+                          !current
+                      )
+                    }
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-black text-[#CF743D]"
                   >
-                    {showPassword ? "Hide" : "Show"}
+                    {showPassword
+                      ? "Hide"
+                      : "Show"}
                   </button>
                 </div>
               </Field>
@@ -515,8 +1024,12 @@ export default function CustomerLogin() {
                 <div className="flex justify-end">
                   <button
                     type="button"
-                    onClick={handleForgotPassword}
-                    disabled={resettingPassword}
+                    onClick={
+                      handleForgotPassword
+                    }
+                    disabled={
+                      resettingPassword
+                    }
                     className="text-sm font-black text-[#CF743D] disabled:opacity-50"
                   >
                     {resettingPassword
@@ -527,7 +1040,9 @@ export default function CustomerLogin() {
               ) : null}
 
               {isSignUp ? (
-                <section className={`p-5 ${SOFT_CARD}`}>
+                <section
+                  className={`p-5 ${SOFT_CARD}`}
+                >
                   <p className="mb-4 font-black text-[#3F5128]">
                     Apartment Address
                   </p>
@@ -535,47 +1050,82 @@ export default function CustomerLogin() {
                   <div className="space-y-4">
                     <Field
                       label="Apartment name"
-                      error={errors.apartmentName}
+                      error={
+                        errors.apartmentName
+                      }
                     >
                       <input
                         name="apartmentName"
-                        value={formData.apartmentName}
-                        onChange={handleChange}
+                        value={
+                          formData.apartmentName
+                        }
+                        onChange={
+                          handleChange
+                        }
                         required
+                        autoComplete="organization"
                         placeholder="Apartment name"
                         className={`${INPUT} bg-white ${
-                          errors.apartmentName ? "border-red-300" : ""
+                          errors.apartmentName
+                            ? "border-red-300"
+                            : ""
                         }`}
                       />
                     </Field>
 
-                    <Field label="Block / Tower">
-                      <input
-                        name="block"
-                        value={formData.block}
-                        onChange={handleChange}
-                        placeholder="Block / Tower"
-                        className={`${INPUT} bg-white`}
-                      />
-                    </Field>
+                    <div className="rounded-[20px] border border-[#EADFCE] bg-white/70 p-3">
+                      <p className="mb-3 text-xs font-black uppercase tracking-wide text-[#3F5128]">
+                        Block and door
+                      </p>
 
-                    <Field label="Flat No." error={errors.flatNo}>
-                      <input
-                        name="flatNo"
-                        value={formData.flatNo}
-                        onChange={handleChange}
-                        required
-                        placeholder="Flat No."
-                        className={`${INPUT} bg-white ${
-                          errors.flatNo ? "border-red-300" : ""
-                        }`}
-                      />
-                    </Field>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Field label="Block / Tower">
+                          <input
+                            name="block"
+                            value={
+                              formData.block
+                            }
+                            onChange={
+                              handleChange
+                            }
+                            placeholder="Block"
+                            className={`${INPUT} bg-white px-3`}
+                          />
+                        </Field>
+
+                        <Field
+                          label="Door / Flat No."
+                          error={
+                            errors.flatNo
+                          }
+                        >
+                          <input
+                            name="flatNo"
+                            value={
+                              formData.flatNo
+                            }
+                            onChange={
+                              handleChange
+                            }
+                            required
+                            placeholder="Door No."
+                            className={`${INPUT} bg-white px-3 ${
+                              errors.flatNo
+                                ? "border-red-300"
+                                : ""
+                            }`}
+                          />
+                        </Field>
+                      </div>
+                    </div>
                   </div>
 
                   <p className="mt-4 text-xs font-semibold leading-relaxed text-[#6B6258]">
-                    Address is used for order coordination. Kitchen/customer
-                    door details are not shown publicly.
+                    Address is used for
+                    order coordination.
+                    Kitchen/customer door
+                    details are not shown
+                    publicly.
                   </p>
                 </section>
               ) : null}
@@ -583,7 +1133,7 @@ export default function CustomerLogin() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-[0.99] disabled:opacity-50"
+                className="w-full rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading
                   ? "Please wait..."
@@ -595,11 +1145,7 @@ export default function CustomerLogin() {
 
             <button
               type="button"
-              onClick={() => {
-                setIsSignUp(!isSignUp);
-                setMessage("");
-                clearErrors();
-              }}
+              onClick={toggleSignUpMode}
               className="mt-5 w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 text-sm font-black text-[#3F5128] active:scale-95"
             >
               {isSignUp
@@ -613,7 +1159,11 @@ export default function CustomerLogin() {
   );
 }
 
-function RoleButton({ active, onClick, label }) {
+function RoleButton({
+  active,
+  onClick,
+  label,
+}) {
   return (
     <button
       type="button"
@@ -629,16 +1179,28 @@ function RoleButton({ active, onClick, label }) {
   );
 }
 
-function HeroTile({ icon, title }) {
+function HeroTile({
+  icon,
+  title,
+}) {
   return (
-    <div className="rounded-2xl border border-white/15 bg-white/10 p-3 text-center">
-      <p className="text-2xl">{icon}</p>
-      <p className="mt-2 text-xs font-black text-white">{title}</p>
+    <div className="rounded-2xl border border-white/20 bg-white/10 p-4 text-center">
+      <p className="text-3xl">
+        {icon}
+      </p>
+
+      <p className="mt-2 text-sm font-black text-white">
+        {title}
+      </p>
     </div>
   );
 }
 
-function Field({ label, error, children }) {
+function Field({
+  label,
+  error,
+  children,
+}) {
   return (
     <label className="block">
       <span className="mb-2 block text-xs font-black uppercase tracking-wide text-[#6B6258]">
@@ -646,7 +1208,9 @@ function Field({ label, error, children }) {
       </span>
 
       {error ? (
-        <p className="mb-2 text-sm font-black text-red-600">{error}</p>
+        <p className="mb-2 text-sm font-black text-red-600">
+          {error}
+        </p>
       ) : null}
 
       {children}

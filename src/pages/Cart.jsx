@@ -1,29 +1,50 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import {
+  Link,
+  useNavigate,
+} from "react-router-dom";
+
 import { useCart } from "../context/CartContext";
 
-const CART_TIMING_STORAGE_KEY = "Nefo_cart_order_timing";
+const CART_TIMING_STORAGE_KEY =
+  "Nefo_cart_order_timing";
+
+const MINIMUM_SCHEDULE_NOTICE_MINUTES = 30;
 
 function pad2(value) {
   return String(value).padStart(2, "0");
 }
 
 function toDateValue(date) {
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(
-    date.getDate()
-  )}`;
+  return `${date.getFullYear()}-${pad2(
+    date.getMonth() + 1
+  )}-${pad2(date.getDate())}`;
 }
 
 function addDays(date, days) {
   const nextDate = new Date(date);
-  nextDate.setDate(nextDate.getDate() + days);
+
+  nextDate.setDate(
+    nextDate.getDate() + days
+  );
+
   return nextDate;
 }
 
 function getStoredTiming() {
   try {
-    const saved = localStorage.getItem(CART_TIMING_STORAGE_KEY);
-    return saved ? JSON.parse(saved) : null;
+    const saved = localStorage.getItem(
+      CART_TIMING_STORAGE_KEY
+    );
+
+    return saved
+      ? JSON.parse(saved)
+      : null;
   } catch {
     return null;
   }
@@ -32,26 +53,53 @@ function getStoredTiming() {
 function buildDateOptions() {
   const today = new Date();
 
-  return Array.from({ length: 7 }).map((_, index) => {
-    const date = addDays(today, index);
-    const value = toDateValue(date);
+  return Array.from({
+    length: 7,
+  }).map((_, index) => {
+    const date = addDays(
+      today,
+      index
+    );
+
+    const value =
+      toDateValue(date);
 
     const dayLabel =
       index === 0
         ? "Today"
         : index === 1
         ? "Tomorrow"
-        : date.toLocaleDateString("en-IN", { weekday: "short" });
+        : date.toLocaleDateString(
+            "en-IN",
+            {
+              weekday: "short",
+            }
+          );
 
-    const dateLabel = date.toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    const shortDateLabel =
+      date.toLocaleDateString(
+        "en-IN",
+        {
+          day: "2-digit",
+          month: "short",
+        }
+      );
+
+    const fullDateLabel =
+      date.toLocaleDateString(
+        "en-IN",
+        {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        }
+      );
 
     return {
       value,
-      label: `${dayLabel}, ${dateLabel}`,
+      dayLabel,
+      shortDateLabel,
+      label: `${dayLabel}, ${fullDateLabel}`,
     };
   });
 }
@@ -59,36 +107,133 @@ function buildDateOptions() {
 function buildTimeOptions() {
   const slots = [];
 
-  for (let hour = 7; hour <= 22; hour += 1) {
-    ["00", "30"].forEach((minute) => {
-      const value = `${pad2(hour)}:${minute}`;
-      const date = new Date();
-      date.setHours(hour, Number(minute), 0, 0);
+  for (
+    let hour = 7;
+    hour <= 22;
+    hour += 1
+  ) {
+    ["00", "30"].forEach(
+      (minute) => {
+        const value = `${pad2(
+          hour
+        )}:${minute}`;
 
-      slots.push({
-        value,
-        label: date.toLocaleTimeString("en-IN", {
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-        }),
-      });
-    });
+        const date = new Date();
+
+        date.setHours(
+          hour,
+          Number(minute),
+          0,
+          0
+        );
+
+        slots.push({
+          value,
+
+          label:
+            date.toLocaleTimeString(
+              "en-IN",
+              {
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+              }
+            ),
+        });
+      }
+    );
   }
 
   return slots;
 }
 
-function getDefaultTimeValue(timeOptions) {
-  const now = new Date();
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+function getAvailableTimeOptions(
+  timeOptions,
+  selectedDate
+) {
+  if (!selectedDate) return [];
 
-  const nextSlot = timeOptions.find((slot) => {
-    const [hour, minute] = slot.value.split(":").map(Number);
-    return hour * 60 + minute >= currentMinutes + 30;
-  });
+  const todayValue =
+    toDateValue(new Date());
 
-  return nextSlot?.value || "19:30";
+  if (
+    selectedDate !== todayValue
+  ) {
+    return timeOptions;
+  }
+
+  const minimumTime =
+    Date.now() +
+    MINIMUM_SCHEDULE_NOTICE_MINUTES *
+      60 *
+      1000;
+
+  return timeOptions.filter(
+    (slot) => {
+      const slotDate = new Date(
+        `${selectedDate}T${slot.value}:00`
+      );
+
+      if (
+        Number.isNaN(
+          slotDate.getTime()
+        )
+      ) {
+        return false;
+      }
+
+      return (
+        slotDate.getTime() >=
+        minimumTime
+      );
+    }
+  );
+}
+
+function getInitialDateValue(
+  storedTiming,
+  dateOptions
+) {
+  const storedDate =
+    storedTiming?.scheduledDate;
+
+  const storedDateIsValid =
+    dateOptions.some(
+      (option) =>
+        option.value === storedDate
+    );
+
+  if (storedDateIsValid) {
+    return storedDate;
+  }
+
+  return (
+    dateOptions[0]?.value ||
+    toDateValue(new Date())
+  );
+}
+
+function getInitialTimeValue(
+  storedTiming,
+  availableTimeOptions
+) {
+  const storedTime =
+    storedTiming?.scheduledTime;
+
+  const storedTimeIsValid =
+    availableTimeOptions.some(
+      (option) =>
+        option.value === storedTime
+    );
+
+  if (storedTimeIsValid) {
+    return storedTime;
+  }
+
+  return (
+    availableTimeOptions[0]?.value ||
+    ""
+  );
 }
 
 export default function Cart() {
@@ -102,46 +247,148 @@ export default function Cart() {
     clearCart,
   } = useCart();
 
-  const dateOptions = useMemo(() => buildDateOptions(), []);
-  const timeOptions = useMemo(() => buildTimeOptions(), []);
-  const storedTiming = useMemo(() => getStoredTiming(), []);
+  const dateOptions = useMemo(
+    () => buildDateOptions(),
+    []
+  );
 
-  const [orderTiming, setOrderTiming] = useState(
-    storedTiming?.orderTiming || "now"
+  const timeOptions = useMemo(
+    () => buildTimeOptions(),
+    []
   );
-  const [scheduledDate, setScheduledDate] = useState(
-    storedTiming?.scheduledDate ||
-      dateOptions[0]?.value ||
-      toDateValue(new Date())
+
+  const storedTiming = useMemo(
+    () => getStoredTiming(),
+    []
   );
-  const [scheduledTime, setScheduledTime] = useState(
-    storedTiming?.scheduledTime || getDefaultTimeValue(timeOptions)
+
+  const initialScheduledDate =
+    useMemo(
+      () =>
+        getInitialDateValue(
+          storedTiming,
+          dateOptions
+        ),
+      [
+        storedTiming,
+        dateOptions,
+      ]
+    );
+
+  const initialAvailableTimes =
+    useMemo(
+      () =>
+        getAvailableTimeOptions(
+          timeOptions,
+          initialScheduledDate
+        ),
+      [
+        timeOptions,
+        initialScheduledDate,
+      ]
+    );
+
+  const initialScheduledTime =
+    useMemo(
+      () =>
+        getInitialTimeValue(
+          storedTiming,
+          initialAvailableTimes
+        ),
+      [
+        storedTiming,
+        initialAvailableTimes,
+      ]
+    );
+
+  const [
+    orderTiming,
+    setOrderTiming,
+  ] = useState(
+    storedTiming?.orderTiming ||
+      "now"
   );
-  const [errors, setErrors] = useState({});
+
+  const [
+    scheduledDate,
+    setScheduledDate,
+  ] = useState(
+    initialScheduledDate
+  );
+
+  const [
+    scheduledTime,
+    setScheduledTime,
+  ] = useState(
+    initialScheduledTime
+  );
+
+  const [errors, setErrors] =
+    useState({});
+
+  const availableTimeOptions =
+    useMemo(
+      () =>
+        getAvailableTimeOptions(
+          timeOptions,
+          scheduledDate
+        ),
+      [
+        timeOptions,
+        scheduledDate,
+      ]
+    );
 
   const finalTotal = cartTotal;
 
-  const totalQuantity = useMemo(() => {
-    return cartItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
-  }, [cartItems]);
+  const totalQuantity =
+    useMemo(() => {
+      return cartItems.reduce(
+        (sum, item) =>
+          sum +
+          Number(
+            item.quantity || 0
+          ),
+        0
+      );
+    }, [cartItems]);
 
-  const kitchenCount = useMemo(() => {
-    return new Set(cartItems.map((item) => getKitchenName(item))).size;
-  }, [cartItems]);
+  const kitchenCount =
+    useMemo(() => {
+      return new Set(
+        cartItems.map((item) =>
+          getKitchenName(item)
+        )
+      ).size;
+    }, [cartItems]);
 
-  const selectedDateLabel = useMemo(() => {
-    return (
-      dateOptions.find((option) => option.value === scheduledDate)?.label ||
-      "Select date"
-    );
-  }, [dateOptions, scheduledDate]);
+  const selectedDateLabel =
+    useMemo(() => {
+      return (
+        dateOptions.find(
+          (option) =>
+            option.value ===
+            scheduledDate
+        )?.label || "Select date"
+      );
+    }, [
+      dateOptions,
+      scheduledDate,
+    ]);
 
-  const selectedTimeLabel = useMemo(() => {
-    return (
-      timeOptions.find((option) => option.value === scheduledTime)?.label ||
-      "Select time"
-    );
-  }, [timeOptions, scheduledTime]);
+  const selectedTimeLabel =
+    useMemo(() => {
+      return (
+        timeOptions.find(
+          (option) =>
+            option.value ===
+            scheduledTime
+        )?.label || "Select time"
+      );
+    }, [
+      timeOptions,
+      scheduledTime,
+    ]);
 
   useEffect(() => {
     localStorage.setItem(
@@ -152,28 +399,181 @@ export default function Cart() {
         scheduledTime,
       })
     );
-  }, [orderTiming, scheduledDate, scheduledTime]);
+  }, [
+    orderTiming,
+    scheduledDate,
+    scheduledTime,
+  ]);
+
+  useEffect(() => {
+    if (
+      orderTiming !== "scheduled"
+    ) {
+      return;
+    }
+
+    const dateIsValid =
+      dateOptions.some(
+        (option) =>
+          option.value ===
+          scheduledDate
+      );
+
+    if (!dateIsValid) {
+      setScheduledDate(
+        dateOptions[0]?.value ||
+          toDateValue(new Date())
+      );
+
+      return;
+    }
+
+    const timeIsValid =
+      availableTimeOptions.some(
+        (option) =>
+          option.value ===
+          scheduledTime
+      );
+
+    if (!timeIsValid) {
+      setScheduledTime(
+        availableTimeOptions[0]
+          ?.value || ""
+      );
+    }
+  }, [
+    orderTiming,
+    scheduledDate,
+    scheduledTime,
+    dateOptions,
+    availableTimeOptions,
+  ]);
 
   function getKitchenName(item) {
-    return item.seller_kitchen_name || item.seller || "Home Kitchen";
+    return (
+      item.seller_kitchen_name ||
+      item.seller ||
+      "Home Kitchen"
+    );
+  }
+
+  function selectOrderNow() {
+    setOrderTiming("now");
+    setErrors({});
+  }
+
+  function selectScheduledOrder() {
+    setOrderTiming("scheduled");
+    setErrors({});
+
+    if (!scheduledDate) {
+      const nextDate =
+        dateOptions[0]?.value ||
+        toDateValue(new Date());
+
+      const nextTimeOptions =
+        getAvailableTimeOptions(
+          timeOptions,
+          nextDate
+        );
+
+      setScheduledDate(nextDate);
+
+      setScheduledTime(
+        nextTimeOptions[0]
+          ?.value || ""
+      );
+    }
+  }
+
+  function selectScheduleDate(
+    nextDate
+  ) {
+    const nextTimeOptions =
+      getAvailableTimeOptions(
+        timeOptions,
+        nextDate
+      );
+
+    setScheduledDate(nextDate);
+
+    setScheduledTime(
+      nextTimeOptions[0]?.value ||
+        ""
+    );
+
+    setErrors(
+      (currentErrors) => ({
+        ...currentErrors,
+        scheduledDate: "",
+        scheduledTime: "",
+      })
+    );
+  }
+
+  function selectScheduleTime(
+    nextTime
+  ) {
+    setScheduledTime(nextTime);
+
+    setErrors(
+      (currentErrors) => ({
+        ...currentErrors,
+        scheduledTime: "",
+      })
+    );
   }
 
   function handleCheckout() {
     const nextErrors = {};
 
-    if (orderTiming === "scheduled") {
+    if (
+      orderTiming === "scheduled"
+    ) {
       if (!scheduledDate) {
-        nextErrors.scheduledDate = "Please select a date.";
+        nextErrors.scheduledDate =
+          "Please select a date.";
       }
 
       if (!scheduledTime) {
-        nextErrors.scheduledTime = "Please select a time.";
+        nextErrors.scheduledTime =
+          "Please select a time.";
+      }
+
+      if (
+        scheduledDate &&
+        scheduledTime
+      ) {
+        const scheduledDateTime =
+          new Date(
+            `${scheduledDate}T${scheduledTime}:00`
+          );
+
+        if (
+          Number.isNaN(
+            scheduledDateTime.getTime()
+          )
+        ) {
+          nextErrors.scheduledTime =
+            "Please select a valid schedule.";
+        } else if (
+          scheduledDateTime.getTime() <=
+          Date.now()
+        ) {
+          nextErrors.scheduledTime =
+            "Please select a future time.";
+        }
       }
     }
 
     setErrors(nextErrors);
 
-    if (Object.keys(nextErrors).length > 0) return;
+    if (
+      Object.keys(nextErrors)
+        .length > 0
+    ) {
+      return;
+    }
 
     navigate("/checkout");
   }
@@ -216,7 +616,9 @@ export default function Cart() {
             </h2>
 
             <p className="mx-auto mt-2 max-w-xs text-sm font-semibold leading-relaxed text-[#6B6258]">
-              Add fresh homemade food from nearby kitchens to continue.
+              Add fresh homemade food
+              from nearby kitchens to
+              continue.
             </p>
 
             <Link
@@ -245,8 +647,14 @@ export default function Cart() {
             </h1>
 
             <p className="mt-1 text-sm font-bold text-[#6B6258]">
-              {totalQuantity} {totalQuantity === 1 ? "item" : "items"} from{" "}
-              {kitchenCount} {kitchenCount === 1 ? "kitchen" : "kitchens"}
+              {totalQuantity}{" "}
+              {totalQuantity === 1
+                ? "item"
+                : "items"}{" "}
+              from {kitchenCount}{" "}
+              {kitchenCount === 1
+                ? "kitchen"
+                : "kitchens"}
             </p>
           </div>
 
@@ -262,10 +670,14 @@ export default function Cart() {
         <section className="mt-5 overflow-hidden rounded-[30px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
           <div className="divide-y divide-[#F1E8DC]">
             {cartItems.map((item) => {
-              const kitchenName = getKitchenName(item);
+              const kitchenName =
+                getKitchenName(item);
 
               return (
-                <article key={item.id} className="p-4">
+                <article
+                  key={item.id}
+                  className="p-4"
+                >
                   <div className="flex items-center gap-3">
                     <Link
                       to={`/food/${item.id}`}
@@ -285,7 +697,9 @@ export default function Cart() {
                     </Link>
 
                     <div className="min-w-0 flex-1">
-                      <Link to={`/food/${item.id}`}>
+                      <Link
+                        to={`/food/${item.id}`}
+                      >
                         <h2 className="truncate text-base font-black leading-tight text-[#181411]">
                           {item.name}
                         </h2>
@@ -303,7 +717,11 @@ export default function Cart() {
                     <div className="flex shrink-0 items-center gap-3">
                       <button
                         type="button"
-                        onClick={() => decreaseQuantity(item.id)}
+                        onClick={() =>
+                          decreaseQuantity(
+                            item.id
+                          )
+                        }
                         className="flex h-9 w-9 items-center justify-center rounded-full border border-[#EADFCE] bg-[#FFFDF7] text-lg font-black text-[#3F5128] shadow-inner active:scale-95"
                         aria-label={`Decrease ${item.name}`}
                       >
@@ -316,7 +734,11 @@ export default function Cart() {
 
                       <button
                         type="button"
-                        onClick={() => increaseQuantity(item.id)}
+                        onClick={() =>
+                          increaseQuantity(
+                            item.id
+                          )
+                        }
                         className="flex h-9 w-9 items-center justify-center rounded-full border border-[#EADFCE] bg-[#FFFDF7] text-lg font-black text-[#3F5128] shadow-inner active:scale-95"
                         aria-label={`Increase ${item.name}`}
                       >
@@ -335,8 +757,13 @@ export default function Cart() {
                 to="/marketplace"
                 className="inline-flex items-center gap-2 text-sm font-black text-[#3F5128] active:scale-95"
               >
-                <span className="text-lg leading-none">+</span>
-                <span>Add more items</span>
+                <span className="text-lg leading-none">
+                  +
+                </span>
+
+                <span>
+                  Add more items
+                </span>
               </Link>
 
               <button
@@ -362,10 +789,7 @@ export default function Cart() {
           <div className="mt-5 space-y-4">
             <button
               type="button"
-              onClick={() => {
-                setOrderTiming("now");
-                setErrors({});
-              }}
+              onClick={selectOrderNow}
               className={`w-full rounded-[24px] border p-5 text-left transition-all active:scale-[0.99] ${
                 orderTiming === "now"
                   ? "border-[#CF743D] bg-[#FFF0DF] shadow-[5px_5px_14px_rgba(63,81,40,0.05),-5px_-5px_14px_rgba(255,255,255,0.95)]"
@@ -389,7 +813,8 @@ export default function Cart() {
                   </p>
 
                   <p className="mt-1 text-sm font-semibold text-[#6B6258]">
-                    Place the order immediately.
+                    Place the order
+                    immediately.
                   </p>
                 </div>
               </div>
@@ -397,12 +822,12 @@ export default function Cart() {
 
             <button
               type="button"
-              onClick={() => {
-                setOrderTiming("scheduled");
-                setErrors({});
-              }}
+              onClick={
+                selectScheduledOrder
+              }
               className={`w-full rounded-[24px] border p-5 text-left transition-all active:scale-[0.99] ${
-                orderTiming === "scheduled"
+                orderTiming ===
+                "scheduled"
                   ? "border-[#3F5128] bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15"
                   : "border-[#EADFCE] bg-white/90 text-[#181411] shadow-[5px_5px_14px_rgba(63,81,40,0.05),-5px_-5px_14px_rgba(255,255,255,0.95)]"
               }`}
@@ -410,7 +835,8 @@ export default function Cart() {
               <div className="flex items-center gap-4">
                 <div
                   className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full border ${
-                    orderTiming === "scheduled"
+                    orderTiming ===
+                    "scheduled"
                       ? "border-white/10 bg-white/15 text-white"
                       : "border-[#EADFCE] bg-[#FFFDF7] text-[#3F5128]"
                   }`}
@@ -421,7 +847,8 @@ export default function Cart() {
                 <div className="min-w-0">
                   <p
                     className={`text-lg font-black ${
-                      orderTiming === "scheduled"
+                      orderTiming ===
+                      "scheduled"
                         ? "text-white"
                         : "text-[#181411]"
                     }`}
@@ -431,12 +858,14 @@ export default function Cart() {
 
                   <p
                     className={`mt-1 text-sm font-semibold ${
-                      orderTiming === "scheduled"
+                      orderTiming ===
+                      "scheduled"
                         ? "text-white/75"
                         : "text-[#6B6258]"
                     }`}
                   >
-                    {orderTiming === "scheduled"
+                    {orderTiming ===
+                    "scheduled"
                       ? `${selectedDateLabel} • ${selectedTimeLabel}`
                       : "Choose date and time."}
                   </p>
@@ -444,89 +873,168 @@ export default function Cart() {
               </div>
             </button>
 
-            {orderTiming === "scheduled" ? (
-              <div className="rounded-[24px] border border-[#EADFCE] bg-white/90 p-4 shadow-[5px_5px_14px_rgba(63,81,40,0.05),-5px_-5px_14px_rgba(255,255,255,0.95)]">
+            {orderTiming ===
+            "scheduled" ? (
+              <div className="rounded-[24px] border border-[#D8C9B3] bg-white/95 p-4 shadow-[5px_5px_14px_rgba(63,81,40,0.05),-5px_-5px_14px_rgba(255,255,255,0.95)]">
                 <div>
-                  <label className="mb-2 block text-xs font-black uppercase tracking-wide text-[#CF743D]">
-                    Date
-                  </label>
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="text-[#CF743D]">
+                      <CalendarIcon />
+                    </span>
+
+                    <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
+                      Select date
+                    </p>
+                  </div>
 
                   {errors.scheduledDate ? (
-                    <p className="mb-2 text-xs font-black text-red-500">
-                      {errors.scheduledDate}
+                    <p className="mb-3 text-xs font-black text-red-500">
+                      {
+                        errors.scheduledDate
+                      }
                     </p>
                   ) : null}
 
-                  <div className="relative">
-                    <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#6B6258]">
-                      <CalendarIcon />
-                    </div>
+                  <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2 scrollbar-hide">
+                    {dateOptions.map(
+                      (option) => {
+                        const active =
+                          scheduledDate ===
+                          option.value;
 
-                    <select
-                      value={scheduledDate}
-                      onChange={(event) => {
-                        setScheduledDate(event.target.value);
-                        setErrors((current) => ({
-                          ...current,
-                          scheduledDate: "",
-                        }));
-                      }}
-                      className="h-14 w-full appearance-none rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-0 pl-12 pr-12 text-sm font-black text-[#181411] outline-none focus:border-[#CF743D]"
-                      aria-label="Select date"
-                    >
-                      {dateOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                        return (
+                          <button
+                            key={
+                              option.value
+                            }
+                            type="button"
+                            onClick={() =>
+                              selectScheduleDate(
+                                option.value
+                              )
+                            }
+                            aria-pressed={
+                              active
+                            }
+                            className={`min-w-[96px] shrink-0 rounded-2xl border px-3 py-3 text-left transition-all active:scale-95 ${
+                              active
+                                ? "border-[#3F5128] bg-[#3F5128] text-white shadow-md shadow-[#3F5128]/15"
+                                : "border-[#D8C9B3] bg-[#FFFDF7] text-[#3F5128]"
+                            }`}
+                          >
+                            <p className="text-xs font-black">
+                              {
+                                option.dayLabel
+                              }
+                            </p>
 
-                    <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#6B6258]">
-                      <ChevronDownIcon />
-                    </div>
+                            <p
+                              className={`mt-1 text-sm font-bold ${
+                                active
+                                  ? "text-white/75"
+                                  : "text-[#6B6258]"
+                              }`}
+                            >
+                              {
+                                option.shortDateLabel
+                              }
+                            </p>
+                          </button>
+                        );
+                      }
+                    )}
                   </div>
                 </div>
 
-                <div className="mt-4">
-                  <label className="mb-2 block text-xs font-black uppercase tracking-wide text-[#CF743D]">
-                    Time
-                  </label>
+                <div className="mt-5">
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="text-[#CF743D]">
+                      <ClockIcon />
+                    </span>
+
+                    <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
+                      Select time
+                    </p>
+                  </div>
 
                   {errors.scheduledTime ? (
-                    <p className="mb-2 text-xs font-black text-red-500">
-                      {errors.scheduledTime}
+                    <p className="mb-3 text-xs font-black text-red-500">
+                      {
+                        errors.scheduledTime
+                      }
                     </p>
                   ) : null}
 
-                  <div className="relative">
-                    <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#6B6258]">
-                      <ClockIcon />
-                    </div>
+                  {availableTimeOptions.length ===
+                  0 ? (
+                    <div className="rounded-2xl border border-red-200 bg-red-50 p-4">
+                      <p className="text-sm font-black text-red-600">
+                        No time slots
+                        available today.
+                      </p>
 
-                    <select
-                      value={scheduledTime}
-                      onChange={(event) => {
-                        setScheduledTime(event.target.value);
-                        setErrors((current) => ({
-                          ...current,
-                          scheduledTime: "",
-                        }));
-                      }}
-                      className="h-14 w-full appearance-none rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-0 pl-12 pr-12 text-sm font-black text-[#181411] outline-none focus:border-[#CF743D]"
-                      aria-label="Select time"
-                    >
-                      {timeOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-
-                    <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#6B6258]">
-                      <ChevronDownIcon />
+                      <p className="mt-1 text-xs font-semibold text-red-500">
+                        Select tomorrow or
+                        another date.
+                      </p>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="max-h-[288px] overflow-y-auto rounded-2xl border border-[#EADFCE] bg-[#FFFDF7] p-3">
+                      <div className="grid grid-cols-3 gap-2">
+                        {availableTimeOptions.map(
+                          (option) => {
+                            const active =
+                              scheduledTime ===
+                              option.value;
+
+                            return (
+                              <button
+                                key={
+                                  option.value
+                                }
+                                type="button"
+                                onClick={() =>
+                                  selectScheduleTime(
+                                    option.value
+                                  )
+                                }
+                                aria-pressed={
+                                  active
+                                }
+                                className={`h-12 rounded-2xl border px-2 text-xs font-black transition-all active:scale-95 ${
+                                  active
+                                    ? "border-[#CF743D] bg-[#CF743D] text-white shadow-md shadow-[#CF743D]/20"
+                                    : "border-[#D8C9B3] bg-white text-[#3F5128]"
+                                }`}
+                              >
+                                {
+                                  option.label
+                                }
+                              </button>
+                            );
+                          }
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
+
+                {scheduledDate &&
+                scheduledTime ? (
+                  <div className="mt-5 rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF] p-4">
+                    <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
+                      Selected schedule
+                    </p>
+
+                    <p className="mt-2 font-black text-[#3F5128]">
+                      {selectedDateLabel}
+                    </p>
+
+                    <p className="mt-1 text-sm font-bold text-[#6B6258]">
+                      {selectedTimeLabel}
+                    </p>
+                  </div>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -540,7 +1048,9 @@ export default function Cart() {
               Total
             </p>
 
-            <p className="text-xl font-black text-[#3F5128]">₹{finalTotal}</p>
+            <p className="text-xl font-black text-[#3F5128]">
+              ₹{finalTotal}
+            </p>
           </div>
 
           <button
@@ -579,7 +1089,14 @@ function CalendarIcon() {
       stroke="currentColor"
       strokeWidth="2.2"
     >
-      <rect x="3" y="4" width="18" height="17" rx="2" />
+      <rect
+        x="3"
+        y="4"
+        width="18"
+        height="17"
+        rx="2"
+      />
+
       <path d="M8 2v4" />
       <path d="M16 2v4" />
       <path d="M3 10h18" />
@@ -596,22 +1113,13 @@ function ClockIcon() {
       stroke="currentColor"
       strokeWidth="2.2"
     >
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3 2" />
-    </svg>
-  );
-}
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+      />
 
-function ChevronDownIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.4"
-    >
-      <path d="M6 9l6 6 6-6" />
+      <path d="M12 7v5l3 2" />
     </svg>
   );
 }

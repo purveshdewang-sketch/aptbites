@@ -56,32 +56,49 @@ export default function SellerDashboard() {
     packing_charge: 5,
   });
 
-  const [sellerProfileComplete, setSellerProfileComplete] = useState(false);
-  const [bankDetailsCompleted, setBankDetailsCompleted] = useState(false);
+  const [sellerProfileComplete, setSellerProfileComplete] =
+    useState(false);
+
+  const [bankDetailsCompleted, setBankDetailsCompleted] =
+    useState(false);
+
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileSaving, setProfileSaving] = useState(false);
 
   const [sellerFoods, setSellerFoods] = useState([]);
   const [sellerOrders, setSellerOrders] = useState([]);
+
   const [sellerOnline, setSellerOnline] = useState(true);
-  const [acceptScheduledOrders, setAcceptScheduledOrders] = useState(true);
-  const [deliveryAvailable, setDeliveryAvailable] = useState(true);
-  const [pickupAvailable, setPickupAvailable] = useState(true);
+
+  const [acceptScheduledOrders, setAcceptScheduledOrders] =
+    useState(true);
+
+  const [deliveryAvailable, setDeliveryAvailable] =
+    useState(true);
+
+  const [pickupAvailable, setPickupAvailable] =
+    useState(true);
+
   const [packingCharge, setPackingCharge] = useState(5);
   const [timerTick, setTimerTick] = useState(0);
   const [editingFood, setEditingFood] = useState(null);
+
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [foodsLoading, setFoodsLoading] = useState(true);
   const [ordersLoading, setOrdersLoading] = useState(true);
+
   const [message, setMessage] = useState("");
   const [audioReady, setAudioReady] = useState(false);
 
   useEffect(() => {
     if (!user) return;
 
-    const savedSellerName = localStorage.getItem(`Nefo_seller_name_${user.id}`);
+    const savedSellerName = localStorage.getItem(
+      `Nefo_seller_name_${user.id}`
+    );
 
     if (savedSellerName) {
       setFormData((currentData) => ({
@@ -167,11 +184,20 @@ export default function SellerDashboard() {
   }, [user]);
 
   function getSellerStorageKey() {
-    return user ? `Nefo_seller_name_${user.id}` : "Nefo_seller_name";
+    return user
+      ? `Nefo_seller_name_${user.id}`
+      : "Nefo_seller_name";
+  }
+
+  function goToCustomerHome() {
+    navigate("/");
   }
 
   function getSafePackingCharge(value) {
-    return Math.min(15, Math.max(5, Number(value || 5)));
+    return Math.min(
+      15,
+      Math.max(5, Number(value || 5))
+    );
   }
 
   function isSellerSetupComplete(profile) {
@@ -198,12 +224,17 @@ export default function SellerDashboard() {
       .maybeSingle();
 
     if (error) {
-      setMessage(`Could not load seller profile: ${error.message}`);
+      setMessage(
+        `Could not load seller profile: ${error.message}`
+      );
+
       setProfileLoading(false);
       return;
     }
 
-    const profileRole = String(data?.role || "").toLowerCase();
+    const profileRole = String(
+      data?.role || ""
+    ).toLowerCase();
 
     const isApprovedSeller =
       data?.is_seller === true ||
@@ -212,38 +243,69 @@ export default function SellerDashboard() {
 
     if (!isApprovedSeller) {
       setSellerProfileComplete(false);
+
       setMessage(
         "This account is not approved as a seller. Please apply to sell on Nefo and wait for owner approval."
       );
+
       setProfileLoading(false);
       return;
     }
 
-    const safePackingCharge = getSafePackingCharge(data?.packing_charge || 5);
-    const bankComplete = data?.bank_details_completed === true;
+    const safePackingCharge = getSafePackingCharge(
+      data?.packing_charge || 5
+    );
+
+    const bankComplete =
+      data?.bank_details_completed === true;
 
     setBankDetailsCompleted(bankComplete);
     setSellerOnline(data?.seller_online !== false);
-    setAcceptScheduledOrders(data?.accept_scheduled_orders !== false);
-    setDeliveryAvailable(data?.delivery_available !== false);
-    setPickupAvailable(data?.pickup_available !== false);
+
+    setAcceptScheduledOrders(
+      data?.accept_scheduled_orders !== false
+    );
+
+    setDeliveryAvailable(
+      data?.delivery_available !== false
+    );
+
+    setPickupAvailable(
+      data?.pickup_available !== false
+    );
+
     setPackingCharge(safePackingCharge);
 
     const setupData = {
-      seller_kitchen_name: data?.seller_kitchen_name || "",
+      seller_kitchen_name:
+        data?.seller_kitchen_name || "",
+
       flat: data?.flat || "",
       phone: data?.phone || "",
-      seller_specialty: data?.seller_specialty || "",
-      seller_about: data?.seller_about || "",
-      accept_scheduled_orders: data?.accept_scheduled_orders !== false,
-      delivery_available: data?.delivery_available !== false,
-      pickup_available: data?.pickup_available !== false,
+
+      seller_specialty:
+        data?.seller_specialty || "",
+
+      seller_about:
+        data?.seller_about || "",
+
+      accept_scheduled_orders:
+        data?.accept_scheduled_orders !== false,
+
+      delivery_available:
+        data?.delivery_available !== false,
+
+      pickup_available:
+        data?.pickup_available !== false,
+
       packing_charge: safePackingCharge,
     };
 
     setSellerSetupData(setupData);
 
-    const setupComplete = isSellerSetupComplete(setupData);
+    const setupComplete =
+      isSellerSetupComplete(setupData);
+
     setSellerProfileComplete(setupComplete);
 
     if (setupData.seller_kitchen_name) {
@@ -259,19 +321,30 @@ export default function SellerDashboard() {
     }
 
     if (setupComplete) {
-      localStorage.removeItem(`Nefo_seller_profile_incomplete_${user.id}`);
+      localStorage.removeItem(
+        `Nefo_seller_profile_incomplete_${user.id}`
+      );
     } else {
-      localStorage.setItem(`Nefo_seller_profile_incomplete_${user.id}`, "yes");
+      localStorage.setItem(
+        `Nefo_seller_profile_incomplete_${user.id}`,
+        "yes"
+      );
     }
 
     setProfileLoading(false);
   }
 
   function handleSellerSetupChange(event) {
-    const { name, value, type, checked } = event.target;
+    const {
+      name,
+      value,
+      type,
+      checked,
+    } = event.target;
 
     setSellerSetupData((currentData) => ({
       ...currentData,
+
       [name]:
         type === "checkbox"
           ? checked
@@ -293,7 +366,10 @@ export default function SellerDashboard() {
       !sellerSetupData.seller_specialty.trim() ||
       !sellerSetupData.seller_about.trim()
     ) {
-      setMessage("Please complete all seller profile fields.");
+      setMessage(
+        "Please complete all seller profile fields."
+      );
+
       return;
     }
 
@@ -301,7 +377,10 @@ export default function SellerDashboard() {
       sellerSetupData.delivery_available === false &&
       sellerSetupData.pickup_available === false
     ) {
-      setMessage("At least one option must stay ON: Delivery or Self Pickup.");
+      setMessage(
+        "At least one option must stay ON: Delivery or Self Pickup."
+      );
+
       return;
     }
 
@@ -318,88 +397,155 @@ export default function SellerDashboard() {
       role: "seller",
       is_seller: true,
       seller_online: true,
-      accept_scheduled_orders: sellerSetupData.accept_scheduled_orders,
-      delivery_available: sellerSetupData.delivery_available,
-      pickup_available: sellerSetupData.pickup_available,
+
+      accept_scheduled_orders:
+        sellerSetupData.accept_scheduled_orders,
+
+      delivery_available:
+        sellerSetupData.delivery_available,
+
+      pickup_available:
+        sellerSetupData.pickup_available,
+
       packing_charge: safePackingCharge,
-      full_name: sellerSetupData.seller_kitchen_name.trim(),
-      flat: sellerSetupData.flat.trim(),
-      phone: sellerSetupData.phone.trim(),
-      seller_kitchen_name: sellerSetupData.seller_kitchen_name.trim(),
-      seller_specialty: sellerSetupData.seller_specialty.trim(),
-      seller_about: sellerSetupData.seller_about.trim(),
+
+      full_name:
+        sellerSetupData.seller_kitchen_name.trim(),
+
+      flat:
+        sellerSetupData.flat.trim(),
+
+      phone:
+        sellerSetupData.phone.trim(),
+
+      seller_kitchen_name:
+        sellerSetupData.seller_kitchen_name.trim(),
+
+      seller_specialty:
+        sellerSetupData.seller_specialty.trim(),
+
+      seller_about:
+        sellerSetupData.seller_about.trim(),
     };
 
-    const { error } = await supabase.from("profiles").upsert(payload);
+    const { error } = await supabase
+      .from("profiles")
+      .upsert(payload);
 
     if (error) {
-      setMessage(`Seller profile could not be saved: ${error.message}`);
+      setMessage(
+        `Seller profile could not be saved: ${error.message}`
+      );
+
       setProfileSaving(false);
       return;
     }
 
-    localStorage.setItem(`Nefo_seller_access_${user.id}`, "yes");
+    localStorage.setItem(
+      `Nefo_seller_access_${user.id}`,
+      "yes"
+    );
+
     localStorage.setItem(
       `Nefo_seller_name_${user.id}`,
       sellerSetupData.seller_kitchen_name.trim()
     );
-    localStorage.removeItem(`Nefo_seller_profile_incomplete_${user.id}`);
+
+    localStorage.removeItem(
+      `Nefo_seller_profile_incomplete_${user.id}`
+    );
 
     setFormData((currentData) => ({
       ...currentData,
-      seller: sellerSetupData.seller_kitchen_name.trim(),
+
+      seller:
+        sellerSetupData.seller_kitchen_name.trim(),
     }));
 
     setSellerOnline(true);
-    setAcceptScheduledOrders(sellerSetupData.accept_scheduled_orders);
-    setDeliveryAvailable(sellerSetupData.delivery_available);
-    setPickupAvailable(sellerSetupData.pickup_available);
+
+    setAcceptScheduledOrders(
+      sellerSetupData.accept_scheduled_orders
+    );
+
+    setDeliveryAvailable(
+      sellerSetupData.delivery_available
+    );
+
+    setPickupAvailable(
+      sellerSetupData.pickup_available
+    );
+
     setPackingCharge(safePackingCharge);
     setSellerProfileComplete(true);
     setProfileSaving(false);
-    setMessage("Seller profile completed successfully.");
+
+    setMessage(
+      "Seller profile completed successfully."
+    );
   }
 
   async function toggleSellerOnline() {
     if (!user) return;
 
     const nextStatus = !sellerOnline;
+
     setSellerOnline(nextStatus);
 
     const { error } = await supabase
       .from("profiles")
-      .update({ seller_online: nextStatus })
+      .update({
+        seller_online: nextStatus,
+      })
       .eq("id", user.id);
 
     if (error) {
       setSellerOnline(!nextStatus);
-      setMessage(`Could not update online status: ${error.message}`);
+
+      setMessage(
+        `Could not update online status: ${error.message}`
+      );
+
       return;
     }
 
-    setMessage(nextStatus ? "You are now online." : "You are now offline.");
+    setMessage(
+      nextStatus
+        ? "You are now online."
+        : "You are now offline."
+    );
   }
 
   async function toggleAcceptScheduledOrders() {
     if (!user) return;
 
-    const nextStatus = !acceptScheduledOrders;
+    const nextStatus =
+      !acceptScheduledOrders;
+
     setAcceptScheduledOrders(nextStatus);
 
     const { error } = await supabase
       .from("profiles")
-      .update({ accept_scheduled_orders: nextStatus })
+      .update({
+        accept_scheduled_orders: nextStatus,
+      })
       .eq("id", user.id);
 
     if (error) {
       setAcceptScheduledOrders(!nextStatus);
-      setMessage(`Could not update scheduled order status: ${error.message}`);
+
+      setMessage(
+        `Could not update scheduled order status: ${error.message}`
+      );
+
       return;
     }
 
     setSellerSetupData((currentData) => ({
       ...currentData,
-      accept_scheduled_orders: nextStatus,
+
+      accept_scheduled_orders:
+        nextStatus,
     }));
 
     setMessage(
@@ -412,10 +558,17 @@ export default function SellerDashboard() {
   async function toggleDeliveryAvailable() {
     if (!user) return;
 
-    const nextStatus = !deliveryAvailable;
+    const nextStatus =
+      !deliveryAvailable;
 
-    if (!nextStatus && !pickupAvailable) {
-      setMessage("At least one option must stay ON: Delivery or Self Pickup.");
+    if (
+      !nextStatus &&
+      !pickupAvailable
+    ) {
+      setMessage(
+        "At least one option must stay ON: Delivery or Self Pickup."
+      );
+
       return;
     }
 
@@ -423,18 +576,26 @@ export default function SellerDashboard() {
 
     const { error } = await supabase
       .from("profiles")
-      .update({ delivery_available: nextStatus })
+      .update({
+        delivery_available: nextStatus,
+      })
       .eq("id", user.id);
 
     if (error) {
       setDeliveryAvailable(!nextStatus);
-      setMessage(`Could not update delivery setting: ${error.message}`);
+
+      setMessage(
+        `Could not update delivery setting: ${error.message}`
+      );
+
       return;
     }
 
     setSellerSetupData((currentData) => ({
       ...currentData,
-      delivery_available: nextStatus,
+
+      delivery_available:
+        nextStatus,
     }));
 
     setMessage(
@@ -447,10 +608,17 @@ export default function SellerDashboard() {
   async function togglePickupAvailable() {
     if (!user) return;
 
-    const nextStatus = !pickupAvailable;
+    const nextStatus =
+      !pickupAvailable;
 
-    if (!nextStatus && !deliveryAvailable) {
-      setMessage("At least one option must stay ON: Delivery or Self Pickup.");
+    if (
+      !nextStatus &&
+      !deliveryAvailable
+    ) {
+      setMessage(
+        "At least one option must stay ON: Delivery or Self Pickup."
+      );
+
       return;
     }
 
@@ -458,18 +626,26 @@ export default function SellerDashboard() {
 
     const { error } = await supabase
       .from("profiles")
-      .update({ pickup_available: nextStatus })
+      .update({
+        pickup_available: nextStatus,
+      })
       .eq("id", user.id);
 
     if (error) {
       setPickupAvailable(!nextStatus);
-      setMessage(`Could not update pickup setting: ${error.message}`);
+
+      setMessage(
+        `Could not update pickup setting: ${error.message}`
+      );
+
       return;
     }
 
     setSellerSetupData((currentData) => ({
       ...currentData,
-      pickup_available: nextStatus,
+
+      pickup_available:
+        nextStatus,
     }));
 
     setMessage(
@@ -482,7 +658,8 @@ export default function SellerDashboard() {
   async function updatePackingCharge(nextCharge) {
     if (!user) return;
 
-    const safeCharge = getSafePackingCharge(nextCharge);
+    const safeCharge =
+      getSafePackingCharge(nextCharge);
 
     setPackingCharge(safeCharge);
 
@@ -493,22 +670,30 @@ export default function SellerDashboard() {
 
     const { error } = await supabase
       .from("profiles")
-      .update({ packing_charge: safeCharge })
+      .update({
+        packing_charge: safeCharge,
+      })
       .eq("id", user.id);
 
     if (error) {
-      setMessage(`Could not update packing charge: ${error.message}`);
+      setMessage(
+        `Could not update packing charge: ${error.message}`
+      );
+
       fetchSellerProfile();
       return;
     }
 
-    setMessage(`Packing charge updated to ₹${safeCharge}.`);
+    setMessage(
+      `Packing charge updated to ₹${safeCharge}.`
+    );
   }
 
   function toggleNotificationSound() {
     if (!user) return;
 
     const nextValue = !audioReady;
+
     setAudioReady(nextValue);
 
     localStorage.setItem(
@@ -530,47 +715,87 @@ export default function SellerDashboard() {
   }
 
   function playTingSound(forcePlay = false) {
-    if (!audioReady && !forcePlay) return;
+    if (
+      !audioReady &&
+      !forcePlay
+    ) {
+      return;
+    }
 
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    const AudioContextClass =
+      window.AudioContext ||
+      window.webkitAudioContext;
+
     if (!AudioContextClass) return;
 
     if (!audioContextRef.current) {
-      audioContextRef.current = new AudioContextClass();
+      audioContextRef.current =
+        new AudioContextClass();
     }
 
-    const audioContext = audioContextRef.current;
+    const audioContext =
+      audioContextRef.current;
 
-    if (audioContext.state === "suspended") {
+    if (
+      audioContext.state === "suspended"
+    ) {
       audioContext.resume();
     }
 
-    const now = audioContext.currentTime;
+    const now =
+      audioContext.currentTime;
 
-    [0, 0.1, 0.2].forEach((delay, index) => {
-      const oscillator = audioContext.createOscillator();
-      const gain = audioContext.createGain();
+    [0, 0.1, 0.2].forEach(
+      (delay, index) => {
+        const oscillator =
+          audioContext.createOscillator();
 
-      oscillator.type = "sine";
+        const gain =
+          audioContext.createGain();
 
-      const frequencies = [1400, 1600, 1800];
+        oscillator.type = "sine";
 
-      oscillator.frequency.setValueAtTime(frequencies[index], now + delay);
+        const frequencies = [
+          1400,
+          1600,
+          1800,
+        ];
 
-      gain.gain.setValueAtTime(0.0001, now + delay);
-      gain.gain.exponentialRampToValueAtTime(0.25, now + delay + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.08);
+        oscillator.frequency.setValueAtTime(
+          frequencies[index],
+          now + delay
+        );
 
-      oscillator.connect(gain);
-      gain.connect(audioContext.destination);
+        gain.gain.setValueAtTime(
+          0.0001,
+          now + delay
+        );
 
-      oscillator.start(now + delay);
-      oscillator.stop(now + delay + 0.08);
-    });
+        gain.gain.exponentialRampToValueAtTime(
+          0.25,
+          now + delay + 0.01
+        );
+
+        gain.gain.exponentialRampToValueAtTime(
+          0.0001,
+          now + delay + 0.08
+        );
+
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+
+        oscillator.start(now + delay);
+
+        oscillator.stop(
+          now + delay + 0.08
+        );
+      }
+    );
   }
 
   function handleChange(event) {
-    const { name, value } = event.target;
+    const { name, value } =
+      event.target;
 
     setFormData((currentData) => ({
       ...currentData,
@@ -578,17 +803,28 @@ export default function SellerDashboard() {
     }));
 
     if (name === "seller") {
-      localStorage.setItem(getSellerStorageKey(), value);
+      localStorage.setItem(
+        getSellerStorageKey(),
+        value
+      );
     }
   }
 
   function getOrderItems(order) {
-    if (Array.isArray(order.items)) return order.items;
+    if (Array.isArray(order.items)) {
+      return order.items;
+    }
 
-    if (typeof order.items === "string") {
+    if (
+      typeof order.items === "string"
+    ) {
       try {
-        const parsedItems = JSON.parse(order.items);
-        return Array.isArray(parsedItems) ? parsedItems : [];
+        const parsedItems =
+          JSON.parse(order.items);
+
+        return Array.isArray(parsedItems)
+          ? parsedItems
+          : [];
       } catch {
         return [];
       }
@@ -598,15 +834,22 @@ export default function SellerDashboard() {
   }
 
   function isScheduledOrder(order) {
-    return order.scheduled_order === true || Boolean(order.scheduled_for);
+    return (
+      order.scheduled_order === true ||
+      Boolean(order.scheduled_for)
+    );
   }
 
   function formatScheduledDateTime(value) {
-    if (!value) return "Schedule time not available";
+    if (!value) {
+      return "Schedule time not available";
+    }
 
     const date = new Date(value);
 
-    if (Number.isNaN(date.getTime())) {
+    if (
+      Number.isNaN(date.getTime())
+    ) {
       return "Schedule time not available";
     }
 
@@ -628,18 +871,24 @@ export default function SellerDashboard() {
       .from("foods")
       .select("*")
       .eq("user_id", user.id)
-      .order("id", { ascending: false });
+      .order("id", {
+        ascending: false,
+      });
 
     if (!error) {
       setSellerFoods(data || []);
     } else {
-      setMessage(`Could not load dishes: ${error.message}`);
+      setMessage(
+        `Could not load dishes: ${error.message}`
+      );
     }
 
     setFoodsLoading(false);
   }
 
-  async function fetchSellerOrders(shouldCheckNewOrder = false) {
+  async function fetchSellerOrders(
+    shouldCheckNewOrder = false
+  ) {
     if (!user) return;
 
     setOrdersLoading(true);
@@ -648,184 +897,293 @@ export default function SellerDashboard() {
       .from("orders")
       .select("*")
       .eq("seller_id", user.id)
-      .order("id", { ascending: false });
+      .order("id", {
+        ascending: false,
+      });
 
     if (!error) {
-      const nextOrders = data || [];
+      const nextOrders =
+        data || [];
 
       if (shouldCheckNewOrder) {
-        const previousIds = previousOrderIdsRef.current;
+        const previousIds =
+          previousOrderIdsRef.current;
 
-        const newActiveOrderFound = nextOrders.some((order) => {
-          const dbStatus = normalizeStatus(order.status);
-          return (
-            !previousIds.includes(order.id) &&
-            dbStatus !== "completed" &&
-            dbStatus !== "cancelled"
-          );
-        });
+        const newActiveOrderFound =
+          nextOrders.some((order) => {
+            const dbStatus =
+              normalizeStatus(
+                order.status
+              );
+
+            return (
+              !previousIds.includes(
+                order.id
+              ) &&
+              dbStatus !== "completed" &&
+              dbStatus !== "cancelled"
+            );
+          });
 
         if (newActiveOrderFound) {
           playTingSound();
 
-          document.title = "🔔 New Order - Nefo";
+          document.title =
+            "🔔 New Order - Nefo";
 
           setTimeout(() => {
-            document.title = "Nefo Seller";
+            document.title =
+              "Nefo Seller";
           }, 5000);
 
-          if ("Notification" in window && Notification.permission === "granted") {
-            new Notification("🍔 New Nefo Order", {
-              body: "You received a new food order.",
-              icon: "/Nefo-logo.png",
-            });
+          if (
+            "Notification" in window &&
+            Notification.permission ===
+              "granted"
+          ) {
+            new Notification(
+              "🍔 New Nefo Order",
+              {
+                body:
+                  "You received a new food order.",
+
+                icon:
+                  "/Nefo-logo.png",
+              }
+            );
           }
 
-          setMessage("🔔 New order received.");
+          setMessage(
+            "🔔 New order received."
+          );
         }
       }
 
-      previousOrderIdsRef.current = nextOrders.map((order) => order.id);
+      previousOrderIdsRef.current =
+        nextOrders.map(
+          (order) => order.id
+        );
+
       setSellerOrders(nextOrders);
     } else {
-      setMessage(`Could not load seller orders: ${error.message}`);
+      setMessage(
+        `Could not load seller orders: ${error.message}`
+      );
     }
 
     setOrdersLoading(false);
   }
 
   async function handleImageChange(event) {
-    const file = event.target.files[0];
+    const file =
+      event.target.files[0];
 
     if (!file) return;
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ];
 
-    if (!allowedTypes.includes(file.type)) {
-      setMessage("Please upload a JPG, PNG, or WEBP image.");
+    if (
+      !allowedTypes.includes(file.type)
+    ) {
+      setMessage(
+        "Please upload a JPG, PNG, or WEBP image."
+      );
+
       return;
     }
 
     try {
-      setMessage("Compressing image...");
+      setMessage(
+        "Compressing image..."
+      );
 
-      const compressedFile = await compressImage(file);
+      const compressedFile =
+        await compressImage(file);
 
       setImageFile(compressedFile);
 
-      const previewUrl = URL.createObjectURL(compressedFile);
+      const previewUrl =
+        URL.createObjectURL(
+          compressedFile
+        );
 
       setImagePreview(previewUrl);
 
       setMessage(
-        `Image optimized (${(compressedFile.size / 1024 / 1024).toFixed(2)} MB)`
+        `Image optimized (${(
+          compressedFile.size /
+          1024 /
+          1024
+        ).toFixed(2)} MB)`
       );
     } catch {
-      setMessage("Could not process image.");
+      setMessage(
+        "Could not process image."
+      );
     }
   }
 
   function removeSelectedImage() {
     setImageFile(null);
-    setImagePreview(editingFood?.image || "");
-    setMessage(
-      editingFood ? "Image reverted to existing dish image." : "Image removed."
+
+    setImagePreview(
+      editingFood?.image || ""
     );
 
-    if (uploadImageInputRef.current) {
-      uploadImageInputRef.current.value = "";
+    setMessage(
+      editingFood
+        ? "Image reverted to existing dish image."
+        : "Image removed."
+    );
+
+    if (
+      uploadImageInputRef.current
+    ) {
+      uploadImageInputRef.current.value =
+        "";
     }
 
-    if (cameraImageInputRef.current) {
-      cameraImageInputRef.current.value = "";
+    if (
+      cameraImageInputRef.current
+    ) {
+      cameraImageInputRef.current.value =
+        "";
     }
   }
 
   function compressImage(file) {
-    return new Promise((resolve, reject) => {
-      const image = new Image();
+    return new Promise(
+      (resolve, reject) => {
+        const image = new Image();
 
-      image.onload = () => {
-        const canvas = document.createElement("canvas");
+        image.onload = () => {
+          const canvas =
+            document.createElement(
+              "canvas"
+            );
 
-        const MAX_WIDTH = 1200;
-        const MAX_HEIGHT = 1200;
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
 
-        let width = image.width;
-        let height = image.height;
+          let width = image.width;
+          let height = image.height;
 
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *=
+                MAX_WIDTH / width;
+
+              width = MAX_WIDTH;
+            }
+          } else if (
+            height > MAX_HEIGHT
+          ) {
+            width *=
+              MAX_HEIGHT / height;
+
             height = MAX_HEIGHT;
           }
-        }
 
-        canvas.width = width;
-        canvas.height = height;
+          canvas.width = width;
+          canvas.height = height;
 
-        const ctx = canvas.getContext("2d");
+          const ctx =
+            canvas.getContext("2d");
 
-        ctx.drawImage(image, 0, 0, width, height);
+          ctx.drawImage(
+            image,
+            0,
+            0,
+            width,
+            height
+          );
 
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) {
-              reject(new Error("Compression failed"));
-              return;
-            }
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(
+                  new Error(
+                    "Compression failed"
+                  )
+                );
 
-            const compressedFile = new File([blob], `${Date.now()}-Nefo.jpg`, {
-              type: "image/jpeg",
-            });
+                return;
+              }
 
-            resolve(compressedFile);
-          },
-          "image/jpeg",
-          0.75
-        );
-      };
+              const compressedFile =
+                new File(
+                  [blob],
+                  `${Date.now()}-Nefo.jpg`,
+                  {
+                    type: "image/jpeg",
+                  }
+                );
 
-      image.onerror = reject;
+              resolve(compressedFile);
+            },
+            "image/jpeg",
+            0.75
+          );
+        };
 
-      image.src = URL.createObjectURL(file);
-    });
+        image.onerror = reject;
+
+        image.src =
+          URL.createObjectURL(file);
+      }
+    );
   }
 
   async function uploadDishImage() {
     if (!imageFile) {
-      return editingFood?.image || "";
+      return (
+        editingFood?.image || ""
+      );
     }
 
-    const fileExtension = imageFile.name.split(".").pop();
+    const fileExtension =
+      imageFile.name
+        .split(".")
+        .pop();
 
     const fileName = `${Date.now()}-${Math.random()
       .toString(36)
       .slice(2)}.${fileExtension}`;
 
-    const filePath = `dishes/${fileName}`;
+    const filePath =
+      `dishes/${fileName}`;
 
-    const { error } = await supabase.storage
-      .from("food-images")
-      .upload(filePath, imageFile, {
-        cacheControl: "3600",
-        upsert: false,
-      });
+    const { error } =
+      await supabase.storage
+        .from("food-images")
+        .upload(
+          filePath,
+          imageFile,
+          {
+            cacheControl: "3600",
+            upsert: false,
+          }
+        );
 
     if (error) throw error;
 
-    const { data } = supabase.storage.from("food-images").getPublicUrl(filePath);
+    const { data } =
+      supabase.storage
+        .from("food-images")
+        .getPublicUrl(filePath);
 
     return data.publicUrl;
   }
 
   function resetForm() {
-    const savedSellerName = localStorage.getItem(getSellerStorageKey()) || "";
+    const savedSellerName =
+      localStorage.getItem(
+        getSellerStorageKey()
+      ) || "";
 
     setFormData({
       name: "",
@@ -842,12 +1200,18 @@ export default function SellerDashboard() {
     setImageFile(null);
     setImagePreview("");
 
-    if (uploadImageInputRef.current) {
-      uploadImageInputRef.current.value = "";
+    if (
+      uploadImageInputRef.current
+    ) {
+      uploadImageInputRef.current.value =
+        "";
     }
 
-    if (cameraImageInputRef.current) {
-      cameraImageInputRef.current.value = "";
+    if (
+      cameraImageInputRef.current
+    ) {
+      cameraImageInputRef.current.value =
+        "";
     }
   }
 
@@ -861,16 +1225,26 @@ export default function SellerDashboard() {
       time: food.time || "",
       stock: food.stock || "",
       type: food.type || "Veg",
-      category: food.category || "Meals",
-      description: food.description || "",
+
+      category:
+        food.category || "Meals",
+
+      description:
+        food.description || "",
     });
 
     if (food.seller) {
-      localStorage.setItem(getSellerStorageKey(), food.seller);
+      localStorage.setItem(
+        getSellerStorageKey(),
+        food.seller
+      );
     }
 
     setImageFile(null);
-    setImagePreview(food.image || "");
+
+    setImagePreview(
+      food.image || ""
+    );
 
     setActiveTab("menu");
 
@@ -884,12 +1258,20 @@ export default function SellerDashboard() {
     event.preventDefault();
 
     if (!user) {
-      setMessage("Please sign in before adding or editing dishes.");
+      setMessage(
+        "Please sign in before adding or editing dishes."
+      );
+
       return;
     }
 
-    if (!sellerProfileComplete) {
-      setMessage("Please complete your seller profile before adding dishes.");
+    if (
+      !sellerProfileComplete
+    ) {
+      setMessage(
+        "Please complete your seller profile before adding dishes."
+      );
+
       return;
     }
 
@@ -900,22 +1282,35 @@ export default function SellerDashboard() {
       !formData.time ||
       formData.stock === ""
     ) {
-      setMessage("Please fill dish name, price, seller, ready time, and stock.");
+      setMessage(
+        "Please fill dish name, price, seller, ready time, and stock."
+      );
+
       return;
     }
 
-    if (!editingFood && !imageFile) {
-      setMessage("Please upload a dish image before adding this dish.");
+    if (
+      !editingFood &&
+      !imageFile
+    ) {
+      setMessage(
+        "Please upload a dish image before adding this dish."
+      );
+
       return;
     }
 
-    localStorage.setItem(getSellerStorageKey(), formData.seller);
+    localStorage.setItem(
+      getSellerStorageKey(),
+      formData.seller
+    );
 
     setLoading(true);
     setMessage("");
 
     try {
-      const imageUrl = await uploadDishImage();
+      const imageUrl =
+        await uploadDishImage();
 
       const payload = {
         user_id: user.id,
@@ -926,39 +1321,62 @@ export default function SellerDashboard() {
         stock: Number(formData.stock),
         type: formData.type,
         category: formData.category,
-        description: formData.description,
+
+        description:
+          formData.description,
+
         image: imageUrl,
       };
 
       if (editingFood) {
-        const { error } = await supabase
-          .from("foods")
-          .update(payload)
-          .eq("id", editingFood.id)
-          .eq("user_id", user.id);
+        const { error } =
+          await supabase
+            .from("foods")
+            .update(payload)
+            .eq(
+              "id",
+              editingFood.id
+            )
+            .eq(
+              "user_id",
+              user.id
+            );
 
         if (error) throw error;
 
-        setMessage("Dish updated successfully.");
+        setMessage(
+          "Dish updated successfully."
+        );
       } else {
-        const { error } = await supabase.from("foods").insert([payload]);
+        const { error } =
+          await supabase
+            .from("foods")
+            .insert([payload]);
 
         if (error) throw error;
 
-        setMessage("Dish added successfully.");
+        setMessage(
+          "Dish added successfully."
+        );
       }
 
       resetForm();
       fetchSellerFoods();
     } catch (error) {
-      setMessage(`Error: ${error.message}`);
+      setMessage(
+        `Error: ${error.message}`
+      );
     } finally {
       setLoading(false);
     }
   }
 
   async function deleteDish(foodId) {
-    const confirmDelete = window.confirm("Delete this dish permanently?");
+    const confirmDelete =
+      window.confirm(
+        "Delete this dish permanently?"
+      );
+
     if (!confirmDelete) return;
 
     const { error } = await supabase
@@ -968,7 +1386,10 @@ export default function SellerDashboard() {
       .eq("user_id", user.id);
 
     if (error) {
-      setMessage(`Delete failed: ${error.message}`);
+      setMessage(
+        `Delete failed: ${error.message}`
+      );
+
       return;
     }
 
@@ -977,16 +1398,24 @@ export default function SellerDashboard() {
   }
 
   async function toggleStock(food) {
-    const newStockValue = Number(food.stock) === 0 ? 10 : 0;
+    const newStockValue =
+      Number(food.stock) === 0
+        ? 10
+        : 0;
 
     const { error } = await supabase
       .from("foods")
-      .update({ stock: newStockValue })
+      .update({
+        stock: newStockValue,
+      })
       .eq("id", food.id)
       .eq("user_id", user.id);
 
     if (error) {
-      setMessage(`Could not update stock: ${error.message}`);
+      setMessage(
+        `Could not update stock: ${error.message}`
+      );
+
       return;
     }
 
@@ -1002,12 +1431,17 @@ export default function SellerDashboard() {
   async function acceptOrder(orderId) {
     const { error } = await supabase
       .from("orders")
-      .update({ seller_response: "accepted" })
+      .update({
+        seller_response: "accepted",
+      })
       .eq("id", orderId)
       .eq("seller_id", user.id);
 
     if (error) {
-      setMessage(`Could not accept order: ${error.message}`);
+      setMessage(
+        `Could not accept order: ${error.message}`
+      );
+
       return;
     }
 
@@ -1016,7 +1450,11 @@ export default function SellerDashboard() {
   }
 
   async function rejectOrder(orderId) {
-    const confirmReject = window.confirm("Reject this order?");
+    const confirmReject =
+      window.confirm(
+        "Reject this order?"
+      );
+
     if (!confirmReject) return;
 
     const { error } = await supabase
@@ -1029,7 +1467,10 @@ export default function SellerDashboard() {
       .eq("seller_id", user.id);
 
     if (error) {
-      setMessage(`Could not reject order: ${error.message}`);
+      setMessage(
+        `Could not reject order: ${error.message}`
+      );
+
       return;
     }
 
@@ -1038,32 +1479,54 @@ export default function SellerDashboard() {
   }
 
   async function completeOrder(orderId) {
-    const confirmComplete = window.confirm("Mark this order as completed?");
+    const confirmComplete =
+      window.confirm(
+        "Mark this order as completed?"
+      );
 
     if (!confirmComplete) return;
 
     const { data, error } = await supabase
       .from("orders")
-      .update({ status: "completed" })
+      .update({
+        status: "completed",
+      })
       .eq("id", orderId)
       .eq("seller_id", user.id)
       .select("*");
 
     if (error) {
-      setMessage(`Could not complete order: ${error.message}`);
+      setMessage(
+        `Could not complete order: ${error.message}`
+      );
+
       return;
     }
 
-    if (!data || data.length === 0) {
-      setMessage("Order completion failed. Order was not updated.");
+    if (
+      !data ||
+      data.length === 0
+    ) {
+      setMessage(
+        "Order completion failed. Order was not updated."
+      );
+
       return;
     }
 
-    setSellerOrders((currentOrders) =>
-      currentOrders.map((order) => (order.id === orderId ? data[0] : order))
+    setSellerOrders(
+      (currentOrders) =>
+        currentOrders.map((order) =>
+          order.id === orderId
+            ? data[0]
+            : order
+        )
     );
 
-    setMessage("Order completed. Earnings updated.");
+    setMessage(
+      "Order completed. Earnings updated."
+    );
+
     fetchSellerOrders(false);
   }
 
@@ -1078,33 +1541,55 @@ export default function SellerDashboard() {
       .eq("seller_id", user.id);
 
     if (error) {
-      setMessage(`Could not mark ready for pickup: ${error.message}`);
+      setMessage(
+        `Could not mark ready for pickup: ${error.message}`
+      );
+
       return;
     }
 
-    setMessage("Order marked ready for pickup.");
+    setMessage(
+      "Order marked ready for pickup."
+    );
+
     fetchSellerOrders();
   }
 
   function normalizeStatus(status) {
-    return String(status || "confirmed").toLowerCase();
+    return String(
+      status || "confirmed"
+    ).toLowerCase();
   }
 
   function normalizeSellerResponse(response) {
-    return String(response || "pending").toLowerCase();
+    return String(
+      response || "pending"
+    ).toLowerCase();
   }
 
   function isSelfPickup(order) {
-    return String(order.delivery_type || "").toLowerCase().includes("pickup");
+    return String(
+      order.delivery_type || ""
+    )
+      .toLowerCase()
+      .includes("pickup");
   }
 
   function getAutoStatus(order) {
     timerTick;
 
-    const dbStatus = normalizeStatus(order.status);
-    const sellerResponse = normalizeSellerResponse(order.seller_response);
+    const dbStatus =
+      normalizeStatus(order.status);
 
-    if (dbStatus === "cancelled" || sellerResponse === "rejected") {
+    const sellerResponse =
+      normalizeSellerResponse(
+        order.seller_response
+      );
+
+    if (
+      dbStatus === "cancelled" ||
+      sellerResponse === "rejected"
+    ) {
       return "cancelled";
     }
 
@@ -1124,94 +1609,214 @@ export default function SellerDashboard() {
   }
 
   function getStatusLabel(status) {
-    const currentStatus = normalizeStatus(status);
+    const currentStatus =
+      normalizeStatus(status);
 
-    if (currentStatus === "pending") return "Pending";
-    if (currentStatus === "accepted") return "Preparing";
-    if (currentStatus === "confirmed") return "Confirmed";
-    if (currentStatus === "cooking") return "Cooking";
-    if (currentStatus === "packing") return "Packing";
-    if (currentStatus === "ready_for_pickup") return "Ready";
-    if (currentStatus === "completed") return "Completed";
-    if (currentStatus === "cancelled") return "Cancelled";
+    if (currentStatus === "pending") {
+      return "Pending";
+    }
+
+    if (currentStatus === "accepted") {
+      return "Preparing";
+    }
+
+    if (
+      currentStatus === "confirmed"
+    ) {
+      return "Confirmed";
+    }
+
+    if (currentStatus === "cooking") {
+      return "Cooking";
+    }
+
+    if (currentStatus === "packing") {
+      return "Packing";
+    }
+
+    if (
+      currentStatus ===
+      "ready_for_pickup"
+    ) {
+      return "Ready";
+    }
+
+    if (
+      currentStatus === "completed"
+    ) {
+      return "Completed";
+    }
+
+    if (
+      currentStatus === "cancelled"
+    ) {
+      return "Cancelled";
+    }
 
     return "Pending";
   }
 
   function getStatusPillClass(status) {
-    const currentStatus = normalizeStatus(status);
+    const currentStatus =
+      normalizeStatus(status);
 
-    if (currentStatus === "completed") {
+    if (
+      currentStatus === "completed"
+    ) {
       return "bg-green-50 text-green-700 border border-green-200";
     }
 
-    if (currentStatus === "cancelled") {
+    if (
+      currentStatus === "cancelled"
+    ) {
       return "bg-red-50 text-red-600 border border-red-200";
     }
 
-    if (currentStatus === "pending") {
+    if (
+      currentStatus === "pending"
+    ) {
       return "bg-yellow-50 text-yellow-700 border border-yellow-200";
     }
 
     return "bg-[#FFF0DF] text-[#3F5128] border border-[#D8C9B3]";
   }
 
-  const activeSellerOrders = sellerOrders.filter((order) => {
-    const dbStatus = normalizeStatus(order.status);
-    const autoStatus = normalizeStatus(getAutoStatus(order));
-    const sellerResponse = normalizeSellerResponse(order.seller_response);
+  const activeSellerOrders =
+    sellerOrders.filter((order) => {
+      const dbStatus =
+        normalizeStatus(order.status);
 
-    if (dbStatus === "cancelled") return false;
-    if (sellerResponse === "rejected") return false;
-    if (autoStatus === "completed") return false;
+      const autoStatus =
+        normalizeStatus(
+          getAutoStatus(order)
+        );
 
-    return true;
-  });
+      const sellerResponse =
+        normalizeSellerResponse(
+          order.seller_response
+        );
 
-  const completedOrders = sellerOrders.filter((order) => {
-    const dbStatus = normalizeStatus(order.status);
-    const sellerResponse = normalizeSellerResponse(order.seller_response);
+      if (
+        dbStatus === "cancelled"
+      ) {
+        return false;
+      }
 
-    if (dbStatus !== "completed") return false;
-    if (sellerResponse === "rejected") return false;
+      if (
+        sellerResponse === "rejected"
+      ) {
+        return false;
+      }
 
-    return true;
-  });
+      if (
+        autoStatus === "completed"
+      ) {
+        return false;
+      }
 
-  const todayDateString = new Date().toDateString();
+      return true;
+    });
 
-  const todayCompletedOrders = completedOrders.filter((order) => {
-    if (!order.created_at) return false;
-    return new Date(order.created_at).toDateString() === todayDateString;
-  });
+  const completedOrders =
+    sellerOrders.filter((order) => {
+      const dbStatus =
+        normalizeStatus(order.status);
 
-  const todayTotalOrders = sellerOrders.filter((order) => {
-    if (!order.created_at) return false;
-    return new Date(order.created_at).toDateString() === todayDateString;
-  });
+      const sellerResponse =
+        normalizeSellerResponse(
+          order.seller_response
+        );
 
-  const grossEarnings = completedOrders.reduce((total, order) => {
-    return total + Number(order.subtotal_amount || 0);
-  }, 0);
+      if (
+        dbStatus !== "completed"
+      ) {
+        return false;
+      }
 
-  const todayEarnings = todayCompletedOrders.reduce((total, order) => {
-    return total + Number(order.subtotal_amount || 0);
-  }, 0);
+      if (
+        sellerResponse === "rejected"
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+
+  const todayDateString =
+    new Date().toDateString();
+
+  const todayCompletedOrders =
+    completedOrders.filter((order) => {
+      if (!order.created_at) {
+        return false;
+      }
+
+      return (
+        new Date(
+          order.created_at
+        ).toDateString() ===
+        todayDateString
+      );
+    });
+
+  const todayTotalOrders =
+    sellerOrders.filter((order) => {
+      if (!order.created_at) {
+        return false;
+      }
+
+      return (
+        new Date(
+          order.created_at
+        ).toDateString() ===
+        todayDateString
+      );
+    });
+
+  const grossEarnings =
+    completedOrders.reduce(
+      (total, order) =>
+        total +
+        Number(
+          order.subtotal_amount || 0
+        ),
+      0
+    );
+
+  const todayEarnings =
+    todayCompletedOrders.reduce(
+      (total, order) =>
+        total +
+        Number(
+          order.subtotal_amount || 0
+        ),
+      0
+    );
 
   const averageOrderValue =
     completedOrders.length > 0
-      ? Math.round(grossEarnings / completedOrders.length)
+      ? Math.round(
+          grossEarnings /
+            completedOrders.length
+        )
       : 0;
 
   const itemSalesMap = {};
 
   completedOrders.forEach((order) => {
-    const items = getOrderItems(order);
+    const items =
+      getOrderItems(order);
 
     items.forEach((item) => {
-      const itemName = item.name || "Unknown item";
-      const itemQuantity = Number(item.quantity || 0);
-      const itemRevenue = Number(item.price || 0) * itemQuantity;
+      const itemName =
+        item.name || "Unknown item";
+
+      const itemQuantity =
+        Number(item.quantity || 0);
+
+      const itemRevenue =
+        Number(item.price || 0) *
+        itemQuantity;
 
       if (!itemSalesMap[itemName]) {
         itemSalesMap[itemName] = {
@@ -1221,40 +1826,70 @@ export default function SellerDashboard() {
         };
       }
 
-      itemSalesMap[itemName].quantity += itemQuantity;
-      itemSalesMap[itemName].revenue += itemRevenue;
+      itemSalesMap[itemName].quantity +=
+        itemQuantity;
+
+      itemSalesMap[itemName].revenue +=
+        itemRevenue;
     });
   });
 
-  const bestSellingItems = Object.values(itemSalesMap)
-    .sort((a, b) => b.quantity - a.quantity)
-    .slice(0, 5);
+  const bestSellingItems =
+    Object.values(itemSalesMap)
+      .sort(
+        (a, b) =>
+          b.quantity - a.quantity
+      )
+      .slice(0, 5);
 
-  const totalOrdersCount = sellerOrders.length;
-  const activeOrdersCount = activeSellerOrders.length;
-  const pendingOrdersCount = sellerOrders.filter(
-    (order) => normalizeSellerResponse(order.seller_response) === "pending"
-  ).length;
-  const preparingOrdersCount = activeSellerOrders.filter(
-    (order) => normalizeSellerResponse(order.seller_response) === "accepted"
-  ).length;
-  const completedOrdersCount = completedOrders.length;
-  const activeDishesCount = sellerFoods.filter(
-    (food) => Number(food.stock) > 0
-  ).length;
+  const totalOrdersCount =
+    sellerOrders.length;
+
+  const activeOrdersCount =
+    activeSellerOrders.length;
+
+  const pendingOrdersCount =
+    sellerOrders.filter(
+      (order) =>
+        normalizeSellerResponse(
+          order.seller_response
+        ) === "pending"
+    ).length;
+
+  const preparingOrdersCount =
+    activeSellerOrders.filter(
+      (order) =>
+        normalizeSellerResponse(
+          order.seller_response
+        ) === "accepted"
+    ).length;
+
+  const completedOrdersCount =
+    completedOrders.length;
+
+  const activeDishesCount =
+    sellerFoods.filter(
+      (food) =>
+        Number(food.stock) > 0
+    ).length;
 
   if (!user) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#FFF8EC] px-4 py-10 text-[#181411]">
-        <div className={`w-full max-w-md p-7 text-center ${CARD}`}>
+        <div
+          className={`w-full max-w-md p-7 text-center ${CARD}`}
+        >
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#D8C9B3] bg-[#FFF0DF] text-3xl">
             👨‍🍳
           </div>
 
-          <h1 className="mt-5 text-2xl font-black">Seller login required</h1>
+          <h1 className="mt-5 text-2xl font-black">
+            Seller login required
+          </h1>
 
           <p className="mt-3 text-[#6B6258]">
-            Please sign in before managing food dishes.
+            Please sign in before
+            managing food dishes.
           </p>
 
           <Link
@@ -1271,7 +1906,9 @@ export default function SellerDashboard() {
   if (profileLoading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#FFF8EC] px-4 py-10 text-[#181411]">
-        <div className={`w-full max-w-md p-8 text-center ${CARD}`}>
+        <div
+          className={`w-full max-w-md p-8 text-center ${CARD}`}
+        >
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#D8C9B3] bg-[#FFF0DF] text-3xl">
             👨‍🍳
           </div>
@@ -1287,7 +1924,9 @@ export default function SellerDashboard() {
   if (!bankDetailsCompleted) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#FFF8EC] px-4 py-10 text-[#181411]">
-        <div className={`w-full max-w-md p-7 text-center ${CARD}`}>
+        <div
+          className={`w-full max-w-md p-7 text-center ${CARD}`}
+        >
           <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-yellow-200 bg-yellow-50 text-4xl">
             🏦
           </div>
@@ -1297,15 +1936,27 @@ export default function SellerDashboard() {
           </h1>
 
           <p className="mt-3 leading-relaxed text-[#6B6258]">
-            Payout bank details are required before opening Seller Dashboard.
+            Payout bank details are
+            required before opening
+            Seller Dashboard.
           </p>
 
           <button
             type="button"
-            onClick={() => navigate("/profile")}
+            onClick={() =>
+              navigate("/profile")
+            }
             className="mt-7 w-full rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 font-black text-white"
           >
             Complete Profile
+          </button>
+
+          <button
+            type="button"
+            onClick={goToCustomerHome}
+            className="mt-3 w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 font-black text-[#3F5128] active:scale-[0.99]"
+          >
+            Back to Customer Home
           </button>
         </div>
       </main>
@@ -1316,23 +1967,46 @@ export default function SellerDashboard() {
     return (
       <main className="min-h-screen bg-[#FFF8EC] px-4 py-6 pb-28 text-[#181411]">
         <div className="mx-auto max-w-md">
-          <section className={`p-5 ${CARD}`}>
+          <button
+            type="button"
+            onClick={goToCustomerHome}
+            className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#D8C9B3] bg-white/95 px-4 py-2.5 text-sm font-black text-[#3F5128] shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] active:scale-95"
+          >
+            <BackIcon />
+            Customer Home
+          </button>
+
+          <section
+            className={`p-5 ${CARD}`}
+          >
             <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
               Seller Setup
             </p>
 
             <h1 className="mt-2 text-3xl font-black leading-tight text-[#3F5128]">
-              Complete your kitchen profile
+              Complete your kitchen
+              profile
             </h1>
 
-            {message ? <MessageBox message={message} /> : null}
+            {message ? (
+              <MessageBox
+                message={message}
+              />
+            ) : null}
 
-            <form onSubmit={saveSellerSetup} className="mt-6 space-y-4">
+            <form
+              onSubmit={saveSellerSetup}
+              className="mt-6 space-y-4"
+            >
               <Field label="Kitchen name">
                 <input
                   name="seller_kitchen_name"
-                  value={sellerSetupData.seller_kitchen_name}
-                  onChange={handleSellerSetupChange}
+                  value={
+                    sellerSetupData.seller_kitchen_name
+                  }
+                  onChange={
+                    handleSellerSetupChange
+                  }
                   required
                   className={INPUT}
                   placeholder="Kitchen name"
@@ -1342,8 +2016,12 @@ export default function SellerDashboard() {
               <Field label="Tower / Flat">
                 <input
                   name="flat"
-                  value={sellerSetupData.flat}
-                  onChange={handleSellerSetupChange}
+                  value={
+                    sellerSetupData.flat
+                  }
+                  onChange={
+                    handleSellerSetupChange
+                  }
                   required
                   className={INPUT}
                   placeholder="Tower / Flat"
@@ -1353,8 +2031,12 @@ export default function SellerDashboard() {
               <Field label="Phone number">
                 <input
                   name="phone"
-                  value={sellerSetupData.phone}
-                  onChange={handleSellerSetupChange}
+                  value={
+                    sellerSetupData.phone
+                  }
+                  onChange={
+                    handleSellerSetupChange
+                  }
                   required
                   className={INPUT}
                   placeholder="Phone Number"
@@ -1364,8 +2046,12 @@ export default function SellerDashboard() {
               <Field label="Specialty">
                 <input
                   name="seller_specialty"
-                  value={sellerSetupData.seller_specialty}
-                  onChange={handleSellerSetupChange}
+                  value={
+                    sellerSetupData.seller_specialty
+                  }
+                  onChange={
+                    handleSellerSetupChange
+                  }
                   required
                   className={INPUT}
                   placeholder="Specialty"
@@ -1375,8 +2061,12 @@ export default function SellerDashboard() {
               <Field label="About kitchen">
                 <textarea
                   name="seller_about"
-                  value={sellerSetupData.seller_about}
-                  onChange={handleSellerSetupChange}
+                  value={
+                    sellerSetupData.seller_about
+                  }
+                  onChange={
+                    handleSellerSetupChange
+                  }
                   rows="4"
                   required
                   className={`${INPUT} min-h-32 resize-none`}
@@ -1388,37 +2078,57 @@ export default function SellerDashboard() {
                 title="Accept scheduled orders"
                 text="Customers can choose date and time."
                 name="accept_scheduled_orders"
-                checked={sellerSetupData.accept_scheduled_orders}
-                onChange={handleSellerSetupChange}
+                checked={
+                  sellerSetupData.accept_scheduled_orders
+                }
+                onChange={
+                  handleSellerSetupChange
+                }
               />
 
               <CheckTile
                 title="Delivery available"
                 text="Customers can choose delivery."
                 name="delivery_available"
-                checked={sellerSetupData.delivery_available}
-                onChange={handleSellerSetupChange}
+                checked={
+                  sellerSetupData.delivery_available
+                }
+                onChange={
+                  handleSellerSetupChange
+                }
               />
 
               <CheckTile
                 title="Self pickup available"
                 text="Customers can choose pickup."
                 name="pickup_available"
-                checked={sellerSetupData.pickup_available}
-                onChange={handleSellerSetupChange}
+                checked={
+                  sellerSetupData.pickup_available
+                }
+                onChange={
+                  handleSellerSetupChange
+                }
               />
 
-              <div className={`p-4 ${SOFT_CARD}`}>
+              <div
+                className={`p-4 ${SOFT_CARD}`}
+              >
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="font-black text-[#181411]">Packing charge</p>
+                    <p className="font-black text-[#181411]">
+                      Packing charge
+                    </p>
+
                     <p className="mt-1 text-sm text-[#6B6258]">
                       Added at checkout.
                     </p>
                   </div>
 
                   <div className="rounded-2xl bg-[#3F5128] px-4 py-2 font-black text-white">
-                    ₹{sellerSetupData.packing_charge}
+                    ₹
+                    {
+                      sellerSetupData.packing_charge
+                    }
                   </div>
                 </div>
 
@@ -1428,8 +2138,12 @@ export default function SellerDashboard() {
                   min="5"
                   max="15"
                   step="1"
-                  value={sellerSetupData.packing_charge}
-                  onChange={handleSellerSetupChange}
+                  value={
+                    sellerSetupData.packing_charge
+                  }
+                  onChange={
+                    handleSellerSetupChange
+                  }
                   className="mt-5 w-full accent-[#CF743D]"
                 />
               </div>
@@ -1439,7 +2153,9 @@ export default function SellerDashboard() {
                 disabled={profileSaving}
                 className="w-full rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 font-black text-white disabled:opacity-50"
               >
-                {profileSaving ? "Saving..." : "Save and Continue"}
+                {profileSaving
+                  ? "Saving..."
+                  : "Save and Continue"}
               </button>
             </form>
           </section>
@@ -1450,7 +2166,10 @@ export default function SellerDashboard() {
 
   function MiniSparkline() {
     return (
-      <svg viewBox="0 0 260 80" className="mt-3 h-24 w-full">
+      <svg
+        viewBox="0 0 260 80"
+        className="mt-3 h-24 w-full"
+      >
         <path
           d="M4 62 C 28 58, 30 44, 52 50 S 82 64, 104 54 S 132 34, 156 44 S 184 62, 206 38 S 238 32, 256 10"
           fill="none"
@@ -1463,7 +2182,8 @@ export default function SellerDashboard() {
   }
 
   function RecentOrderRow({ order }) {
-    const status = getAutoStatus(order);
+    const status =
+      getAutoStatus(order);
 
     return (
       <div className="flex items-center justify-between gap-3 border-b border-[#EADFCE] py-3 last:border-b-0">
@@ -1471,13 +2191,18 @@ export default function SellerDashboard() {
           <p className="truncate text-xs font-black text-[#181411]">
             #{order.id}
           </p>
+
           <p className="truncate text-[11px] text-[#6B6258]">
-            {order.customer_name || "Customer"}
+            {order.customer_name ||
+              "Customer"}
           </p>
         </div>
 
         <p className="shrink-0 text-xs font-black text-[#181411]">
-          ₹{order.total_amount || order.subtotal_amount || 0}
+          ₹
+          {order.total_amount ||
+            order.subtotal_amount ||
+            0}
         </p>
 
         <span
@@ -1492,7 +2217,8 @@ export default function SellerDashboard() {
   }
 
   function DashboardView() {
-    const recentOrders = sellerOrders.slice(0, 5);
+    const recentOrders =
+      sellerOrders.slice(0, 5);
 
     return (
       <div className="space-y-4">
@@ -1500,24 +2226,37 @@ export default function SellerDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-base font-black text-[#3F5128]">
-                {sellerOnline ? "Online" : "Offline"}
+                {sellerOnline
+                  ? "Online"
+                  : "Offline"}
               </p>
+
               <p className="mt-1 text-xs font-semibold text-[#6B6258]">
-                Customers can {sellerOnline ? "order now" : "not order now"}.
+                Customers can{" "}
+                {sellerOnline
+                  ? "order now"
+                  : "not order now"}
+                .
               </p>
             </div>
 
             <button
               type="button"
-              onClick={toggleSellerOnline}
+              onClick={
+                toggleSellerOnline
+              }
               className={`relative h-9 w-16 rounded-full transition-all ${
-                sellerOnline ? "bg-[#CF743D]" : "bg-[#EADFCE]"
+                sellerOnline
+                  ? "bg-[#CF743D]"
+                  : "bg-[#EADFCE]"
               }`}
               aria-label="Toggle seller online status"
             >
               <span
                 className={`absolute top-1 h-7 w-7 rounded-full bg-white shadow-md transition-all ${
-                  sellerOnline ? "right-1" : "left-1"
+                  sellerOnline
+                    ? "right-1"
+                    : "left-1"
                 }`}
               />
             </button>
@@ -1525,14 +2264,39 @@ export default function SellerDashboard() {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <StatCard label="Today's Orders" value={todayTotalOrders.length} />
-          <StatCard label="Pending" value={pendingOrdersCount} />
-          <StatCard label="Preparing" value={preparingOrdersCount} />
-          <StatCard label="Completed" value={completedOrdersCount} />
+          <StatCard
+            label="Today's Orders"
+            value={
+              todayTotalOrders.length
+            }
+          />
+
+          <StatCard
+            label="Pending"
+            value={pendingOrdersCount}
+          />
+
+          <StatCard
+            label="Preparing"
+            value={
+              preparingOrdersCount
+            }
+          />
+
+          <StatCard
+            label="Completed"
+            value={
+              completedOrdersCount
+            }
+          />
         </div>
 
-        <section className={`p-5 ${CARD}`}>
-          <p className="text-sm font-black text-[#6B6258]">Today’s Revenue</p>
+        <section
+          className={`p-5 ${CARD}`}
+        >
+          <p className="text-sm font-black text-[#6B6258]">
+            Today’s Revenue
+          </p>
 
           <h2 className="mt-2 text-4xl font-black text-[#181411]">
             ₹{todayEarnings}
@@ -1545,7 +2309,9 @@ export default function SellerDashboard() {
           <MiniSparkline />
         </section>
 
-        <section className={`p-4 ${CARD}`}>
+        <section
+          className={`p-4 ${CARD}`}
+        >
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-black text-[#181411]">
               Recent Orders
@@ -1553,7 +2319,9 @@ export default function SellerDashboard() {
 
             <button
               type="button"
-              onClick={() => setActiveTab("orders")}
+              onClick={() =>
+                setActiveTab("orders")
+              }
               className="text-sm font-black text-[#CF743D]"
             >
               See All
@@ -1562,13 +2330,23 @@ export default function SellerDashboard() {
 
           <div className="mt-2">
             {ordersLoading ? (
-              <p className="py-4 text-sm text-[#6B6258]">Loading orders...</p>
-            ) : recentOrders.length === 0 ? (
-              <p className="py-4 text-sm text-[#6B6258]">No orders yet.</p>
+              <p className="py-4 text-sm text-[#6B6258]">
+                Loading orders...
+              </p>
+            ) : recentOrders.length ===
+              0 ? (
+              <p className="py-4 text-sm text-[#6B6258]">
+                No orders yet.
+              </p>
             ) : (
-              recentOrders.map((order) => (
-                <RecentOrderRow key={order.id} order={order} />
-              ))
+              recentOrders.map(
+                (order) => (
+                  <RecentOrderRow
+                    key={order.id}
+                    order={order}
+                  />
+                )
+              )
             )}
           </div>
         </section>
@@ -1576,22 +2354,34 @@ export default function SellerDashboard() {
         <section className="grid grid-cols-2 gap-3">
           <button
             type="button"
-            onClick={toggleAcceptScheduledOrders}
+            onClick={
+              toggleAcceptScheduledOrders
+            }
             className={`rounded-[22px] border border-[#EADFCE] bg-white/90 py-4 text-sm font-black shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] ${
-              acceptScheduledOrders ? "text-[#3F5128]" : "text-[#9A8E80]"
+              acceptScheduledOrders
+                ? "text-[#3F5128]"
+                : "text-[#9A8E80]"
             }`}
           >
-            {acceptScheduledOrders ? "🕒 Schedule ON" : "🕒 Schedule OFF"}
+            {acceptScheduledOrders
+              ? "🕒 Schedule ON"
+              : "🕒 Schedule OFF"}
           </button>
 
           <button
             type="button"
-            onClick={toggleNotificationSound}
+            onClick={
+              toggleNotificationSound
+            }
             className={`rounded-[22px] border border-[#EADFCE] bg-white/90 py-4 text-sm font-black shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] ${
-              audioReady ? "text-[#3F5128]" : "text-[#9A8E80]"
+              audioReady
+                ? "text-[#3F5128]"
+                : "text-[#9A8E80]"
             }`}
           >
-            {audioReady ? "🔔 Sound ON" : "🔕 Sound OFF"}
+            {audioReady
+              ? "🔔 Sound ON"
+              : "🔕 Sound OFF"}
           </button>
         </section>
       </div>
@@ -1605,149 +2395,233 @@ export default function SellerDashboard() {
           <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
             Kitchen Orders
           </p>
-          <h2 className="mt-1 text-2xl font-black text-[#181411]">Orders</h2>
+
+          <h2 className="mt-1 text-2xl font-black text-[#181411]">
+            Orders
+          </h2>
+
           <p className="mt-1 text-sm text-[#6B6258]">
-            Accept, chat, prepare, and complete orders.
+            Accept, chat, prepare, and
+            complete orders.
           </p>
         </div>
 
         {ordersLoading ? (
-          <div className={`p-6 text-[#6B6258] ${SOFT_CARD}`}>
+          <div
+            className={`p-6 text-[#6B6258] ${SOFT_CARD}`}
+          >
             Loading orders...
           </div>
-        ) : activeSellerOrders.length === 0 ? (
-          <div className={`p-8 text-center ${SOFT_CARD}`}>
-            <div className="text-4xl">🛎️</div>
+        ) : activeSellerOrders.length ===
+          0 ? (
+          <div
+            className={`p-8 text-center ${SOFT_CARD}`}
+          >
+            <div className="text-4xl">
+              🛎️
+            </div>
+
             <p className="mt-3 font-black text-[#6B6258]">
-              No active orders right now.
+              No active orders right
+              now.
             </p>
           </div>
         ) : (
-          activeSellerOrders.map((order) => {
-            const autoStatus = getAutoStatus(order);
-            const sellerResponse = normalizeSellerResponse(
-              order.seller_response
-            );
-            const orderIsSelfPickup = isSelfPickup(order);
-            const scheduled = isScheduledOrder(order);
+          activeSellerOrders.map(
+            (order) => {
+              const autoStatus =
+                getAutoStatus(order);
 
-            return (
-              <article key={order.id} className={`p-4 ${CARD}`}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-[#6B6258]">
-                      Order #{order.id}
-                    </p>
+              const sellerResponse =
+                normalizeSellerResponse(
+                  order.seller_response
+                );
 
-                    <h3 className="mt-1 text-2xl font-black text-[#3F5128]">
-                      ₹{order.total_amount}
-                    </h3>
+              const orderIsSelfPickup =
+                isSelfPickup(order);
 
-                    <p className="mt-2 truncate text-sm text-[#6B6258]">
-                      {order.customer_name} • {order.phone}
-                    </p>
+              const scheduled =
+                isScheduledOrder(order);
 
-                    <p className="mt-1 truncate text-sm text-[#6B6258]">
-                      {order.delivery_type} • {order.flat}
-                    </p>
-
-                    {scheduled ? (
-                      <p className="mt-2 w-fit rounded-full border border-[#D8C9B3] bg-[#FFF0DF] px-3 py-1 text-xs font-black text-[#3F5128]">
-                        🕒 {formatScheduledDateTime(order.scheduled_for)}
-                      </p>
-                    ) : null}
-                  </div>
-
-                  <span
-                    className={`rounded-full px-3 py-1 text-[10px] font-black ${getStatusPillClass(
-                      autoStatus
-                    )}`}
-                  >
-                    {getStatusLabel(autoStatus)}
-                  </span>
-                </div>
-
-                <Link
-                  to={`/order-chat/${order.id}`}
-                  className="mt-4 flex items-center justify-between rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF] p-4"
+              return (
+                <article
+                  key={order.id}
+                  className={`p-4 ${CARD}`}
                 >
-                  <div>
-                    <p className="font-black text-[#3F5128]">
-                      Chat with customer
-                    </p>
-                    <p className="mt-1 text-xs text-[#6B6258]">
-                      Confirm item changes, timing, or pickup.
-                    </p>
-                  </div>
-                  <span className="text-2xl font-black text-[#3F5128]">›</span>
-                </Link>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-[#6B6258]">
+                        Order #
+                        {order.id}
+                      </p>
 
-                <div className="mt-4 space-y-3 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-3">
-                  {getOrderItems(order).map((item) => (
-                    <div
-                      key={`${order.id}-${item.id || item.name}`}
-                      className="flex items-center justify-between gap-3"
+                      <h3 className="mt-1 text-2xl font-black text-[#3F5128]">
+                        ₹
+                        {
+                          order.total_amount
+                        }
+                      </h3>
+
+                      <p className="mt-2 truncate text-sm text-[#6B6258]">
+                        {
+                          order.customer_name
+                        }{" "}
+                        • {order.phone}
+                      </p>
+
+                      <p className="mt-1 truncate text-sm text-[#6B6258]">
+                        {
+                          order.delivery_type
+                        }{" "}
+                        • {order.flat}
+                      </p>
+
+                      {scheduled ? (
+                        <p className="mt-2 w-fit rounded-full border border-[#D8C9B3] bg-[#FFF0DF] px-3 py-1 text-xs font-black text-[#3F5128]">
+                          🕒{" "}
+                          {formatScheduledDateTime(
+                            order.scheduled_for
+                          )}
+                        </p>
+                      ) : null}
+                    </div>
+
+                    <span
+                      className={`rounded-full px-3 py-1 text-[10px] font-black ${getStatusPillClass(
+                        autoStatus
+                      )}`}
                     >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-black text-[#181411]">
-                          {item.name}
-                        </p>
-                        <p className="text-xs text-[#6B6258]">
-                          Qty {item.quantity} × ₹{item.price}
-                        </p>
-                      </div>
+                      {getStatusLabel(
+                        autoStatus
+                      )}
+                    </span>
+                  </div>
 
-                      <p className="shrink-0 text-sm font-black text-[#3F5128]">
-                        ₹{Number(item.price || 0) * Number(item.quantity || 0)}
+                  <Link
+                    to={`/order-chat/${order.id}`}
+                    className="mt-4 flex items-center justify-between rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF] p-4"
+                  >
+                    <div>
+                      <p className="font-black text-[#3F5128]">
+                        Chat with customer
+                      </p>
+
+                      <p className="mt-1 text-xs text-[#6B6258]">
+                        Confirm item changes,
+                        timing, or pickup.
                       </p>
                     </div>
-                  ))}
-                </div>
 
-                {sellerResponse === "pending" ? (
-                  <div className="mt-4 grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => acceptOrder(order.id)}
-                      className="rounded-2xl bg-green-600 py-3 font-black text-white"
-                    >
-                      Accept
-                    </button>
+                    <span className="text-2xl font-black text-[#3F5128]">
+                      ›
+                    </span>
+                  </Link>
 
-                    <button
-                      type="button"
-                      onClick={() => rejectOrder(order.id)}
-                      className="rounded-2xl bg-red-500 py-3 font-black text-white"
-                    >
-                      Reject
-                    </button>
+                  <div className="mt-4 space-y-3 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-3">
+                    {getOrderItems(
+                      order
+                    ).map((item) => (
+                      <div
+                        key={`${order.id}-${
+                          item.id ||
+                          item.name
+                        }`}
+                        className="flex items-center justify-between gap-3"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-black text-[#181411]">
+                            {item.name}
+                          </p>
+
+                          <p className="text-xs text-[#6B6258]">
+                            Qty{" "}
+                            {
+                              item.quantity
+                            }{" "}
+                            × ₹
+                            {item.price}
+                          </p>
+                        </div>
+
+                        <p className="shrink-0 text-sm font-black text-[#3F5128]">
+                          ₹
+                          {Number(
+                            item.price ||
+                              0
+                          ) *
+                            Number(
+                              item.quantity ||
+                                0
+                            )}
+                        </p>
+                      </div>
+                    ))}
                   </div>
-                ) : null}
 
-                {sellerResponse === "accepted" ? (
-                  <div className="mt-4 space-y-3">
-                    {orderIsSelfPickup && !order.ready_for_pickup ? (
+                  {sellerResponse ===
+                  "pending" ? (
+                    <div className="mt-4 grid grid-cols-2 gap-3">
                       <button
                         type="button"
-                        onClick={() => markReadyForPickup(order.id)}
-                        className="w-full rounded-2xl bg-green-600 py-3 font-black text-white"
+                        onClick={() =>
+                          acceptOrder(
+                            order.id
+                          )
+                        }
+                        className="rounded-2xl bg-green-600 py-3 font-black text-white"
                       >
-                        📦 Ready for Pickup
+                        Accept
                       </button>
-                    ) : null}
 
-                    <button
-                      type="button"
-                      onClick={() => completeOrder(order.id)}
-                      className="w-full rounded-2xl bg-[#3F5128] py-3 font-black text-white"
-                    >
-                      ✅ Complete Order
-                    </button>
-                  </div>
-                ) : null}
-              </article>
-            );
-          })
+                      <button
+                        type="button"
+                        onClick={() =>
+                          rejectOrder(
+                            order.id
+                          )
+                        }
+                        className="rounded-2xl bg-red-500 py-3 font-black text-white"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  ) : null}
+
+                  {sellerResponse ===
+                  "accepted" ? (
+                    <div className="mt-4 space-y-3">
+                      {orderIsSelfPickup &&
+                      !order.ready_for_pickup ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            markReadyForPickup(
+                              order.id
+                            )
+                          }
+                          className="w-full rounded-2xl bg-green-600 py-3 font-black text-white"
+                        >
+                          📦 Ready for Pickup
+                        </button>
+                      ) : null}
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          completeOrder(
+                            order.id
+                          )
+                        }
+                        className="w-full rounded-2xl bg-[#3F5128] py-3 font-black text-white"
+                      >
+                        ✅ Complete Order
+                      </button>
+                    </div>
+                  ) : null}
+                </article>
+              );
+            }
+          )
         )}
       </section>
     );
@@ -1756,7 +2630,10 @@ export default function SellerDashboard() {
   function MenuView() {
     return (
       <section className="space-y-5">
-        <form onSubmit={handleSubmit} className={`p-5 ${CARD}`}>
+        <form
+          onSubmit={handleSubmit}
+          className={`p-5 ${CARD}`}
+        >
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
@@ -1764,11 +2641,15 @@ export default function SellerDashboard() {
               </p>
 
               <h2 className="mt-1 text-3xl font-black leading-tight text-[#3F5128]">
-                {editingFood ? "Edit dish" : "Add new dish"}
+                {editingFood
+                  ? "Edit dish"
+                  : "Add new dish"}
               </h2>
 
               <p className="mt-2 text-sm font-semibold text-[#6B6258]">
-                Add clear dish details so customers can order confidently.
+                Add clear dish details so
+                customers can order
+                confidently.
               </p>
             </div>
 
@@ -1798,8 +2679,12 @@ export default function SellerDashboard() {
               <Field label="Price">
                 <input
                   name="price"
-                  value={formData.price}
-                  onChange={handleChange}
+                  value={
+                    formData.price
+                  }
+                  onChange={
+                    handleChange
+                  }
                   type="number"
                   min="1"
                   className={INPUT}
@@ -1810,8 +2695,12 @@ export default function SellerDashboard() {
               <Field label="Qty">
                 <input
                   name="stock"
-                  value={formData.stock}
-                  onChange={handleChange}
+                  value={
+                    formData.stock
+                  }
+                  onChange={
+                    handleChange
+                  }
                   type="number"
                   min="0"
                   className={INPUT}
@@ -1834,15 +2723,24 @@ export default function SellerDashboard() {
               <Field label="Category">
                 <select
                   name="category"
-                  value={formData.category}
-                  onChange={handleChange}
+                  value={
+                    formData.category
+                  }
+                  onChange={
+                    handleChange
+                  }
                   className={INPUT}
                 >
-                  {FOOD_CATEGORIES.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
+                  {FOOD_CATEGORIES.map(
+                    (category) => (
+                      <option
+                        key={category}
+                        value={category}
+                      >
+                        {category}
+                      </option>
+                    )
+                  )}
                 </select>
               </Field>
 
@@ -1853,8 +2751,13 @@ export default function SellerDashboard() {
                   onChange={handleChange}
                   className={INPUT}
                 >
-                  <option value="Veg">Veg</option>
-                  <option value="Non-Veg">Non-Veg</option>
+                  <option value="Veg">
+                    Veg
+                  </option>
+
+                  <option value="Non-Veg">
+                    Non-Veg
+                  </option>
                 </select>
               </Field>
             </div>
@@ -1862,8 +2765,12 @@ export default function SellerDashboard() {
             <Field label="Kitchen name">
               <input
                 name="seller"
-                value={formData.seller}
-                onChange={handleChange}
+                value={
+                  formData.seller
+                }
+                onChange={
+                  handleChange
+                }
                 className={INPUT}
                 placeholder="Kitchen name"
               />
@@ -1872,25 +2779,37 @@ export default function SellerDashboard() {
             <Field label="Short description / ingredients">
               <textarea
                 name="description"
-                value={formData.description}
-                onChange={handleChange}
+                value={
+                  formData.description
+                }
+                onChange={
+                  handleChange
+                }
                 rows="4"
                 className={`${INPUT} min-h-32 resize-none`}
                 placeholder="Short description / ingredients"
               />
             </Field>
 
-            <div className={`p-4 ${SOFT_CARD}`}>
-              <p className="text-sm font-black text-[#181411]">Dish Image</p>
+            <div
+              className={`p-4 ${SOFT_CARD}`}
+            >
+              <p className="text-sm font-black text-[#181411]">
+                Dish Image
+              </p>
 
               <p className="mt-1 text-xs font-semibold text-[#6B6258]">
-                Upload a clear food image. Camera works better on phone.
+                Upload a clear food image.
+                Camera works better on
+                phone.
               </p>
 
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <button
                   type="button"
-                  onClick={() => uploadImageInputRef.current?.click()}
+                  onClick={() =>
+                    uploadImageInputRef.current?.click()
+                  }
                   className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 text-sm font-black text-[#3F5128] active:scale-95"
                 >
                   🖼️ Upload
@@ -1898,7 +2817,9 @@ export default function SellerDashboard() {
 
                 <button
                   type="button"
-                  onClick={() => cameraImageInputRef.current?.click()}
+                  onClick={() =>
+                    cameraImageInputRef.current?.click()
+                  }
                   className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 text-sm font-black text-[#3F5128] active:scale-95"
                 >
                   📸 Camera
@@ -1906,20 +2827,28 @@ export default function SellerDashboard() {
               </div>
 
               <input
-                ref={uploadImageInputRef}
+                ref={
+                  uploadImageInputRef
+                }
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/*"
                 className="hidden"
-                onChange={handleImageChange}
+                onChange={
+                  handleImageChange
+                }
               />
 
               <input
-                ref={cameraImageInputRef}
+                ref={
+                  cameraImageInputRef
+                }
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/*"
                 capture="environment"
                 className="hidden"
-                onChange={handleImageChange}
+                onChange={
+                  handleImageChange
+                }
               />
 
               {imagePreview ? (
@@ -1933,7 +2862,9 @@ export default function SellerDashboard() {
                   <div className="mt-3 grid grid-cols-2 gap-3">
                     <button
                       type="button"
-                      onClick={() => uploadImageInputRef.current?.click()}
+                      onClick={() =>
+                        uploadImageInputRef.current?.click()
+                      }
                       className="rounded-2xl border border-[#CF743D] py-3 font-black text-[#3F5128]"
                     >
                       Change
@@ -1941,7 +2872,9 @@ export default function SellerDashboard() {
 
                     <button
                       type="button"
-                      onClick={removeSelectedImage}
+                      onClick={
+                        removeSelectedImage
+                      }
                       className="rounded-2xl border border-red-300 py-3 font-black text-red-500"
                     >
                       Remove
@@ -1957,7 +2890,11 @@ export default function SellerDashboard() {
             disabled={loading}
             className="mt-6 w-full rounded-2xl bg-[#3F5128] px-6 py-4 font-black text-white shadow-lg shadow-[#3F5128]/15 disabled:opacity-50"
           >
-            {loading ? "Saving..." : editingFood ? "Update Dish" : "Add Dish"}
+            {loading
+              ? "Saving..."
+              : editingFood
+              ? "Update Dish"
+              : "Add Dish"}
           </button>
         </form>
 
@@ -1967,6 +2904,7 @@ export default function SellerDashboard() {
               <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
                 Live Menu
               </p>
+
               <h2 className="mt-1 text-3xl font-black text-[#181411]">
                 Your dishes
               </h2>
@@ -1978,104 +2916,148 @@ export default function SellerDashboard() {
           </div>
 
           {foodsLoading ? (
-            <p className="text-[#6B6258]">Loading your dishes...</p>
-          ) : sellerFoods.length === 0 ? (
-            <div className={`p-8 text-center ${SOFT_CARD}`}>
-              <p className="text-[#6B6258]">No dishes added yet.</p>
+            <p className="text-[#6B6258]">
+              Loading your dishes...
+            </p>
+          ) : sellerFoods.length ===
+            0 ? (
+            <div
+              className={`p-8 text-center ${SOFT_CARD}`}
+            >
+              <p className="text-[#6B6258]">
+                No dishes added yet.
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4">
-              {sellerFoods.map((food) => (
-                <div key={food.id} className={`overflow-hidden ${CARD}`}>
-                  <div className="relative aspect-[4/3] bg-[#FFF0DF]">
-                    <img
-                      src={food.image}
-                      alt={food.name}
-                      className="h-full w-full object-cover"
-                    />
+              {sellerFoods.map(
+                (food) => (
+                  <div
+                    key={food.id}
+                    className={`overflow-hidden ${CARD}`}
+                  >
+                    <div className="relative aspect-[4/3] bg-[#FFF0DF]">
+                      <img
+                        src={food.image}
+                        alt={food.name}
+                        className="h-full w-full object-cover"
+                      />
 
-                    <div className="absolute left-3 top-3">
-                      <span
-                        className={`rounded-full px-3 py-1.5 text-[11px] font-black shadow-sm ${
-                          food.type === "Non-Veg"
-                            ? "bg-red-500 text-white"
-                            : "bg-[#6F7F43] text-white"
-                        }`}
-                      >
-                        {food.type || "Veg"}
-                      </span>
-                    </div>
-
-                    {Number(food.stock) === 0 ? (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/65">
-                        <span className="rounded-2xl bg-white px-4 py-2 font-black text-[#3F5128]">
-                          Sold Out
-                        </span>
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div className="p-4">
-                    <div className="flex justify-between gap-3">
-                      <div className="min-w-0">
-                        <h3 className="truncate text-lg font-black text-[#181411]">
-                          {food.name}
-                        </h3>
-
-                        <p className="mt-1 truncate text-sm text-[#6B6258]">
-                          {food.category || "Meals"} • {food.time || "Soon"}
-                        </p>
-                      </div>
-
-                      <div className="shrink-0 text-right">
-                        <p className="text-xl font-black text-[#3F5128]">
-                          ₹{food.price}
-                        </p>
-
-                        <p
-                          className={`text-xs font-black ${
-                            Number(food.stock) <= 2
-                              ? "text-red-500"
-                              : Number(food.stock) <= 5
-                              ? "text-orange-500"
-                              : "text-[#6B6258]"
+                      <div className="absolute left-3 top-3">
+                        <span
+                          className={`rounded-full px-3 py-1.5 text-[11px] font-black shadow-sm ${
+                            food.type ===
+                            "Non-Veg"
+                              ? "bg-red-500 text-white"
+                              : "bg-[#6F7F43] text-white"
                           }`}
                         >
-                          {Number(food.stock) <= 2
-                            ? `Only ${food.stock} left`
-                            : `${food.stock} left`}
-                        </p>
+                          {food.type ||
+                            "Veg"}
+                        </span>
+                      </div>
+
+                      {Number(
+                        food.stock
+                      ) === 0 ? (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/65">
+                          <span className="rounded-2xl bg-white px-4 py-2 font-black text-[#3F5128]">
+                            Sold Out
+                          </span>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="p-4">
+                      <div className="flex justify-between gap-3">
+                        <div className="min-w-0">
+                          <h3 className="truncate text-lg font-black text-[#181411]">
+                            {food.name}
+                          </h3>
+
+                          <p className="mt-1 truncate text-sm text-[#6B6258]">
+                            {food.category ||
+                              "Meals"}{" "}
+                            •{" "}
+                            {food.time ||
+                              "Soon"}
+                          </p>
+                        </div>
+
+                        <div className="shrink-0 text-right">
+                          <p className="text-xl font-black text-[#3F5128]">
+                            ₹
+                            {food.price}
+                          </p>
+
+                          <p
+                            className={`text-xs font-black ${
+                              Number(
+                                food.stock
+                              ) <= 2
+                                ? "text-red-500"
+                                : Number(
+                                    food.stock
+                                  ) <=
+                                  5
+                                ? "text-orange-500"
+                                : "text-[#6B6258]"
+                            }`}
+                          >
+                            {Number(
+                              food.stock
+                            ) <= 2
+                              ? `Only ${food.stock} left`
+                              : `${food.stock} left`}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-3 gap-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            startEdit(
+                              food
+                            )
+                          }
+                          className="rounded-xl bg-[#3F5128] py-2.5 text-xs font-black text-white"
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            toggleStock(
+                              food
+                            )
+                          }
+                          className="rounded-xl border border-[#D8C9B3] bg-[#FFFDF7] py-2.5 text-xs font-black text-[#3F5128]"
+                        >
+                          {Number(
+                            food.stock
+                          ) === 0
+                            ? "In Stock"
+                            : "Sold Out"}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            deleteDish(
+                              food.id
+                            )
+                          }
+                          className="rounded-xl border border-red-300 py-2.5 text-xs font-black text-red-500"
+                        >
+                          Delete
+                        </button>
                       </div>
                     </div>
-
-                    <div className="mt-4 grid grid-cols-3 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => startEdit(food)}
-                        className="rounded-xl bg-[#3F5128] py-2.5 text-xs font-black text-white"
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => toggleStock(food)}
-                        className="rounded-xl border border-[#D8C9B3] bg-[#FFFDF7] py-2.5 text-xs font-black text-[#3F5128]"
-                      >
-                        {Number(food.stock) === 0 ? "In Stock" : "Sold Out"}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => deleteDish(food.id)}
-                        className="rounded-xl border border-red-300 py-2.5 text-xs font-black text-red-500"
-                      >
-                        Delete
-                      </button>
-                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              )}
             </div>
           )}
         </section>
@@ -2086,7 +3068,9 @@ export default function SellerDashboard() {
   function MoreView() {
     return (
       <section className="space-y-4">
-        <section className={`p-5 ${CARD}`}>
+        <section
+          className={`p-5 ${CARD}`}
+        >
           <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
             Settings
           </p>
@@ -2098,35 +3082,54 @@ export default function SellerDashboard() {
           <div className="mt-5 grid grid-cols-1 gap-3">
             <button
               type="button"
-              onClick={toggleDeliveryAvailable}
+              onClick={
+                toggleDeliveryAvailable
+              }
               className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 font-black text-[#3F5128]"
             >
-              {deliveryAvailable ? "🚚 Delivery ON" : "🚚 Delivery OFF"}
+              {deliveryAvailable
+                ? "🚚 Delivery ON"
+                : "🚚 Delivery OFF"}
             </button>
 
             <button
               type="button"
-              onClick={togglePickupAvailable}
+              onClick={
+                togglePickupAvailable
+              }
               className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 font-black text-[#3F5128]"
             >
-              {pickupAvailable ? "🛍️ Pickup ON" : "🛍️ Pickup OFF"}
+              {pickupAvailable
+                ? "🛍️ Pickup ON"
+                : "🛍️ Pickup OFF"}
             </button>
 
             <button
               type="button"
-              onClick={toggleAcceptScheduledOrders}
+              onClick={
+                toggleAcceptScheduledOrders
+              }
               className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 font-black text-[#3F5128]"
             >
-              {acceptScheduledOrders ? "🕒 Schedule ON" : "🕒 Schedule OFF"}
+              {acceptScheduledOrders
+                ? "🕒 Schedule ON"
+                : "🕒 Schedule OFF"}
             </button>
           </div>
         </section>
 
-        <section className={`p-5 ${CARD}`}>
+        <section
+          className={`p-5 ${CARD}`}
+        >
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="font-black text-[#181411]">Packing charge</p>
-              <p className="mt-1 text-sm text-[#6B6258]">Choose ₹5 to ₹15.</p>
+              <p className="font-black text-[#181411]">
+                Packing charge
+              </p>
+
+              <p className="mt-1 text-sm text-[#6B6258]">
+                Choose ₹5 to ₹15.
+              </p>
             </div>
 
             <div className="rounded-2xl bg-[#3F5128] px-5 py-2.5 text-xl font-black text-white">
@@ -2141,54 +3144,107 @@ export default function SellerDashboard() {
             step="1"
             value={packingCharge}
             onChange={(event) => {
-              const nextCharge = Number(event.target.value);
-              setPackingCharge(nextCharge);
-              setSellerSetupData((currentData) => ({
-                ...currentData,
-                packing_charge: nextCharge,
-              }));
+              const nextCharge =
+                Number(
+                  event.target.value
+                );
+
+              setPackingCharge(
+                nextCharge
+              );
+
+              setSellerSetupData(
+                (currentData) => ({
+                  ...currentData,
+
+                  packing_charge:
+                    nextCharge,
+                })
+              );
             }}
-            onMouseUp={(event) => updatePackingCharge(event.target.value)}
-            onTouchEnd={(event) => updatePackingCharge(event.target.value)}
+            onMouseUp={(event) =>
+              updatePackingCharge(
+                event.target.value
+              )
+            }
+            onTouchEnd={(event) =>
+              updatePackingCharge(
+                event.target.value
+              )
+            }
             className="mt-5 w-full accent-[#CF743D]"
           />
         </section>
 
-        <section className={`p-5 ${CARD}`}>
-          <p className="font-black text-[#181411]">Seller Analytics</p>
+        <section
+          className={`p-5 ${CARD}`}
+        >
+          <p className="font-black text-[#181411]">
+            Seller Analytics
+          </p>
 
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <StatCard label="Gross" value={`₹${grossEarnings}`} />
-            <StatCard label="Avg Order" value={`₹${averageOrderValue}`} />
-            <StatCard label="Active Dishes" value={activeDishesCount} />
-            <StatCard label="Total Orders" value={totalOrdersCount} />
+            <StatCard
+              label="Gross"
+              value={`₹${grossEarnings}`}
+            />
+
+            <StatCard
+              label="Avg Order"
+              value={`₹${averageOrderValue}`}
+            />
+
+            <StatCard
+              label="Active Dishes"
+              value={
+                activeDishesCount
+              }
+            />
+
+            <StatCard
+              label="Total Orders"
+              value={
+                totalOrdersCount
+              }
+            />
           </div>
         </section>
 
-        {bestSellingItems.length > 0 ? (
-          <section className={`p-5 ${CARD}`}>
-            <p className="font-black text-[#181411]">Best selling items</p>
+        {bestSellingItems.length >
+        0 ? (
+          <section
+            className={`p-5 ${CARD}`}
+          >
+            <p className="font-black text-[#181411]">
+              Best selling items
+            </p>
 
             <div className="mt-4 space-y-3">
-              {bestSellingItems.map((item) => (
-                <div
-                  key={item.name}
-                  className="flex items-center justify-between rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-3"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-black text-[#181411]">
-                      {item.name}
-                    </p>
-                    <p className="text-xs text-[#6B6258]">
-                      Qty sold: {item.quantity}
+              {bestSellingItems.map(
+                (item) => (
+                  <div
+                    key={item.name}
+                    className="flex items-center justify-between rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-black text-[#181411]">
+                        {item.name}
+                      </p>
+
+                      <p className="text-xs text-[#6B6258]">
+                        Qty sold:{" "}
+                        {
+                          item.quantity
+                        }
+                      </p>
+                    </div>
+
+                    <p className="shrink-0 font-black text-[#3F5128]">
+                      ₹{item.revenue}
                     </p>
                   </div>
-
-                  <p className="shrink-0 font-black text-[#3F5128]">
-                    ₹{item.revenue}
-                  </p>
-                </div>
-              ))}
+                )
+              )}
             </div>
           </section>
         ) : null}
@@ -2199,21 +3255,36 @@ export default function SellerDashboard() {
   return (
     <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-32 text-[#181411]">
       <div className="mx-auto max-w-md">
-        <header className="flex items-center justify-between pb-5 pt-2">
-          <div className="min-w-0">
-            <h1 className="truncate text-3xl font-black leading-tight text-[#181411]">
-              Seller Dashboard
-            </h1>
-
-            <p className="mt-1 truncate text-sm font-bold text-[#6B6258]">
-              {sellerSetupData.seller_kitchen_name || "Kitchen"}
-            </p>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-3">
+        <header className="flex items-center justify-between gap-3 pb-5 pt-2">
+          <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
-              onClick={toggleNotificationSound}
+              onClick={goToCustomerHome}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#D8C9B3] bg-white/95 text-[#3F5128] shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)] active:scale-95"
+              aria-label="Back to customer home"
+              title="Back to customer home"
+            >
+              <BackIcon />
+            </button>
+
+            <div className="min-w-0">
+              <h1 className="truncate text-2xl font-black leading-tight text-[#181411]">
+                Seller Dashboard
+              </h1>
+
+              <p className="mt-1 truncate text-xs font-bold text-[#6B6258]">
+                {sellerSetupData.seller_kitchen_name ||
+                  "Kitchen"}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={
+                toggleNotificationSound
+              }
               className="flex h-11 w-11 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-lg shadow-[5px_5px_14px_rgba(63,81,40,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]"
               aria-label="Toggle notification sound"
             >
@@ -2222,65 +3293,133 @@ export default function SellerDashboard() {
 
             <button
               type="button"
-              onClick={() => navigate("/profile")}
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-[#C86B37] bg-[#CF743D] text-lg font-black text-white shadow-lg shadow-[#3F5128]/10"
+              onClick={() =>
+                navigate("/profile")
+              }
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-[#C86B37] bg-[#CF743D] text-lg font-black text-white shadow-lg shadow-[#3F5128]/10"
               aria-label="Open profile"
             >
-              {user?.email?.charAt(0)?.toUpperCase() || "S"}
+              {user?.email
+                ?.charAt(0)
+                ?.toUpperCase() || "S"}
             </button>
           </div>
         </header>
 
-        {message ? <MessageBox message={message} /> : null}
+        {message ? (
+          <MessageBox
+            message={message}
+          />
+        ) : null}
 
-        {activeTab === "dashboard" && <DashboardView />}
-        {activeTab === "menu" && <MenuView />}
-        {activeTab === "orders" && <OrdersView />}
-        {activeTab === "more" && <MoreView />}
+        {activeTab ===
+          "dashboard" && (
+          <DashboardView />
+        )}
+
+        {activeTab === "menu" && (
+          <MenuView />
+        )}
+
+        {activeTab === "orders" && (
+          <OrdersView />
+        )}
+
+        {activeTab === "more" && (
+          <MoreView />
+        )}
       </div>
 
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#EADFCE] bg-[#FFF8EC]/95 px-4 py-2 backdrop-blur-xl">
         <div className="mx-auto grid max-w-md grid-cols-4 gap-1">
           {[
-            ["dashboard", "🏠", "Dashboard"],
+            [
+              "dashboard",
+              "🏠",
+              "Dashboard",
+            ],
+
             ["menu", "🍽️", "Menu"],
-            ["orders", "📋", "Orders"],
+
+            [
+              "orders",
+              "📋",
+              "Orders",
+            ],
+
             ["more", "☷", "More"],
-          ].map(([key, icon, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setActiveTab(key)}
-              className={`rounded-2xl py-2 text-[11px] font-black transition-all ${
-                activeTab === key
-                  ? "bg-[#FFF0DF] text-[#3F5128]"
-                  : "text-[#6B6258]"
-              }`}
-            >
-              <div className="text-lg leading-none">{icon}</div>
-              <div className="mt-1">{label}</div>
-            </button>
-          ))}
+          ].map(
+            ([key, icon, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() =>
+                  setActiveTab(key)
+                }
+                className={`rounded-2xl py-2 text-[11px] font-black transition-all ${
+                  activeTab === key
+                    ? "bg-[#FFF0DF] text-[#3F5128]"
+                    : "text-[#6B6258]"
+                }`}
+              >
+                <div className="text-lg leading-none">
+                  {icon}
+                </div>
+
+                <div className="mt-1">
+                  {label}
+                </div>
+              </button>
+            )
+          )}
         </div>
       </nav>
     </main>
   );
 }
 
-function Field({ label, children }) {
+function BackIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+      aria-hidden="true"
+    >
+      <path d="M19 12H5" />
+      <path d="M11 18l-6-6 6-6" />
+    </svg>
+  );
+}
+
+function Field({
+  label,
+  children,
+}) {
   return (
     <label className="block">
       <span className="mb-2 block text-xs font-black uppercase tracking-wide text-[#6B6258]">
         {label}
       </span>
+
       {children}
     </label>
   );
 }
 
-function CheckTile({ title, text, name, checked, onChange }) {
+function CheckTile({
+  title,
+  text,
+  name,
+  checked,
+  onChange,
+}) {
   return (
-    <label className={`flex cursor-pointer items-start gap-3 p-4 ${SOFT_CARD}`}>
+    <label
+      className={`flex cursor-pointer items-start gap-3 p-4 ${SOFT_CARD}`}
+    >
       <input
         type="checkbox"
         name={name}
@@ -2290,8 +3429,13 @@ function CheckTile({ title, text, name, checked, onChange }) {
       />
 
       <div>
-        <p className="font-black text-[#181411]">{title}</p>
-        <p className="mt-1 text-sm text-[#6B6258]">{text}</p>
+        <p className="font-black text-[#181411]">
+          {title}
+        </p>
+
+        <p className="mt-1 text-sm text-[#6B6258]">
+          {text}
+        </p>
       </div>
     </label>
   );
@@ -2305,11 +3449,19 @@ function MessageBox({ message }) {
   );
 }
 
-function StatCard({ label, value }) {
+function StatCard({
+  label,
+  value,
+}) {
   return (
     <div className={`p-4 ${SOFT_CARD}`}>
-      <p className="text-[11px] font-black text-[#6B6258]">{label}</p>
-      <p className="mt-3 text-3xl font-black text-[#181411]">{value}</p>
+      <p className="text-[11px] font-black text-[#6B6258]">
+        {label}
+      </p>
+
+      <p className="mt-3 text-3xl font-black text-[#181411]">
+        {value}
+      </p>
     </div>
   );
 }

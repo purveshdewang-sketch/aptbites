@@ -1609,14 +1609,7 @@ export default function Home() {
                 Kitchens
               </h2>
 
-              <button
-                type="button"
-                onClick={scrollToAllFood}
-                className="inline-flex items-center gap-1 text-xs font-black text-[#CF743D]"
-              >
-                See All{" "}
-                <ChevronRightIcon />
-              </button>
+              onClick={scrollToAllFood}
             </div>
 
             {loadingFoods ? (
