@@ -22,6 +22,178 @@ const FOOD_TYPE_CHIPS = ["All", "Veg", "Non-Veg"];
 const CARD =
   "rounded-[26px] border border-[#EADFCE] bg-white/95 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
+const FAVORITES_STORAGE_KEY = "Nefo_favorite_foods";
+const PREFERENCE_STORAGE_PREFIX = "Nefo_food_preferences";
+
+const RECOMMENDATION_MIN_ACCOUNT_AGE_DAYS = 3;
+const RECOMMENDATION_MIN_INTERACTION_SCORE = 8;
+const RECOMMENDATION_MIN_COMPLETED_ORDERS = 2;
+
+const COMPLETED_ORDER_STATUSES = new Set([
+  "completed",
+  "delivered",
+]);
+
+const EMPTY_PREFERENCES = {
+  categories: {},
+  foodTypes: {},
+  kitchens: {},
+  searches: {},
+};
+
+function normalizeText(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function getPreferenceStorageKey(userId) {
+  return `${PREFERENCE_STORAGE_PREFIX}_${userId}`;
+}
+
+function createEmptyPreferences() {
+  return {
+    categories: {},
+    foodTypes: {},
+    kitchens: {},
+    searches: {},
+  };
+}
+
+function readStoredPreferences(userId) {
+  if (!userId) {
+    return createEmptyPreferences();
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(
+      getPreferenceStorageKey(userId)
+    );
+
+    if (!rawValue) {
+      return createEmptyPreferences();
+    }
+
+    const parsedValue = JSON.parse(rawValue);
+
+    return {
+      categories:
+        parsedValue?.categories &&
+        typeof parsedValue.categories === "object"
+          ? parsedValue.categories
+          : {},
+
+      foodTypes:
+        parsedValue?.foodTypes &&
+        typeof parsedValue.foodTypes === "object"
+          ? parsedValue.foodTypes
+          : {},
+
+      kitchens:
+        parsedValue?.kitchens &&
+        typeof parsedValue.kitchens === "object"
+          ? parsedValue.kitchens
+          : {},
+
+      searches:
+        parsedValue?.searches &&
+        typeof parsedValue.searches === "object"
+          ? parsedValue.searches
+          : {},
+    };
+  } catch {
+    return createEmptyPreferences();
+  }
+}
+
+function readFavoriteFoodIds() {
+  try {
+    const rawValue = window.localStorage.getItem(
+      FAVORITES_STORAGE_KEY
+    );
+
+    if (!rawValue) {
+      return [];
+    }
+
+    const parsedValue = JSON.parse(rawValue);
+
+    if (!Array.isArray(parsedValue)) {
+      return [];
+    }
+
+    return [
+      ...new Set(
+        parsedValue
+          .map((item) => {
+            if (
+              item &&
+              typeof item === "object"
+            ) {
+              return String(
+                item.id ||
+                  item.food_id ||
+                  item.foodId ||
+                  ""
+              );
+            }
+
+            return String(item || "");
+          })
+          .filter(Boolean)
+      ),
+    ];
+  } catch {
+    return [];
+  }
+}
+
+function parseOrderItems(value) {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (typeof value !== "string") {
+    return [];
+  }
+
+  try {
+    const parsedValue = JSON.parse(value);
+    return Array.isArray(parsedValue)
+      ? parsedValue
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function addScore(map, key, score) {
+  const normalizedKey = normalizeText(key);
+
+  if (!normalizedKey || !Number.isFinite(score)) {
+    return;
+  }
+
+  map.set(
+    normalizedKey,
+    (map.get(normalizedKey) || 0) + score
+  );
+}
+
+function sumPreferenceCounts(group) {
+  return Object.values(group || {}).reduce(
+    (total, value) =>
+      total +
+      Math.min(
+        5,
+        Math.max(0, Number(value || 0))
+      ),
+    0
+  );
+}
+
+function getFoodId(food) {
+  return String(food?.id || "");
+}
+
 export default function Home() {
   const { user } = useAuth();
   const { cartItems } = useCart();
@@ -30,18 +202,36 @@ export default function Home() {
 
   const searchInputRef = useRef(null);
   const resultsRef = useRef(null);
+  const lastTrackedSearchRef = useRef("");
 
   const [isSeller, setIsSeller] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [homeFoods, setHomeFoods] = useState([]);
   const [profile, setProfile] = useState(null);
 
-  const [activeCategory, setActiveCategory] = useState("All");
-  const [activeFoodType, setActiveFoodType] = useState("All");
-  const [searchText, setSearchText] = useState("");
+  const [activeCategory, setActiveCategory] =
+    useState("All");
 
-  const [loadingFoods, setLoadingFoods] = useState(true);
-  const [foodError, setFoodError] = useState("");
+  const [activeFoodType, setActiveFoodType] =
+    useState("All");
+
+  const [searchText, setSearchText] =
+    useState("");
+
+  const [completedOrders, setCompletedOrders] =
+    useState([]);
+
+  const [favoriteFoodIds, setFavoriteFoodIds] =
+    useState([]);
+
+  const [preferenceSignals, setPreferenceSignals] =
+    useState(EMPTY_PREFERENCES);
+
+  const [loadingFoods, setLoadingFoods] =
+    useState(true);
+
+  const [foodError, setFoodError] =
+    useState("");
 
   useEffect(() => {
     checkUserRole();
@@ -88,8 +278,49 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (!user?.id) {
+      setCompletedOrders([]);
+      setFavoriteFoodIds([]);
+      setPreferenceSignals(
+        createEmptyPreferences()
+      );
+      return;
+    }
+
+    setPreferenceSignals(
+      readStoredPreferences(user.id)
+    );
+
+    setFavoriteFoodIds(
+      readFavoriteFoodIds()
+    );
+
+    fetchCompletedOrders();
+
+    function handleFavoritesUpdated() {
+      setFavoriteFoodIds(
+        readFavoriteFoodIds()
+      );
+    }
+
+    window.addEventListener(
+      "Nefo_favorites_updated",
+      handleFavoritesUpdated
+    );
+
+    return () => {
+      window.removeEventListener(
+        "Nefo_favorites_updated",
+        handleFavoritesUpdated
+      );
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
     const query = searchParams.get("q");
-    const shouldOpenSearch = searchParams.get("search") === "1";
+
+    const shouldOpenSearch =
+      searchParams.get("search") === "1";
 
     if (query) {
       setSearchText(query);
@@ -106,6 +337,40 @@ export default function Home() {
       }, 150);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      return undefined;
+    }
+
+    const normalizedSearch =
+      normalizeText(searchText);
+
+    if (normalizedSearch.length < 3) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => {
+      if (
+        lastTrackedSearchRef.current ===
+        normalizedSearch
+      ) {
+        return;
+      }
+
+      lastTrackedSearchRef.current =
+        normalizedSearch;
+
+      recordPreferenceSignal(
+        "searches",
+        normalizedSearch
+      );
+    }, 1200);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [searchText, user?.id]);
 
   async function checkUserRole() {
     if (!user) {
@@ -142,7 +407,8 @@ export default function Home() {
 
     if (error) {
       setIsSeller(
-        metadataRole === "seller" || metadataRole === "admin"
+        metadataRole === "seller" ||
+          metadataRole === "admin"
       );
 
       setIsAdmin(metadataRole === "admin");
@@ -150,10 +416,13 @@ export default function Home() {
       return;
     }
 
-    const profileRole = String(data?.role || "").toLowerCase();
+    const profileRole = String(
+      data?.role || ""
+    ).toLowerCase();
 
     const adminAllowed =
-      profileRole === "admin" || metadataRole === "admin";
+      profileRole === "admin" ||
+      metadataRole === "admin";
 
     setProfile(data || null);
     setIsAdmin(adminAllowed);
@@ -166,17 +435,112 @@ export default function Home() {
     );
   }
 
-  async function fetchHomeFoods(showLoading = true) {
+  async function fetchCompletedOrders() {
+    if (!user?.id) {
+      setCompletedOrders([]);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("orders")
+      .select("id, items, status, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", {
+        ascending: false,
+      })
+      .limit(60);
+
+    if (error) {
+      setCompletedOrders([]);
+      return;
+    }
+
+    const completed = (data || []).filter(
+      (order) =>
+        COMPLETED_ORDER_STATUSES.has(
+          normalizeText(order.status)
+        )
+    );
+
+    setCompletedOrders(completed);
+  }
+
+  function recordPreferenceSignal(
+    group,
+    value
+  ) {
+    if (!user?.id) {
+      return;
+    }
+
+    const normalizedValue =
+      normalizeText(value);
+
+    if (
+      !normalizedValue ||
+      ![
+        "categories",
+        "foodTypes",
+        "kitchens",
+        "searches",
+      ].includes(group)
+    ) {
+      return;
+    }
+
+    setPreferenceSignals((current) => {
+      const currentGroup =
+        current?.[group] || {};
+
+      const nextValue = Math.min(
+        12,
+        Number(
+          currentGroup[normalizedValue] || 0
+        ) + 1
+      );
+
+      const nextPreferences = {
+        ...createEmptyPreferences(),
+        ...current,
+
+        [group]: {
+          ...currentGroup,
+          [normalizedValue]: nextValue,
+        },
+      };
+
+      try {
+        window.localStorage.setItem(
+          getPreferenceStorageKey(user.id),
+          JSON.stringify(nextPreferences)
+        );
+      } catch {
+        // Recommendations can still use orders
+        // when local storage is unavailable.
+      }
+
+      return nextPreferences;
+    });
+  }
+
+  async function fetchHomeFoods(
+    showLoading = true
+  ) {
     if (showLoading) {
       setLoadingFoods(true);
     }
 
     setFoodError("");
 
-    const { data: foodData, error: foodFetchError } = await supabase
+    const {
+      data: foodData,
+      error: foodFetchError,
+    } = await supabase
       .from("foods")
       .select("*")
-      .order("id", { ascending: false });
+      .order("id", {
+        ascending: false,
+      });
 
     if (foodFetchError) {
       setHomeFoods([]);
@@ -190,7 +554,11 @@ export default function Home() {
     const kitchenIds = [
       ...new Set(
         foods
-          .map((food) => food.user_id || food.seller_id)
+          .map(
+            (food) =>
+              food.user_id ||
+              food.seller_id
+          )
           .filter(Boolean)
       ),
     ];
@@ -198,27 +566,39 @@ export default function Home() {
     let kitchenMap = {};
 
     if (kitchenIds.length > 0) {
-      const { data: kitchenProfiles } = await supabase
-        .from("profiles")
-        .select(
-          "id, seller_online, seller_kitchen_name, delivery_available, pickup_available"
-        )
-        .in("id", kitchenIds);
+      const { data: kitchenProfiles } =
+        await supabase
+          .from("profiles")
+          .select(
+            "id, seller_online, seller_kitchen_name, delivery_available, pickup_available"
+          )
+          .in("id", kitchenIds);
 
-      kitchenMap = (kitchenProfiles || []).reduce(
-        (result, kitchenProfile) => {
-          result[String(kitchenProfile.id)] = {
+      kitchenMap = (
+        kitchenProfiles || []
+      ).reduce(
+        (
+          result,
+          kitchenProfile
+        ) => {
+          result[
+            String(kitchenProfile.id)
+          ] = {
             seller_online:
-              kitchenProfile.seller_online !== false,
+              kitchenProfile.seller_online !==
+              false,
 
             seller_kitchen_name:
-              kitchenProfile.seller_kitchen_name || "",
+              kitchenProfile.seller_kitchen_name ||
+              "",
 
             delivery_available:
-              kitchenProfile.delivery_available !== false,
+              kitchenProfile.delivery_available !==
+              false,
 
             pickup_available:
-              kitchenProfile.pickup_available !== false,
+              kitchenProfile.pickup_available !==
+              false,
           };
 
           return result;
@@ -229,74 +609,110 @@ export default function Home() {
 
     const ratingMap = {};
 
-    const { data: ratingData } = await supabase
-      .from("food_ratings")
-      .select("food_id, rating");
+    const { data: ratingData } =
+      await supabase
+        .from("food_ratings")
+        .select("food_id, rating");
 
-    (ratingData || []).forEach((ratingRow) => {
-      const foodId = String(ratingRow.food_id || "");
-      const ratingValue = Number(ratingRow.rating || 0);
+    (ratingData || []).forEach(
+      (ratingRow) => {
+        const foodId = String(
+          ratingRow.food_id || ""
+        );
 
-      if (!foodId || ratingValue <= 0) return;
+        const ratingValue = Number(
+          ratingRow.rating || 0
+        );
 
-      if (!ratingMap[foodId]) {
-        ratingMap[foodId] = {
-          total: 0,
-          count: 0,
+        if (
+          !foodId ||
+          ratingValue <= 0
+        ) {
+          return;
+        }
+
+        if (!ratingMap[foodId]) {
+          ratingMap[foodId] = {
+            total: 0,
+            count: 0,
+          };
+        }
+
+        ratingMap[foodId].total +=
+          ratingValue;
+
+        ratingMap[foodId].count += 1;
+      }
+    );
+
+    const enrichedFoods = foods.map(
+      (food) => {
+        const kitchenId =
+          food.user_id ||
+          food.seller_id;
+
+        const kitchenProfile =
+          kitchenMap[
+            String(kitchenId)
+          ] || {};
+
+        const foodRating =
+          ratingMap[
+            String(food.id)
+          ] || {
+            total: 0,
+            count: 0,
+          };
+
+        const ratingAverage =
+          foodRating.count > 0
+            ? foodRating.total /
+              foodRating.count
+            : 0;
+
+        return {
+          ...food,
+
+          seller_id:
+            food.seller_id ||
+            food.user_id ||
+            kitchenId,
+
+          seller_online:
+            kitchenProfile.seller_online !==
+            undefined
+              ? kitchenProfile.seller_online
+              : food.seller_online !==
+                false,
+
+          seller_kitchen_name:
+            kitchenProfile.seller_kitchen_name ||
+            food.seller_kitchen_name ||
+            food.seller ||
+            "Home Kitchen",
+
+          delivery_available:
+            kitchenProfile.delivery_available !==
+            undefined
+              ? kitchenProfile.delivery_available
+              : food.delivery_available !==
+                false,
+
+          pickup_available:
+            kitchenProfile.pickup_available !==
+            undefined
+              ? kitchenProfile.pickup_available
+              : food.pickup_available !==
+                false,
+
+          rating_average:
+            ratingAverage,
+
+          rating_count:
+            foodRating.count,
         };
       }
-
-      ratingMap[foodId].total += ratingValue;
-      ratingMap[foodId].count += 1;
-    });
-
-    const enrichedFoods = foods.map((food) => {
-      const kitchenId = food.user_id || food.seller_id;
-      const kitchenProfile =
-        kitchenMap[String(kitchenId)] || {};
-
-      const foodRating =
-        ratingMap[String(food.id)] || {
-          total: 0,
-          count: 0,
-        };
-
-      const ratingAverage =
-        foodRating.count > 0
-          ? foodRating.total / foodRating.count
-          : 0;
-
-      return {
-        ...food,
-
-        seller_id:
-          food.seller_id || food.user_id || kitchenId,
-
-        seller_online:
-          kitchenProfile.seller_online !== undefined
-            ? kitchenProfile.seller_online
-            : food.seller_online !== false,
-
-        seller_kitchen_name:
-          kitchenProfile.seller_kitchen_name ||
-          food.seller_kitchen_name ||
-          food.seller ||
-          "Home Kitchen",
-
-        delivery_available:
-          kitchenProfile.delivery_available !== undefined
-            ? kitchenProfile.delivery_available
-            : food.delivery_available !== false,
-
-        pickup_available:
-          kitchenProfile.pickup_available !== undefined
-            ? kitchenProfile.pickup_available
-            : food.pickup_available !== false,
-
-        rating_average: ratingAverage,
-        rating_count: foodRating.count,
-      };
-    });
+    );
 
     setHomeFoods(enrichedFoods);
     setLoadingFoods(false);
@@ -317,7 +733,9 @@ export default function Home() {
       user?.email ||
       "N";
 
-    return String(name).charAt(0).toUpperCase();
+    return String(name)
+      .charAt(0)
+      .toUpperCase();
   }
 
   function clearFilters() {
@@ -338,24 +756,66 @@ export default function Home() {
     setActiveCategory("All");
     setActiveFoodType("All");
 
+    recordPreferenceSignal(
+      "kitchens",
+      kitchenName
+    );
+
     window.setTimeout(() => {
       scrollToAllFood();
     }, 100);
   }
 
+  function handleCategorySelect(category) {
+    setActiveCategory(category);
+
+    if (category !== "All") {
+      recordPreferenceSignal(
+        "categories",
+        category
+      );
+    }
+  }
+
+  function handleFoodTypeSelect(foodType) {
+    setActiveFoodType(foodType);
+
+    if (foodType !== "All") {
+      recordPreferenceSignal(
+        "foodTypes",
+        foodType
+      );
+    }
+  }
+
   const locationLabel = useMemo(() => {
-    const apartment = profile?.apartment_name?.trim();
-    const block = profile?.block?.trim();
-    const flatNo = profile?.flat_no?.trim();
-    const flat = profile?.flat?.trim();
+    const apartment =
+      profile?.apartment_name?.trim();
+
+    const block =
+      profile?.block?.trim();
+
+    const flatNo =
+      profile?.flat_no?.trim();
+
+    const flat =
+      profile?.flat?.trim();
 
     if (apartment && block) {
       return `${apartment}, ${block}`;
     }
 
-    if (apartment) return apartment;
-    if (flatNo) return `Flat ${flatNo}`;
-    if (flat) return flat;
+    if (apartment) {
+      return apartment;
+    }
+
+    if (flatNo) {
+      return `Flat ${flatNo}`;
+    }
+
+    if (flat) {
+      return flat;
+    }
 
     return "Set your location";
   }, [profile]);
@@ -363,7 +823,8 @@ export default function Home() {
   const cartCount = useMemo(() => {
     return cartItems.reduce(
       (total, item) =>
-        total + Number(item.quantity || 0),
+        total +
+        Number(item.quantity || 0),
       0
     );
   }, [cartItems]);
@@ -371,9 +832,11 @@ export default function Home() {
   const categoryCounts = useMemo(() => {
     const counts = {};
 
-    CATEGORY_CHIPS.forEach((category) => {
-      counts[category] = 0;
-    });
+    CATEGORY_CHIPS.forEach(
+      (category) => {
+        counts[category] = 0;
+      }
+    );
 
     homeFoods.forEach((food) => {
       const category = String(
@@ -382,7 +845,9 @@ export default function Home() {
 
       counts.All += 1;
 
-      if (counts[category] !== undefined) {
+      if (
+        counts[category] !== undefined
+      ) {
         counts[category] += 1;
       }
     });
@@ -391,7 +856,10 @@ export default function Home() {
   }, [homeFoods]);
 
   const filteredFoods = useMemo(() => {
-    const search = searchText.trim().toLowerCase();
+    const search =
+      searchText
+        .trim()
+        .toLowerCase();
 
     return homeFoods.filter((food) => {
       const category = String(
@@ -420,13 +888,19 @@ export default function Home() {
 
       const categoryMatch =
         activeCategory === "All" ||
-        category === activeCategory.toLowerCase() ||
-        category.includes(activeCategory.toLowerCase()) ||
-        name.includes(activeCategory.toLowerCase());
+        category ===
+          activeCategory.toLowerCase() ||
+        category.includes(
+          activeCategory.toLowerCase()
+        ) ||
+        name.includes(
+          activeCategory.toLowerCase()
+        );
 
       const typeMatch =
         activeFoodType === "All" ||
-        type === activeFoodType.toLowerCase();
+        type ===
+          activeFoodType.toLowerCase();
 
       const searchMatch =
         !search ||
@@ -437,7 +911,11 @@ export default function Home() {
         description.includes(search) ||
         preparationTime.includes(search);
 
-      return categoryMatch && typeMatch && searchMatch;
+      return (
+        categoryMatch &&
+        typeMatch &&
+        searchMatch
+      );
     });
   }, [
     homeFoods,
@@ -446,22 +924,351 @@ export default function Home() {
     searchText,
   ]);
 
+  const recommendationContext =
+    useMemo(() => {
+      const accountCreatedAt =
+        user?.created_at
+          ? new Date(user.created_at)
+          : null;
+
+      const accountAgeMs =
+        accountCreatedAt &&
+        !Number.isNaN(
+          accountCreatedAt.getTime()
+        )
+          ? Date.now() -
+            accountCreatedAt.getTime()
+          : 0;
+
+      const accountAgeDays =
+        Math.max(
+          0,
+          accountAgeMs /
+            (1000 * 60 * 60 * 24)
+        );
+
+      const interactionScore =
+        completedOrders.length * 6 +
+        favoriteFoodIds.length * 4 +
+        sumPreferenceCounts(
+          preferenceSignals.categories
+        ) +
+        sumPreferenceCounts(
+          preferenceSignals.foodTypes
+        ) +
+        sumPreferenceCounts(
+          preferenceSignals.kitchens
+        ) *
+          2 +
+        sumPreferenceCounts(
+          preferenceSignals.searches
+        ) *
+          2;
+
+      const eligible =
+        completedOrders.length >=
+          RECOMMENDATION_MIN_COMPLETED_ORDERS ||
+        (accountAgeDays >=
+          RECOMMENDATION_MIN_ACCOUNT_AGE_DAYS &&
+          interactionScore >=
+            RECOMMENDATION_MIN_INTERACTION_SCORE);
+
+      return {
+        eligible,
+        accountAgeDays,
+        interactionScore,
+      };
+    }, [
+      user?.created_at,
+      completedOrders,
+      favoriteFoodIds,
+      preferenceSignals,
+    ]);
+
+  const recommendedFoods = useMemo(() => {
+    if (
+      !recommendationContext.eligible ||
+      homeFoods.length === 0
+    ) {
+      return [];
+    }
+
+    const foodIdScores = new Map();
+    const nameScores = new Map();
+    const categoryScores = new Map();
+    const typeScores = new Map();
+    const kitchenScores = new Map();
+    const searchScores = new Map();
+
+    completedOrders.forEach((order) => {
+      parseOrderItems(order.items).forEach(
+        (item) => {
+          const quantity = Math.max(
+            1,
+            Number(item?.quantity || 1)
+          );
+
+          addScore(
+            foodIdScores,
+            item?.id ||
+              item?.food_id ||
+              item?.foodId,
+            10 * quantity
+          );
+
+          addScore(
+            nameScores,
+            item?.name ||
+              item?.food_name,
+            8 * quantity
+          );
+
+          addScore(
+            categoryScores,
+            item?.category,
+            5 * quantity
+          );
+
+          addScore(
+            typeScores,
+            item?.type,
+            4 * quantity
+          );
+
+          addScore(
+            kitchenScores,
+            item?.seller_kitchen_name ||
+              item?.seller ||
+              item?.kitchen_name,
+            5 * quantity
+          );
+        }
+      );
+    });
+
+    favoriteFoodIds.forEach((foodId) => {
+      const favoriteFood =
+        homeFoods.find(
+          (food) =>
+            getFoodId(food) ===
+            String(foodId)
+        );
+
+      if (!favoriteFood) {
+        return;
+      }
+
+      addScore(
+        foodIdScores,
+        favoriteFood.id,
+        8
+      );
+
+      addScore(
+        categoryScores,
+        favoriteFood.category,
+        3
+      );
+
+      addScore(
+        typeScores,
+        favoriteFood.type,
+        2
+      );
+
+      addScore(
+        kitchenScores,
+        getKitchenName(favoriteFood),
+        3
+      );
+    });
+
+    Object.entries(
+      preferenceSignals.categories || {}
+    ).forEach(([key, count]) => {
+      addScore(
+        categoryScores,
+        key,
+        Math.min(5, Number(count || 0)) *
+          3
+      );
+    });
+
+    Object.entries(
+      preferenceSignals.foodTypes || {}
+    ).forEach(([key, count]) => {
+      addScore(
+        typeScores,
+        key,
+        Math.min(5, Number(count || 0)) *
+          2
+      );
+    });
+
+    Object.entries(
+      preferenceSignals.kitchens || {}
+    ).forEach(([key, count]) => {
+      addScore(
+        kitchenScores,
+        key,
+        Math.min(5, Number(count || 0)) *
+          3
+      );
+    });
+
+    Object.entries(
+      preferenceSignals.searches || {}
+    ).forEach(([key, count]) => {
+      addScore(
+        searchScores,
+        key,
+        Math.min(5, Number(count || 0)) *
+          2
+      );
+    });
+
+    return homeFoods
+      .filter((food) => {
+        const stock = Number(
+          food.stock || 0
+        );
+
+        return (
+          stock > 0 &&
+          food.seller_online !== false &&
+          (food.delivery_available !==
+            false ||
+            food.pickup_available !==
+              false)
+        );
+      })
+      .map((food) => {
+        const foodId =
+          normalizeText(food.id);
+
+        const name =
+          normalizeText(food.name);
+
+        const category =
+          normalizeText(food.category);
+
+        const type =
+          normalizeText(
+            food.type || "Veg"
+          );
+
+        const kitchen =
+          normalizeText(
+            getKitchenName(food)
+          );
+
+        let score =
+          foodIdScores.get(foodId) || 0;
+
+        score +=
+          nameScores.get(name) || 0;
+
+        score +=
+          categoryScores.get(category) ||
+          0;
+
+        score +=
+          typeScores.get(type) || 0;
+
+        score +=
+          kitchenScores.get(kitchen) || 0;
+
+        searchScores.forEach(
+          (
+            searchScore,
+            searchTerm
+          ) => {
+            if (
+              name.includes(searchTerm) ||
+              category.includes(
+                searchTerm
+              ) ||
+              kitchen.includes(searchTerm)
+            ) {
+              score += searchScore;
+            }
+          }
+        );
+
+        score +=
+          Math.min(
+            5,
+            Number(
+              food.rating_average || 0
+            )
+          ) * 0.6;
+
+        score += Math.min(
+          2,
+          Number(
+            food.rating_count || 0
+          ) * 0.08
+        );
+
+        return {
+          food,
+          score,
+        };
+      })
+      .filter(
+        (entry) => entry.score > 0
+      )
+      .sort((first, second) => {
+        if (
+          second.score !== first.score
+        ) {
+          return (
+            second.score - first.score
+          );
+        }
+
+        return (
+          Number(
+            second.food.rating_average ||
+              0
+          ) -
+          Number(
+            first.food.rating_average ||
+              0
+          )
+        );
+      })
+      .slice(0, 5)
+      .map((entry) => entry.food);
+  }, [
+    recommendationContext.eligible,
+    homeFoods,
+    completedOrders,
+    favoriteFoodIds,
+    preferenceSignals,
+  ]);
+
   const popularKitchens = useMemo(() => {
     const kitchenMap = new Map();
 
     homeFoods
       .filter((food) => {
-        const stock = Number(food.stock || 0);
+        const stock = Number(
+          food.stock || 0
+        );
 
         return (
           stock > 0 &&
           food.seller_online !== false &&
-          (food.delivery_available !== false ||
-            food.pickup_available !== false)
+          (food.delivery_available !==
+            false ||
+            food.pickup_available !==
+              false)
         );
       })
       .forEach((food) => {
-        const kitchenName = getKitchenName(food);
+        const kitchenName =
+          getKitchenName(food);
 
         const kitchenKey = String(
           food.seller_id ||
@@ -469,7 +1276,9 @@ export default function Home() {
             kitchenName.toLowerCase()
         );
 
-        if (!kitchenMap.has(kitchenKey)) {
+        if (
+          !kitchenMap.has(kitchenKey)
+        ) {
           kitchenMap.set(kitchenKey, {
             id: kitchenKey,
             name: kitchenName,
@@ -480,53 +1289,70 @@ export default function Home() {
           });
         }
 
-        const kitchen = kitchenMap.get(kitchenKey);
+        const kitchen =
+          kitchenMap.get(kitchenKey);
 
         kitchen.items.push(food);
 
-        if (!kitchen.image && food.image) {
-          kitchen.image = food.image;
+        if (
+          !kitchen.image &&
+          food.image
+        ) {
+          kitchen.image =
+            food.image;
         }
 
-        const foodRatingCount = Number(
-          food.rating_count || 0
-        );
+        const foodRatingCount =
+          Number(
+            food.rating_count || 0
+          );
 
-        const foodRatingAverage = Number(
-          food.rating_average || 0
-        );
+        const foodRatingAverage =
+          Number(
+            food.rating_average || 0
+          );
 
         kitchen.ratingTotal +=
-          foodRatingAverage * foodRatingCount;
+          foodRatingAverage *
+          foodRatingCount;
 
-        kitchen.ratingCount += foodRatingCount;
+        kitchen.ratingCount +=
+          foodRatingCount;
       });
 
-    return Array.from(kitchenMap.values())
+    return Array.from(
+      kitchenMap.values()
+    )
       .map((kitchen) => ({
         ...kitchen,
 
         ratingAverage:
           kitchen.ratingCount > 0
-            ? kitchen.ratingTotal / kitchen.ratingCount
+            ? kitchen.ratingTotal /
+              kitchen.ratingCount
             : 0,
       }))
-      .sort((firstKitchen, secondKitchen) => {
-        if (
-          secondKitchen.ratingCount !==
-          firstKitchen.ratingCount
-        ) {
-          return (
-            secondKitchen.ratingCount -
+      .sort(
+        (
+          firstKitchen,
+          secondKitchen
+        ) => {
+          if (
+            secondKitchen.ratingCount !==
             firstKitchen.ratingCount
+          ) {
+            return (
+              secondKitchen.ratingCount -
+              firstKitchen.ratingCount
+            );
+          }
+
+          return (
+            secondKitchen.items.length -
+            firstKitchen.items.length
           );
         }
-
-        return (
-          secondKitchen.items.length -
-          firstKitchen.items.length
-        );
-      })
+      )
       .slice(0, 8);
   }, [homeFoods]);
 
@@ -534,6 +1360,11 @@ export default function Home() {
     Boolean(searchText.trim()) ||
     activeCategory !== "All" ||
     activeFoodType !== "All";
+
+  const showRecommendations =
+    !hasActiveFilters &&
+    recommendationContext.eligible &&
+    recommendedFoods.length > 0;
 
   const sellFoodPath =
     isSeller || isAdmin
@@ -573,7 +1404,9 @@ export default function Home() {
 
               {cartCount > 0 ? (
                 <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-[#CF743D] px-1 text-[10px] font-black text-white">
-                  {cartCount > 9 ? "9+" : cartCount}
+                  {cartCount > 9
+                    ? "9+"
+                    : cartCount}
                 </span>
               ) : (
                 <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full border-2 border-white bg-[#CF743D]" />
@@ -606,7 +1439,9 @@ export default function Home() {
               ref={searchInputRef}
               value={searchText}
               onChange={(event) =>
-                setSearchText(event.target.value)
+                setSearchText(
+                  event.target.value
+                )
               }
               className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[#181411] outline-none placeholder:text-[#9A8E80]"
               placeholder="Search food, kitchens or categories..."
@@ -615,7 +1450,9 @@ export default function Home() {
             {searchText ? (
               <button
                 type="button"
-                onClick={() => setSearchText("")}
+                onClick={() =>
+                  setSearchText("")
+                }
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FFF0DF] text-lg font-black text-[#CF743D]"
                 aria-label="Clear search"
               >
@@ -627,61 +1464,74 @@ export default function Home() {
 
         <section className="-mx-4 mt-4 overflow-x-auto px-4 scrollbar-hide">
           <div className="flex min-w-max gap-2">
-            {FOOD_TYPE_CHIPS.map((foodType) => {
-              const isActive =
-                activeFoodType === foodType;
+            {FOOD_TYPE_CHIPS.map(
+              (foodType) => {
+                const isActive =
+                  activeFoodType ===
+                  foodType;
 
-              return (
-                <button
-                  key={foodType}
-                  type="button"
-                  onClick={() =>
-                    setActiveFoodType(foodType)
-                  }
-                  className={`rounded-full border px-5 py-2.5 text-sm font-black transition-all active:scale-95 ${
-                    isActive
-                      ? "border-[#CF743D] bg-[#FFF0DF] text-[#3F5128]"
-                      : "border-[#EADFCE] bg-white/80 text-[#6B6258]"
-                  }`}
-                >
-                  {foodType === "All"
-                    ? "All food"
-                    : foodType}
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    key={foodType}
+                    type="button"
+                    onClick={() =>
+                      handleFoodTypeSelect(
+                        foodType
+                      )
+                    }
+                    className={`rounded-full border px-5 py-2.5 text-sm font-black transition-all active:scale-95 ${
+                      isActive
+                        ? "border-[#CF743D] bg-[#FFF0DF] text-[#3F5128]"
+                        : "border-[#EADFCE] bg-white/80 text-[#6B6258]"
+                    }`}
+                  >
+                    {foodType === "All"
+                      ? "All food"
+                      : foodType}
+                  </button>
+                );
+              }
+            )}
           </div>
         </section>
 
         <section className="-mx-4 mt-3 overflow-x-auto px-4 pb-1 scrollbar-hide">
           <div className="flex min-w-max gap-2">
-            {CATEGORY_CHIPS.map((category) => {
-              const isActive =
-                activeCategory === category;
+            {CATEGORY_CHIPS.map(
+              (category) => {
+                const isActive =
+                  activeCategory ===
+                  category;
 
-              return (
-                <button
-                  key={category}
-                  type="button"
-                  onClick={() =>
-                    setActiveCategory(category)
-                  }
-                  className={`rounded-full border px-5 py-2.5 text-sm font-black transition-all active:scale-95 ${
-                    isActive
-                      ? "border-[#3F5128] bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15"
-                      : "border-[#EADFCE] bg-white/80 text-[#6B6258] shadow-[4px_4px_12px_rgba(63,81,40,0.05),-4px_-4px_12px_rgba(255,255,255,0.95)]"
-                  }`}
-                >
-                  {category}
+                return (
+                  <button
+                    key={category}
+                    type="button"
+                    onClick={() =>
+                      handleCategorySelect(
+                        category
+                      )
+                    }
+                    className={`rounded-full border px-5 py-2.5 text-sm font-black transition-all active:scale-95 ${
+                      isActive
+                        ? "border-[#3F5128] bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15"
+                        : "border-[#EADFCE] bg-white/80 text-[#6B6258] shadow-[4px_4px_12px_rgba(63,81,40,0.05),-4px_-4px_12px_rgba(255,255,255,0.95)]"
+                    }`}
+                  >
+                    {category}
 
-                  {category === "All" ? (
-                    <span className="ml-1 opacity-70">
-                      ({categoryCounts.All || 0})
-                    </span>
-                  ) : null}
-                </button>
-              );
-            })}
+                    {category === "All" ? (
+                      <span className="ml-1 opacity-70">
+                        (
+                        {categoryCounts.All ||
+                          0}
+                        )
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              }
+            )}
           </div>
         </section>
 
@@ -715,10 +1565,42 @@ export default function Home() {
               to={sellFoodPath}
               className="shrink-0 rounded-full border border-[#CF743D] bg-[#CF743D] px-5 py-3 text-sm font-black text-white shadow-lg shadow-black/10 active:scale-95"
             >
-              {isSeller || isAdmin ? "Open" : "Start"}
+              {isSeller || isAdmin
+                ? "Open"
+                : "Start"}
             </Link>
           </div>
         </section>
+
+        {showRecommendations ? (
+          <section className="mt-6">
+            <div className="mb-3">
+              <p className="text-[11px] font-black uppercase tracking-wide text-[#CF743D]">
+                Personalised
+              </p>
+
+              <h2 className="mt-1 text-lg font-black text-[#3F5128]">
+                Picked for You
+              </h2>
+
+              <p className="mt-1 text-xs font-semibold text-[#6B6258]">
+                Based on your orders,
+                favourites and food activity.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {recommendedFoods.map(
+                (food) => (
+                  <FoodCard
+                    key={`recommended-${food.id}`}
+                    item={food}
+                  />
+                )
+              )}
+            </div>
+          </section>
+        ) : null}
 
         {!hasActiveFilters ? (
           <section className="mt-6">
@@ -732,7 +1614,8 @@ export default function Home() {
                 onClick={scrollToAllFood}
                 className="inline-flex items-center gap-1 text-xs font-black text-[#CF743D]"
               >
-                See All <ChevronRightIcon />
+                See All{" "}
+                <ChevronRightIcon />
               </button>
             </div>
 
@@ -742,16 +1625,21 @@ export default function Home() {
                 <KitchenSkeleton />
                 <KitchenSkeleton />
               </div>
-            ) : popularKitchens.length > 0 ? (
+            ) : popularKitchens.length >
+              0 ? (
               <div className="-mx-4 overflow-x-auto px-4 scrollbar-hide">
                 <div className="flex min-w-max gap-3">
-                  {popularKitchens.map((kitchen) => (
-                    <KitchenCard
-                      key={kitchen.id}
-                      kitchen={kitchen}
-                      onSelect={selectKitchen}
-                    />
-                  ))}
+                  {popularKitchens.map(
+                    (kitchen) => (
+                      <KitchenCard
+                        key={kitchen.id}
+                        kitchen={kitchen}
+                        onSelect={
+                          selectKitchen
+                        }
+                      />
+                    )
+                  )}
                 </div>
               </div>
             ) : (
@@ -782,7 +1670,8 @@ export default function Home() {
               {!loadingFoods ? (
                 <p className="mt-1 text-xs font-semibold text-[#6B6258]">
                   {filteredFoods.length}{" "}
-                  {filteredFoods.length === 1
+                  {filteredFoods.length ===
+                  1
                     ? "dish"
                     : "dishes"}{" "}
                   found
@@ -813,7 +1702,9 @@ export default function Home() {
 
               <button
                 type="button"
-                onClick={() => fetchHomeFoods()}
+                onClick={() =>
+                  fetchHomeFoods()
+                }
                 className="mt-4 rounded-2xl bg-red-600 px-5 py-3 text-sm font-black text-white"
               >
                 Try Again
@@ -825,17 +1716,22 @@ export default function Home() {
               <FoodSkeleton />
               <FoodSkeleton />
             </div>
-          ) : filteredFoods.length > 0 ? (
+          ) : filteredFoods.length >
+            0 ? (
             <div className="space-y-3">
-              {filteredFoods.map((food) => (
-                <FoodCard
-                  key={food.id}
-                  item={food}
-                />
-              ))}
+              {filteredFoods.map(
+                (food) => (
+                  <FoodCard
+                    key={food.id}
+                    item={food}
+                  />
+                )
+              )}
             </div>
           ) : (
-            <div className={`p-8 text-center ${CARD}`}>
+            <div
+              className={`p-8 text-center ${CARD}`}
+            >
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#D8C9B3] bg-[#FFF0DF] text-3xl">
                 🔎
               </div>
@@ -845,7 +1741,9 @@ export default function Home() {
               </h3>
 
               <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
-                Try another dish, kitchen, category, or food type.
+                Try another dish,
+                kitchen, category, or
+                food type.
               </p>
 
               <button
@@ -863,11 +1761,16 @@ export default function Home() {
   );
 }
 
-function KitchenCard({ kitchen, onSelect }) {
+function KitchenCard({
+  kitchen,
+  onSelect,
+}) {
   return (
     <button
       type="button"
-      onClick={() => onSelect(kitchen.name)}
+      onClick={() =>
+        onSelect(kitchen.name)
+      }
       className="w-[138px] shrink-0 overflow-hidden rounded-[24px] border border-[#EADFCE] bg-white/90 text-left shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-[0.98]"
     >
       <div className="h-[98px] overflow-hidden bg-[#FFF0DF]">
@@ -896,7 +1799,9 @@ function KitchenCard({ kitchen, onSelect }) {
             </span>
 
             <span>
-              {kitchen.ratingAverage.toFixed(1)}
+              {kitchen.ratingAverage.toFixed(
+                1
+              )}
             </span>
 
             <span>
