@@ -35,6 +35,7 @@ import Favorites from "./pages/Favorites";
 
 import ScrollToTop from "./components/ScrollToTop";
 import GlobalBackHandler from "./components/GlobalBackHandler";
+import PullToRefresh from "./components/PullToRefresh";
 
 import { useAuth } from "./context/AuthContext";
 import { supabase } from "./lib/supabaseClient";
@@ -45,7 +46,9 @@ function LoadingScreen() {
       <div className="rounded-[28px] border border-[#EADFCE] bg-white/90 px-8 py-7 text-center shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
         <div className="mx-auto flex h-14 w-14 animate-spin items-center justify-center rounded-full border-4 border-[#EADFCE] border-t-[#3F5128]" />
 
-        <p className="mt-4 font-black text-[#3F5128]">Loading...</p>
+        <p className="mt-4 font-black text-[#3F5128]">
+          Loading...
+        </p>
       </div>
     </main>
   );
@@ -72,7 +75,21 @@ function shouldShowCustomerBottomNav(pathname) {
     "/refund-policy",
   ];
 
-  return !hiddenRoutes.some((route) => pathname.startsWith(route));
+  return !hiddenRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
+}
+
+function shouldEnablePullToRefresh(pathname) {
+  const disabledRoutes = [
+    "/customer-login",
+    "/seller-login",
+    "/reset-password",
+  ];
+
+  return !disabledRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
 }
 
 function BottomNav() {
@@ -126,7 +143,8 @@ function BottomNav() {
                 >
                   <span
                     className={
-                      item.label === "Favorites" && isActive
+                      item.label === "Favorites" &&
+                      isActive
                         ? "text-[#CF743D]"
                         : ""
                     }
@@ -135,7 +153,9 @@ function BottomNav() {
                   </span>
                 </div>
 
-                <span className="leading-none">{item.label}</span>
+                <span className="leading-none">
+                  {item.label}
+                </span>
               </>
             )}
           </NavLink>
@@ -175,9 +195,10 @@ function FloatingHelpButton() {
 
   if (shouldHide) return null;
 
-  const bottomNavVisible = shouldShowCustomerBottomNav(
-    location.pathname
-  );
+  const bottomNavVisible =
+    shouldShowCustomerBottomNav(
+      location.pathname
+    );
 
   const sellerPages = [
     "/seller-dashboard",
@@ -193,16 +214,24 @@ function FloatingHelpButton() {
 
   return (
     <Link
-      to={isSellerPage ? "/seller-helper" : "/care-agent"}
+      to={
+        isSellerPage
+          ? "/seller-helper"
+          : "/care-agent"
+      }
       className={`fixed right-4 z-[999] rounded-full border px-4 py-3 font-black shadow-2xl transition-all active:scale-95 ${
-        bottomNavVisible ? "bottom-24" : "bottom-5"
+        bottomNavVisible
+          ? "bottom-24"
+          : "bottom-5"
       } ${
         isSellerPage
           ? "border-[#CF743D] bg-[#CF743D] text-white hover:bg-[#B85F2C]"
           : "border-[#3F5128] bg-[#3F5128] text-white hover:bg-[#4D612F]"
       }`}
     >
-      {isSellerPage ? "👨‍🍳 Seller Help" : "💬 Help"}
+      {isSellerPage
+        ? "👨‍🍳 Seller Help"
+        : "💬 Help"}
     </Link>
   );
 }
@@ -210,10 +239,17 @@ function FloatingHelpButton() {
 function ProtectedRoute({ children }) {
   const { user, authLoading } = useAuth();
 
-  if (authLoading) return <LoadingScreen />;
+  if (authLoading) {
+    return <LoadingScreen />;
+  }
 
   if (!user) {
-    return <Navigate to="/customer-login" replace />;
+    return (
+      <Navigate
+        to="/customer-login"
+        replace
+      />
+    );
   }
 
   return children;
@@ -222,8 +258,11 @@ function ProtectedRoute({ children }) {
 function SellerOnlyRoute({ children }) {
   const { user, authLoading } = useAuth();
 
-  const [checkingRole, setCheckingRole] = useState(true);
-  const [sellerAllowed, setSellerAllowed] = useState(false);
+  const [checkingRole, setCheckingRole] =
+    useState(true);
+
+  const [sellerAllowed, setSellerAllowed] =
+    useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -257,7 +296,9 @@ function SellerOnlyRoute({ children }) {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("role, is_seller, seller_application_status")
+        .select(
+          "role, is_seller, seller_application_status"
+        )
         .eq("id", user.id)
         .maybeSingle();
 
@@ -269,10 +310,13 @@ function SellerOnlyRoute({ children }) {
         return;
       }
 
-      const profileRole = String(data?.role || "").toLowerCase();
+      const profileRole = String(
+        data?.role || ""
+      ).toLowerCase();
 
       const applicationStatus = String(
-        data?.seller_application_status || "not_applied"
+        data?.seller_application_status ||
+          "not_applied"
       ).toLowerCase();
 
       const isApprovedSeller =
@@ -280,9 +324,13 @@ function SellerOnlyRoute({ children }) {
         data?.is_seller === true &&
         applicationStatus === "approved";
 
-      const isAdmin = profileRole === "admin";
+      const isAdmin =
+        profileRole === "admin";
 
-      setSellerAllowed(isApprovedSeller || isAdmin);
+      setSellerAllowed(
+        isApprovedSeller || isAdmin
+      );
+
       setCheckingRole(false);
     }
 
@@ -298,11 +346,21 @@ function SellerOnlyRoute({ children }) {
   }
 
   if (!user) {
-    return <Navigate to="/customer-login" replace />;
+    return (
+      <Navigate
+        to="/customer-login"
+        replace
+      />
+    );
   }
 
   if (!sellerAllowed) {
-    return <Navigate to="/seller-registration" replace />;
+    return (
+      <Navigate
+        to="/seller-registration"
+        replace
+      />
+    );
   }
 
   return children;
@@ -311,8 +369,11 @@ function SellerOnlyRoute({ children }) {
 function AdminOnlyRoute({ children }) {
   const { user, authLoading } = useAuth();
 
-  const [checkingRole, setCheckingRole] = useState(true);
-  const [adminAllowed, setAdminAllowed] = useState(false);
+  const [checkingRole, setCheckingRole] =
+    useState(true);
+
+  const [adminAllowed, setAdminAllowed] =
+    useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -358,9 +419,14 @@ function AdminOnlyRoute({ children }) {
         return;
       }
 
-      const profileRole = String(data?.role || "").toLowerCase();
+      const profileRole = String(
+        data?.role || ""
+      ).toLowerCase();
 
-      setAdminAllowed(profileRole === "admin");
+      setAdminAllowed(
+        profileRole === "admin"
+      );
+
       setCheckingRole(false);
     }
 
@@ -376,7 +442,12 @@ function AdminOnlyRoute({ children }) {
   }
 
   if (!user) {
-    return <Navigate to="/customer-login" replace />;
+    return (
+      <Navigate
+        to="/customer-login"
+        replace
+      />
+    );
   }
 
   if (!adminAllowed) {
@@ -386,7 +457,10 @@ function AdminOnlyRoute({ children }) {
   return children;
 }
 
-function ComingSoonPage({ title, description }) {
+function ComingSoonPage({
+  title,
+  description,
+}) {
   return (
     <main className="min-h-screen bg-[#FFF8EC] px-4 py-6 pb-28 text-[#181411]">
       <div className="mx-auto max-w-md">
@@ -414,9 +488,20 @@ function ComingSoonPage({ title, description }) {
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/customer-login" element={<CustomerLogin />} />
-      <Route path="/seller-login" element={<SellerLogin />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route
+        path="/customer-login"
+        element={<CustomerLogin />}
+      />
+
+      <Route
+        path="/seller-login"
+        element={<SellerLogin />}
+      />
+
+      <Route
+        path="/reset-password"
+        element={<ResetPassword />}
+      />
 
       <Route
         path="/seller-registration"
@@ -465,12 +550,22 @@ function AppRoutes() {
 
       <Route
         path="/marketplace"
-        element={<Navigate to="/?search=1" replace />}
+        element={
+          <Navigate
+            to="/?search=1"
+            replace
+          />
+        }
       />
 
       <Route
         path="/search"
-        element={<Navigate to="/?search=1" replace />}
+        element={
+          <Navigate
+            to="/?search=1"
+            replace
+          />
+        }
       />
 
       <Route
@@ -632,7 +727,12 @@ function AppRoutes() {
         }
       />
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route
+        path="*"
+        element={
+          <Navigate to="/" replace />
+        }
+      />
     </Routes>
   );
 }
@@ -640,15 +740,25 @@ function AppRoutes() {
 function AppShell() {
   const location = useLocation();
 
-  const showBottomNav = shouldShowCustomerBottomNav(
-    location.pathname
-  );
+  const showBottomNav =
+    shouldShowCustomerBottomNav(
+      location.pathname
+    );
+
+  const pullToRefreshEnabled =
+    shouldEnablePullToRefresh(
+      location.pathname
+    );
 
   return (
     <>
       <GlobalBackHandler />
 
       <ScrollToTop />
+
+      <PullToRefresh
+        enabled={pullToRefreshEnabled}
+      />
 
       <AppRoutes />
 

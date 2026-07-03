@@ -842,4 +842,4 @@ export default function FoodCard({ item }) {
       </article>
     </>
   );
-}
+} 

@@ -15,7 +15,6 @@ const CATEGORY_CHIPS = [
   "Sweets",
   "Drinks",
   "Tiffin",
-  "Specials",
 ];
 
 const FOOD_TYPE_CHIPS = ["All", "Veg", "Non-Veg"];
@@ -725,7 +724,7 @@ export default function Home() {
           <section className="mt-6">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-lg font-black text-[#3F5128]">
-                Popular Kitchens
+                Kitchens
               </h2>
 
               <button
