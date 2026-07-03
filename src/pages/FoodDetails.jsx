@@ -95,8 +95,6 @@ export default function FoodDetails() {
   const fulfillmentUnavailable =
     deliveryAvailable === false && pickupAvailable === false;
   const isSoldOut = stock <= 0;
-  const isLowStock = stock > 0 && stock <= 2;
-  const isSellingFast = stock > 2 && stock <= 5;
   const isBlocked = kitchenIsClosed || fulfillmentUnavailable || isSoldOut;
 
   const deliveryTime = food?.time || food?.delivery_time || "30-40 min";
@@ -385,7 +383,7 @@ export default function FoodDetails() {
 
   function handleIncrease() {
     if (quantity >= stock) {
-      alert(`Only ${stock} available.`);
+      alert("You have reached the available stock limit.");
       return;
     }
 
@@ -450,13 +448,11 @@ export default function FoodDetails() {
     if (kitchenIsClosed) return "Ordering temporarily unavailable";
     if (fulfillmentUnavailable) return "Kitchen is not taking orders right now";
     if (isSoldOut) return "Sold out";
-    if (isLowStock) return `Only ${stock} portions left`;
-    if (isSellingFast) return `${stock} portions left • selling fast`;
-    return `${stock} portions available`;
+    return "";
   }
 
   function getAvailabilityClass() {
-    if (kitchenIsClosed || fulfillmentUnavailable || isSoldOut || isLowStock) {
+    if (kitchenIsClosed || fulfillmentUnavailable || isSoldOut) {
       return "text-red-500";
     }
 
@@ -716,9 +712,11 @@ export default function FoodDetails() {
             </div>
           </div>
 
-          <p className={`mt-3 text-xs font-black ${getAvailabilityClass()}`}>
-            {getAvailabilityText()}
-          </p>
+          {getAvailabilityText() ? (
+            <p className={`mt-3 text-xs font-black ${getAvailabilityClass()}`}>
+              {getAvailabilityText()}
+            </p>
+          ) : null}
         </section>
 
         <section className="mt-7">

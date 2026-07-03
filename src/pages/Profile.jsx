@@ -3,13 +3,92 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabaseClient";
 
+const PROFILE_IMAGE_BUCKET = "profile-images";
+const MAX_PROFILE_IMAGE_SIZE = 10 * 1024 * 1024;
+const PROFILE_IMAGE_DIMENSION = 900;
+
 const PAGE_CARD =
   "rounded-[26px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+
+function compressProfileImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onerror = () => {
+      reject(new Error("Could not read the selected image."));
+    };
+
+    reader.onload = () => {
+      const image = new Image();
+
+      image.onerror = () => {
+        reject(
+          new Error(
+            "This image format could not be opened. Use JPG, PNG, or WebP."
+          )
+        );
+      };
+
+      image.onload = () => {
+        const originalWidth = image.naturalWidth || image.width;
+        const originalHeight = image.naturalHeight || image.height;
+
+        if (!originalWidth || !originalHeight) {
+          reject(new Error("The selected image is invalid."));
+          return;
+        }
+
+        const scale = Math.min(
+          PROFILE_IMAGE_DIMENSION / originalWidth,
+          PROFILE_IMAGE_DIMENSION / originalHeight,
+          1
+        );
+
+        const width = Math.max(1, Math.round(originalWidth * scale));
+        const height = Math.max(1, Math.round(originalHeight * scale));
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        const context = canvas.getContext("2d");
+
+        if (!context) {
+          reject(new Error("Image processing is not supported."));
+          return;
+        }
+
+        context.imageSmoothingEnabled = true;
+        context.imageSmoothingQuality = "high";
+        context.drawImage(image, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error("Could not prepare the selected image."));
+              return;
+            }
+
+            resolve(blob);
+          },
+          "image/webp",
+          0.82
+        );
+      };
+
+      image.src = String(reader.result || "");
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function Profile() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+
   const editSectionRef = useRef(null);
+  const avatarInputRef = useRef(null);
 
   const [editMode, setEditMode] = useState(false);
 
@@ -38,12 +117,22 @@ export default function Profile() {
   const [role, setRole] = useState("customer");
   const [isSeller, setIsSeller] = useState(false);
   const [bankDetailsCompleted, setBankDetailsCompleted] = useState(false);
+
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [pendingAvatarBlob, setPendingAvatarBlob] = useState(null);
+  const [pendingAvatarPreview, setPendingAvatarPreview] = useState("");
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarRemoving, setAvatarRemoving] = useState(false);
+  const [avatarError, setAvatarError] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
   const [message, setMessage] = useState("");
 
   const isAdmin = role === "admin";
+  const displayedAvatar = pendingAvatarPreview || avatarUrl;
+  const avatarBusy = avatarUploading || avatarRemoving;
 
   const profileChanged =
     originalFormData &&
@@ -109,10 +198,7 @@ export default function Profile() {
 
     const lineOne = apartment || "No address added";
 
-    const lineTwo = [
-      block,
-      flatNo ? `Flat ${flatNo}` : flat,
-    ]
+    const lineTwo = [block, flatNo ? `Flat ${flatNo}` : flat]
       .filter(Boolean)
       .join(", ");
 
@@ -126,6 +212,14 @@ export default function Profile() {
     fetchProfile();
   }, [user]);
 
+  useEffect(() => {
+    return () => {
+      if (pendingAvatarPreview) {
+        URL.revokeObjectURL(pendingAvatarPreview);
+      }
+    };
+  }, [pendingAvatarPreview]);
+
   async function fetchProfile() {
     if (!user) {
       setLoading(false);
@@ -134,6 +228,7 @@ export default function Profile() {
 
     setLoading(true);
     setMessage("");
+    setAvatarError("");
 
     const defaultProfile = {
       full_name: user?.user_metadata?.full_name || "",
@@ -159,13 +254,14 @@ export default function Profile() {
     const { data, error } = await supabase
       .from("profiles")
       .select(
-        "role, is_seller, full_name, phone, apartment_name, block, flat_no, flat, seller_kitchen_name, seller_door_no, seller_specialty, seller_about, accept_scheduled_orders, delivery_available, pickup_available, seller_application_status, bank_account_holder, bank_name, bank_account_number, bank_ifsc, bank_upi_id, bank_details_completed"
+        "role, is_seller, full_name, phone, apartment_name, block, flat_no, flat, avatar_url, seller_kitchen_name, seller_door_no, seller_specialty, seller_about, accept_scheduled_orders, delivery_available, pickup_available, seller_application_status, bank_account_holder, bank_name, bank_account_number, bank_ifsc, bank_upi_id, bank_details_completed"
       )
       .eq("id", user.id)
       .maybeSingle();
 
     if (error) {
       setMessage(`Could not load profile: ${error.message}`);
+      setAvatarUrl(user?.user_metadata?.avatar_url || "");
       setFormData(defaultProfile);
       setOriginalFormData(defaultProfile);
       setLoading(false);
@@ -192,13 +288,15 @@ export default function Profile() {
 
     setRole(profileRole || "customer");
     setIsSeller(sellerAllowed);
+
     setBankDetailsCompleted(
       profileRole === "admin" || data?.bank_details_completed === true
     );
 
+    setAvatarUrl(data?.avatar_url || user?.user_metadata?.avatar_url || "");
+
     const loadedProfile = {
-      full_name:
-        data?.full_name || user?.user_metadata?.full_name || "",
+      full_name: data?.full_name || user?.user_metadata?.full_name || "",
       phone:
         data?.phone ||
         user?.phone ||
@@ -208,28 +306,16 @@ export default function Profile() {
         data?.apartment_name ||
         user?.user_metadata?.apartment_name ||
         "",
-      block:
-        data?.block ||
-        user?.user_metadata?.block ||
-        "",
-      flat_no:
-        data?.flat_no ||
-        user?.user_metadata?.flat_no ||
-        "",
-      flat:
-        data?.flat ||
-        user?.user_metadata?.flat ||
-        "",
+      block: data?.block || user?.user_metadata?.block || "",
+      flat_no: data?.flat_no || user?.user_metadata?.flat_no || "",
+      flat: data?.flat || user?.user_metadata?.flat || "",
       seller_kitchen_name: data?.seller_kitchen_name || "",
       seller_door_no: data?.seller_door_no || "",
       seller_specialty: data?.seller_specialty || "",
       seller_about: data?.seller_about || "",
-      accept_scheduled_orders:
-        data?.accept_scheduled_orders !== false,
-      delivery_available:
-        data?.delivery_available !== false,
-      pickup_available:
-        data?.pickup_available !== false,
+      accept_scheduled_orders: data?.accept_scheduled_orders !== false,
+      delivery_available: data?.delivery_available !== false,
+      pickup_available: data?.pickup_available !== false,
       bank_account_holder: data?.bank_account_holder || "",
       bank_name: data?.bank_name || "",
       bank_account_number: data?.bank_account_number || "",
@@ -269,8 +355,7 @@ export default function Profile() {
       return;
     }
 
-    const nextValue =
-      name === "bank_ifsc" ? value.toUpperCase() : value;
+    const nextValue = name === "bank_ifsc" ? value.toUpperCase() : value;
 
     setFormData((currentData) => ({
       ...currentData,
@@ -278,6 +363,182 @@ export default function Profile() {
     }));
 
     setMessage("");
+  }
+
+  async function handleAvatarSelection(event) {
+    const selectedFile = event.target.files?.[0];
+
+    event.target.value = "";
+
+    if (!selectedFile) return;
+
+    setAvatarError("");
+    setMessage("");
+
+    if (!selectedFile.type.startsWith("image/")) {
+      setAvatarError("Please select an image file.");
+      return;
+    }
+
+    if (selectedFile.size > MAX_PROFILE_IMAGE_SIZE) {
+      setAvatarError("Profile photo must be smaller than 10 MB.");
+      return;
+    }
+
+    try {
+      const compressedBlob = await compressProfileImage(selectedFile);
+      const previewUrl = URL.createObjectURL(compressedBlob);
+
+      setPendingAvatarBlob(compressedBlob);
+      setPendingAvatarPreview(previewUrl);
+    } catch (error) {
+      setAvatarError(
+        error?.message || "Could not prepare the selected profile photo."
+      );
+    }
+  }
+
+  function cancelAvatarSelection() {
+    setPendingAvatarBlob(null);
+    setPendingAvatarPreview("");
+    setAvatarError("");
+  }
+
+  async function saveProfilePhoto() {
+    if (!user || !pendingAvatarBlob || avatarUploading) return;
+
+    setAvatarUploading(true);
+    setAvatarError("");
+    setMessage("");
+
+    const imagePath = `${user.id}/avatar.webp`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(PROFILE_IMAGE_BUCKET)
+      .upload(imagePath, pendingAvatarBlob, {
+        contentType: "image/webp",
+        cacheControl: "3600",
+        upsert: true,
+      });
+
+    if (uploadError) {
+      setAvatarError(`Could not upload photo: ${uploadError.message}`);
+      setAvatarUploading(false);
+      return;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from(PROFILE_IMAGE_BUCKET)
+      .getPublicUrl(imagePath);
+
+    const basePublicUrl = publicUrlData?.publicUrl || "";
+
+    if (!basePublicUrl) {
+      setAvatarError("The uploaded profile photo URL could not be created.");
+      setAvatarUploading(false);
+      return;
+    }
+
+    const versionedAvatarUrl = `${basePublicUrl}${
+      basePublicUrl.includes("?") ? "&" : "?"
+    }v=${Date.now()}`;
+
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .upsert(
+        {
+          id: user.id,
+          email: user.email,
+          avatar_url: versionedAvatarUrl,
+        },
+        {
+          onConflict: "id",
+        }
+      );
+
+    if (profileError) {
+      setAvatarError(`Could not save profile photo: ${profileError.message}`);
+      setAvatarUploading(false);
+      return;
+    }
+
+    const { error: metadataError } = await supabase.auth.updateUser({
+      data: {
+        avatar_url: versionedAvatarUrl,
+      },
+    });
+
+    if (metadataError) {
+      setAvatarError(
+        `Photo uploaded, but account metadata could not update: ${metadataError.message}`
+      );
+    }
+
+    setAvatarUrl(versionedAvatarUrl);
+    setPendingAvatarBlob(null);
+    setPendingAvatarPreview("");
+    setAvatarUploading(false);
+    setMessage("Profile photo updated successfully.");
+  }
+
+  async function removeProfilePhoto() {
+    if (!user || avatarRemoving) return;
+
+    const confirmed = window.confirm("Remove your profile photo?");
+
+    if (!confirmed) return;
+
+    setAvatarRemoving(true);
+    setAvatarError("");
+    setMessage("");
+
+    const imagePath = `${user.id}/avatar.webp`;
+
+    const { error: storageError } = await supabase.storage
+      .from(PROFILE_IMAGE_BUCKET)
+      .remove([imagePath]);
+
+    if (
+      storageError &&
+      !String(storageError.message || "")
+        .toLowerCase()
+        .includes("not found")
+    ) {
+      setAvatarError(`Could not remove photo: ${storageError.message}`);
+      setAvatarRemoving(false);
+      return;
+    }
+
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({
+        avatar_url: null,
+      })
+      .eq("id", user.id);
+
+    if (profileError) {
+      setAvatarError(`Could not remove profile photo: ${profileError.message}`);
+      setAvatarRemoving(false);
+      return;
+    }
+
+    const { error: metadataError } = await supabase.auth.updateUser({
+      data: {
+        avatar_url: null,
+      },
+    });
+
+    if (metadataError) {
+      setAvatarError(
+        `Photo removed, but account metadata could not update: ${metadataError.message}`
+      );
+    }
+
+    setAvatarUrl("");
+    setPendingAvatarBlob(null);
+    setPendingAvatarPreview("");
+    setAvatarRemoving(false);
+    setMessage("Profile photo removed.");
   }
 
   async function handleSaveProfile(event) {
@@ -304,11 +565,7 @@ export default function Profile() {
       return;
     }
 
-    if (
-      isSeller &&
-      !isAdmin &&
-      !currentBankDetailsComplete
-    ) {
+    if (isSeller && !isAdmin && !currentBankDetailsComplete) {
       setMessage(
         "Please complete Account Holder Name, Bank Name, Account Number, and IFSC Code to start selling."
       );
@@ -337,13 +594,10 @@ export default function Profile() {
       flat: formData.flat.trim(),
       role,
       is_seller: isSeller,
-      bank_account_holder:
-        formData.bank_account_holder.trim(),
+      bank_account_holder: formData.bank_account_holder.trim(),
       bank_name: formData.bank_name.trim(),
-      bank_account_number:
-        formData.bank_account_number.trim(),
-      bank_ifsc:
-        formData.bank_ifsc.trim().toUpperCase(),
+      bank_account_number: formData.bank_account_number.trim(),
+      bank_ifsc: formData.bank_ifsc.trim().toUpperCase(),
       bank_upi_id: formData.bank_upi_id.trim(),
       bank_details_completed: nextBankDetailsCompleted,
     };
@@ -352,23 +606,18 @@ export default function Profile() {
       profilePayload.seller_kitchen_name =
         formData.seller_kitchen_name.trim();
 
-      profilePayload.seller_door_no =
-        formData.seller_door_no.trim();
+      profilePayload.seller_door_no = formData.seller_door_no.trim();
 
-      profilePayload.seller_specialty =
-        formData.seller_specialty.trim();
+      profilePayload.seller_specialty = formData.seller_specialty.trim();
 
-      profilePayload.seller_about =
-        formData.seller_about.trim();
+      profilePayload.seller_about = formData.seller_about.trim();
 
       profilePayload.accept_scheduled_orders =
         formData.accept_scheduled_orders;
 
-      profilePayload.delivery_available =
-        formData.delivery_available;
+      profilePayload.delivery_available = formData.delivery_available;
 
-      profilePayload.pickup_available =
-        formData.pickup_available;
+      profilePayload.pickup_available = formData.pickup_available;
     }
 
     const { error } = await supabase
@@ -390,6 +639,7 @@ export default function Profile() {
         flat_no: formData.flat_no.trim(),
         flat: formData.flat.trim(),
         role,
+        avatar_url: avatarUrl || null,
       },
     });
 
@@ -400,25 +650,17 @@ export default function Profile() {
       block: formData.block.trim(),
       flat_no: formData.flat_no.trim(),
       flat: formData.flat.trim(),
-      seller_kitchen_name:
-        formData.seller_kitchen_name.trim(),
+      seller_kitchen_name: formData.seller_kitchen_name.trim(),
       seller_door_no: formData.seller_door_no.trim(),
-      seller_specialty:
-        formData.seller_specialty.trim(),
+      seller_specialty: formData.seller_specialty.trim(),
       seller_about: formData.seller_about.trim(),
-      accept_scheduled_orders:
-        formData.accept_scheduled_orders,
-      delivery_available:
-        formData.delivery_available,
-      pickup_available:
-        formData.pickup_available,
-      bank_account_holder:
-        formData.bank_account_holder.trim(),
+      accept_scheduled_orders: formData.accept_scheduled_orders,
+      delivery_available: formData.delivery_available,
+      pickup_available: formData.pickup_available,
+      bank_account_holder: formData.bank_account_holder.trim(),
       bank_name: formData.bank_name.trim(),
-      bank_account_number:
-        formData.bank_account_number.trim(),
-      bank_ifsc:
-        formData.bank_ifsc.trim().toUpperCase(),
+      bank_account_number: formData.bank_account_number.trim(),
+      bank_ifsc: formData.bank_ifsc.trim().toUpperCase(),
       bank_upi_id: formData.bank_upi_id.trim(),
     };
 
@@ -438,16 +680,11 @@ export default function Profile() {
     setResettingPassword(true);
     setMessage("");
 
-    const redirectTo =
-      `${window.location.origin}/reset-password`;
+    const redirectTo = `${window.location.origin}/reset-password`;
 
-    const { error } =
-      await supabase.auth.resetPasswordForEmail(
-        user.email,
-        {
-          redirectTo,
-        }
-      );
+    const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+      redirectTo,
+    });
 
     if (error) {
       setMessage(`Password reset failed: ${error.message}`);
@@ -455,10 +692,7 @@ export default function Profile() {
       return;
     }
 
-    setMessage(
-      "Password reset link sent to your email."
-    );
-
+    setMessage("Password reset link sent to your email.");
     setResettingPassword(false);
   }
 
@@ -501,10 +735,7 @@ export default function Profile() {
     setEditMode(true);
 
     setTimeout(() => {
-      const bankSection =
-        document.getElementById(
-          "seller-bank-details"
-        );
+      const bankSection = document.getElementById("seller-bank-details");
 
       bankSection?.scrollIntoView({
         behavior: "smooth",
@@ -560,10 +791,48 @@ export default function Profile() {
         ) : (
           <>
             <section className={`p-4 ${PAGE_CARD}`}>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleAvatarSelection}
+                className="hidden"
+                aria-label="Choose profile photo"
+              />
+
               <div className="flex items-center gap-4">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#CF743D] text-xl font-black text-white shadow-inner">
-                  {getInitials()}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={avatarBusy}
+                  className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-visible rounded-full active:scale-95 disabled:opacity-60"
+                  aria-label={
+                    displayedAvatar
+                      ? "Change profile photo"
+                      : "Add profile photo"
+                  }
+                >
+                  <span className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-[#CF743D] text-2xl font-black text-white shadow-[5px_5px_14px_rgba(63,81,40,0.16)]">
+                    {displayedAvatar ? (
+                      <img
+                        src={displayedAvatar}
+                        alt={`${displayName} profile`}
+                        className="h-full w-full object-cover"
+                        onError={() => {
+                          if (!pendingAvatarPreview) {
+                            setAvatarUrl("");
+                          }
+                        }}
+                      />
+                    ) : (
+                      getInitials()
+                    )}
+                  </span>
+
+                  <span className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#3F5128] text-white shadow-lg">
+                    <CameraIcon />
+                  </span>
+                </button>
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -587,14 +856,70 @@ export default function Profile() {
                       {displayPhone}
                     </p>
                   ) : null}
+
+                  <button
+                    type="button"
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={avatarBusy}
+                    className="mt-2 text-xs font-black text-[#CF743D] disabled:opacity-50"
+                  >
+                    {avatarUrl ? "Change Photo" : "Add Photo"}
+                  </button>
                 </div>
               </div>
+
+              {avatarError ? (
+                <p className="mt-4 text-sm font-black text-red-600">
+                  {avatarError}
+                </p>
+              ) : null}
+
+              {pendingAvatarPreview ? (
+                <div className="mt-4 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-4">
+                  <p className="text-sm font-black text-[#3F5128]">
+                    New photo preview
+                  </p>
+
+                  <p className="mt-1 text-xs font-semibold text-[#6B6258]">
+                    Save this photo or choose another one.
+                  </p>
+
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={saveProfilePhoto}
+                      disabled={avatarUploading}
+                      className="rounded-2xl border border-[#3F5128] bg-[#3F5128] py-3 text-xs font-black text-white active:scale-95 disabled:opacity-50"
+                    >
+                      {avatarUploading ? "Uploading..." : "Save Photo"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={cancelAvatarSelection}
+                      disabled={avatarUploading}
+                      className="rounded-2xl border border-[#D8C9B3] bg-white py-3 text-xs font-black text-[#3F5128] active:scale-95 disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : avatarUrl ? (
+                <button
+                  type="button"
+                  onClick={removeProfilePhoto}
+                  disabled={avatarRemoving}
+                  className="mt-4 text-xs font-black text-red-500 disabled:opacity-50"
+                >
+                  {avatarRemoving ? "Removing photo..." : "Remove Photo"}
+                </button>
+              ) : null}
             </section>
 
             <section className={`mt-4 p-4 ${PAGE_CARD}`}>
               <div className="mb-2 flex items-start justify-between gap-3">
                 <h3 className="text-sm font-black text-[#181411]">
-                  My Address
+                  Seller Details
                 </h3>
 
                 <button
@@ -615,9 +940,7 @@ export default function Profile() {
               </div>
             </section>
 
-            {isSeller &&
-            !isAdmin &&
-            !sellerOnboardingComplete ? (
+            {isSeller && !isAdmin && !sellerOnboardingComplete ? (
               <section className="mt-4 rounded-[24px] bg-[#3F5128] p-4 text-white shadow-lg shadow-[#3F5128]/15">
                 <p className="text-xs font-black uppercase tracking-wide text-[#F3C06E]">
                   Seller setup required
@@ -783,10 +1106,7 @@ export default function Profile() {
                   </button>
                 </div>
 
-                <form
-                  id="profile-form"
-                  onSubmit={handleSaveProfile}
-                >
+                <form id="profile-form" onSubmit={handleSaveProfile}>
                   <FormSection title="Personal Information">
                     <InputField
                       label="Full Name"
@@ -857,16 +1177,14 @@ export default function Profile() {
                       <FormSection title="Seller Bank Details">
                         <div
                           className={`rounded-2xl border p-4 ${
-                            isAdmin ||
-                            currentBankDetailsComplete
+                            isAdmin || currentBankDetailsComplete
                               ? "border-green-200 bg-green-50"
                               : "border-yellow-200 bg-yellow-50"
                           }`}
                         >
                           <p
                             className={`text-sm font-black ${
-                              isAdmin ||
-                              currentBankDetailsComplete
+                              isAdmin || currentBankDetailsComplete
                                 ? "text-green-700"
                                 : "text-yellow-700"
                             }`}
@@ -880,8 +1198,7 @@ export default function Profile() {
 
                           <p
                             className={`mt-1 text-xs font-semibold leading-relaxed ${
-                              isAdmin ||
-                              currentBankDetailsComplete
+                              isAdmin || currentBankDetailsComplete
                                 ? "text-green-700"
                                 : "text-yellow-700"
                             }`}
@@ -906,11 +1223,7 @@ export default function Profile() {
                         />
 
                         <InputField
-                          label={
-                            isAdmin
-                              ? "Bank Name"
-                              : "Bank Name *"
-                          }
+                          label={isAdmin ? "Bank Name" : "Bank Name *"}
                           name="bank_name"
                           value={formData.bank_name}
                           onChange={handleChange}
@@ -920,9 +1233,7 @@ export default function Profile() {
 
                         <InputField
                           label={
-                            isAdmin
-                              ? "Account Number"
-                              : "Account Number *"
+                            isAdmin ? "Account Number" : "Account Number *"
                           }
                           name="bank_account_number"
                           value={formData.bank_account_number}
@@ -933,11 +1244,7 @@ export default function Profile() {
                         />
 
                         <InputField
-                          label={
-                            isAdmin
-                              ? "IFSC Code"
-                              : "IFSC Code *"
-                          }
+                          label={isAdmin ? "IFSC Code" : "IFSC Code *"}
                           name="bank_ifsc"
                           value={formData.bank_ifsc}
                           onChange={handleChange}
@@ -997,9 +1304,7 @@ export default function Profile() {
 
                         <CheckField
                           name="accept_scheduled_orders"
-                          checked={
-                            formData.accept_scheduled_orders
-                          }
+                          checked={formData.accept_scheduled_orders}
                           onChange={handleChange}
                           title="Accept scheduled orders"
                           text="Customers can choose date and time for later orders."
@@ -1007,9 +1312,7 @@ export default function Profile() {
 
                         <CheckField
                           name="delivery_available"
-                          checked={
-                            formData.delivery_available
-                          }
+                          checked={formData.delivery_available}
                           onChange={handleChange}
                           title="Delivery available"
                           text="Customers can choose doorstep delivery."
@@ -1017,9 +1320,7 @@ export default function Profile() {
 
                         <CheckField
                           name="pickup_available"
-                          checked={
-                            formData.pickup_available
-                          }
+                          checked={formData.pickup_available}
                           onChange={handleChange}
                           title="Self pickup available"
                           text="Customers can choose self pickup."
@@ -1030,7 +1331,8 @@ export default function Profile() {
 
                   <FormSection title="Password">
                     <p className="text-sm font-semibold leading-relaxed text-[#6B6258]">
-                      We will send a secure password reset link to your registered email.
+                      We will send a secure password reset link to your
+                      registered email.
                     </p>
 
                     <button
@@ -1050,13 +1352,11 @@ export default function Profile() {
                     disabled={
                       saving ||
                       (!profileChanged &&
-                        bankDetailsCompleted ===
-                          effectiveBankDetailsComplete)
+                        bankDetailsCompleted === effectiveBankDetailsComplete)
                     }
                     className={`mt-5 w-full rounded-2xl py-4 text-sm font-black transition-all active:scale-[0.98] disabled:opacity-60 ${
                       profileChanged ||
-                      bankDetailsCompleted !==
-                        effectiveBankDetailsComplete
+                      bankDetailsCompleted !== effectiveBankDetailsComplete
                         ? "bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15"
                         : "cursor-not-allowed bg-[#F1E8DC] text-[#9A8E80]"
                     }`}
@@ -1064,8 +1364,7 @@ export default function Profile() {
                     {saving
                       ? "Saving..."
                       : profileChanged ||
-                        bankDetailsCompleted !==
-                          effectiveBankDetailsComplete
+                        bankDetailsCompleted !== effectiveBankDetailsComplete
                       ? "Save Profile"
                       : "No Changes"}
                   </button>
@@ -1089,12 +1388,7 @@ function ProfileLoading() {
   );
 }
 
-function ProfileRow({
-  icon,
-  label,
-  to,
-  onClick,
-}) {
+function ProfileRow({ icon, label, to, onClick }) {
   const row = (
     <div className="flex items-center justify-between py-3">
       <div className="flex items-center gap-3">
@@ -1102,9 +1396,7 @@ function ProfileRow({
           {icon}
         </div>
 
-        <span className="text-sm font-bold text-[#181411]">
-          {label}
-        </span>
+        <span className="text-sm font-bold text-[#181411]">{label}</span>
       </div>
 
       <ChevronIcon />
@@ -1113,10 +1405,7 @@ function ProfileRow({
 
   if (to) {
     return (
-      <Link
-        to={to}
-        className="block active:scale-[0.99]"
-      >
+      <Link to={to} className="block active:scale-[0.99]">
         {row}
       </Link>
     );
@@ -1134,21 +1423,15 @@ function ProfileRow({
 }
 
 function Divider() {
-  return (
-    <div className="border-t border-[#EADFCE]" />
-  );
+  return <div className="border-t border-[#EADFCE]" />;
 }
 
 function FormSection({ title, children }) {
   return (
     <section className="mt-5 border-t border-[#EADFCE] pt-5 first:mt-0 first:border-t-0 first:pt-0">
-      <h3 className="mb-4 text-base font-black text-[#181411]">
-        {title}
-      </h3>
+      <h3 className="mb-4 text-base font-black text-[#181411]">{title}</h3>
 
-      <div className="space-y-4">
-        {children}
-      </div>
+      <div className="space-y-4">{children}</div>
     </section>
   );
 }
@@ -1184,13 +1467,7 @@ function InputField({
   );
 }
 
-function CheckField({
-  name,
-  checked,
-  onChange,
-  title,
-  text,
-}) {
+function CheckField({ name, checked, onChange, title, text }) {
   return (
     <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-4">
       <input
@@ -1202,15 +1479,28 @@ function CheckField({
       />
 
       <div>
-        <p className="text-sm font-black text-[#181411]">
-          {title}
-        </p>
+        <p className="text-sm font-black text-[#181411]">{title}</p>
 
         <p className="mt-1 text-xs font-semibold leading-relaxed text-[#6B6258]">
           {text}
         </p>
       </div>
     </label>
+  );
+}
+
+function CameraIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M4 7h3l1.5-2h7L17 7h3v12H4z" />
+      <circle cx="12" cy="13" r="3.5" />
+    </svg>
   );
 }
 
@@ -1268,13 +1558,7 @@ function CardIcon() {
       stroke="currentColor"
       strokeWidth="2"
     >
-      <rect
-        x="3"
-        y="5"
-        width="18"
-        height="14"
-        rx="2"
-      />
+      <rect x="3" y="5" width="18" height="14" rx="2" />
       <path d="M3 10h18" />
     </svg>
   );

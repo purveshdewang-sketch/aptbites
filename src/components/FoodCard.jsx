@@ -18,6 +18,7 @@ function readFavorites() {
   try {
     const saved = localStorage.getItem(FAVORITES_STORAGE_KEY);
     const parsed = saved ? JSON.parse(saved) : [];
+
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
@@ -31,6 +32,7 @@ function saveFavorites(favorites) {
 
 function isItemFavorite(item) {
   const itemId = getFavoriteId(item);
+
   if (!itemId) return false;
 
   return readFavorites().some(
@@ -56,14 +58,17 @@ export default function FoodCard({ item }) {
   const cartItem = cartItems.find(
     (cartItem) => String(cartItem.id) === String(item.id)
   );
-  const quantity = cartItem ? cartItem.quantity : 0;
 
+  const quantity = cartItem ? cartItem.quantity : 0;
   const stock = Number(item.stock || 0);
+
   const demandBadge = item.demand_badge || null;
   const demandLabel =
     typeof demandBadge === "string" ? demandBadge : demandBadge?.label;
 
-  const kitchenName = item.seller_kitchen_name || item.seller || "Home Kitchen";
+  const kitchenName =
+    item.seller_kitchen_name || item.seller || "Home Kitchen";
+
   const imageSrc = item.image || "/Nefo-logo.png";
 
   const kitchenIsClosed = item.seller_online === false;
@@ -71,9 +76,10 @@ export default function FoodCard({ item }) {
   const pickupAvailable = item.pickup_available !== false;
   const fulfillmentUnavailable = !deliveryAvailable && !pickupAvailable;
 
-  const isLowStock = stock > 0 && stock <= 2;
   const isSoldOut = stock <= 0;
-  const isBlocked = kitchenIsClosed || isSoldOut || fulfillmentUnavailable;
+
+  const isBlocked =
+    kitchenIsClosed || isSoldOut || fulfillmentUnavailable;
 
   useEffect(() => {
     setFavorite(isItemFavorite(item));
@@ -82,11 +88,19 @@ export default function FoodCard({ item }) {
       setFavorite(isItemFavorite(item));
     }
 
-    window.addEventListener("Nefo_favorites_updated", syncFavoriteState);
+    window.addEventListener(
+      "Nefo_favorites_updated",
+      syncFavoriteState
+    );
+
     window.addEventListener("storage", syncFavoriteState);
 
     return () => {
-      window.removeEventListener("Nefo_favorites_updated", syncFavoriteState);
+      window.removeEventListener(
+        "Nefo_favorites_updated",
+        syncFavoriteState
+      );
+
       window.removeEventListener("storage", syncFavoriteState);
     };
   }, [item]);
@@ -106,7 +120,7 @@ export default function FoodCard({ item }) {
       href,
     });
 
-    setTimeout(() => {
+    window.setTimeout(() => {
       setToast(null);
     }, 1500);
   }
@@ -121,11 +135,16 @@ export default function FoodCard({ item }) {
     }
 
     if (fulfillmentUnavailable) {
-      alert("This kitchen is not taking delivery or pickup orders right now.");
+      alert(
+        "This kitchen is not taking delivery or pickup orders right now."
+      );
       return;
     }
 
-    if (isSoldOut) return;
+    if (isSoldOut) {
+      alert("This dish is sold out.");
+      return;
+    }
 
     addToCart({
       ...item,
@@ -146,16 +165,20 @@ export default function FoodCard({ item }) {
     event.stopPropagation();
 
     const itemId = getFavoriteId(item);
+
     if (!itemId) return;
 
     const currentFavorites = readFavorites();
+
     const alreadyFavorite = currentFavorites.some(
-      (favoriteItem) => getFavoriteId(favoriteItem) === itemId
+      (favoriteItem) =>
+        getFavoriteId(favoriteItem) === itemId
     );
 
     if (alreadyFavorite) {
       const nextFavorites = currentFavorites.filter(
-        (favoriteItem) => getFavoriteId(favoriteItem) !== itemId
+        (favoriteItem) =>
+          getFavoriteId(favoriteItem) !== itemId
       );
 
       saveFavorites(nextFavorites);
@@ -173,10 +196,12 @@ export default function FoodCard({ item }) {
     }
 
     const favoriteItem = buildFavoriteItem(item);
+
     const nextFavorites = [
       favoriteItem,
       ...currentFavorites.filter(
-        (favoriteItem) => getFavoriteId(favoriteItem) !== itemId
+        (favoriteItem) =>
+          getFavoriteId(favoriteItem) !== itemId
       ),
     ];
 
@@ -195,6 +220,7 @@ export default function FoodCard({ item }) {
   function handleDecrease(event) {
     event.preventDefault();
     event.stopPropagation();
+
     decreaseQuantity(item.id);
   }
 
@@ -203,7 +229,7 @@ export default function FoodCard({ item }) {
     event.stopPropagation();
 
     if (quantity >= stock) {
-      alert(`Only ${stock} available.`);
+      alert("Maximum available quantity reached.");
       return;
     }
 
@@ -214,12 +240,12 @@ export default function FoodCard({ item }) {
     if (kitchenIsClosed) return "Closed";
     if (fulfillmentUnavailable) return "Unavailable";
     if (isSoldOut) return "Sold out";
-    if (isLowStock) return `Only ${stock} left`;
-    return `${stock} left`;
+
+    return "Available";
   }
 
   function getAvailabilityClass() {
-    if (kitchenIsClosed || fulfillmentUnavailable || isSoldOut || isLowStock) {
+    if (kitchenIsClosed || fulfillmentUnavailable || isSoldOut) {
       return "text-red-500";
     }
 
@@ -230,6 +256,7 @@ export default function FoodCard({ item }) {
     if (kitchenIsClosed) return "Closed";
     if (fulfillmentUnavailable) return "Unavailable";
     if (isSoldOut) return "Sold out";
+
     return "Unavailable";
   }
 
@@ -237,6 +264,7 @@ export default function FoodCard({ item }) {
     if (kitchenIsClosed) return "Closed";
     if (fulfillmentUnavailable) return "Unavailable";
     if (isSoldOut) return "Sold Out";
+
     return "ADD";
   }
 
@@ -245,7 +273,9 @@ export default function FoodCard({ item }) {
       return (
         <span
           className={`rounded-full border border-red-200 bg-red-50 font-black text-red-600 ${
-            compact ? "px-2 py-0.5 text-[9px]" : "px-3 py-1.5 text-[11px]"
+            compact
+              ? "px-2 py-0.5 text-[9px]"
+              : "px-3 py-1.5 text-[11px]"
           }`}
         >
           Not taking orders
@@ -258,7 +288,9 @@ export default function FoodCard({ item }) {
         {deliveryAvailable ? (
           <span
             className={`rounded-full border border-[#D8C9B3] bg-[#FFF0DF] font-black text-[#3F5128] ${
-              compact ? "px-2 py-0.5 text-[9px]" : "px-3 py-1.5 text-[11px]"
+              compact
+                ? "px-2 py-0.5 text-[9px]"
+                : "px-3 py-1.5 text-[11px]"
             }`}
           >
             🚚 Delivery
@@ -268,7 +300,9 @@ export default function FoodCard({ item }) {
         {pickupAvailable ? (
           <span
             className={`${SOFT_BADGE} ${
-              compact ? "px-2 py-0.5 text-[9px]" : "px-3 py-1.5 text-[11px]"
+              compact
+                ? "px-2 py-0.5 text-[9px]"
+                : "px-3 py-1.5 text-[11px]"
             }`}
           >
             🛍️ Pickup
@@ -288,7 +322,9 @@ export default function FoodCard({ item }) {
             </div>
 
             <div className="min-w-0 flex-1">
-              <p className="font-black text-[#3F5128]">{toast.title}</p>
+              <p className="font-black text-[#3F5128]">
+                {toast.title}
+              </p>
 
               {toast.message ? (
                 <p className="mt-1 truncate text-sm font-semibold text-[#6B6258]">
@@ -351,7 +387,9 @@ export default function FoodCard({ item }) {
                       : "border-[#EADFCE] bg-white/95 text-[#3F5128]"
                   }`}
                   aria-label={
-                    favorite ? "Remove from favorites" : "Add to favorites"
+                    favorite
+                      ? "Remove from favorites"
+                      : "Add to favorites"
                   }
                 >
                   {favorite ? "♥" : "♡"}
@@ -524,7 +562,9 @@ export default function FoodCard({ item }) {
                     : "border-[#EADFCE] bg-white/95 text-[#3F5128]"
                 }`}
                 aria-label={
-                  favorite ? "Remove from favorites" : "Add to favorites"
+                  favorite
+                    ? "Remove from favorites"
+                    : "Add to favorites"
                 }
               >
                 {favorite ? "♥" : "♡"}
@@ -542,10 +582,6 @@ export default function FoodCard({ item }) {
                 ) : isSoldOut ? (
                   <span className="rounded-full bg-[#181411] px-3 py-1.5 text-xs font-black text-white shadow-sm">
                     SOLD OUT
-                  </span>
-                ) : isLowStock ? (
-                  <span className="rounded-full bg-red-500 px-3 py-1.5 text-xs font-black text-white shadow-sm">
-                    Only {stock} left
                   </span>
                 ) : (
                   <span className="rounded-full border border-[#D8C9B3] bg-white/95 px-3 py-1.5 text-xs font-black text-[#3F5128] shadow-sm">
@@ -626,7 +662,9 @@ export default function FoodCard({ item }) {
                   </span>
                 </p>
 
-                <p className={`text-sm font-black ${getAvailabilityClass()}`}>
+                <p
+                  className={`text-sm font-black ${getAvailabilityClass()}`}
+                >
                   {getAvailabilityText()}
                 </p>
               </div>
@@ -645,7 +683,9 @@ export default function FoodCard({ item }) {
                     : "border-[#3F5128] bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15 active:scale-[0.98]"
                 }`}
               >
-                {isBlocked ? getButtonLabel() : "+ Add to Cart"}
+                {isBlocked
+                  ? getButtonLabel()
+                  : "+ Add to Cart"}
               </button>
             ) : (
               <div className="flex items-center justify-between overflow-hidden rounded-2xl border border-[#3F5128] bg-[#3F5128] font-black text-white shadow-lg shadow-[#3F5128]/15">
