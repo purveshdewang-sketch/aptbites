@@ -18,22 +18,6 @@ const navItems = [
     ),
   },
   {
-    label: "Search",
-    path: "/marketplace",
-    icon: (
-      <svg
-        viewBox="0 0 24 24"
-        className="h-5 w-5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <circle cx="11" cy="11" r="7" />
-        <path d="M20 20l-3.5-3.5" />
-      </svg>
-    ),
-  },
-  {
     label: "Orders",
     path: "/orders",
     icon: (
@@ -48,6 +32,21 @@ const navItems = [
         <path d="M6 7h12v14H6z" />
         <path d="M9 11h6" />
         <path d="M9 15h6" />
+      </svg>
+    ),
+  },
+  {
+    label: "Favorites",
+    path: "/favorites",
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        className="h-5 w-5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" />
       </svg>
     ),
   },
@@ -71,34 +70,42 @@ const navItems = [
 
 export default function BottomNav() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[900] border-t border-[#D7F5EF] bg-[#FFFFF2]/95 shadow-[0_-8px_24px_rgba(7,59,53,0.06)] backdrop-blur-xl">
-      <div className="mx-auto grid h-[72px] max-w-md grid-cols-4 px-2 pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-[900] border-t border-[#EADFCE] bg-[#FFF8EC]/95 shadow-[0_-8px_24px_rgba(63,81,40,0.08)] backdrop-blur-xl">
+      <div className="mx-auto grid h-[76px] max-w-md grid-cols-4 px-2 pb-[env(safe-area-inset-bottom)]">
         {navItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
             end={item.path === "/"}
             className={({ isActive }) =>
-              `flex flex-col items-center justify-center gap-1 rounded-2xl text-[10px] font-black transition-all ${
+              `flex flex-col items-center justify-center gap-1 rounded-2xl text-[10px] font-black transition-all active:scale-95 ${
                 isActive
-                  ? "text-[#073B35]"
-                  : "text-[#7A8783] hover:text-[#073B35]"
+                  ? "text-[#3F5128]"
+                  : "text-[#6B6258] hover:text-[#3F5128]"
               }`
             }
           >
             {({ isActive }) => (
               <>
                 <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-2xl border transition-all ${
+                  className={`flex h-9 w-9 items-center justify-center rounded-2xl border transition-all ${
                     isActive
-                      ? "border-[#BDEFE6] bg-[#D7F5EF] shadow-[4px_4px_10px_rgba(7,59,53,0.08),-4px_-4px_10px_rgba(255,255,255,0.9)]"
-                      : "border-transparent"
+                      ? "border-[#D8C9B3] bg-[#FFF0DF] shadow-[4px_4px_10px_rgba(63,81,40,0.08),-4px_-4px_10px_rgba(255,255,255,0.9)]"
+                      : "border-transparent bg-transparent"
                   }`}
                 >
-                  {item.icon}
+                  <span
+                    className={
+                      item.label === "Favorites" && isActive
+                        ? "text-[#CF743D]"
+                        : ""
+                    }
+                  >
+                    {item.icon}
+                  </span>
                 </div>
 
-                <span>{item.label}</span>
+                <span className="leading-none">{item.label}</span>
               </>
             )}
           </NavLink>

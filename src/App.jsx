@@ -12,7 +12,6 @@ import {
 import Home from "./pages/Home";
 import CustomerLogin from "./pages/CustomerLogin";
 import SellerLogin from "./pages/SellerLogin";
-import Marketplace from "./pages/Marketplace";
 import SellerDashboard from "./pages/SellerDashboard";
 import SellerRegistration from "./pages/SellerRegistration";
 import OwnerSellerApplications from "./pages/OwnerSellerApplications";
@@ -84,11 +83,6 @@ function BottomNav() {
       icon: <HomeIcon />,
     },
     {
-      label: "Search",
-      path: "/marketplace",
-      icon: <SearchIcon />,
-    },
-    {
       label: "Orders",
       path: "/orders",
       icon: <OrdersIcon />,
@@ -107,7 +101,7 @@ function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-[900] border-t border-[#EADFCE] bg-[#FFF8EC]/95 shadow-[0_-8px_24px_rgba(63,81,40,0.08)] backdrop-blur-xl">
-      <div className="mx-auto grid h-[76px] max-w-md grid-cols-5 px-1 pb-[env(safe-area-inset-bottom)]">
+      <div className="mx-auto grid h-[76px] max-w-md grid-cols-4 px-2 pb-[env(safe-area-inset-bottom)]">
         {navItems.map((item) => (
           <NavLink
             key={item.path}
@@ -217,7 +211,10 @@ function ProtectedRoute({ children }) {
   const { user, authLoading } = useAuth();
 
   if (authLoading) return <LoadingScreen />;
-  if (!user) return <Navigate to="/customer-login" replace />;
+
+  if (!user) {
+    return <Navigate to="/customer-login" replace />;
+  }
 
   return children;
 }
@@ -272,9 +269,7 @@ function SellerOnlyRoute({ children }) {
         return;
       }
 
-      const profileRole = String(
-        data?.role || ""
-      ).toLowerCase();
+      const profileRole = String(data?.role || "").toLowerCase();
 
       const applicationStatus = String(
         data?.seller_application_status || "not_applied"
@@ -298,7 +293,9 @@ function SellerOnlyRoute({ children }) {
     };
   }, [user, authLoading]);
 
-  if (authLoading || checkingRole) return <LoadingScreen />;
+  if (authLoading || checkingRole) {
+    return <LoadingScreen />;
+  }
 
   if (!user) {
     return <Navigate to="/customer-login" replace />;
@@ -361,9 +358,7 @@ function AdminOnlyRoute({ children }) {
         return;
       }
 
-      const profileRole = String(
-        data?.role || ""
-      ).toLowerCase();
+      const profileRole = String(data?.role || "").toLowerCase();
 
       setAdminAllowed(profileRole === "admin");
       setCheckingRole(false);
@@ -376,7 +371,9 @@ function AdminOnlyRoute({ children }) {
     };
   }, [user, authLoading]);
 
-  if (authLoading || checkingRole) return <LoadingScreen />;
+  if (authLoading || checkingRole) {
+    return <LoadingScreen />;
+  }
 
   if (!user) {
     return <Navigate to="/customer-login" replace />;
@@ -468,11 +465,12 @@ function AppRoutes() {
 
       <Route
         path="/marketplace"
-        element={
-          <ProtectedRoute>
-            <Marketplace />
-          </ProtectedRoute>
-        }
+        element={<Navigate to="/?search=1" replace />}
+      />
+
+      <Route
+        path="/search"
+        element={<Navigate to="/?search=1" replace />}
       />
 
       <Route
@@ -680,21 +678,6 @@ function HomeIcon() {
     >
       <path d="M3 10.5L12 3l9 7.5" />
       <path d="M5 10v10h14V10" />
-    </svg>
-  );
-}
-
-function SearchIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <circle cx="11" cy="11" r="7" />
-      <path d="M20 20l-3.5-3.5" />
     </svg>
   );
 }

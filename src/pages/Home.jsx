@@ -1,81 +1,57 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import FoodCard from "../components/FoodCard";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { supabase } from "../lib/supabaseClient";
 
 const CATEGORY_CHIPS = [
   "All",
+  "Meals",
   "Breakfast",
   "Lunch",
   "Dinner",
   "Snacks",
   "Sweets",
   "Drinks",
+  "Tiffin",
+  "Specials",
 ];
+
+const FOOD_TYPE_CHIPS = ["All", "Veg", "Non-Veg"];
+
+const CARD =
+  "rounded-[26px] border border-[#EADFCE] bg-white/95 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
 export default function Home() {
   const { user } = useAuth();
-  const { cartItems, addToCart, increaseQuantity, decreaseQuantity } = useCart();
+
+  const {
+    cartItems,
+    addToCart,
+    increaseQuantity,
+    decreaseQuantity,
+  } = useCart();
+
+  const [searchParams] = useSearchParams();
+
+  const searchInputRef = useRef(null);
+  const resultsRef = useRef(null);
 
   const [isSeller, setIsSeller] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [homeFoods, setHomeFoods] = useState([]);
   const [profile, setProfile] = useState(null);
+
   const [activeCategory, setActiveCategory] = useState("All");
+  const [activeFoodType, setActiveFoodType] = useState("All");
   const [searchText, setSearchText] = useState("");
+
   const [loadingFoods, setLoadingFoods] = useState(true);
+  const [foodError, setFoodError] = useState("");
   const [toastFood, setToastFood] = useState(null);
 
   useEffect(() => {
-    async function checkUserRole() {
-      if (!user) {
-        setIsSeller(false);
-        setIsAdmin(false);
-        setProfile(null);
-        return;
-      }
-
-      const metadataRole = String(user?.user_metadata?.role || "").toLowerCase();
-
-      if (metadataRole === "seller") {
-        setIsSeller(true);
-      }
-
-      if (metadataRole === "admin") {
-        setIsAdmin(true);
-        setIsSeller(true);
-      }
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select(
-          "role, is_seller, full_name, apartment_name, block, flat_no, flat"
-        )
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (error) {
-        setIsSeller(metadataRole === "seller" || metadataRole === "admin");
-        setIsAdmin(metadataRole === "admin");
-        setProfile(null);
-        return;
-      }
-
-      const profileRole = String(data?.role || "").toLowerCase();
-
-      setProfile(data || null);
-      setIsAdmin(profileRole === "admin" || metadataRole === "admin");
-
-      setIsSeller(
-        profileRole === "seller" ||
-          profileRole === "admin" ||
-          data?.is_seller === true ||
-          metadataRole === "seller" ||
-          metadataRole === "admin"
-      );
-    }
-
     checkUserRole();
   }, [user]);
 
@@ -83,7 +59,7 @@ export default function Home() {
     fetchHomeFoods();
 
     const foodsChannel = supabase
-      .channel("home-foods-realtime-channel")
+      .channel("merged-home-foods-channel")
       .on(
         "postgres_changes",
         {
@@ -92,41 +68,254 @@ export default function Home() {
           table: "foods",
         },
         () => {
-          fetchHomeFoods();
+          fetchHomeFoods(false);
+        }
+      )
+      .subscribe();
+
+    const profilesChannel = supabase
+      .channel("merged-home-profiles-channel")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "profiles",
+        },
+        () => {
+          fetchHomeFoods(false);
+          checkUserRole();
         }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(foodsChannel);
+      supabase.removeChannel(profilesChannel);
     };
   }, []);
 
-  async function fetchHomeFoods() {
-    setLoadingFoods(true);
+  useEffect(() => {
+    const query = searchParams.get("q");
+    const shouldOpenSearch = searchParams.get("search") === "1";
 
-    const { data, error } = await supabase
-      .from("foods")
+    if (query) {
+      setSearchText(query);
+    }
+
+    if (shouldOpenSearch) {
+      window.setTimeout(() => {
+        searchInputRef.current?.focus();
+
+        searchInputRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 150);
+    }
+  }, [searchParams]);
+
+  async function checkUserRole() {
+    if (!user) {
+      setIsSeller(false);
+      setIsAdmin(false);
+      setProfile(null);
+      return;
+    }
+
+    const metadataRole = String(
+      user?.user_metadata?.role || ""
+    ).toLowerCase();
+
+    let { data, error } = await supabase
+      .from("profiles")
       .select(
-        "id, user_id, name, seller, seller_kitchen_name, price, image, category, type, stock, time, description, seller_online, delivery_available, pickup_available, demand_badge"
+        "role, is_seller, full_name, apartment_name, block, flat_no, flat, avatar_url"
       )
-      .order("id", { ascending: false })
-      .limit(24);
+      .eq("id", user.id)
+      .maybeSingle();
 
     if (error) {
+      const fallbackResult = await supabase
+        .from("profiles")
+        .select(
+          "role, is_seller, full_name, apartment_name, block, flat_no, flat"
+        )
+        .eq("id", user.id)
+        .maybeSingle();
+
+      data = fallbackResult.data;
+      error = fallbackResult.error;
+    }
+
+    if (error) {
+      setIsSeller(
+        metadataRole === "seller" || metadataRole === "admin"
+      );
+
+      setIsAdmin(metadataRole === "admin");
+      setProfile(null);
+      return;
+    }
+
+    const profileRole = String(data?.role || "").toLowerCase();
+
+    const adminAllowed =
+      profileRole === "admin" || metadataRole === "admin";
+
+    setProfile(data || null);
+    setIsAdmin(adminAllowed);
+
+    setIsSeller(
+      adminAllowed ||
+        profileRole === "seller" ||
+        data?.is_seller === true ||
+        metadataRole === "seller"
+    );
+  }
+
+  async function fetchHomeFoods(showLoading = true) {
+    if (showLoading) {
+      setLoadingFoods(true);
+    }
+
+    setFoodError("");
+
+    const { data: foodData, error: foodFetchError } = await supabase
+      .from("foods")
+      .select("*")
+      .order("id", { ascending: false });
+
+    if (foodFetchError) {
       setHomeFoods([]);
+      setFoodError(foodFetchError.message);
       setLoadingFoods(false);
       return;
     }
 
-    const foodsWithImages = (data || []).filter((food) => food.image);
+    const foods = foodData || [];
 
-    setHomeFoods(foodsWithImages);
+    const kitchenIds = [
+      ...new Set(
+        foods
+          .map((food) => food.user_id || food.seller_id)
+          .filter(Boolean)
+      ),
+    ];
+
+    let kitchenMap = {};
+
+    if (kitchenIds.length > 0) {
+      const { data: kitchenProfiles } = await supabase
+        .from("profiles")
+        .select(
+          "id, seller_online, seller_kitchen_name, delivery_available, pickup_available"
+        )
+        .in("id", kitchenIds);
+
+      kitchenMap = (kitchenProfiles || []).reduce(
+        (result, kitchenProfile) => {
+          result[String(kitchenProfile.id)] = {
+            seller_online:
+              kitchenProfile.seller_online !== false,
+
+            seller_kitchen_name:
+              kitchenProfile.seller_kitchen_name || "",
+
+            delivery_available:
+              kitchenProfile.delivery_available !== false,
+
+            pickup_available:
+              kitchenProfile.pickup_available !== false,
+          };
+
+          return result;
+        },
+        {}
+      );
+    }
+
+    const ratingMap = {};
+
+    const { data: ratingData } = await supabase
+      .from("food_ratings")
+      .select("food_id, rating");
+
+    (ratingData || []).forEach((ratingRow) => {
+      const foodId = String(ratingRow.food_id || "");
+      const ratingValue = Number(ratingRow.rating || 0);
+
+      if (!foodId || ratingValue <= 0) return;
+
+      if (!ratingMap[foodId]) {
+        ratingMap[foodId] = {
+          total: 0,
+          count: 0,
+        };
+      }
+
+      ratingMap[foodId].total += ratingValue;
+      ratingMap[foodId].count += 1;
+    });
+
+    const enrichedFoods = foods.map((food) => {
+      const kitchenId = food.user_id || food.seller_id;
+      const kitchenProfile =
+        kitchenMap[String(kitchenId)] || {};
+
+      const foodRating =
+        ratingMap[String(food.id)] || {
+          total: 0,
+          count: 0,
+        };
+
+      const ratingAverage =
+        foodRating.count > 0
+          ? foodRating.total / foodRating.count
+          : 0;
+
+      return {
+        ...food,
+
+        seller_id:
+          food.seller_id || food.user_id || kitchenId,
+
+        seller_online:
+          kitchenProfile.seller_online !== undefined
+            ? kitchenProfile.seller_online
+            : food.seller_online !== false,
+
+        seller_kitchen_name:
+          kitchenProfile.seller_kitchen_name ||
+          food.seller_kitchen_name ||
+          food.seller ||
+          "Home Kitchen",
+
+        delivery_available:
+          kitchenProfile.delivery_available !== undefined
+            ? kitchenProfile.delivery_available
+            : food.delivery_available !== false,
+
+        pickup_available:
+          kitchenProfile.pickup_available !== undefined
+            ? kitchenProfile.pickup_available
+            : food.pickup_available !== false,
+
+        rating_average: ratingAverage,
+        rating_count: foodRating.count,
+      };
+    });
+
+    setHomeFoods(enrichedFoods);
     setLoadingFoods(false);
   }
 
   function getKitchenName(food) {
-    return food?.seller_kitchen_name || food?.seller || "Home Kitchen";
+    return (
+      food?.seller_kitchen_name ||
+      food?.seller ||
+      "Home Kitchen"
+    );
   }
 
   function getInitial() {
@@ -142,9 +331,32 @@ export default function Home() {
   function showAddedToast(food) {
     setToastFood(food);
 
-    setTimeout(() => {
+    window.setTimeout(() => {
       setToastFood(null);
     }, 1400);
+  }
+
+  function clearFilters() {
+    setSearchText("");
+    setActiveCategory("All");
+    setActiveFoodType("All");
+  }
+
+  function scrollToAllFood() {
+    resultsRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
+
+  function selectKitchen(kitchenName) {
+    setSearchText(kitchenName);
+    setActiveCategory("All");
+    setActiveFoodType("All");
+
+    window.setTimeout(() => {
+      scrollToAllFood();
+    }, 100);
   }
 
   const locationLabel = useMemo(() => {
@@ -153,7 +365,10 @@ export default function Home() {
     const flatNo = profile?.flat_no?.trim();
     const flat = profile?.flat?.trim();
 
-    if (apartment && block) return `${apartment}, ${block}`;
+    if (apartment && block) {
+      return `${apartment}, ${block}`;
+    }
+
     if (apartment) return apartment;
     if (flatNo) return `Flat ${flatNo}`;
     if (flat) return flat;
@@ -163,69 +378,214 @@ export default function Home() {
 
   const cartCount = useMemo(() => {
     return cartItems.reduce(
-      (total, item) => total + Number(item.quantity || 0),
+      (total, item) =>
+        total + Number(item.quantity || 0),
       0
     );
   }, [cartItems]);
+
+  const categoryCounts = useMemo(() => {
+    const counts = {};
+
+    CATEGORY_CHIPS.forEach((category) => {
+      counts[category] = 0;
+    });
+
+    homeFoods.forEach((food) => {
+      const category = String(
+        food.category || "Meals"
+      ).trim();
+
+      counts.All += 1;
+
+      if (counts[category] !== undefined) {
+        counts[category] += 1;
+      }
+    });
+
+    return counts;
+  }, [homeFoods]);
 
   const filteredFoods = useMemo(() => {
     const search = searchText.trim().toLowerCase();
 
     return homeFoods.filter((food) => {
-      const category = String(food?.category || food?.type || "").toLowerCase();
-      const name = String(food?.name || "").toLowerCase();
-      const kitchen = String(getKitchenName(food)).toLowerCase();
+      const category = String(
+        food?.category || ""
+      ).toLowerCase();
+
+      const type = String(
+        food?.type || "Veg"
+      ).toLowerCase();
+
+      const name = String(
+        food?.name || ""
+      ).toLowerCase();
+
+      const kitchen = String(
+        getKitchenName(food)
+      ).toLowerCase();
+
+      const description = String(
+        food?.description || ""
+      ).toLowerCase();
+
+      const preparationTime = String(
+        food?.time || ""
+      ).toLowerCase();
 
       const categoryMatch =
         activeCategory === "All" ||
+        category === activeCategory.toLowerCase() ||
         category.includes(activeCategory.toLowerCase()) ||
         name.includes(activeCategory.toLowerCase());
 
-      const searchMatch =
-        !search || name.includes(search) || kitchen.includes(search);
+      const typeMatch =
+        activeFoodType === "All" ||
+        type === activeFoodType.toLowerCase();
 
-      return categoryMatch && searchMatch;
+      const searchMatch =
+        !search ||
+        name.includes(search) ||
+        kitchen.includes(search) ||
+        category.includes(search) ||
+        type.includes(search) ||
+        description.includes(search) ||
+        preparationTime.includes(search);
+
+      return categoryMatch && typeMatch && searchMatch;
     });
-  }, [homeFoods, activeCategory, searchText]);
+  }, [
+    homeFoods,
+    activeCategory,
+    activeFoodType,
+    searchText,
+  ]);
 
   const popularKitchens = useMemo(() => {
     const kitchenMap = new Map();
 
-    homeFoods.forEach((food) => {
-      const kitchenName = getKitchenName(food);
-      const key = kitchenName.toLowerCase();
+    homeFoods
+      .filter((food) => {
+        const stock = Number(food.stock || 0);
 
-      if (!kitchenMap.has(key)) {
-        kitchenMap.set(key, {
-          name: kitchenName,
-          image: food.image,
-          items: [],
-          minPrice: Number(food.price || 0),
-        });
-      }
+        return (
+          stock > 0 &&
+          food.seller_online !== false &&
+          (food.delivery_available !== false ||
+            food.pickup_available !== false)
+        );
+      })
+      .forEach((food) => {
+        const kitchenName = getKitchenName(food);
 
-      const kitchen = kitchenMap.get(key);
-      kitchen.items.push(food);
+        const kitchenKey = String(
+          food.seller_id ||
+            food.user_id ||
+            kitchenName.toLowerCase()
+        );
 
-      if (Number(food.price || 0) < kitchen.minPrice) {
-        kitchen.minPrice = Number(food.price || 0);
-      }
+        if (!kitchenMap.has(kitchenKey)) {
+          kitchenMap.set(kitchenKey, {
+            id: kitchenKey,
+            name: kitchenName,
+            image: food.image || "",
+            items: [],
+            ratingTotal: 0,
+            ratingCount: 0,
+          });
+        }
 
-      if (!kitchen.image && food.image) {
-        kitchen.image = food.image;
-      }
-    });
+        const kitchen = kitchenMap.get(kitchenKey);
 
-    return Array.from(kitchenMap.values()).slice(0, 6);
+        kitchen.items.push(food);
+
+        if (!kitchen.image && food.image) {
+          kitchen.image = food.image;
+        }
+
+        const foodRatingCount = Number(
+          food.rating_count || 0
+        );
+
+        const foodRatingAverage = Number(
+          food.rating_average || 0
+        );
+
+        kitchen.ratingTotal +=
+          foodRatingAverage * foodRatingCount;
+
+        kitchen.ratingCount += foodRatingCount;
+      });
+
+    return Array.from(kitchenMap.values())
+      .map((kitchen) => ({
+        ...kitchen,
+
+        ratingAverage:
+          kitchen.ratingCount > 0
+            ? kitchen.ratingTotal / kitchen.ratingCount
+            : 0,
+      }))
+      .sort((firstKitchen, secondKitchen) => {
+        if (
+          secondKitchen.ratingCount !==
+          firstKitchen.ratingCount
+        ) {
+          return (
+            secondKitchen.ratingCount -
+            firstKitchen.ratingCount
+          );
+        }
+
+        return (
+          secondKitchen.items.length -
+          firstKitchen.items.length
+        );
+      })
+      .slice(0, 8);
   }, [homeFoods]);
 
   const recommendedFoods = useMemo(() => {
-    return filteredFoods.slice(0, 10);
-  }, [filteredFoods]);
+    return homeFoods
+      .filter((food) => {
+        const stock = Number(food.stock || 0);
 
-  const shouldShowSellFood = !user || isSeller || isAdmin;
+        return (
+          stock > 0 &&
+          food.seller_online !== false &&
+          (food.delivery_available !== false ||
+            food.pickup_available !== false)
+        );
+      })
+      .sort((firstFood, secondFood) => {
+        const countDifference =
+          Number(secondFood.rating_count || 0) -
+          Number(firstFood.rating_count || 0);
+
+        if (countDifference !== 0) {
+          return countDifference;
+        }
+
+        return (
+          Number(secondFood.rating_average || 0) -
+          Number(firstFood.rating_average || 0)
+        );
+      })
+      .slice(0, 6);
+  }, [homeFoods]);
+
+  const hasActiveFilters =
+    Boolean(searchText.trim()) ||
+    activeCategory !== "All" ||
+    activeFoodType !== "All";
+
+  const shouldShowSellFood = true;
+
   const sellFoodPath =
-    user && (isSeller || isAdmin) ? "/seller-dashboard" : "/seller-login";
+    isSeller || isAdmin
+      ? "/seller-dashboard"
+      : "/seller-registration";
 
   return (
     <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-32 text-[#181411]">
@@ -237,7 +597,10 @@ export default function Home() {
             </div>
 
             <div className="min-w-0 flex-1">
-              <p className="font-black text-[#3F5128]">Added to cart</p>
+              <p className="font-black text-[#3F5128]">
+                Added to cart
+              </p>
+
               <p className="truncate text-xs font-semibold text-[#6B6258]">
                 {toastFood.name} added successfully.
               </p>
@@ -260,14 +623,18 @@ export default function Home() {
               Nefo
             </h1>
 
-            <button
-              type="button"
+            <Link
+              to="/profile"
               className="mt-1 flex max-w-[230px] items-center gap-1 truncate text-left text-sm font-black text-[#6B6258]"
             >
               <LocationIcon />
-              <span className="truncate">{locationLabel}</span>
+
+              <span className="truncate">
+                {locationLabel}
+              </span>
+
               <ChevronDownIcon />
-            </button>
+            </Link>
           </div>
 
           <div className="flex items-center gap-2">
@@ -289,37 +656,90 @@ export default function Home() {
 
             <Link
               to="/profile"
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-[#C86B37] bg-[#CF743D] text-sm font-black text-white shadow-[6px_6px_16px_rgba(63,81,40,0.1),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+              className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-[#C86B37] bg-[#CF743D] text-sm font-black text-white shadow-[6px_6px_16px_rgba(63,81,40,0.1),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
               aria-label="Profile"
             >
-              {getInitial()}
+              {profile?.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt="Profile"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                getInitial()
+              )}
             </Link>
           </div>
         </header>
 
         <section className="mt-5">
-          <div className="flex items-center gap-3 rounded-[20px] border border-[#D8C9B3] bg-white/80 px-4 py-3 shadow-[inset_2px_2px_6px_rgba(63,81,40,0.04),inset_-2px_-2px_6px_rgba(255,255,255,0.9)]">
+          <div className="flex items-center gap-3 rounded-[20px] border border-[#D8C9B3] bg-white/90 px-4 py-3 shadow-[inset_2px_2px_6px_rgba(63,81,40,0.04),inset_-2px_-2px_6px_rgba(255,255,255,0.9)]">
             <SearchIcon />
 
             <input
+              ref={searchInputRef}
               value={searchText}
-              onChange={(event) => setSearchText(event.target.value)}
+              onChange={(event) =>
+                setSearchText(event.target.value)
+              }
               className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[#181411] outline-none placeholder:text-[#9A8E80]"
-              placeholder="Search for food, kitchens..."
+              placeholder="Search food, kitchens or categories..."
             />
+
+            {searchText ? (
+              <button
+                type="button"
+                onClick={() => setSearchText("")}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FFF0DF] text-lg font-black text-[#CF743D]"
+                aria-label="Clear search"
+              >
+                ×
+              </button>
+            ) : null}
           </div>
         </section>
 
-        <section className="mt-4 -mx-4 overflow-x-auto px-4 scrollbar-hide">
+        <section className="-mx-4 mt-4 overflow-x-auto px-4 scrollbar-hide">
+          <div className="flex min-w-max gap-2">
+            {FOOD_TYPE_CHIPS.map((foodType) => {
+              const isActive =
+                activeFoodType === foodType;
+
+              return (
+                <button
+                  key={foodType}
+                  type="button"
+                  onClick={() =>
+                    setActiveFoodType(foodType)
+                  }
+                  className={`rounded-full border px-5 py-2.5 text-sm font-black transition-all active:scale-95 ${
+                    isActive
+                      ? "border-[#CF743D] bg-[#FFF0DF] text-[#3F5128]"
+                      : "border-[#EADFCE] bg-white/80 text-[#6B6258]"
+                  }`}
+                >
+                  {foodType === "All"
+                    ? "All food"
+                    : foodType}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="-mx-4 mt-3 overflow-x-auto px-4 pb-1 scrollbar-hide">
           <div className="flex min-w-max gap-2">
             {CATEGORY_CHIPS.map((category) => {
-              const isActive = activeCategory === category;
+              const isActive =
+                activeCategory === category;
 
               return (
                 <button
                   key={category}
                   type="button"
-                  onClick={() => setActiveCategory(category)}
+                  onClick={() =>
+                    setActiveCategory(category)
+                  }
                   className={`rounded-full border px-5 py-2.5 text-sm font-black transition-all active:scale-95 ${
                     isActive
                       ? "border-[#3F5128] bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15"
@@ -327,6 +747,12 @@ export default function Home() {
                   }`}
                 >
                   {category}
+
+                  {category === "All" ? (
+                    <span className="ml-1 opacity-70">
+                      ({categoryCounts.All || 0})
+                    </span>
+                  ) : null}
                 </button>
               );
             })}
@@ -336,6 +762,7 @@ export default function Home() {
         {shouldShowSellFood ? (
           <section className="relative mt-4 overflow-hidden rounded-[24px] border border-[#4D612F] bg-[#3F5128] p-5 text-white shadow-lg shadow-[#3F5128]/15">
             <div className="absolute -right-7 -top-8 h-36 w-36 rounded-full bg-white/10" />
+
             <div className="absolute bottom-0 right-3 h-24 w-40 opacity-30">
               <MountainLineIcon />
             </div>
@@ -345,11 +772,17 @@ export default function Home() {
                 <p className="text-xs font-black uppercase tracking-wide text-[#F3C06E]">
                   Kitchen partner
                 </p>
+
                 <h2 className="mt-1 text-xl font-black">
-                  {isSeller || isAdmin ? "Manage your kitchen" : "Sell on Nefo"}
+                  {isSeller || isAdmin
+                    ? "Manage your kitchen"
+                    : "Sell on Nefo"}
                 </h2>
+
                 <p className="mt-1 text-sm font-semibold text-white/75">
-                  Grow your business with Nefo
+                  {isSeller || isAdmin
+                    ? "Manage orders, food and availability."
+                    : "Start selling homemade food nearby."}
                 </p>
               </div>
 
@@ -363,81 +796,187 @@ export default function Home() {
           </section>
         ) : null}
 
-        <section className="mt-6">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-black text-[#3F5128]">
-              Popular Kitchens
-            </h2>
+        {!hasActiveFilters ? (
+          <>
+            <section className="mt-6">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-lg font-black text-[#3F5128]">
+                  Popular Kitchens
+                </h2>
 
-            <Link
-              to="/marketplace"
-              className="inline-flex items-center gap-1 text-xs font-black text-[#CF743D]"
-            >
-              See All <ChevronRightIcon />
-            </Link>
-          </div>
-
-          {loadingFoods ? (
-            <div className="-mx-4 flex gap-3 overflow-hidden px-4">
-              <KitchenSkeleton />
-              <KitchenSkeleton />
-              <KitchenSkeleton />
-            </div>
-          ) : popularKitchens.length > 0 ? (
-            <div className="-mx-4 overflow-x-auto px-4 scrollbar-hide">
-              <div className="flex min-w-max gap-3">
-                {popularKitchens.map((kitchen) => (
-                  <KitchenCard key={kitchen.name} kitchen={kitchen} />
-                ))}
+                <button
+                  type="button"
+                  onClick={scrollToAllFood}
+                  className="inline-flex items-center gap-1 text-xs font-black text-[#CF743D]"
+                >
+                  See All <ChevronRightIcon />
+                </button>
               </div>
+
+              {loadingFoods ? (
+                <div className="-mx-4 flex gap-3 overflow-hidden px-4">
+                  <KitchenSkeleton />
+                  <KitchenSkeleton />
+                  <KitchenSkeleton />
+                </div>
+              ) : popularKitchens.length > 0 ? (
+                <div className="-mx-4 overflow-x-auto px-4 scrollbar-hide">
+                  <div className="flex min-w-max gap-3">
+                    {popularKitchens.map((kitchen) => (
+                      <KitchenCard
+                        key={kitchen.id}
+                        kitchen={kitchen}
+                        onSelect={selectKitchen}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <EmptyCard
+                  title="No kitchens yet"
+                  text="Nearby kitchens will appear here after dishes are uploaded."
+                />
+              )}
+            </section>
+
+            <section className="mt-6">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-lg font-black text-[#3F5128]">
+                  Recommended for you
+                </h2>
+
+                <button
+                  type="button"
+                  onClick={scrollToAllFood}
+                  className="inline-flex items-center gap-1 text-xs font-black text-[#CF743D]"
+                >
+                  See All <ChevronRightIcon />
+                </button>
+              </div>
+
+              {loadingFoods ? (
+                <div className="space-y-3">
+                  <FoodSkeleton />
+                  <FoodSkeleton />
+                  <FoodSkeleton />
+                </div>
+              ) : recommendedFoods.length > 0 ? (
+                <div className="space-y-3">
+                  {recommendedFoods.map((food) => (
+                    <RecommendedFoodCard
+                      key={food.id}
+                      food={food}
+                      cartItems={cartItems}
+                      addToCart={addToCart}
+                      increaseQuantity={increaseQuantity}
+                      decreaseQuantity={decreaseQuantity}
+                      onAdded={showAddedToast}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <EmptyCard
+                  title="No food available"
+                  text="New homemade dishes will appear here."
+                />
+              )}
+            </section>
+          </>
+        ) : null}
+
+        <section
+          ref={resultsRef}
+          className="mt-7 scroll-mt-4"
+        >
+          <div className="mb-4 flex items-end justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-black uppercase tracking-wide text-[#CF743D]">
+                Home Search
+              </p>
+
+              <h2 className="mt-1 text-xl font-black text-[#3F5128]">
+                {hasActiveFilters
+                  ? "Search Results"
+                  : "All Food Near You"}
+              </h2>
+
+              {!loadingFoods ? (
+                <p className="mt-1 text-xs font-semibold text-[#6B6258]">
+                  {filteredFoods.length}{" "}
+                  {filteredFoods.length === 1
+                    ? "dish"
+                    : "dishes"}{" "}
+                  found
+                </p>
+              ) : null}
             </div>
-          ) : (
-            <EmptyCard
-              title="No kitchens yet"
-              text="Nearby kitchens will appear here after dishes are uploaded."
-            />
-          )}
-        </section>
 
-        <section className="mt-6">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-black text-[#3F5128]">
-              Recommended for you
-            </h2>
-
-            <Link
-              to="/marketplace"
-              className="inline-flex items-center gap-1 text-xs font-black text-[#CF743D]"
-            >
-              See All <ChevronRightIcon />
-            </Link>
+            {hasActiveFilters ? (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="shrink-0 rounded-full border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-2 text-xs font-black text-[#3F5128] active:scale-95"
+              >
+                Clear
+              </button>
+            ) : null}
           </div>
 
-          {loadingFoods ? (
+          {foodError ? (
+            <div className="rounded-[24px] border border-red-200 bg-red-50 p-5">
+              <p className="font-black text-red-600">
+                Food could not be loaded
+              </p>
+
+              <p className="mt-1 text-sm font-semibold text-red-500">
+                {foodError}
+              </p>
+
+              <button
+                type="button"
+                onClick={() => fetchHomeFoods()}
+                className="mt-4 rounded-2xl bg-red-600 px-5 py-3 text-sm font-black text-white"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : loadingFoods ? (
             <div className="space-y-3">
               <FoodSkeleton />
               <FoodSkeleton />
               <FoodSkeleton />
             </div>
-          ) : recommendedFoods.length > 0 ? (
+          ) : filteredFoods.length > 0 ? (
             <div className="space-y-3">
-              {recommendedFoods.map((food) => (
-                <RecommendedFoodCard
+              {filteredFoods.map((food) => (
+                <FoodCard
                   key={food.id}
-                  food={food}
-                  cartItems={cartItems}
-                  addToCart={addToCart}
-                  increaseQuantity={increaseQuantity}
-                  decreaseQuantity={decreaseQuantity}
-                  onAdded={showAddedToast}
+                  item={food}
                 />
               ))}
             </div>
           ) : (
-            <EmptyCard
-              title="No matching food"
-              text="Try another category or search term."
-            />
+            <div className={`p-8 text-center ${CARD}`}>
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#D8C9B3] bg-[#FFF0DF] text-3xl">
+                🔎
+              </div>
+
+              <h3 className="mt-4 text-xl font-black text-[#181411]">
+                No matching food
+              </h3>
+
+              <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
+                Try another dish, kitchen, category, or food type.
+              </p>
+
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="mt-5 rounded-2xl border border-[#3F5128] bg-[#3F5128] px-6 py-3 text-sm font-black text-white"
+              >
+                Show All Food
+              </button>
+            </div>
           )}
         </section>
       </div>
@@ -445,15 +984,14 @@ export default function Home() {
   );
 }
 
-function KitchenCard({ kitchen }) {
-  const firstFood = kitchen.items?.[0];
-
+function KitchenCard({ kitchen, onSelect }) {
   return (
-    <Link
-      to={firstFood ? `/food/${firstFood.id}` : "/marketplace"}
-      className="w-[128px] shrink-0 overflow-hidden rounded-[24px] border border-[#EADFCE] bg-white/90 shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-[0.98]"
+    <button
+      type="button"
+      onClick={() => onSelect(kitchen.name)}
+      className="w-[138px] shrink-0 overflow-hidden rounded-[24px] border border-[#EADFCE] bg-white/90 text-left shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-[0.98]"
     >
-      <div className="h-[94px] overflow-hidden bg-[#FFF0DF]">
+      <div className="h-[98px] overflow-hidden bg-[#FFF0DF]">
         {kitchen.image ? (
           <img
             src={kitchen.image}
@@ -472,14 +1010,28 @@ function KitchenCard({ kitchen }) {
           {kitchen.name}
         </h3>
 
-        <div className="mt-1 flex items-center gap-1 text-[10px] font-bold text-[#6B6258]">
-          <span className="text-[#CF743D]">★</span>
-          <span>4.8</span>
-          <span>•</span>
-          <span>{kitchen.items.length} items</span>
-        </div>
+        {kitchen.ratingCount > 0 ? (
+          <div className="mt-1 flex items-center gap-1 text-[10px] font-bold text-[#6B6258]">
+            <span className="text-[#F59E0B]">★</span>
+
+            <span>
+              {kitchen.ratingAverage.toFixed(1)}
+            </span>
+
+            <span>
+              ({kitchen.ratingCount})
+            </span>
+          </div>
+        ) : (
+          <p className="mt-1 text-[10px] font-bold text-[#6B6258]">
+            {kitchen.items.length}{" "}
+            {kitchen.items.length === 1
+              ? "dish"
+              : "dishes"}
+          </p>
+        )}
       </div>
-    </Link>
+    </button>
   );
 }
 
@@ -491,16 +1043,41 @@ function RecommendedFoodCard({
   decreaseQuantity,
   onAdded,
 }) {
-  const cartItem = cartItems.find((cartItem) => cartItem.id === food.id);
-  const quantity = cartItem ? cartItem.quantity : 0;
+  const cartItem = cartItems.find(
+    (currentCartItem) =>
+      String(currentCartItem.id) === String(food.id)
+  );
+
+  const quantity = cartItem
+    ? Number(cartItem.quantity || 0)
+    : 0;
 
   const stock = Number(food.stock || 0);
   const kitchenIsClosed = food.seller_online === false;
-  const deliveryAvailable = food.delivery_available !== false;
-  const pickupAvailable = food.pickup_available !== false;
-  const fulfillmentUnavailable = !deliveryAvailable && !pickupAvailable;
+
+  const deliveryAvailable =
+    food.delivery_available !== false;
+
+  const pickupAvailable =
+    food.pickup_available !== false;
+
+  const fulfillmentUnavailable =
+    !deliveryAvailable && !pickupAvailable;
+
   const soldOut = stock <= 0;
-  const blocked = kitchenIsClosed || fulfillmentUnavailable || soldOut;
+
+  const blocked =
+    kitchenIsClosed ||
+    fulfillmentUnavailable ||
+    soldOut;
+
+  const ratingCount = Number(
+    food.rating_count || 0
+  );
+
+  const ratingAverage = Number(
+    food.rating_average || 0
+  );
 
   function handleAdd(event) {
     event.preventDefault();
@@ -512,19 +1089,30 @@ function RecommendedFoodCard({
     }
 
     if (fulfillmentUnavailable) {
-      alert("This kitchen is not taking delivery or pickup orders right now.");
+      alert(
+        "This kitchen is not taking delivery or pickup orders right now."
+      );
       return;
     }
 
-    if (soldOut) return;
+    if (soldOut) {
+      alert("This dish is sold out.");
+      return;
+    }
 
-    addToCart(food);
+    addToCart({
+      ...food,
+      seller_id:
+        food.seller_id || food.user_id,
+    });
+
     onAdded(food);
   }
 
   function handleDecrease(event) {
     event.preventDefault();
     event.stopPropagation();
+
     decreaseQuantity(food.id);
   }
 
@@ -533,7 +1121,7 @@ function RecommendedFoodCard({
     event.stopPropagation();
 
     if (quantity >= stock) {
-      alert(`Only ${stock} available.`);
+      alert("Maximum available quantity reached.");
       return;
     }
 
@@ -544,6 +1132,7 @@ function RecommendedFoodCard({
     if (kitchenIsClosed) return "Closed";
     if (fulfillmentUnavailable) return "Off";
     if (soldOut) return "Out";
+
     return "Add";
   }
 
@@ -551,7 +1140,9 @@ function RecommendedFoodCard({
     <Link
       to={`/food/${food.id}`}
       className={`flex gap-3 rounded-[24px] border bg-white/90 p-3 shadow-[6px_6px_16px_rgba(63,81,40,0.07),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-[0.99] ${
-        blocked ? "border-red-100" : "border-[#EADFCE]"
+        blocked
+          ? "border-red-100"
+          : "border-[#EADFCE]"
       }`}
     >
       <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-[20px] border border-[#EADFCE] bg-[#FFF0DF]">
@@ -560,7 +1151,9 @@ function RecommendedFoodCard({
             src={food.image}
             alt={food.name}
             className={`h-full w-full object-cover ${
-              blocked ? "grayscale opacity-50" : ""
+              blocked
+                ? "grayscale opacity-50"
+                : ""
             }`}
           />
         ) : (
@@ -581,27 +1174,50 @@ function RecommendedFoodCard({
       <div className="min-w-0 flex-1 py-1">
         <h3
           className={`truncate text-sm font-black ${
-            blocked ? "text-[#9A8E80]" : "text-[#181411]"
+            blocked
+              ? "text-[#9A8E80]"
+              : "text-[#181411]"
           }`}
         >
           {food.name}
         </h3>
 
         <p className="mt-0.5 truncate text-xs font-semibold text-[#6B6258]">
-          {food.seller_kitchen_name || food.seller || "Home Kitchen"}
+          {food.seller_kitchen_name ||
+            food.seller ||
+            "Home Kitchen"}
         </p>
 
         <div className="mt-1 flex items-center gap-1 text-xs font-bold text-[#6B6258]">
-          <span className="text-[#CF743D]">★</span>
-          <span>4.8</span>
-          <span>•</span>
-          <span>{food.time || "Soon"}</span>
+          {ratingCount > 0 ? (
+            <>
+              <span className="text-[#F59E0B]">
+                ★
+              </span>
+
+              <span>
+                {ratingAverage.toFixed(1)}
+              </span>
+
+              <span>
+                ({ratingCount})
+              </span>
+
+              <span>•</span>
+            </>
+          ) : null}
+
+          <span>
+            {food.time || "Soon"}
+          </span>
         </div>
 
         <div className="mt-2 flex items-center justify-between gap-2">
           <p
             className={`text-base font-black ${
-              blocked ? "text-[#9A8E80]" : "text-[#3F5128]"
+              blocked
+                ? "text-[#9A8E80]"
+                : "text-[#3F5128]"
             }`}
           >
             ₹{food.price}
@@ -660,14 +1276,21 @@ function EmptyCard({ title, text }) {
       <div className="pointer-events-none absolute -left-7 bottom-0 text-[90px] leading-none text-[#EADFCE]/70">
         ❧
       </div>
+
       <div className="pointer-events-none absolute -right-7 bottom-0 text-[90px] leading-none text-[#EADFCE]/70">
         ❧
       </div>
 
       <div className="relative z-10">
         <div className="text-4xl">🍲</div>
-        <h3 className="mt-3 text-lg font-black text-[#181411]">{title}</h3>
-        <p className="mt-1 text-sm font-semibold text-[#6B6258]">{text}</p>
+
+        <h3 className="mt-3 text-lg font-black text-[#181411]">
+          {title}
+        </h3>
+
+        <p className="mt-1 text-sm font-semibold text-[#6B6258]">
+          {text}
+        </p>
       </div>
     </div>
   );
@@ -675,7 +1298,7 @@ function EmptyCard({ title, text }) {
 
 function KitchenSkeleton() {
   return (
-    <div className="h-[146px] w-[128px] shrink-0 animate-pulse rounded-[24px] border border-[#EADFCE] bg-white/90 shadow-sm" />
+    <div className="h-[154px] w-[138px] shrink-0 animate-pulse rounded-[24px] border border-[#EADFCE] bg-white/90 shadow-sm" />
   );
 }
 
