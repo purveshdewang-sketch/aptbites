@@ -26,12 +26,7 @@ const CARD =
 export default function Home() {
   const { user } = useAuth();
 
-  const {
-    cartItems,
-    addToCart,
-    increaseQuantity,
-    decreaseQuantity,
-  } = useCart();
+  const { cartItems } = useCart();
 
   const [searchParams] = useSearchParams();
 
@@ -49,7 +44,6 @@ export default function Home() {
 
   const [loadingFoods, setLoadingFoods] = useState(true);
   const [foodError, setFoodError] = useState("");
-  const [toastFood, setToastFood] = useState(null);
 
   useEffect(() => {
     checkUserRole();
@@ -328,14 +322,6 @@ export default function Home() {
     return String(name).charAt(0).toUpperCase();
   }
 
-  function showAddedToast(food) {
-    setToastFood(food);
-
-    window.setTimeout(() => {
-      setToastFood(null);
-    }, 1400);
-  }
-
   function clearFilters() {
     setSearchText("");
     setActiveCategory("All");
@@ -546,34 +532,6 @@ export default function Home() {
       .slice(0, 8);
   }, [homeFoods]);
 
-  const recommendedFoods = useMemo(() => {
-    return homeFoods
-      .filter((food) => {
-        const stock = Number(food.stock || 0);
-
-        return (
-          stock > 0 &&
-          food.seller_online !== false &&
-          (food.delivery_available !== false ||
-            food.pickup_available !== false)
-        );
-      })
-      .sort((firstFood, secondFood) => {
-        const countDifference =
-          Number(secondFood.rating_count || 0) -
-          Number(firstFood.rating_count || 0);
-
-        if (countDifference !== 0) {
-          return countDifference;
-        }
-
-        return (
-          Number(secondFood.rating_average || 0) -
-          Number(firstFood.rating_average || 0)
-        );
-      })
-      .slice(0, 6);
-  }, [homeFoods]);
 
   const hasActiveFilters =
     Boolean(searchText.trim()) ||
@@ -589,33 +547,6 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-32 text-[#181411]">
-      {toastFood ? (
-        <div className="fixed left-3 right-3 top-5 z-[999] mx-auto max-w-md rounded-[24px] border border-[#EADFCE] bg-white/95 p-4 shadow-2xl shadow-[#3F5128]/15">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#EADFCE] bg-[#FFF0DF] text-xl">
-              ✅
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <p className="font-black text-[#3F5128]">
-                Added to cart
-              </p>
-
-              <p className="truncate text-xs font-semibold text-[#6B6258]">
-                {toastFood.name} added successfully.
-              </p>
-            </div>
-
-            <Link
-              to="/cart"
-              className="rounded-full border border-[#3F5128] bg-[#3F5128] px-4 py-2 text-xs font-black text-white"
-            >
-              View
-            </Link>
-          </div>
-        </div>
-      ) : null}
-
       <div className="mx-auto max-w-md">
         <header className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -797,8 +728,7 @@ export default function Home() {
         ) : null}
 
         {!hasActiveFilters ? (
-          <>
-            <section className="mt-6">
+          <section className="mt-6">
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-lg font-black text-[#3F5128]">
                   Popular Kitchens
@@ -837,51 +767,7 @@ export default function Home() {
                   text="Nearby kitchens will appear here after dishes are uploaded."
                 />
               )}
-            </section>
-
-            <section className="mt-6">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-lg font-black text-[#3F5128]">
-                  Recommended for you
-                </h2>
-
-                <button
-                  type="button"
-                  onClick={scrollToAllFood}
-                  className="inline-flex items-center gap-1 text-xs font-black text-[#CF743D]"
-                >
-                  See All <ChevronRightIcon />
-                </button>
-              </div>
-
-              {loadingFoods ? (
-                <div className="space-y-3">
-                  <FoodSkeleton />
-                  <FoodSkeleton />
-                  <FoodSkeleton />
-                </div>
-              ) : recommendedFoods.length > 0 ? (
-                <div className="space-y-3">
-                  {recommendedFoods.map((food) => (
-                    <RecommendedFoodCard
-                      key={food.id}
-                      food={food}
-                      cartItems={cartItems}
-                      addToCart={addToCart}
-                      increaseQuantity={increaseQuantity}
-                      decreaseQuantity={decreaseQuantity}
-                      onAdded={showAddedToast}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <EmptyCard
-                  title="No food available"
-                  text="New homemade dishes will appear here."
-                />
-              )}
-            </section>
-          </>
+          </section>
         ) : null}
 
         <section
@@ -1032,241 +918,6 @@ function KitchenCard({ kitchen, onSelect }) {
         )}
       </div>
     </button>
-  );
-}
-
-function RecommendedFoodCard({
-  food,
-  cartItems,
-  addToCart,
-  increaseQuantity,
-  decreaseQuantity,
-  onAdded,
-}) {
-  const cartItem = cartItems.find(
-    (currentCartItem) =>
-      String(currentCartItem.id) === String(food.id)
-  );
-
-  const quantity = cartItem
-    ? Number(cartItem.quantity || 0)
-    : 0;
-
-  const stock = Number(food.stock || 0);
-  const kitchenIsClosed = food.seller_online === false;
-
-  const deliveryAvailable =
-    food.delivery_available !== false;
-
-  const pickupAvailable =
-    food.pickup_available !== false;
-
-  const fulfillmentUnavailable =
-    !deliveryAvailable && !pickupAvailable;
-
-  const soldOut = stock <= 0;
-
-  const blocked =
-    kitchenIsClosed ||
-    fulfillmentUnavailable ||
-    soldOut;
-
-  const ratingCount = Number(
-    food.rating_count || 0
-  );
-
-  const ratingAverage = Number(
-    food.rating_average || 0
-  );
-
-  function handleAdd(event) {
-    event.preventDefault();
-    event.stopPropagation();
-
-    if (kitchenIsClosed) {
-      alert("This kitchen is closed right now.");
-      return;
-    }
-
-    if (fulfillmentUnavailable) {
-      alert(
-        "This kitchen is not taking delivery or pickup orders right now."
-      );
-      return;
-    }
-
-    if (soldOut) {
-      alert("This dish is sold out.");
-      return;
-    }
-
-    addToCart({
-      ...food,
-      seller_id:
-        food.seller_id || food.user_id,
-    });
-
-    onAdded(food);
-  }
-
-  function handleDecrease(event) {
-    event.preventDefault();
-    event.stopPropagation();
-
-    decreaseQuantity(food.id);
-  }
-
-  function handleIncrease(event) {
-    event.preventDefault();
-    event.stopPropagation();
-
-    if (quantity >= stock) {
-      alert("Maximum available quantity reached.");
-      return;
-    }
-
-    increaseQuantity(food.id);
-  }
-
-  function getButtonLabel() {
-    if (kitchenIsClosed) return "Closed";
-    if (fulfillmentUnavailable) return "Off";
-    if (soldOut) return "Out";
-
-    return "Add";
-  }
-
-  return (
-    <Link
-      to={`/food/${food.id}`}
-      className={`flex gap-3 rounded-[24px] border bg-white/90 p-3 shadow-[6px_6px_16px_rgba(63,81,40,0.07),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-[0.99] ${
-        blocked
-          ? "border-red-100"
-          : "border-[#EADFCE]"
-      }`}
-    >
-      <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-[20px] border border-[#EADFCE] bg-[#FFF0DF]">
-        {food.image ? (
-          <img
-            src={food.image}
-            alt={food.name}
-            className={`h-full w-full object-cover ${
-              blocked
-                ? "grayscale opacity-50"
-                : ""
-            }`}
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-3xl">
-            🍽️
-          </div>
-        )}
-
-        {blocked ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-            <span className="rounded-full bg-white px-2 py-1 text-[10px] font-black text-[#3F5128]">
-              {getButtonLabel()}
-            </span>
-          </div>
-        ) : null}
-      </div>
-
-      <div className="min-w-0 flex-1 py-1">
-        <h3
-          className={`truncate text-sm font-black ${
-            blocked
-              ? "text-[#9A8E80]"
-              : "text-[#181411]"
-          }`}
-        >
-          {food.name}
-        </h3>
-
-        <p className="mt-0.5 truncate text-xs font-semibold text-[#6B6258]">
-          {food.seller_kitchen_name ||
-            food.seller ||
-            "Home Kitchen"}
-        </p>
-
-        <div className="mt-1 flex items-center gap-1 text-xs font-bold text-[#6B6258]">
-          {ratingCount > 0 ? (
-            <>
-              <span className="text-[#F59E0B]">
-                ★
-              </span>
-
-              <span>
-                {ratingAverage.toFixed(1)}
-              </span>
-
-              <span>
-                ({ratingCount})
-              </span>
-
-              <span>•</span>
-            </>
-          ) : null}
-
-          <span>
-            {food.time || "Soon"}
-          </span>
-        </div>
-
-        <div className="mt-2 flex items-center justify-between gap-2">
-          <p
-            className={`text-base font-black ${
-              blocked
-                ? "text-[#9A8E80]"
-                : "text-[#3F5128]"
-            }`}
-          >
-            ₹{food.price}
-          </p>
-
-          {quantity === 0 || blocked ? (
-            <button
-              type="button"
-              onClick={handleAdd}
-              disabled={blocked}
-              className={`min-w-[74px] rounded-full border px-4 py-2 text-[11px] font-black transition-all active:scale-95 ${
-                blocked
-                  ? "cursor-not-allowed border-[#EADFCE] bg-[#F1E8DC] text-[#9A8E80]"
-                  : "border-[#3F5128] bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15"
-              }`}
-            >
-              {getButtonLabel()}
-            </button>
-          ) : (
-            <div className="flex items-center overflow-hidden rounded-full bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15">
-              <button
-                type="button"
-                onClick={handleDecrease}
-                className="flex h-8 w-8 items-center justify-center text-base font-black active:bg-[#4D612F]"
-              >
-                −
-              </button>
-
-              <span className="flex h-8 min-w-8 items-center justify-center bg-[#CF743D] px-2 text-xs font-black text-white">
-                {quantity}
-              </span>
-
-              <button
-                type="button"
-                onClick={handleIncrease}
-                disabled={quantity >= stock}
-                className={`flex h-8 w-8 items-center justify-center text-base font-black ${
-                  quantity >= stock
-                    ? "cursor-not-allowed opacity-40"
-                    : "active:bg-[#4D612F]"
-                }`}
-              >
-                +
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </Link>
   );
 }
 
