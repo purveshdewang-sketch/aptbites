@@ -99,6 +99,8 @@ export default function SellerDashboard() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [sellerProfileComplete, setSellerProfileComplete] = useState(false);
   const [bankDetailsCompleted, setBankDetailsCompleted] = useState(false);
+  const [sellerAvatarUrl, setSellerAvatarUrl] = useState("");
+  const [avatarImageFailed, setAvatarImageFailed] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileSaving, setProfileSaving] = useState(false);
 
@@ -123,6 +125,25 @@ export default function SellerDashboard() {
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [messagesLoading, setMessagesLoading] = useState(true);
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    const pageBackHandler = () => {
+      if (activeTab !== "dashboard") {
+        setActiveTab("dashboard");
+        return true;
+      }
+
+      return false;
+    };
+
+    window.NeFoPageBack = pageBackHandler;
+
+    return () => {
+      if (window.NeFoPageBack === pageBackHandler) {
+        delete window.NeFoPageBack;
+      }
+    };
+  }, [activeTab]);
 
   useEffect(() => {
     if (!user) return undefined;
@@ -209,7 +230,7 @@ export default function SellerDashboard() {
           if ("Notification" in window && Notification.permission === "granted") {
             new Notification("💬 New NeFo customer message", {
               body: getMessageText(incomingMessage),
-              icon: "/Nefo-logo.png",
+              icon: "/nefo-logo.png",
             });
           }
         }
@@ -359,7 +380,7 @@ export default function SellerDashboard() {
     const { data, error } = await supabase
       .from("profiles")
       .select(
-        "role, is_seller, seller_online, accept_scheduled_orders, delivery_available, pickup_available, packing_charge, seller_kitchen_name, flat, phone, seller_specialty, seller_about, bank_details_completed"
+        "role, is_seller, seller_online, accept_scheduled_orders, delivery_available, pickup_available, packing_charge, seller_kitchen_name, flat, phone, seller_specialty, seller_about, bank_details_completed, avatar_url"
       )
       .eq("id", user.id)
       .maybeSingle();
@@ -390,6 +411,12 @@ export default function SellerDashboard() {
       profileRole === "admin" || data?.bank_details_completed === true;
 
     setBankDetailsCompleted(bankComplete);
+    setSellerAvatarUrl(
+      data?.avatar_url ||
+        user?.user_metadata?.avatar_url ||
+        ""
+    );
+    setAvatarImageFailed(false);
     setSellerOnline(data?.seller_online !== false);
     setAcceptScheduledOrders(data?.accept_scheduled_orders !== false);
     setDeliveryAvailable(data?.delivery_available !== false);
@@ -798,7 +825,7 @@ export default function SellerDashboard() {
           if ("Notification" in window && Notification.permission === "granted") {
             new Notification("🍔 New NeFo Order", {
               body: "You received a new food order.",
-              icon: "/Nefo-logo.png",
+              icon: "/nefo-logo.png",
             });
           }
 
@@ -1588,32 +1615,45 @@ export default function SellerDashboard() {
   function DashboardView() {
     return (
       <section className="space-y-5">
-        <section className="relative overflow-hidden rounded-[28px] border border-[#4D612F] bg-[#3F5128] p-5 text-white shadow-lg shadow-[#3F5128]/15">
+        <section
+          className={`relative overflow-hidden rounded-[28px] border p-5 text-white shadow-lg transition-colors duration-200 ${
+            sellerOnline
+              ? "border-[#4D612F] bg-[#3F5128] shadow-[#3F5128]/15"
+              : "border-red-700 bg-red-600 shadow-red-900/15"
+          }`}
+        >
           <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-white/10" />
 
           <div className="relative z-10 flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-black uppercase tracking-wide text-[#F3C06E]">
+              <p
+                className={`text-xs font-black uppercase tracking-wide ${
+                  sellerOnline ? "text-[#F3C06E]" : "text-red-100"
+                }`}
+              >
                 Kitchen status
               </p>
 
               <h2 className="mt-1 text-2xl font-black">
-                {sellerOnline ? "Open for orders" : "Kitchen is offline"}
+                {sellerOnline ? "Open for orders" : "Closed for orders"}
               </h2>
 
-              <p className="mt-2 text-sm font-semibold text-white/75">
-                Order and customer-message alerts always play sound.
+              <p className="mt-2 text-sm font-semibold text-white/80">
+                {sellerOnline
+                  ? "Order and customer-message alerts always play sound."
+                  : "Your kitchen is offline and new customer orders are paused."}
               </p>
             </div>
 
             <button
               type="button"
               onClick={toggleSellerOnline}
-              className={`shrink-0 rounded-full border px-4 py-2 text-xs font-black active:scale-95 ${
+              className={`shrink-0 rounded-full border px-4 py-2 text-xs font-black shadow-sm transition-colors active:scale-95 ${
                 sellerOnline
-                  ? "border-green-300/30 bg-green-400/15 text-green-100"
-                  : "border-white/20 bg-white/10 text-white"
+                  ? "border-green-300/40 bg-green-500/20 text-green-50"
+                  : "border-red-200 bg-red-800 text-white"
               }`}
+              aria-pressed={sellerOnline}
             >
               {sellerOnline ? "Online" : "Offline"}
             </button>
@@ -2516,8 +2556,17 @@ export default function SellerDashboard() {
   return (
     <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-32 text-[#181411]">
       <div className="mx-auto max-w-md">
-        <header className="flex items-center justify-between pb-5 pt-2">
-          <div className="min-w-0">
+        <header className="flex items-center gap-3 pb-5 pt-2">
+          <button
+            type="button"
+            aria-label="Go back"
+            data-nefo-back="true"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#D8C9B3] bg-white/95 text-[#3F5128] shadow-[5px_5px_14px_rgba(63,81,40,0.08),-5px_-5px_14px_rgba(255,255,255,0.95)] active:scale-95"
+          >
+            <BackIcon />
+          </button>
+
+          <div className="min-w-0 flex-1">
             <h1 className="truncate text-3xl font-black leading-tight text-[#181411]">
               Seller Dashboard
             </h1>
@@ -2530,10 +2579,19 @@ export default function SellerDashboard() {
           <button
             type="button"
             onClick={() => navigate("/profile")}
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#C86B37] bg-[#CF743D] text-lg font-black text-white shadow-lg shadow-[#3F5128]/10"
+            className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#C86B37] bg-[#CF743D] text-lg font-black text-white shadow-lg shadow-[#3F5128]/10 active:scale-95"
             aria-label="Open profile"
           >
-            {user?.email?.charAt(0)?.toUpperCase() || "S"}
+            {sellerAvatarUrl && !avatarImageFailed ? (
+              <img
+                src={sellerAvatarUrl}
+                alt="Seller profile"
+                className="h-full w-full object-cover"
+                onError={() => setAvatarImageFailed(true)}
+              />
+            ) : (
+              user?.email?.charAt(0)?.toUpperCase() || "S"
+            )}
           </button>
         </header>
 
@@ -2636,7 +2694,8 @@ function CheckTile({ title, text, name, checked, onChange }) {
 }
 
 function MessageBox({ message }) {
-  const isError = /could not|failed|error|not approved|required/i.test(message);
+  const isError =
+    /could not|failed|error|not approved|required|offline|closed/i.test(message);
 
   return (
     <div
@@ -2684,5 +2743,21 @@ function QuickAction({ icon, label, onClick, badge = 0 }) {
         </span>
       ) : null}
     </button>
+  );
+}
+
+function BackIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+      aria-hidden="true"
+    >
+      <path d="M19 12H5" />
+      <path d="M12 19l-7-7 7-7" />
+    </svg>
   );
 }

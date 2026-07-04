@@ -515,6 +515,33 @@ export default function GlobalBackHandler() {
 
     backInProgressRef.current = true;
 
+    const pageBackHandler =
+      window.NeFoPageBack;
+
+    if (
+      typeof pageBackHandler ===
+      "function"
+    ) {
+      try {
+        const handledByPage =
+          pageBackHandler();
+
+        if (handledByPage) {
+          window.setTimeout(() => {
+            backInProgressRef.current =
+              false;
+          }, 150);
+
+          return;
+        }
+      } catch (error) {
+        console.error(
+          "NeFo page back handler failed:",
+          error
+        );
+      }
+    }
+
     const history =
       readRouteHistory();
 
@@ -702,7 +729,7 @@ export default function GlobalBackHandler() {
             'a[aria-label="Go back"]',
             'button[aria-label="Back"]',
             'a[aria-label="Back"]',
-            '[data-NeFo-back="true"]',
+            '[data-nefo-back="true"]',
           ].join(", ")
         );
 
