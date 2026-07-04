@@ -1,12 +1,16 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import {
   Link,
   useNavigate,
 } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
 import { supabase } from "../lib/supabaseClient";
-import nefoLogo from "../assets/nefo-logo.png";
 
+const LOGO_SOURCES = [
+  "/nefo-logo.png",
+  "/NeFo-logo.png",
+  "/Nefo-logo.png",
+];
 
 const CARD =
   "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
@@ -19,6 +23,18 @@ const INPUT =
 
 const NATIVE_RESET_REDIRECT_URL =
   "com.nefo.app://reset-password";
+
+function createEmptyErrors() {
+  return {
+    email: "",
+    password: "",
+    fullName: "",
+    phone: "",
+    apartmentName: "",
+    flatNo: "",
+    general: "",
+  };
+}
 
 function getPasswordResetRedirectUrl() {
   if (Capacitor.isNativePlatform()) {
@@ -35,9 +51,10 @@ function isEmailIdentifier(value) {
 }
 
 function normalizePhone(value) {
-  let digits = String(
-    value || ""
-  ).replace(/\D/g, "");
+  let digits = String(value || "").replace(
+    /\D/g,
+    ""
+  );
 
   if (
     digits.length === 12 &&
@@ -73,7 +90,7 @@ async function getFunctionErrorMessage(error) {
       );
     }
   } catch {
-    // Use the standard function error.
+    // Use the standard function error below.
   }
 
   return (
@@ -121,33 +138,15 @@ export default function CustomerLogin() {
     useState("");
 
   const [errors, setErrors] =
-    useState({
-      email: "",
-      password: "",
-      fullName: "",
-      phone: "",
-      apartmentName: "",
-      flatNo: "",
-      general: "",
-    });
+    useState(createEmptyErrors);
 
   function clearErrors() {
-    setErrors({
-      email: "",
-      password: "",
-      fullName: "",
-      phone: "",
-      apartmentName: "",
-      flatNo: "",
-      general: "",
-    });
+    setErrors(createEmptyErrors());
   }
 
   function handleChange(event) {
-    const {
-      name,
-      value,
-    } = event.target;
+    const { name, value } =
+      event.target;
 
     setFormData(
       (currentData) => ({
@@ -168,7 +167,7 @@ export default function CustomerLogin() {
   }
 
   function cleanPhone(phone) {
-    return phone.replace(
+    return String(phone || "").replace(
       /\D/g,
       ""
     );
@@ -225,7 +224,9 @@ export default function CustomerLogin() {
       setErrors(
         (currentErrors) => ({
           ...currentErrors,
-          email: errorMessage,
+          email:
+            errorMessage ||
+            "Please check your email or mobile number.",
         })
       );
 
@@ -243,15 +244,8 @@ export default function CustomerLogin() {
   }
 
   function validateSignUpFields() {
-    const nextErrors = {
-      email: "",
-      password: "",
-      fullName: "",
-      phone: "",
-      apartmentName: "",
-      flatNo: "",
-      general: "",
-    };
+    const nextErrors =
+      createEmptyErrors();
 
     if (!formData.fullName.trim()) {
       nextErrors.fullName =
@@ -262,9 +256,8 @@ export default function CustomerLogin() {
       nextErrors.phone =
         "Phone number is required.";
     } else if (
-      cleanPhone(
-        formData.phone
-      ).length < 10
+      cleanPhone(formData.phone)
+        .length < 10
     ) {
       nextErrors.phone =
         "Please enter a valid phone number.";
@@ -307,15 +300,8 @@ export default function CustomerLogin() {
   }
 
   function validateLoginFields() {
-    const nextErrors = {
-      email: "",
-      password: "",
-      fullName: "",
-      phone: "",
-      apartmentName: "",
-      flatNo: "",
-      general: "",
-    };
+    const nextErrors =
+      createEmptyErrors();
 
     const identifier =
       formData.email.trim();
@@ -514,10 +500,7 @@ export default function CustomerLogin() {
       .select(
         "role, is_seller, seller_application_status"
       )
-      .eq(
-        "id",
-        loggedInUser.id
-      )
+      .eq("id", loggedInUser.id)
       .maybeSingle();
 
     if (profileError) {
@@ -695,7 +678,6 @@ export default function CustomerLogin() {
             setErrors(
               (currentErrors) => ({
                 ...currentErrors,
-
                 general: `Profile save failed: ${profileError.message}`,
               })
             );
@@ -768,7 +750,6 @@ export default function CustomerLogin() {
       setErrors(
         (currentErrors) => ({
           ...currentErrors,
-
           general:
             error?.message ||
             "Something went wrong. Please try again.",
@@ -811,32 +792,29 @@ export default function CustomerLogin() {
         <header>
           <Link
             to="/"
-            className="flex w-full items-center gap-4 rounded-[26px] border border-[#EADFCE] bg-[#FFFDF7]/95 px-4 py-3 shadow-[6px_6px_18px_rgba(63,81,40,0.07),-6px_-6px_18px_rgba(255,255,255,0.95)] transition-transform active:scale-[0.99]"
+            className="flex w-full items-center gap-3 rounded-[26px] border border-[#EADFCE] bg-[#FFFDF7]/95 px-3 py-3 shadow-[6px_6px_18px_rgba(63,81,40,0.07),-6px_-6px_18px_rgba(255,255,255,0.95)] transition-transform active:scale-[0.99] sm:gap-4 sm:px-4"
             aria-label="Go to NeFo home"
           >
-            <div className="flex h-[66px] w-[66px] shrink-0 items-center justify-center overflow-hidden rounded-[22px] border border-[#D8C9B3] bg-[#FFF8EC] shadow-[inset_2px_2px_6px_rgba(63,81,40,0.04),inset_-2px_-2px_6px_rgba(255,255,255,0.95)]">
-              <img
-              src={nefoLogo}
-              alt="NeFo logo"
-              className="h-full w-full object-contain p-1.5"
-            />
+            <div className="flex h-[64px] w-[64px] shrink-0 items-center justify-center overflow-hidden rounded-[20px] border border-[#D8C9B3] bg-[#FFF8EC] p-1.5">
+              <BrandLogo />
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="flex items-baseline gap-2">
-                <p className="text-[26px] font-black leading-none tracking-tight text-[#3F5128]">
+              <div className="flex items-center gap-2">
+                <p className="text-[25px] font-black leading-none tracking-tight text-[#3F5128]">
                   NeFo
                 </p>
 
                 <span className="h-2 w-2 rounded-full bg-[#CF743D]" />
               </div>
 
-              <p className="mt-2 text-[11px] font-black uppercase tracking-[0.14em] text-[#6B6258]">
+              <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-[#6B6258] sm:text-[11px]">
                 Neighbour Food
               </p>
 
-              <p className="mt-1 truncate text-[10px] font-bold text-[#9A8E80]">
-                Homemade food from kitchens near you
+              <p className="mt-1 truncate text-[9px] font-bold text-[#9A8E80] sm:text-[10px]">
+                Homemade food from
+                kitchens near you
               </p>
             </div>
 
@@ -1250,6 +1228,149 @@ export default function CustomerLogin() {
   );
 }
 
+function BrandLogo() {
+  const [
+    sourceIndex,
+    setSourceIndex,
+  ] = useState(0);
+
+  const [
+    useFallback,
+    setUseFallback,
+  ] = useState(false);
+
+  function handleImageError() {
+    if (
+      sourceIndex <
+      LOGO_SOURCES.length - 1
+    ) {
+      setSourceIndex(
+        (currentIndex) =>
+          currentIndex + 1
+      );
+
+      return;
+    }
+
+    setUseFallback(true);
+  }
+
+  if (useFallback) {
+    return <NeFoLogoMark />;
+  }
+
+  return (
+    <img
+      key={
+        LOGO_SOURCES[
+          sourceIndex
+        ]
+      }
+      src={
+        LOGO_SOURCES[
+          sourceIndex
+        ]
+      }
+      alt=""
+      aria-hidden="true"
+      onError={
+        handleImageError
+      }
+      className="h-full w-full object-contain"
+    />
+  );
+}
+
+function NeFoLogoMark() {
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      className="h-full w-full"
+      aria-hidden="true"
+    >
+      <path
+        d="M48 8C31 20 19 34 18 53v22c0 10 6 17 15 19V56c0-9 5-17 13-22l22 24c7 7 10 15 9 27 9-5 14-14 14-26C91 34 75 17 61 7c1 18 8 26 17 38 8 11 9 25 5 36 1-15-5-25-14-34L49 25c2-6 2-11-1-17Z"
+        fill="#3F5128"
+      />
+
+      <path
+        d="M58 26c12 11 21 23 24 38 2 9 0 17-4 23-1-13-6-23-15-31L46 38c5-4 9-8 12-12Z"
+        fill="#DB824B"
+      />
+
+      <ellipse
+        cx="62"
+        cy="40"
+        rx="2.2"
+        ry="4.5"
+        fill="#FFF8EC"
+      />
+
+      <ellipse
+        cx="70"
+        cy="49"
+        rx="2.2"
+        ry="4.5"
+        transform="rotate(30 70 49)"
+        fill="#FFF8EC"
+      />
+
+      <ellipse
+        cx="61"
+        cy="55"
+        rx="2.2"
+        ry="4.5"
+        fill="#FFF8EC"
+      />
+
+      <ellipse
+        cx="72"
+        cy="62"
+        rx="4.5"
+        ry="2.2"
+        transform="rotate(-15 72 62)"
+        fill="#FFF8EC"
+      />
+
+      <rect
+        x="38"
+        y="67"
+        width="8"
+        height="8"
+        rx="1.8"
+        fill="#D89A32"
+      />
+
+      <rect
+        x="49"
+        y="67"
+        width="8"
+        height="8"
+        rx="1.8"
+        fill="#D89A32"
+      />
+
+      <rect
+        x="38"
+        y="78"
+        width="8"
+        height="8"
+        rx="1.8"
+        fill="#D89A32"
+      />
+
+      <rect
+        x="49"
+        y="78"
+        width="8"
+        height="8"
+        rx="1.8"
+        fill="#D89A32"
+      />
+    </svg>
+  );
+}
+
 function RoleButton({
   active,
   onClick,
@@ -1317,6 +1438,7 @@ function ChevronRightIcon() {
       fill="none"
       stroke="currentColor"
       strokeWidth="2.5"
+      aria-hidden="true"
     >
       <path d="m9 18 6-6-6-6" />
     </svg>
