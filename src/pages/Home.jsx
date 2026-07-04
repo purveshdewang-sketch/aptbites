@@ -1651,7 +1651,7 @@ export default function Home() {
           <div className="mb-4 flex items-end justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[11px] font-black uppercase tracking-wide text-[#CF743D]">
-                Home Search
+               Search
               </p>
 
               <h2 className="mt-1 text-xl font-black text-[#3F5128]">
