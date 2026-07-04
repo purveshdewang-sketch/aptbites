@@ -1991,7 +1991,7 @@ export default function SellerHelper() {
 
               <div className="min-w-0">
                 <p className="text-xl font-black">
-                  NeFo AI Seller
+                  NeFo AI Seller Assistantance
                 </p>
 
                 <p className="mt-0.5 text-xs font-semibold text-white/70">
