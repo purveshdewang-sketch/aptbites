@@ -1,10 +1,22 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import {
+  Link,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
+
 import FoodCard from "../components/FoodCard";
 import { supabase } from "../lib/supabaseClient";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 
-const FAVORITES_STORAGE_KEY = "Nefo_favorite_foods";
+const FAVORITES_STORAGE_KEY =
+  "Nefo_favorite_foods";
 
 const KITCHEN_MENU_CATEGORIES = [
   "Meals",
@@ -22,150 +34,389 @@ function getFavoriteId(item) {
 
 function readFavorites() {
   try {
-    const saved = localStorage.getItem(FAVORITES_STORAGE_KEY);
-    const parsed = saved ? JSON.parse(saved) : [];
-    return Array.isArray(parsed) ? parsed : [];
+    const saved = localStorage.getItem(
+      FAVORITES_STORAGE_KEY
+    );
+
+    const parsed = saved
+      ? JSON.parse(saved)
+      : [];
+
+    return Array.isArray(parsed)
+      ? parsed
+      : [];
   } catch {
     return [];
   }
 }
 
 function saveFavorites(favorites) {
-  localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
-  window.dispatchEvent(new CustomEvent("Nefo_favorites_updated"));
+  localStorage.setItem(
+    FAVORITES_STORAGE_KEY,
+    JSON.stringify(favorites)
+  );
+
+  window.dispatchEvent(
+    new CustomEvent(
+      "Nefo_favorites_updated"
+    )
+  );
 }
 
 function isItemFavorite(item) {
-  const itemId = getFavoriteId(item);
+  const itemId =
+    getFavoriteId(item);
+
   if (!itemId) return false;
 
   return readFavorites().some(
-    (favoriteItem) => getFavoriteId(favoriteItem) === itemId
+    (favoriteItem) =>
+      getFavoriteId(
+        favoriteItem
+      ) === itemId
   );
 }
 
 function buildFavoriteItem(item) {
   return {
     ...item,
-    seller_id: item.seller_id || item.user_id,
-    favorite_saved_at: new Date().toISOString(),
+
+    seller_id:
+      item.seller_id ||
+      item.user_id,
+
+    favorite_saved_at:
+      new Date().toISOString(),
+  };
+}
+
+function buildRatingMap(ratingRows) {
+  const ratingMap = {};
+
+  (ratingRows || []).forEach(
+    (ratingRow) => {
+      const foodId = String(
+        ratingRow.food_id || ""
+      );
+
+      const ratingValue = Number(
+        ratingRow.rating || 0
+      );
+
+      if (
+        !foodId ||
+        ratingValue < 1 ||
+        ratingValue > 5
+      ) {
+        return;
+      }
+
+      if (!ratingMap[foodId]) {
+        ratingMap[foodId] = {
+          total: 0,
+          count: 0,
+        };
+      }
+
+      ratingMap[foodId].total +=
+        ratingValue;
+
+      ratingMap[foodId].count += 1;
+    }
+  );
+
+  return ratingMap;
+}
+
+function getFoodRating(
+  ratingMap,
+  foodId
+) {
+  const ratingData =
+    ratingMap[String(foodId)] || {
+      total: 0,
+      count: 0,
+    };
+
+  return {
+    average:
+      ratingData.count > 0
+        ? ratingData.total /
+          ratingData.count
+        : 0,
+
+    count: ratingData.count,
   };
 }
 
 export default function FoodDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  const { cartItems, addToCart, increaseQuantity, decreaseQuantity, cartCount } =
-    useCart();
+  const {
+    cartItems,
+    addToCart,
+    increaseQuantity,
+    decreaseQuantity,
+    cartCount,
+  } = useCart();
 
-  const [food, setFood] = useState(null);
-  const [kitchenFoods, setKitchenFoods] = useState([]);
-  const [kitchenOnline, setKitchenOnline] = useState(true);
-  const [deliveryAvailable, setDeliveryAvailable] = useState(true);
-  const [pickupAvailable, setPickupAvailable] = useState(true);
-  const [selectedKitchenCategory, setSelectedKitchenCategory] = useState("All");
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
-  const [liked, setLiked] = useState(false);
-  const [toast, setToast] = useState(null);
+  const [food, setFood] =
+    useState(null);
+
+  const [
+    kitchenFoods,
+    setKitchenFoods,
+  ] = useState([]);
+
+  const [
+    kitchenOnline,
+    setKitchenOnline,
+  ] = useState(true);
+
+  const [
+    deliveryAvailable,
+    setDeliveryAvailable,
+  ] = useState(true);
+
+  const [
+    pickupAvailable,
+    setPickupAvailable,
+  ] = useState(true);
+
+  const [
+    selectedKitchenCategory,
+    setSelectedKitchenCategory,
+  ] = useState("All");
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [message, setMessage] =
+    useState("");
+
+  const [liked, setLiked] =
+    useState(false);
+
+  const [toast, setToast] =
+    useState(null);
+
+  const [
+    ratingAverage,
+    setRatingAverage,
+  ] = useState(0);
+
+  const [
+    ratingCount,
+    setRatingCount,
+  ] = useState(0);
+
+  const [
+    userRating,
+    setUserRating,
+  ] = useState(0);
+
+  const [
+    ratingSaving,
+    setRatingSaving,
+  ] = useState(false);
+
+  const [
+    ratingError,
+    setRatingError,
+  ] = useState("");
 
   const cartItem = cartItems.find(
-    (cartItem) => String(cartItem.id) === String(id)
+    (currentCartItem) =>
+      String(currentCartItem.id) ===
+      String(id)
   );
 
-  const quantity = cartItem ? cartItem.quantity : 0;
+  const quantity = cartItem
+    ? Number(cartItem.quantity || 0)
+    : 0;
 
-  const computedCartCount = useMemo(() => {
-    if (typeof cartCount === "number") return cartCount;
+  const computedCartCount =
+    useMemo(() => {
+      if (
+        typeof cartCount ===
+        "number"
+      ) {
+        return cartCount;
+      }
 
-    return cartItems.reduce(
-      (total, item) => total + Number(item.quantity || 0),
-      0
-    );
-  }, [cartCount, cartItems]);
+      return cartItems.reduce(
+        (total, item) =>
+          total +
+          Number(
+            item.quantity || 0
+          ),
+        0
+      );
+    }, [cartCount, cartItems]);
 
-  const stock = Number(food?.stock || 0);
+  const stock = Number(
+    food?.stock || 0
+  );
+
   const kitchenName =
-    food?.seller_kitchen_name || food?.seller || "Home Kitchen";
-  const sellerDoorNo = food?.seller_door_no || "";
+    food?.seller_kitchen_name ||
+    food?.seller ||
+    "Home Kitchen";
+
+  const sellerDoorNo =
+    food?.seller_door_no || "";
+
+  const sellerAvatarUrl =
+    food?.seller_avatar_url || "";
 
   const kitchenIsClosed =
-    kitchenOnline === false || food?.seller_online === false;
-  const fulfillmentUnavailable =
-    deliveryAvailable === false && pickupAvailable === false;
-  const isSoldOut = stock <= 0;
-  const isBlocked = kitchenIsClosed || fulfillmentUnavailable || isSoldOut;
+    kitchenOnline === false ||
+    food?.seller_online === false;
 
-  const deliveryTime = food?.time || food?.delivery_time || "30-40 min";
-  const distanceText =
-    food?.distance_text ||
-    food?.distance ||
-    (food?.distance_km ? `${food.distance_km} km` : "4.2 km");
+  const fulfillmentUnavailable =
+    deliveryAvailable === false &&
+    pickupAvailable === false;
+
+  const isSoldOut = stock <= 0;
+
+  const isBlocked =
+    kitchenIsClosed ||
+    fulfillmentUnavailable ||
+    isSoldOut;
+
+  const deliveryTime =
+    food?.time ||
+    food?.delivery_time ||
+    "30-40 min";
 
   useEffect(() => {
+    setSelectedKitchenCategory(
+      "All"
+    );
+
     fetchFoodDetails();
 
     const foodsChannel = supabase
-      .channel(`food-details-foods-${id}`)
+      .channel(
+        `food-details-foods-${id}`
+      )
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "foods" },
-        () => fetchFoodDetails(false)
+        {
+          event: "*",
+          schema: "public",
+          table: "foods",
+        },
+        () =>
+          fetchFoodDetails(false)
       )
       .subscribe();
 
-    const profilesChannel = supabase
-      .channel(`food-details-profiles-${id}`)
+    const profilesChannel =
+      supabase
+        .channel(
+          `food-details-profiles-${id}`
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "profiles",
+          },
+          () =>
+            fetchFoodDetails(false)
+        )
+        .subscribe();
+
+    const ratingsChannel = supabase
+      .channel(
+        `food-details-ratings-${id}`
+      )
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "profiles" },
-        () => fetchFoodDetails(false)
+        {
+          event: "*",
+          schema: "public",
+          table: "food_ratings",
+        },
+        () =>
+          fetchFoodDetails(false)
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(foodsChannel);
-      supabase.removeChannel(profilesChannel);
+      supabase.removeChannel(
+        foodsChannel
+      );
+
+      supabase.removeChannel(
+        profilesChannel
+      );
+
+      supabase.removeChannel(
+        ratingsChannel
+      );
     };
-  }, [id]);
+  }, [id, user?.id]);
 
   useEffect(() => {
     function syncFavoriteState() {
       if (!food) return;
-      setLiked(isItemFavorite(food));
+
+      setLiked(
+        isItemFavorite(food)
+      );
     }
 
-    window.addEventListener("Nefo_favorites_updated", syncFavoriteState);
-    window.addEventListener("storage", syncFavoriteState);
+    window.addEventListener(
+      "Nefo_favorites_updated",
+      syncFavoriteState
+    );
+
+    window.addEventListener(
+      "storage",
+      syncFavoriteState
+    );
 
     return () => {
-      window.removeEventListener("Nefo_favorites_updated", syncFavoriteState);
-      window.removeEventListener("storage", syncFavoriteState);
+      window.removeEventListener(
+        "Nefo_favorites_updated",
+        syncFavoriteState
+      );
+
+      window.removeEventListener(
+        "storage",
+        syncFavoriteState
+      );
     };
   }, [food]);
 
   function showToast({
     icon = "✅",
     title = "Done",
-    message = "",
+    message: toastMessage = "",
     actionLabel = "",
     href = "",
   }) {
     setToast({
       icon,
       title,
-      message,
+      message: toastMessage,
       actionLabel,
       href,
     });
 
-    setTimeout(() => {
+    window.setTimeout(() => {
       setToast(null);
-    }, 1500);
+    }, 1600);
   }
 
-  async function fetchKitchenProfile(kitchenId) {
+  async function fetchKitchenProfile(
+    kitchenId
+  ) {
     if (!kitchenId) {
       return {
         seller_online: true,
@@ -175,30 +426,57 @@ export default function FoodDetails() {
         seller_specialty: "",
         delivery_available: true,
         pickup_available: true,
+        avatar_url: "",
       };
     }
 
-    const { data, error } = await supabase
+    const {
+      data,
+      error,
+    } = await supabase
       .from("profiles")
       .select(
-        "id, seller_online, seller_kitchen_name, seller_door_no, seller_about, seller_specialty, delivery_available, pickup_available"
+        "id, seller_online, seller_kitchen_name, seller_door_no, seller_about, seller_specialty, delivery_available, pickup_available, avatar_url"
       )
       .eq("id", kitchenId)
       .maybeSingle();
 
     if (!error) {
       return {
-        seller_online: data?.seller_online !== false,
-        seller_kitchen_name: data?.seller_kitchen_name || "",
-        seller_door_no: data?.seller_door_no || "",
-        seller_about: data?.seller_about || "",
-        seller_specialty: data?.seller_specialty || "",
-        delivery_available: data?.delivery_available !== false,
-        pickup_available: data?.pickup_available !== false,
+        seller_online:
+          data?.seller_online !==
+          false,
+
+        seller_kitchen_name:
+          data?.seller_kitchen_name ||
+          "",
+
+        seller_door_no:
+          data?.seller_door_no || "",
+
+        seller_about:
+          data?.seller_about || "",
+
+        seller_specialty:
+          data?.seller_specialty ||
+          "",
+
+        delivery_available:
+          data?.delivery_available !==
+          false,
+
+        pickup_available:
+          data?.pickup_available !==
+          false,
+
+        avatar_url:
+          data?.avatar_url || "",
       };
     }
 
-    const { data: fallbackData } = await supabase
+    const {
+      data: fallbackData,
+    } = await supabase
       .from("profiles")
       .select(
         "id, seller_online, seller_kitchen_name, seller_about, seller_specialty, delivery_available, pickup_available"
@@ -207,29 +485,62 @@ export default function FoodDetails() {
       .maybeSingle();
 
     return {
-      seller_online: fallbackData?.seller_online !== false,
-      seller_kitchen_name: fallbackData?.seller_kitchen_name || "",
+      seller_online:
+        fallbackData?.seller_online !==
+        false,
+
+      seller_kitchen_name:
+        fallbackData
+          ?.seller_kitchen_name || "",
+
       seller_door_no: "",
-      seller_about: fallbackData?.seller_about || "",
-      seller_specialty: fallbackData?.seller_specialty || "",
-      delivery_available: fallbackData?.delivery_available !== false,
-      pickup_available: fallbackData?.pickup_available !== false,
+
+      seller_about:
+        fallbackData?.seller_about ||
+        "",
+
+      seller_specialty:
+        fallbackData
+          ?.seller_specialty || "",
+
+      delivery_available:
+        fallbackData
+          ?.delivery_available !==
+        false,
+
+      pickup_available:
+        fallbackData
+          ?.pickup_available !==
+        false,
+
+      avatar_url: "",
     };
   }
 
-  async function fetchFoodDetails(showLoading = true) {
-    if (showLoading) setLoading(true);
+  async function fetchFoodDetails(
+    showLoading = true
+  ) {
+    if (showLoading) {
+      setLoading(true);
+    }
 
     setMessage("");
+    setRatingError("");
 
-    const { data: foodData, error: foodError } = await supabase
+    const {
+      data: foodData,
+      error: foodError,
+    } = await supabase
       .from("foods")
       .select("*")
       .eq("id", id)
       .maybeSingle();
 
     if (foodError) {
-      setMessage(foodError.message);
+      setMessage(
+        foodError.message
+      );
+
       setFood(null);
       setLoading(false);
       return;
@@ -238,44 +549,45 @@ export default function FoodDetails() {
     if (!foodData) {
       setFood(null);
       setKitchenFoods([]);
-      setMessage("This dish is no longer available.");
+
+      setMessage(
+        "This dish is no longer available."
+      );
+
       setLoading(false);
       return;
     }
 
-    const kitchenId = foodData.user_id || foodData.seller_id;
-    const kitchenProfile = await fetchKitchenProfile(kitchenId);
+    const kitchenId =
+      foodData.user_id ||
+      foodData.seller_id;
+
+    const kitchenProfile =
+      await fetchKitchenProfile(
+        kitchenId
+      );
 
     const finalKitchenName =
-      kitchenProfile.seller_kitchen_name ||
+      kitchenProfile
+        .seller_kitchen_name ||
       foodData.seller_kitchen_name ||
       foodData.seller ||
       "Home Kitchen";
 
-    const enrichedFood = {
-      ...foodData,
-      seller_id: kitchenId,
-      seller_online: kitchenProfile.seller_online,
-      seller_kitchen_name: finalKitchenName,
-      seller_door_no:
-        kitchenProfile.seller_door_no || foodData.seller_door_no || "",
-      seller_about: kitchenProfile.seller_about || foodData.seller_about || "",
-      seller_specialty:
-        kitchenProfile.seller_specialty || foodData.seller_specialty || "",
-      delivery_available: kitchenProfile.delivery_available,
-      pickup_available: kitchenProfile.pickup_available,
-    };
-
-    setFood(enrichedFood);
-    setLiked(isItemFavorite(enrichedFood));
-    setKitchenOnline(kitchenProfile.seller_online);
-    setDeliveryAvailable(kitchenProfile.delivery_available);
-    setPickupAvailable(kitchenProfile.pickup_available);
-
-    const { data: allFoodsData } = await supabase
+    const {
+      data: allFoodsData,
+      error: allFoodsError,
+    } = await supabase
       .from("foods")
       .select("*")
-      .order("id", { ascending: false });
+      .order("id", {
+        ascending: false,
+      });
+
+    const allFoods =
+      allFoodsError
+        ? [foodData]
+        : allFoodsData || [];
 
     const currentSellerNames = [
       finalKitchenName,
@@ -283,98 +595,419 @@ export default function FoodDetails() {
       foodData.seller,
     ]
       .filter(Boolean)
-      .map((name) => String(name).trim().toLowerCase());
+      .map((name) =>
+        String(name)
+          .trim()
+          .toLowerCase()
+      );
 
-    const enrichedKitchenFoods = (allFoodsData || [])
-      .filter((item) => {
-        if (String(item.id) === String(id)) return false;
+    const matchingKitchenFoods =
+      allFoods.filter((item) => {
+        const itemKitchenId =
+          item.user_id ||
+          item.seller_id;
 
-        const itemKitchenId = item.user_id || item.seller_id;
-
-        const itemNames = [item.seller_kitchen_name, item.seller]
+        const itemNames = [
+          item.seller_kitchen_name,
+          item.seller,
+        ]
           .filter(Boolean)
-          .map((name) => String(name).trim().toLowerCase());
+          .map((name) =>
+            String(name)
+              .trim()
+              .toLowerCase()
+          );
 
         const sameKitchenId =
           kitchenId &&
           itemKitchenId &&
-          String(itemKitchenId) === String(kitchenId);
+          String(itemKitchenId) ===
+            String(kitchenId);
 
-        const sameKitchenName = itemNames.some((name) =>
-          currentSellerNames.includes(name)
+        const sameKitchenName =
+          itemNames.some((name) =>
+            currentSellerNames.includes(
+              name
+            )
+          );
+
+        return (
+          sameKitchenId ||
+          sameKitchenName
+        );
+      });
+
+    const relevantFoodIds = [
+      ...new Set(
+        [
+          foodData,
+          ...matchingKitchenFoods,
+        ]
+          .map((item) => item.id)
+          .filter(
+            (foodId) =>
+              foodId !== undefined &&
+              foodId !== null
+          )
+      ),
+    ];
+
+    let ratingRows = [];
+
+    if (
+      relevantFoodIds.length > 0
+    ) {
+      const {
+        data: ratingsData,
+        error: ratingsError,
+      } = await supabase
+        .from("food_ratings")
+        .select(
+          "food_id, user_id, rating"
+        )
+        .in(
+          "food_id",
+          relevantFoodIds
         );
 
-        return sameKitchenId || sameKitchenName;
-      })
-      .map((item) => ({
-        ...item,
-        seller_id: item.user_id || item.seller_id || kitchenId,
-        seller_online: kitchenProfile.seller_online,
-        seller_kitchen_name:
-          kitchenProfile.seller_kitchen_name ||
-          item.seller_kitchen_name ||
-          item.seller ||
-          finalKitchenName,
-        seller_door_no:
-          kitchenProfile.seller_door_no || item.seller_door_no || "",
-        delivery_available: kitchenProfile.delivery_available,
-        pickup_available: kitchenProfile.pickup_available,
-      }));
+      if (ratingsError) {
+        setRatingError(
+          `Ratings could not be loaded: ${ratingsError.message}`
+        );
+      } else {
+        ratingRows =
+          ratingsData || [];
+      }
+    }
 
-    setKitchenFoods(enrichedKitchenFoods);
+    const ratingMap =
+      buildRatingMap(ratingRows);
+
+    const currentFoodRating =
+      getFoodRating(
+        ratingMap,
+        foodData.id
+      );
+
+    const currentUserRating =
+      user?.id
+        ? ratingRows.find(
+            (ratingRow) =>
+              String(
+                ratingRow.food_id
+              ) ===
+                String(foodData.id) &&
+              String(
+                ratingRow.user_id
+              ) === String(user.id)
+          )
+        : null;
+
+    const enrichedFood = {
+      ...foodData,
+
+      seller_id: kitchenId,
+
+      seller_online:
+        kitchenProfile.seller_online,
+
+      seller_kitchen_name:
+        finalKitchenName,
+
+      seller_door_no:
+        kitchenProfile
+          .seller_door_no ||
+        foodData.seller_door_no ||
+        "",
+
+      seller_about:
+        kitchenProfile
+          .seller_about ||
+        foodData.seller_about ||
+        "",
+
+      seller_specialty:
+        kitchenProfile
+          .seller_specialty ||
+        foodData.seller_specialty ||
+        "",
+
+      seller_avatar_url:
+        kitchenProfile.avatar_url ||
+        "",
+
+      delivery_available:
+        kitchenProfile
+          .delivery_available,
+
+      pickup_available:
+        kitchenProfile
+          .pickup_available,
+
+      rating_average:
+        currentFoodRating.average,
+
+      rating_count:
+        currentFoodRating.count,
+    };
+
+    const enrichedKitchenFoods =
+      matchingKitchenFoods
+        .filter(
+          (item) =>
+            String(item.id) !==
+            String(id)
+        )
+        .map((item) => {
+          const itemRating =
+            getFoodRating(
+              ratingMap,
+              item.id
+            );
+
+          return {
+            ...item,
+
+            seller_id:
+              item.user_id ||
+              item.seller_id ||
+              kitchenId,
+
+            seller_online:
+              kitchenProfile
+                .seller_online,
+
+            seller_kitchen_name:
+              kitchenProfile
+                .seller_kitchen_name ||
+              item.seller_kitchen_name ||
+              item.seller ||
+              finalKitchenName,
+
+            seller_door_no:
+              kitchenProfile
+                .seller_door_no ||
+              item.seller_door_no ||
+              "",
+
+            seller_avatar_url:
+              kitchenProfile
+                .avatar_url || "",
+
+            delivery_available:
+              kitchenProfile
+                .delivery_available,
+
+            pickup_available:
+              kitchenProfile
+                .pickup_available,
+
+            rating_average:
+              itemRating.average,
+
+            rating_count:
+              itemRating.count,
+          };
+        });
+
+    setFood(enrichedFood);
+
+    setLiked(
+      isItemFavorite(
+        enrichedFood
+      )
+    );
+
+    setKitchenOnline(
+      kitchenProfile.seller_online
+    );
+
+    setDeliveryAvailable(
+      kitchenProfile
+        .delivery_available
+    );
+
+    setPickupAvailable(
+      kitchenProfile.pickup_available
+    );
+
+    setRatingAverage(
+      currentFoodRating.average
+    );
+
+    setRatingCount(
+      currentFoodRating.count
+    );
+
+    setUserRating(
+      Number(
+        currentUserRating?.rating ||
+          0
+      )
+    );
+
+    setKitchenFoods(
+      enrichedKitchenFoods
+    );
+
     setLoading(false);
   }
 
-  const availableKitchenFoods = useMemo(() => {
-    return kitchenFoods.filter(
-      (item) =>
-        Number(item.stock || 0) > 0 &&
-        item.seller_online !== false &&
-        (item.delivery_available !== false || item.pickup_available !== false)
-    );
-  }, [kitchenFoods]);
+  async function submitRating(
+    ratingValue
+  ) {
+    if (!user?.id) {
+      setRatingError(
+        "Please sign in before rating this dish."
+      );
 
-  const kitchenCategoryCounts = useMemo(() => {
-    const counts = { All: kitchenFoods.length };
+      return;
+    }
 
-    KITCHEN_MENU_CATEGORIES.forEach((categoryName) => {
-      counts[categoryName] = 0;
+    if (!food?.id) return;
+
+    if (
+      ratingValue < 1 ||
+      ratingValue > 5
+    ) {
+      return;
+    }
+
+    setRatingSaving(true);
+    setRatingError("");
+
+    const {
+      error,
+    } = await supabase
+      .from("food_ratings")
+      .upsert(
+        {
+          food_id: food.id,
+          user_id: user.id,
+          rating: ratingValue,
+          updated_at:
+            new Date().toISOString(),
+        },
+        {
+          onConflict:
+            "food_id,user_id",
+        }
+      );
+
+    if (error) {
+      setRatingError(
+        `Rating could not be saved: ${error.message}`
+      );
+
+      setRatingSaving(false);
+      return;
+    }
+
+    setUserRating(ratingValue);
+
+    showToast({
+      icon: "⭐",
+      title: "Rating saved",
+      message: `You rated ${food.name} ${ratingValue} out of 5.`,
     });
 
-    kitchenFoods.forEach((item) => {
-      const itemCategory = item.category || "Meals";
+    await fetchFoodDetails(false);
 
-      if (counts[itemCategory] !== undefined) {
-        counts[itemCategory] += 1;
+    setRatingSaving(false);
+  }
+
+  const availableKitchenFoods =
+    useMemo(() => {
+      return kitchenFoods.filter(
+        (item) =>
+          Number(
+            item.stock || 0
+          ) > 0 &&
+          item.seller_online !==
+            false &&
+          (item.delivery_available !==
+            false ||
+            item.pickup_available !==
+              false)
+      );
+    }, [kitchenFoods]);
+
+  const kitchenCategoryCounts =
+    useMemo(() => {
+      const counts = {
+        All: kitchenFoods.length,
+      };
+
+      KITCHEN_MENU_CATEGORIES.forEach(
+        (categoryName) => {
+          counts[categoryName] = 0;
+        }
+      );
+
+      kitchenFoods.forEach(
+        (item) => {
+          const itemCategory =
+            item.category ||
+            "Meals";
+
+          if (
+            counts[itemCategory] !==
+            undefined
+          ) {
+            counts[itemCategory] += 1;
+          }
+        }
+      );
+
+      return counts;
+    }, [kitchenFoods]);
+
+  const visibleKitchenFoods =
+    useMemo(() => {
+      if (
+        selectedKitchenCategory ===
+        "All"
+      ) {
+        return kitchenFoods;
       }
-    });
 
-    return counts;
-  }, [kitchenFoods]);
-
-  const visibleKitchenFoods = useMemo(() => {
-    if (selectedKitchenCategory === "All") return kitchenFoods;
-
-    return kitchenFoods.filter(
-      (item) => (item.category || "Meals") === selectedKitchenCategory
-    );
-  }, [kitchenFoods, selectedKitchenCategory]);
+      return kitchenFoods.filter(
+        (item) =>
+          (item.category ||
+            "Meals") ===
+          selectedKitchenCategory
+      );
+    }, [
+      kitchenFoods,
+      selectedKitchenCategory,
+    ]);
 
   function handleAddToCart() {
     if (!food) return;
 
     if (kitchenIsClosed) {
-      alert("This kitchen is closed right now.");
+      alert(
+        "This kitchen is closed right now."
+      );
+
       return;
     }
 
-    if (fulfillmentUnavailable) {
-      alert("This kitchen is not taking delivery or pickup orders right now.");
+    if (
+      fulfillmentUnavailable
+    ) {
+      alert(
+        "This kitchen is not taking delivery or pickup orders right now."
+      );
+
       return;
     }
 
     if (isSoldOut) {
-      alert("This dish is sold out.");
+      alert(
+        "This dish is sold out."
+      );
+
       return;
     }
 
@@ -383,7 +1016,10 @@ export default function FoodDetails() {
 
   function handleIncrease() {
     if (quantity >= stock) {
-      alert("You have reached the available stock limit.");
+      alert(
+        "You have reached the available stock limit."
+      );
+
       return;
     }
 
@@ -397,38 +1033,61 @@ export default function FoodDetails() {
   function handleToggleFavorite() {
     if (!food) return;
 
-    const itemId = getFavoriteId(food);
+    const itemId =
+      getFavoriteId(food);
+
     if (!itemId) return;
 
-    const currentFavorites = readFavorites();
-    const alreadyFavorite = currentFavorites.some(
-      (favoriteItem) => getFavoriteId(favoriteItem) === itemId
-    );
+    const currentFavorites =
+      readFavorites();
 
-    if (alreadyFavorite) {
-      const nextFavorites = currentFavorites.filter(
-        (favoriteItem) => getFavoriteId(favoriteItem) !== itemId
+    const alreadyFavorite =
+      currentFavorites.some(
+        (favoriteItem) =>
+          getFavoriteId(
+            favoriteItem
+          ) === itemId
       );
 
-      saveFavorites(nextFavorites);
+    if (alreadyFavorite) {
+      const nextFavorites =
+        currentFavorites.filter(
+          (favoriteItem) =>
+            getFavoriteId(
+              favoriteItem
+            ) !== itemId
+        );
+
+      saveFavorites(
+        nextFavorites
+      );
+
       setLiked(false);
 
       showToast({
         icon: "♡",
-        title: "Removed from favorites",
+        title:
+          "Removed from favorites",
         message: `${food.name} removed from your favorites.`,
-        actionLabel: "View Favorites",
+        actionLabel:
+          "View Favorites",
         href: "/favorites",
       });
 
       return;
     }
 
-    const favoriteItem = buildFavoriteItem(food);
+    const favoriteItem =
+      buildFavoriteItem(food);
+
     const nextFavorites = [
       favoriteItem,
+
       ...currentFavorites.filter(
-        (favoriteItem) => getFavoriteId(favoriteItem) !== itemId
+        (currentFavorite) =>
+          getFavoriteId(
+            currentFavorite
+          ) !== itemId
       ),
     ];
 
@@ -437,22 +1096,39 @@ export default function FoodDetails() {
 
     showToast({
       icon: "❤️",
-      title: "Added to favorites",
+      title:
+        "Added to favorites",
       message: `${food.name} saved to your favorites.`,
-      actionLabel: "View Favorites",
+      actionLabel:
+        "View Favorites",
       href: "/favorites",
     });
   }
 
   function getAvailabilityText() {
-    if (kitchenIsClosed) return "Ordering temporarily unavailable";
-    if (fulfillmentUnavailable) return "Kitchen is not taking orders right now";
-    if (isSoldOut) return "Sold out";
+    if (kitchenIsClosed) {
+      return "Ordering temporarily unavailable";
+    }
+
+    if (
+      fulfillmentUnavailable
+    ) {
+      return "Kitchen is not taking orders right now";
+    }
+
+    if (isSoldOut) {
+      return "Sold out";
+    }
+
     return "";
   }
 
   function getAvailabilityClass() {
-    if (kitchenIsClosed || fulfillmentUnavailable || isSoldOut) {
+    if (
+      kitchenIsClosed ||
+      fulfillmentUnavailable ||
+      isSoldOut
+    ) {
       return "text-red-500";
     }
 
@@ -460,15 +1136,34 @@ export default function FoodDetails() {
   }
 
   function getKitchenStatusText() {
-    if (kitchenIsClosed) return "Kitchen Closed";
-    if (fulfillmentUnavailable) return "Not Taking Orders";
+    if (kitchenIsClosed) {
+      return "Kitchen Closed";
+    }
+
+    if (
+      fulfillmentUnavailable
+    ) {
+      return "Not Taking Orders";
+    }
+
     return "Open now";
   }
 
   function getMainButtonLabel() {
-    if (kitchenIsClosed) return "Kitchen Closed";
-    if (fulfillmentUnavailable) return "Unavailable";
-    if (isSoldOut) return "Sold Out";
+    if (kitchenIsClosed) {
+      return "Kitchen Closed";
+    }
+
+    if (
+      fulfillmentUnavailable
+    ) {
+      return "Unavailable";
+    }
+
+    if (isSoldOut) {
+      return "Sold Out";
+    }
+
     return "Add to Cart";
   }
 
@@ -484,6 +1179,7 @@ export default function FoodDetails() {
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#41D3BD]/12 text-3xl">
               🍽️
             </div>
+
             <p className="mt-4 font-bold text-[#51615D]">
               Loading dish details...
             </p>
@@ -498,14 +1194,17 @@ export default function FoodDetails() {
       <main className="min-h-screen bg-[#FFFFF2] px-4 py-8 text-[#111827]">
         <div className="mx-auto flex min-h-[70vh] max-w-md items-center justify-center">
           <div className="w-full rounded-[28px] border border-[#E8F4F1] bg-white/90 p-8 text-center shadow-[8px_8px_22px_rgba(7,59,53,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
-            <div className="text-5xl">🍽️</div>
+            <div className="text-5xl">
+              🍽️
+            </div>
 
             <h1 className="mt-4 text-3xl font-black text-[#111827]">
               Dish not found
             </h1>
 
             <p className="mt-3 text-[#51615D]">
-              {message || "This dish may have been removed."}
+              {message ||
+                "This dish may have been removed."}
             </p>
 
             <Link
@@ -530,7 +1229,9 @@ export default function FoodDetails() {
             </div>
 
             <div className="min-w-0 flex-1">
-              <p className="font-black text-[#073B35]">{toast.title}</p>
+              <p className="font-black text-[#073B35]">
+                {toast.title}
+              </p>
 
               {toast.message ? (
                 <p className="mt-1 truncate text-sm font-semibold text-[#51615D]">
@@ -540,7 +1241,8 @@ export default function FoodDetails() {
             </div>
           </div>
 
-          {toast.href && toast.actionLabel ? (
+          {toast.href &&
+          toast.actionLabel ? (
             <Link
               to={toast.href}
               className="mt-4 block rounded-2xl border border-[#073B35] bg-[#073B35] py-3 text-center font-black text-white"
@@ -556,7 +1258,9 @@ export default function FoodDetails() {
           <div className="absolute left-3 right-3 top-3 z-20 flex items-center justify-between">
             <button
               type="button"
-              onClick={() => navigate(-1)}
+              onClick={() =>
+                navigate(-1)
+              }
               className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[#073B35] shadow-lg shadow-black/10 backdrop-blur active:scale-95"
               aria-label="Go back"
             >
@@ -565,13 +1269,23 @@ export default function FoodDetails() {
 
             <button
               type="button"
-              onClick={handleToggleFavorite}
+              onClick={
+                handleToggleFavorite
+              }
               className={`flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-lg shadow-black/10 backdrop-blur active:scale-95 ${
-                liked ? "text-red-500" : "text-[#073B35]"
+                liked
+                  ? "text-red-500"
+                  : "text-[#073B35]"
               }`}
-              aria-label={liked ? "Remove from favorites" : "Save dish"}
+              aria-label={
+                liked
+                  ? "Remove from favorites"
+                  : "Save dish"
+              }
             >
-              <HeartIcon filled={liked} />
+              <HeartIcon
+                filled={liked}
+              />
             </button>
           </div>
 
@@ -581,7 +1295,8 @@ export default function FoodDetails() {
                 src={food.image}
                 alt={food.name}
                 className={`h-full w-full object-cover ${
-                  kitchenIsClosed || fulfillmentUnavailable
+                  kitchenIsClosed ||
+                  fulfillmentUnavailable
                     ? "grayscale opacity-60"
                     : ""
                 }`}
@@ -599,8 +1314,10 @@ export default function FoodDetails() {
                 <p className="text-lg font-black text-[#073B35]">
                   {getMainButtonLabel()}
                 </p>
+
                 <p className="mt-1 text-xs font-semibold text-[#51615D]">
-                  Ordering is temporarily unavailable.
+                  Ordering is temporarily
+                  unavailable.
                 </p>
               </div>
             </div>
@@ -615,8 +1332,20 @@ export default function FoodDetails() {
               </h1>
 
               <div className="mt-2 flex min-w-0 items-center gap-2">
-                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#41D3BD] text-[10px] font-black text-white">
-                  {kitchenName.charAt(0).toUpperCase()}
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#BDEFE6] bg-[#41D3BD] text-[11px] font-black text-white">
+                  {sellerAvatarUrl ? (
+                    <img
+                      src={
+                        sellerAvatarUrl
+                      }
+                      alt={`${kitchenName} profile`}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    kitchenName
+                      .charAt(0)
+                      .toUpperCase()
+                  )}
                 </div>
 
                 <p className="truncate text-xs font-bold text-[#51615D]">
@@ -626,20 +1355,45 @@ export default function FoodDetails() {
             </div>
 
             <div className="shrink-0 pt-1 text-right">
-              <div className="flex items-center justify-end gap-1 text-xs font-black text-[#111827]">
-                <span className="text-[#F59E0B]">★</span>
-                <span>4.8</span>
-                <span className="font-bold text-[#51615D]">(120+)</span>
-              </div>
+              {ratingCount > 0 ? (
+                <>
+                  <div className="flex items-center justify-end gap-1 text-sm font-black text-[#111827]">
+                    <span className="text-[#F59E0B]">
+                      ★
+                    </span>
 
-              <p className={`mt-1 text-[10px] font-black ${getAvailabilityClass()}`}>
-                {getKitchenStatusText()}
-              </p>
+                    <span>
+                      {ratingAverage.toFixed(
+                        1
+                      )}
+                    </span>
+                  </div>
+
+                  <p className="mt-1 text-[10px] font-bold text-[#51615D]">
+                    {ratingCount}{" "}
+                    {ratingCount === 1
+                      ? "rating"
+                      : "ratings"}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-black text-[#073B35]">
+                    New
+                  </p>
+
+                  <p className="mt-1 text-[10px] font-bold text-[#51615D]">
+                    No ratings yet
+                  </p>
+                </>
+              )}
             </div>
           </div>
 
           <div className="mt-4 flex items-center justify-between gap-3">
-            <p className="text-2xl font-black text-[#111827]">₹{food.price}</p>
+            <p className="text-2xl font-black text-[#111827]">
+              ₹{food.price}
+            </p>
 
             <span
               className={`rounded-full px-3 py-1 text-[10px] font-black ${
@@ -658,7 +1412,8 @@ export default function FoodDetails() {
             </p>
           ) : (
             <p className="mt-4 text-sm font-semibold leading-relaxed text-[#51615D]">
-              Fresh homemade food prepared by {kitchenName}.
+              Fresh homemade food
+              prepared by {kitchenName}.
             </p>
           )}
 
@@ -674,8 +1429,100 @@ export default function FoodDetails() {
               }
             />
 
-            <InfoCard value={distanceText} label="Distance" />
+            <InfoCard
+              value={
+                ratingCount > 0
+                  ? `${ratingAverage.toFixed(
+                      1
+                    )} ★`
+                  : "New"
+              }
+              label={
+                ratingCount > 0
+                  ? `${ratingCount} ${
+                      ratingCount === 1
+                        ? "rating"
+                        : "ratings"
+                    }`
+                  : "Be the first to rate"
+              }
+            />
           </div>
+
+          <section className="mt-4 rounded-[24px] border border-[#BDEFE6] bg-white/95 p-4 shadow-[6px_6px_16px_rgba(7,59,53,0.06),-6px_-6px_16px_rgba(255,255,255,0.95)]">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-black text-[#111827]">
+                  Rate this dish
+                </p>
+
+                <p className="mt-1 text-xs font-semibold text-[#51615D]">
+                  Your rating updates the
+                  live score for this
+                  food item.
+                </p>
+              </div>
+
+              {userRating > 0 ? (
+                <span className="shrink-0 rounded-full border border-[#F3C06E] bg-[#FFF8E7] px-3 py-1 text-[10px] font-black text-[#B56B00]">
+                  Your rating:{" "}
+                  {userRating}/5
+                </span>
+              ) : null}
+            </div>
+
+            {ratingError ? (
+              <p className="mt-3 rounded-2xl border border-red-200 bg-red-50 p-3 text-xs font-black text-red-600">
+                {ratingError}
+              </p>
+            ) : null}
+
+            <div className="mt-4 flex items-center justify-between gap-2">
+              {[1, 2, 3, 4, 5].map(
+                (ratingValue) => {
+                  const active =
+                    ratingValue <=
+                    userRating;
+
+                  return (
+                    <button
+                      key={ratingValue}
+                      type="button"
+                      onClick={() =>
+                        submitRating(
+                          ratingValue
+                        )
+                      }
+                      disabled={
+                        ratingSaving
+                      }
+                      className={`flex h-11 flex-1 items-center justify-center rounded-2xl border text-2xl transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 ${
+                        active
+                          ? "border-[#F3C06E] bg-[#FFF8E7] text-[#F59E0B]"
+                          : "border-[#D8EAE6] bg-[#FFFDF7] text-[#B9C7C4]"
+                      }`}
+                      aria-label={`Rate ${ratingValue} out of 5`}
+                      aria-pressed={
+                        active
+                      }
+                    >
+                      {active
+                        ? "★"
+                        : "☆"}
+                    </button>
+                  );
+                }
+              )}
+            </div>
+
+            <p className="mt-3 text-center text-[10px] font-bold text-[#51615D]">
+              {ratingSaving
+                ? "Saving your rating..."
+                : userRating > 0
+                ? "Tap another star to update your rating."
+                : "Tap a star to submit your rating."}
+            </p>
+          </section>
 
           <div className="mt-4 rounded-[24px] border border-[#E8F4F1] bg-white/90 p-4 shadow-[6px_6px_16px_rgba(7,59,53,0.06),-6px_-6px_16px_rgba(255,255,255,0.95)]">
             <h2 className="text-base font-black text-[#111827]">
@@ -690,13 +1537,16 @@ export default function FoodDetails() {
             <div className="mt-3 flex flex-wrap gap-2">
               {food.seller_specialty ? (
                 <span className="rounded-full bg-[#41D3BD]/12 px-3 py-1.5 text-[10px] font-black text-[#073B35]">
-                  {food.seller_specialty}
+                  {
+                    food.seller_specialty
+                  }
                 </span>
               ) : null}
 
               {sellerDoorNo ? (
                 <span className="rounded-full bg-[#FFFFF2] px-3 py-1.5 text-[10px] font-black text-[#073B35]">
-                  Door No. {sellerDoorNo}
+                  Door No.{" "}
+                  {sellerDoorNo}
                 </span>
               ) : null}
 
@@ -713,7 +1563,9 @@ export default function FoodDetails() {
           </div>
 
           {getAvailabilityText() ? (
-            <p className={`mt-3 text-xs font-black ${getAvailabilityClass()}`}>
+            <p
+              className={`mt-3 text-xs font-black ${getAvailabilityClass()}`}
+            >
               {getAvailabilityText()}
             </p>
           ) : null}
@@ -732,7 +1584,9 @@ export default function FoodDetails() {
             </div>
 
             <Link
-              to="/marketplace"
+              to={`/?q=${encodeURIComponent(
+                kitchenName
+              )}&search=1`}
               className="shrink-0 text-xs font-black text-[#0B8F80]"
             >
               See All
@@ -744,84 +1598,130 @@ export default function FoodDetails() {
               <div className="flex min-w-max gap-2">
                 <button
                   type="button"
-                  onClick={() => setSelectedKitchenCategory("All")}
+                  onClick={() =>
+                    setSelectedKitchenCategory(
+                      "All"
+                    )
+                  }
                   className={`shrink-0 rounded-full px-4 py-2 text-[11px] font-black ${
-                    selectedKitchenCategory === "All"
+                    selectedKitchenCategory ===
+                    "All"
                       ? "bg-[#073B35] text-white"
                       : "bg-white/90 text-[#51615D]"
                   }`}
                 >
-                  All ({kitchenCategoryCounts.All || 0})
+                  All (
+                  {kitchenCategoryCounts.All ||
+                    0}
+                  )
                 </button>
 
                 {KITCHEN_MENU_CATEGORIES.filter(
-                  (categoryName) => kitchenCategoryCounts[categoryName] > 0
-                ).map((categoryName) => (
-                  <button
-                    key={categoryName}
-                    type="button"
-                    onClick={() => setSelectedKitchenCategory(categoryName)}
-                    className={`shrink-0 rounded-full px-4 py-2 text-[11px] font-black ${
-                      selectedKitchenCategory === categoryName
-                        ? "bg-[#073B35] text-white"
-                        : "bg-white/90 text-[#51615D]"
-                    }`}
-                  >
-                    {categoryName} ({kitchenCategoryCounts[categoryName]})
-                  </button>
-                ))}
+                  (categoryName) =>
+                    kitchenCategoryCounts[
+                      categoryName
+                    ] > 0
+                ).map(
+                  (categoryName) => (
+                    <button
+                      key={
+                        categoryName
+                      }
+                      type="button"
+                      onClick={() =>
+                        setSelectedKitchenCategory(
+                          categoryName
+                        )
+                      }
+                      className={`shrink-0 rounded-full px-4 py-2 text-[11px] font-black ${
+                        selectedKitchenCategory ===
+                        categoryName
+                          ? "bg-[#073B35] text-white"
+                          : "bg-white/90 text-[#51615D]"
+                      }`}
+                    >
+                      {categoryName} (
+                      {
+                        kitchenCategoryCounts[
+                          categoryName
+                        ]
+                      }
+                      )
+                    </button>
+                  )
+                )}
               </div>
             </div>
           ) : null}
 
           {kitchenFoods.length === 0 ? (
             <div className="rounded-[24px] border border-[#E8F4F1] bg-white/90 p-5 text-center shadow-[6px_6px_16px_rgba(7,59,53,0.06),-6px_-6px_16px_rgba(255,255,255,0.95)]">
-              <div className="text-3xl">🍽️</div>
+              <div className="text-3xl">
+                🍽️
+              </div>
 
               <p className="mt-3 font-black text-[#111827]">
-                No other dishes from this kitchen.
+                No other dishes from
+                this kitchen.
               </p>
 
               <p className="mt-1 text-sm font-semibold text-[#51615D]">
-                Explore other nearby kitchens in the marketplace.
+                Explore other nearby
+                kitchens in the
+                marketplace.
               </p>
             </div>
-          ) : visibleKitchenFoods.length === 0 ? (
+          ) : visibleKitchenFoods.length ===
+            0 ? (
             <div className="rounded-[24px] border border-[#E8F4F1] bg-white/90 p-5 text-center shadow-sm">
               <p className="text-sm font-semibold text-[#51615D]">
-                No dishes in this category right now.
+                No dishes in this
+                category right now.
               </p>
             </div>
           ) : (
             <>
-              {availableKitchenFoods.length > 0 ? (
+              {availableKitchenFoods.length >
+              0 ? (
                 <p className="mb-3 text-xs font-bold text-[#51615D]">
-                  {availableKitchenFoods.length} available from this kitchen.
+                  {
+                    availableKitchenFoods.length
+                  }{" "}
+                  available from this
+                  kitchen.
                 </p>
               ) : null}
 
               <div className="space-y-3">
-                {visibleKitchenFoods.map((item) => (
-                  <FoodCard key={item.id} item={item} />
-                ))}
+                {visibleKitchenFoods.map(
+                  (item) => (
+                    <FoodCard
+                      key={item.id}
+                      item={item}
+                    />
+                  )
+                )}
               </div>
             </>
           )}
         </section>
       </section>
 
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#E8F4F1] bg-[#FFFFF2]/95 px-4 pb-4 pt-3 backdrop-blur-xl">
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#E8F4F1] bg-[#FFFFF2]/95 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl">
         <div className="mx-auto flex max-w-md items-center gap-3">
           <div className="flex h-14 shrink-0 items-center overflow-hidden rounded-2xl border border-[#E8F4F1] bg-white/90 shadow-[4px_4px_12px_rgba(7,59,53,0.06),-4px_-4px_12px_rgba(255,255,255,0.95)]">
             <button
               type="button"
-              onClick={handleDecrease}
+              onClick={
+                handleDecrease
+              }
               disabled={quantity <= 0}
               className={`flex h-14 w-12 items-center justify-center text-xl font-black ${
                 quantity <= 0
                   ? "cursor-not-allowed text-[#B8C9C5]"
                   : "text-[#073B35] active:bg-[#E8F4F1]"
               }`}
+              aria-label="Decrease quantity"
             >
               −
             </button>
@@ -832,19 +1732,29 @@ export default function FoodDetails() {
 
             <button
               type="button"
-              onClick={quantity === 0 ? handleAddToCart : handleIncrease}
-              disabled={isBlocked || quantity >= stock}
+              onClick={
+                quantity === 0
+                  ? handleAddToCart
+                  : handleIncrease
+              }
+              disabled={
+                isBlocked ||
+                quantity >= stock
+              }
               className={`flex h-14 w-12 items-center justify-center text-xl font-black ${
-                isBlocked || quantity >= stock
+                isBlocked ||
+                quantity >= stock
                   ? "cursor-not-allowed text-[#B8C9C5]"
                   : "text-[#073B35] active:bg-[#E8F4F1]"
               }`}
+              aria-label="Increase quantity"
             >
               +
             </button>
           </div>
 
-          {quantity === 0 || isBlocked ? (
+          {quantity === 0 ||
+          isBlocked ? (
             <button
               type="button"
               onClick={handleAddToCart}
@@ -855,7 +1765,10 @@ export default function FoodDetails() {
                   : "bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
               }`}
             >
-              <span className="block">{getMainButtonLabel()}</span>
+              <span className="block">
+                {getMainButtonLabel()}
+              </span>
+
               {!isBlocked ? (
                 <span className="block text-[10px] font-bold opacity-80">
                   ₹{food.price}
@@ -868,8 +1781,12 @@ export default function FoodDetails() {
               className="flex h-14 flex-1 flex-col items-center justify-center rounded-2xl bg-[#073B35] text-sm font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.98]"
             >
               <span>Go to Cart</span>
+
               <span className="text-[10px] font-bold opacity-80">
-                {computedCartCount} {computedCartCount === 1 ? "item" : "items"}
+                {computedCartCount}{" "}
+                {computedCartCount === 1
+                  ? "item"
+                  : "items"}
               </span>
             </Link>
           )}
@@ -879,11 +1796,19 @@ export default function FoodDetails() {
   );
 }
 
-function InfoCard({ value, label }) {
+function InfoCard({
+  value,
+  label,
+}) {
   return (
     <div className="rounded-[20px] border border-[#E8F4F1] bg-white/90 p-4 text-center shadow-[5px_5px_14px_rgba(7,59,53,0.06),-5px_-5px_14px_rgba(255,255,255,0.95)]">
-      <p className="text-sm font-black text-[#111827]">{value}</p>
-      <p className="mt-1 text-[10px] font-bold text-[#51615D]">{label}</p>
+      <p className="text-sm font-black text-[#111827]">
+        {value}
+      </p>
+
+      <p className="mt-1 text-[10px] font-bold text-[#51615D]">
+        {label}
+      </p>
     </div>
   );
 }
@@ -903,12 +1828,18 @@ function BackIcon() {
   );
 }
 
-function HeartIcon({ filled }) {
+function HeartIcon({
+  filled,
+}) {
   return (
     <svg
       viewBox="0 0 24 24"
       className="h-5 w-5"
-      fill={filled ? "currentColor" : "none"}
+      fill={
+        filled
+          ? "currentColor"
+          : "none"
+      }
       stroke="currentColor"
       strokeWidth="2.2"
     >
