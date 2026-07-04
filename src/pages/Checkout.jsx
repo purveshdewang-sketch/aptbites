@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -10,17 +11,58 @@ import {
 } from "react-router-dom";
 
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
+import { supabase } from "../lib/supabaseClient";
+
+const PLATFORM_FEE = 8;
+
+const NeFo_UPI_ID =
+  "cropg1agroresearch@sbi";
+
+const NeFo_PAYEE_NAME = "NeFo";
+
+const CHECKOUT_STORAGE_PREFIX =
+  "NeFo_checkout_details";
+
+const LEGACY_CHECKOUT_STORAGE_PREFIX =
+  "Nefo_checkout_details";
 
 const CART_TIMING_STORAGE_KEY =
   "NeFo_cart_order_timing";
 
-const MINIMUM_SCHEDULE_NOTICE_MINUTES = 30;
+const LEGACY_CART_TIMING_STORAGE_KEY =
+  "Nefo_cart_order_timing";
+
+const MINIMUM_SCHEDULE_NOTICE_MINUTES =
+  30;
+
+const CARD =
+  "rounded-[26px] border border-[#D8C9B3] bg-white/95 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+
+const INPUT =
+  "w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-3.5 text-sm font-semibold text-[#181411] outline-none placeholder:text-[#9A8E80] focus:border-[#CF743D] focus:bg-white disabled:cursor-not-allowed disabled:bg-[#F1E8DC] disabled:text-[#6B6258]";
 
 function pad2(value) {
-  return String(value).padStart(2, "0");
+  return String(value).padStart(
+    2,
+    "0"
+  );
 }
 
-function toDateValue(date) {
+function formatMoney(value) {
+  const amount = Number(
+    value || 0
+  );
+
+  return amount.toLocaleString(
+    "en-IN",
+    {
+      maximumFractionDigits: 2,
+    }
+  );
+}
+
+function formatDateValue(date) {
   return `${date.getFullYear()}-${pad2(
     date.getMonth() + 1
   )}-${pad2(date.getDate())}`;
@@ -36,20 +78,6 @@ function addDays(date, days) {
   return nextDate;
 }
 
-function getStoredTiming() {
-  try {
-    const saved = localStorage.getItem(
-      CART_TIMING_STORAGE_KEY
-    );
-
-    return saved
-      ? JSON.parse(saved)
-      : null;
-  } catch {
-    return null;
-  }
-}
-
 function buildDateOptions() {
   const today = new Date();
 
@@ -61,100 +89,93 @@ function buildDateOptions() {
       index
     );
 
-    const value =
-      toDateValue(date);
-
-    const dayLabel =
-      index === 0
-        ? "Today"
-        : index === 1
-        ? "Tomorrow"
-        : date.toLocaleDateString(
-            "en-IN",
-            {
-              weekday: "short",
-            }
-          );
-
-    const shortDateLabel =
-      date.toLocaleDateString(
-        "en-IN",
-        {
-          day: "2-digit",
-          month: "short",
-        }
-      );
-
-    const fullDateLabel =
-      date.toLocaleDateString(
-        "en-IN",
-        {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        }
-      );
-
     return {
-      value,
-      dayLabel,
-      shortDateLabel,
-      label: `${dayLabel}, ${fullDateLabel}`,
+      value:
+        formatDateValue(date),
+
+      day:
+        index === 0
+          ? "Today"
+          : index === 1
+          ? "Tomorrow"
+          : date.toLocaleDateString(
+              "en-IN",
+              {
+                weekday: "short",
+              }
+            ),
+
+      date:
+        date.toLocaleDateString(
+          "en-IN",
+          {
+            day: "2-digit",
+            month: "short",
+          }
+        ),
+
+      fullLabel:
+        date.toLocaleDateString(
+          "en-IN",
+          {
+            weekday: "short",
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }
+        ),
     };
   });
 }
 
 function buildTimeOptions() {
-  const slots = [];
+  const options = [];
 
   for (
     let hour = 7;
     hour <= 22;
     hour += 1
   ) {
-    ["00", "30"].forEach(
+    [0, 30].forEach(
       (minute) => {
         const value = `${pad2(
           hour
-        )}:${minute}`;
+        )}:${pad2(minute)}`;
 
-        const date = new Date();
-
-        date.setHours(
-          hour,
-          Number(minute),
-          0,
-          0
+        const label = new Date(
+          `2000-01-01T${value}:00`
+        ).toLocaleTimeString(
+          "en-IN",
+          {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          }
         );
 
-        slots.push({
+        options.push({
           value,
-
-          label:
-            date.toLocaleTimeString(
-              "en-IN",
-              {
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: true,
-              }
-            ),
+          label,
         });
       }
     );
   }
 
-  return slots;
+  return options;
 }
 
 function getAvailableTimeOptions(
   timeOptions,
   selectedDate
 ) {
-  if (!selectedDate) return [];
+  if (!selectedDate) {
+    return [];
+  }
 
   const todayValue =
-    toDateValue(new Date());
+    formatDateValue(
+      new Date()
+    );
 
   if (
     selectedDate !== todayValue
@@ -169,162 +190,217 @@ function getAvailableTimeOptions(
       1000;
 
   return timeOptions.filter(
-    (slot) => {
+    (option) => {
       const slotDate = new Date(
-        `${selectedDate}T${slot.value}:00`
+        `${selectedDate}T${option.value}:00`
       );
 
-      if (
-        Number.isNaN(
-          slotDate.getTime()
-        )
-      ) {
-        return false;
-      }
-
       return (
+        !Number.isNaN(
+          slotDate.getTime()
+        ) &&
         slotDate.getTime() >=
-        minimumTime
+          minimumTime
       );
     }
   );
 }
 
-function getInitialDateValue(
-  storedTiming,
-  dateOptions
+function formatScheduledDateTime(
+  dateValue,
+  timeValue
 ) {
-  const storedDate =
-    storedTiming?.scheduledDate;
-
-  const storedDateIsValid =
-    dateOptions.some(
-      (option) =>
-        option.value === storedDate
-    );
-
-  if (storedDateIsValid) {
-    return storedDate;
+  if (
+    !dateValue ||
+    !timeValue
+  ) {
+    return "";
   }
 
-  return (
-    dateOptions[0]?.value ||
-    toDateValue(new Date())
+  const date = new Date(
+    `${dateValue}T${timeValue}:00`
+  );
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return "";
+  }
+
+  return date.toLocaleString(
+    "en-IN",
+    {
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }
   );
 }
 
-function getInitialTimeValue(
-  storedTiming,
-  availableTimeOptions
+function getSafePackingCharge(
+  value
 ) {
-  const storedTime =
-    storedTiming?.scheduledTime;
-
-  const storedTimeIsValid =
-    availableTimeOptions.some(
-      (option) =>
-        option.value === storedTime
-    );
-
-  if (storedTimeIsValid) {
-    return storedTime;
-  }
-
-  return (
-    availableTimeOptions[0]?.value ||
-    ""
+  return Math.min(
+    15,
+    Math.max(
+      5,
+      Number(value || 5)
+    )
   );
 }
 
-export default function Cart() {
-  const navigate = useNavigate();
-
+export default function Checkout() {
   const {
     cartItems,
     cartTotal,
-    increaseQuantity,
-    decreaseQuantity,
     clearCart,
   } = useCart();
 
-  const dateOptions = useMemo(
-    () => buildDateOptions(),
-    []
-  );
+  const { user } = useAuth();
 
-  const timeOptions = useMemo(
-    () => buildTimeOptions(),
-    []
-  );
+  const navigate = useNavigate();
 
-  const storedTiming = useMemo(
-    () => getStoredTiming(),
-    []
-  );
+  const paymentProofInputRef =
+    useRef(null);
 
-  const initialScheduledDate =
-    useMemo(
-      () =>
-        getInitialDateValue(
-          storedTiming,
-          dateOptions
-        ),
-      [
-        storedTiming,
-        dateOptions,
-      ]
-    );
-
-  const initialAvailableTimes =
-    useMemo(
-      () =>
-        getAvailableTimeOptions(
-          timeOptions,
-          initialScheduledDate
-        ),
-      [
-        timeOptions,
-        initialScheduledDate,
-      ]
-    );
-
-  const initialScheduledTime =
-    useMemo(
-      () =>
-        getInitialTimeValue(
-          storedTiming,
-          initialAvailableTimes
-        ),
-      [
-        storedTiming,
-        initialAvailableTimes,
-      ]
-    );
+  const [
+    formData,
+    setFormData,
+  ] = useState({
+    fullName: "",
+    phone: "",
+    flat: "",
+    deliveryType:
+      "Doorstep delivery",
+    notes: "",
+  });
 
   const [
     orderTiming,
     setOrderTiming,
-  ] = useState(
-    storedTiming?.orderTiming ||
-      "now"
-  );
+  ] = useState("now");
 
   const [
     scheduledDate,
     setScheduledDate,
-  ] = useState(
-    initialScheduledDate
-  );
+  ] = useState("");
 
   const [
     scheduledTime,
     setScheduledTime,
-  ] = useState(
-    initialScheduledTime
-  );
+  ] = useState("");
 
-  const [errors, setErrors] =
-    useState({});
+  const [
+    packingRequired,
+    setPackingRequired,
+  ] = useState(true);
+
+  const [
+    kitchenAcceptsScheduledOrders,
+    setKitchenAcceptsScheduledOrders,
+  ] = useState(false);
+
+  const [
+    deliveryAvailable,
+    setDeliveryAvailable,
+  ] = useState(true);
+
+  const [
+    pickupAvailable,
+    setPickupAvailable,
+  ] = useState(true);
+
+  const [
+    packingCharge,
+    setPackingCharge,
+  ] = useState(5);
+
+  const [
+    checkingKitchenSettings,
+    setCheckingKitchenSettings,
+  ] = useState(true);
+
+  const [
+    paymentReference,
+    setPaymentReference,
+  ] = useState("");
+
+  const [
+    paymentProofFile,
+    setPaymentProofFile,
+  ] = useState(null);
+
+  const [
+    paymentProofPreview,
+    setPaymentProofPreview,
+  ] = useState("");
+
+  const [
+    paymentMessage,
+    setPaymentMessage,
+  ] = useState("");
+
+  const [
+    showQr,
+    setShowQr,
+  ] = useState(false);
+
+  const [
+    showBillDetails,
+    setShowBillDetails,
+  ] = useState(false);
+
+  const [
+    showTimingEditor,
+    setShowTimingEditor,
+  ] = useState(false);
+
+  const [
+    showDeliveryEditor,
+    setShowDeliveryEditor,
+  ] = useState(false);
+
+  const [
+    showContactEditor,
+    setShowContactEditor,
+  ] = useState(false);
+
+  const [
+    showNotesEditor,
+    setShowNotesEditor,
+  ] = useState(false);
+
+  const [
+    errors,
+    setErrors,
+  ] = useState({});
+
+  const [
+    orderPlaced,
+    setOrderPlaced,
+  ] = useState(false);
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(false);
+
+  const dateOptions =
+    useMemo(
+      () => buildDateOptions(),
+      []
+    );
+
+  const timeOptions =
+    useMemo(
+      () => buildTimeOptions(),
+      []
+    );
 
   const availableTimeOptions =
     useMemo(
@@ -339,13 +415,46 @@ export default function Cart() {
       ]
     );
 
-  const finalTotal = cartTotal;
+  const subtotalAmount =
+    Number(cartTotal || 0);
+
+  const sellerPackingCharge =
+    getSafePackingCharge(
+      packingCharge
+    );
+
+  const effectivePackingCharge =
+    packingRequired
+      ? sellerPackingCharge
+      : 0;
+
+  const deliveryFee = 0;
+
+  const totalAmount =
+    subtotalAmount +
+    effectivePackingCharge +
+    PLATFORM_FEE +
+    deliveryFee;
+
+  const paymentMethod = "upi";
+
+  const formattedSchedule =
+    formatScheduledDateTime(
+      scheduledDate,
+      scheduledTime
+    );
+
+  const checkoutBlocked =
+    cartItems.length > 0 &&
+    !checkingKitchenSettings &&
+    !deliveryAvailable &&
+    !pickupAvailable;
 
   const totalQuantity =
     useMemo(() => {
       return cartItems.reduce(
-        (sum, item) =>
-          sum +
+        (total, item) =>
+          total +
           Number(
             item.quantity || 0
           ),
@@ -353,89 +462,458 @@ export default function Cart() {
       );
     }, [cartItems]);
 
-  const kitchenCount =
+  const kitchenName =
     useMemo(() => {
-      return new Set(
-        cartItems.map((item) =>
-          getKitchenName(item)
-        )
-      ).size;
+      const firstItem =
+        cartItems[0];
+
+      return firstItem
+        ? getKitchenName(
+            firstItem
+          )
+        : "Home Kitchen";
     }, [cartItems]);
 
-  const selectedDateLabel =
-    useMemo(() => {
-      return (
-        dateOptions.find(
-          (option) =>
-            option.value ===
-            scheduledDate
-        )?.label || "Select date"
-      );
-    }, [
-      dateOptions,
-      scheduledDate,
-    ]);
+  const upiPaymentLink =
+    `upi://pay?pa=${encodeURIComponent(
+      NeFo_UPI_ID
+    )}&pn=${encodeURIComponent(
+      NeFo_PAYEE_NAME
+    )}&am=${encodeURIComponent(
+      totalAmount
+    )}&cu=INR&tn=${encodeURIComponent(
+      "NeFo food order"
+    )}`;
 
-  const selectedTimeLabel =
-    useMemo(() => {
-      return (
-        timeOptions.find(
-          (option) =>
-            option.value ===
-            scheduledTime
-        )?.label || "Select time"
-      );
-    }, [
-      timeOptions,
-      scheduledTime,
-    ]);
+  const qrCodeUrl =
+    `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(
+      upiPaymentLink
+    )}`;
+
+  function getCheckoutStorageKey() {
+    return user
+      ? `${CHECKOUT_STORAGE_PREFIX}_${user.id}`
+      : `${CHECKOUT_STORAGE_PREFIX}_guest`;
+  }
+
+  function getLegacyCheckoutStorageKey() {
+    return user
+      ? `${LEGACY_CHECKOUT_STORAGE_PREFIX}_${user.id}`
+      : `${LEGACY_CHECKOUT_STORAGE_PREFIX}_guest`;
+  }
 
   useEffect(() => {
+    async function loadSavedCheckoutDetails() {
+      const storageKey =
+        getCheckoutStorageKey();
+
+      const legacyStorageKey =
+        getLegacyCheckoutStorageKey();
+
+      const savedDetails =
+        localStorage.getItem(
+          storageKey
+        ) ||
+        localStorage.getItem(
+          legacyStorageKey
+        );
+
+      if (savedDetails) {
+        try {
+          const parsedDetails =
+            JSON.parse(
+              savedDetails
+            );
+
+          setFormData(
+            (current) => ({
+              ...current,
+
+              fullName:
+                parsedDetails.fullName ||
+                "",
+
+              flat:
+                parsedDetails.flat ||
+                "",
+
+              deliveryType:
+                parsedDetails.deliveryType ||
+                "Doorstep delivery",
+
+              notes:
+                parsedDetails.notes ||
+                "",
+            })
+          );
+
+          setOrderTiming(
+            parsedDetails.orderTiming ||
+              "now"
+          );
+
+          setScheduledDate(
+            parsedDetails.scheduledDate ||
+              ""
+          );
+
+          setScheduledTime(
+            parsedDetails.scheduledTime ||
+              ""
+          );
+
+          setPaymentReference(
+            parsedDetails.paymentReference ||
+              ""
+          );
+
+          setPackingRequired(
+            parsedDetails.packingRequired !==
+              false
+          );
+        } catch {
+          localStorage.removeItem(
+            storageKey
+          );
+
+          localStorage.removeItem(
+            legacyStorageKey
+          );
+        }
+      }
+
+      const cartTimingDetails =
+        localStorage.getItem(
+          CART_TIMING_STORAGE_KEY
+        ) ||
+        localStorage.getItem(
+          LEGACY_CART_TIMING_STORAGE_KEY
+        );
+
+      if (cartTimingDetails) {
+        try {
+          const parsedTiming =
+            JSON.parse(
+              cartTimingDetails
+            );
+
+          setOrderTiming(
+            parsedTiming.orderTiming ||
+              "now"
+          );
+
+          setScheduledDate(
+            parsedTiming.scheduledDate ||
+              ""
+          );
+
+          setScheduledTime(
+            parsedTiming.scheduledTime ||
+              ""
+          );
+        } catch {
+          localStorage.removeItem(
+            CART_TIMING_STORAGE_KEY
+          );
+
+          localStorage.removeItem(
+            LEGACY_CART_TIMING_STORAGE_KEY
+          );
+        }
+      }
+
+      if (!user) {
+        return;
+      }
+
+      let profileData = null;
+
+      const profileResult =
+        await supabase
+          .from("profiles")
+          .select(
+            "full_name, phone, flat, flat_no, apartment_name, block"
+          )
+          .eq("id", user.id)
+          .maybeSingle();
+
+      if (!profileResult.error) {
+        profileData =
+          profileResult.data;
+      } else {
+        const fallbackResult =
+          await supabase
+            .from("profiles")
+            .select(
+              "full_name, phone, flat"
+            )
+            .eq("id", user.id)
+            .maybeSingle();
+
+        profileData =
+          fallbackResult.data;
+      }
+
+      const lockedPhone =
+        profileData?.phone ||
+        user?.phone ||
+        user?.user_metadata
+          ?.phone ||
+        "";
+
+      const savedAddress = [
+        profileData?.flat_no,
+        profileData?.block,
+        profileData
+          ?.apartment_name,
+      ]
+        .filter(Boolean)
+        .join(", ");
+
+      setFormData(
+        (current) => ({
+          ...current,
+
+          fullName:
+            current.fullName ||
+            profileData?.full_name ||
+            user?.user_metadata
+              ?.full_name ||
+            "",
+
+          phone: lockedPhone,
+
+          flat:
+            current.flat ||
+            profileData?.flat ||
+            savedAddress ||
+            user?.user_metadata
+              ?.flat ||
+            "",
+        })
+      );
+    }
+
+    loadSavedCheckoutDetails();
+  }, [user]);
+
+  useEffect(() => {
+    const detailsToSave = {
+      fullName:
+        formData.fullName,
+
+      flat: formData.flat,
+
+      deliveryType:
+        formData.deliveryType,
+
+      notes: formData.notes,
+
+      orderTiming,
+
+      scheduledDate,
+
+      scheduledTime,
+
+      paymentReference,
+
+      packingRequired,
+    };
+
     localStorage.setItem(
-      CART_TIMING_STORAGE_KEY,
-      JSON.stringify({
-        orderTiming,
-        scheduledDate,
-        scheduledTime,
-      })
+      getCheckoutStorageKey(),
+      JSON.stringify(
+        detailsToSave
+      )
     );
   }, [
+    formData.fullName,
+    formData.flat,
+    formData.deliveryType,
+    formData.notes,
     orderTiming,
     scheduledDate,
     scheduledTime,
+    paymentReference,
+    packingRequired,
+    user,
+  ]);
+
+  useEffect(() => {
+    async function checkKitchenSettings() {
+      const kitchenId =
+        getKitchenIdFromCart();
+
+      if (
+        !kitchenId ||
+        kitchenId ===
+          "MIXED_KITCHENS"
+      ) {
+        setKitchenAcceptsScheduledOrders(
+          false
+        );
+
+        setDeliveryAvailable(
+          false
+        );
+
+        setPickupAvailable(
+          false
+        );
+
+        setPackingCharge(5);
+
+        setCheckingKitchenSettings(
+          false
+        );
+
+        return;
+      }
+
+      setCheckingKitchenSettings(
+        true
+      );
+
+      const settings =
+        await fetchKitchenSettings(
+          kitchenId
+        );
+
+      const nextScheduleAllowed =
+        settings.accept_scheduled_orders ===
+        true;
+
+      const nextDeliveryAvailable =
+        settings.delivery_available !==
+        false;
+
+      const nextPickupAvailable =
+        settings.pickup_available !==
+        false;
+
+      const nextPackingCharge =
+        getSafePackingCharge(
+          settings.packing_charge
+        );
+
+      setKitchenAcceptsScheduledOrders(
+        nextScheduleAllowed
+      );
+
+      setDeliveryAvailable(
+        nextDeliveryAvailable
+      );
+
+      setPickupAvailable(
+        nextPickupAvailable
+      );
+
+      setPackingCharge(
+        nextPackingCharge
+      );
+
+      setCheckingKitchenSettings(
+        false
+      );
+
+      if (
+        !nextScheduleAllowed &&
+        orderTiming ===
+          "scheduled"
+      ) {
+        setOrderTiming("now");
+        setScheduledDate("");
+        setScheduledTime("");
+      }
+
+      setFormData(
+        (current) => {
+          if (
+            !nextDeliveryAvailable &&
+            !nextPickupAvailable
+          ) {
+            return current;
+          }
+
+          if (
+            current.deliveryType ===
+              "Doorstep delivery" &&
+            !nextDeliveryAvailable &&
+            nextPickupAvailable
+          ) {
+            return {
+              ...current,
+
+              deliveryType:
+                "Self pickup",
+            };
+          }
+
+          if (
+            current.deliveryType ===
+              "Self pickup" &&
+            !nextPickupAvailable &&
+            nextDeliveryAvailable
+          ) {
+            return {
+              ...current,
+
+              deliveryType:
+                "Doorstep delivery",
+            };
+          }
+
+          return current;
+        }
+      );
+    }
+
+    checkKitchenSettings();
+  }, [
+    cartItems,
+    orderTiming,
   ]);
 
   useEffect(() => {
     if (
-      orderTiming !== "scheduled"
+      orderTiming !==
+      "scheduled"
     ) {
       return;
     }
 
-    const dateIsValid =
-      dateOptions.some(
-        (option) =>
-          option.value ===
-          scheduledDate
+    if (!scheduledDate) {
+      const firstDate =
+        dateOptions[0]?.value ||
+        "";
+
+      const firstAvailableTime =
+        getAvailableTimeOptions(
+          timeOptions,
+          firstDate
+        )[0]?.value || "";
+
+      setScheduledDate(
+        firstDate
       );
 
-    if (!dateIsValid) {
-      setScheduledDate(
-        dateOptions[0]?.value ||
-          toDateValue(new Date())
+      setScheduledTime(
+        firstAvailableTime
       );
 
       return;
     }
 
-    const timeIsValid =
+    const selectedTimeStillAvailable =
       availableTimeOptions.some(
         (option) =>
           option.value ===
           scheduledTime
       );
 
-    if (!timeIsValid) {
+    if (
+      !selectedTimeStillAvailable
+    ) {
       setScheduledTime(
         availableTimeOptions[0]
           ?.value || ""
@@ -445,9 +923,111 @@ export default function Cart() {
     orderTiming,
     scheduledDate,
     scheduledTime,
-    dateOptions,
     availableTimeOptions,
+    dateOptions,
+    timeOptions,
   ]);
+
+  async function fetchKitchenSettings(
+    kitchenId
+  ) {
+    if (
+      !kitchenId ||
+      kitchenId ===
+        "MIXED_KITCHENS"
+    ) {
+      return {
+        accept_scheduled_orders:
+          false,
+
+        delivery_available:
+          false,
+
+        pickup_available:
+          false,
+
+        packing_charge: 5,
+      };
+    }
+
+    const { data, error } =
+      await supabase
+        .from("profiles")
+        .select(
+          "accept_scheduled_orders, delivery_available, pickup_available, packing_charge"
+        )
+        .eq("id", kitchenId)
+        .maybeSingle();
+
+    if (error) {
+      return {
+        accept_scheduled_orders:
+          false,
+
+        delivery_available:
+          false,
+
+        pickup_available:
+          false,
+
+        packing_charge: 5,
+      };
+    }
+
+    return {
+      accept_scheduled_orders:
+        data?.accept_scheduled_orders ===
+        true,
+
+      delivery_available:
+        data?.delivery_available !==
+        false,
+
+      pickup_available:
+        data?.pickup_available !==
+        false,
+
+      packing_charge:
+        getSafePackingCharge(
+          data?.packing_charge
+        ),
+    };
+  }
+
+  function getKitchenIdFromCart() {
+    if (!cartItems.length) {
+      return null;
+    }
+
+    const kitchenIds =
+      cartItems
+        .map(
+          (item) =>
+            item.user_id ||
+            item.seller_id
+        )
+        .filter(Boolean);
+
+    const uniqueKitchenIds = [
+      ...new Set(kitchenIds),
+    ];
+
+    if (
+      uniqueKitchenIds.length ===
+      0
+    ) {
+      return null;
+    }
+
+    if (
+      uniqueKitchenIds.length >
+      1
+    ) {
+      return "MIXED_KITCHENS";
+    }
+
+    return uniqueKitchenIds[0];
+  }
 
   function getKitchenName(item) {
     return (
@@ -457,56 +1037,188 @@ export default function Cart() {
     );
   }
 
-  function selectOrderNow() {
-    setOrderTiming("now");
-    setErrors({});
+  function handleChange(event) {
+    const {
+      name,
+      value,
+    } = event.target;
+
+    if (name === "phone") {
+      return;
+    }
+
+    setFormData(
+      (current) => ({
+        ...current,
+        [name]: value,
+      })
+    );
+
+    setErrors(
+      (current) => ({
+        ...current,
+        [name]: "",
+      })
+    );
   }
 
-  function selectScheduledOrder() {
-    setOrderTiming("scheduled");
-    setErrors({});
+  function selectDeliveryType(
+    deliveryType
+  ) {
+    if (
+      deliveryType ===
+        "Doorstep delivery" &&
+      !deliveryAvailable
+    ) {
+      setErrors(
+        (current) => ({
+          ...current,
 
-    if (!scheduledDate) {
-      const nextDate =
-        dateOptions[0]?.value ||
-        toDateValue(new Date());
+          deliveryType:
+            "This kitchen is not offering delivery right now.",
+        })
+      );
 
-      const nextTimeOptions =
-        getAvailableTimeOptions(
-          timeOptions,
-          nextDate
+      return;
+    }
+
+    if (
+      deliveryType ===
+        "Self pickup" &&
+      !pickupAvailable
+    ) {
+      setErrors(
+        (current) => ({
+          ...current,
+
+          deliveryType:
+            "This kitchen is not offering self pickup right now.",
+        })
+      );
+
+      return;
+    }
+
+    setFormData(
+      (current) => ({
+        ...current,
+        deliveryType,
+      })
+    );
+
+    setErrors(
+      (current) => ({
+        ...current,
+        deliveryType: "",
+      })
+    );
+  }
+
+  function selectOrderTiming(
+    nextTiming
+  ) {
+    if (
+      nextTiming ===
+      "scheduled"
+    ) {
+      if (
+        checkingKitchenSettings
+      ) {
+        setErrors(
+          (current) => ({
+            ...current,
+
+            timing:
+              "Checking kitchen schedule availability. Please try again.",
+          })
         );
 
-      setScheduledDate(nextDate);
+        return;
+      }
 
-      setScheduledTime(
-        nextTimeOptions[0]
-          ?.value || ""
+      if (
+        !kitchenAcceptsScheduledOrders
+      ) {
+        setErrors(
+          (current) => ({
+            ...current,
+
+            timing:
+              "This kitchen is not accepting scheduled orders right now.",
+          })
+        );
+
+        return;
+      }
+
+      if (!scheduledDate) {
+        const firstDate =
+          dateOptions[0]
+            ?.value || "";
+
+        const firstTime =
+          getAvailableTimeOptions(
+            timeOptions,
+            firstDate
+          )[0]?.value || "";
+
+        setScheduledDate(
+          firstDate
+        );
+
+        setScheduledTime(
+          firstTime
+        );
+      }
+
+      setShowTimingEditor(
+        true
+      );
+    } else {
+      setShowTimingEditor(
+        false
       );
     }
+
+    setOrderTiming(
+      nextTiming
+    );
+
+    setErrors(
+      (current) => ({
+        ...current,
+        timing: "",
+      })
+    );
   }
 
   function selectScheduleDate(
     nextDate
   ) {
-    const nextTimeOptions =
+    const nextTimes =
       getAvailableTimeOptions(
         timeOptions,
         nextDate
       );
 
-    setScheduledDate(nextDate);
+    setScheduledDate(
+      nextDate
+    );
 
     setScheduledTime(
-      nextTimeOptions[0]?.value ||
+      nextTimes[0]?.value ||
         ""
     );
 
     setErrors(
-      (currentErrors) => ({
-        ...currentErrors,
+      (current) => ({
+        ...current,
+
         scheduledDate: "",
+
         scheduledTime: "",
+
+        timing: "",
       })
     );
   }
@@ -514,21 +1226,351 @@ export default function Cart() {
   function selectScheduleTime(
     nextTime
   ) {
-    setScheduledTime(nextTime);
+    setScheduledTime(
+      nextTime
+    );
 
     setErrors(
-      (currentErrors) => ({
-        ...currentErrors,
+      (current) => ({
+        ...current,
+
         scheduledTime: "",
+
+        timing: "",
       })
     );
   }
 
-  function handleCheckout() {
+  function getScheduledDateTime() {
+    if (
+      orderTiming !==
+      "scheduled"
+    ) {
+      return null;
+    }
+
+    if (
+      !scheduledDate ||
+      !scheduledTime
+    ) {
+      throw new Error(
+        "Please select schedule date and time."
+      );
+    }
+
+    const scheduledDateTime =
+      new Date(
+        `${scheduledDate}T${scheduledTime}:00`
+      );
+
+    if (
+      Number.isNaN(
+        scheduledDateTime.getTime()
+      )
+    ) {
+      throw new Error(
+        "Invalid schedule date or time."
+      );
+    }
+
+    if (
+      scheduledDateTime.getTime() <=
+      Date.now()
+    ) {
+      throw new Error(
+        "Scheduled time must be in the future."
+      );
+    }
+
+    return scheduledDateTime.toISOString();
+  }
+
+  async function copyToClipboard(
+    value,
+    label
+  ) {
+    try {
+      await navigator.clipboard.writeText(
+        String(value)
+      );
+
+      setPaymentMessage(
+        `${label} copied.`
+      );
+    } catch {
+      setPaymentMessage(
+        `Could not copy ${label.toLowerCase()}.`
+      );
+    }
+
+    window.setTimeout(() => {
+      setPaymentMessage("");
+    }, 1800);
+  }
+
+  function handlePaymentProofChange(
+    event
+  ) {
+    const file =
+      event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ];
+
+    if (
+      !allowedTypes.includes(
+        file.type
+      )
+    ) {
+      setErrors(
+        (current) => ({
+          ...current,
+
+          payment:
+            "Please upload a JPG, PNG, or WEBP payment screenshot.",
+        })
+      );
+
+      return;
+    }
+
+    if (
+      file.size >
+      5 * 1024 * 1024
+    ) {
+      setErrors(
+        (current) => ({
+          ...current,
+
+          payment:
+            "Payment screenshot must be below 5 MB.",
+        })
+      );
+
+      return;
+    }
+
+    if (
+      paymentProofPreview
+    ) {
+      URL.revokeObjectURL(
+        paymentProofPreview
+      );
+    }
+
+    setPaymentProofFile(
+      file
+    );
+
+    setPaymentProofPreview(
+      URL.createObjectURL(file)
+    );
+
+    setPaymentMessage(
+      "Payment screenshot selected."
+    );
+
+    setErrors(
+      (current) => ({
+        ...current,
+        payment: "",
+      })
+    );
+  }
+
+  function removePaymentProof() {
+    if (
+      paymentProofPreview
+    ) {
+      URL.revokeObjectURL(
+        paymentProofPreview
+      );
+    }
+
+    setPaymentProofFile(null);
+    setPaymentProofPreview("");
+
+    if (
+      paymentProofInputRef.current
+    ) {
+      paymentProofInputRef.current.value =
+        "";
+    }
+  }
+
+  async function uploadPaymentProof() {
+    if (
+      !paymentProofFile ||
+      !user
+    ) {
+      return "";
+    }
+
+    const fileExtension =
+      paymentProofFile.name
+        .split(".")
+        .pop() || "jpg";
+
+    const filePath =
+      `${user.id}/${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2)}.${fileExtension}`;
+
+    const { error } =
+      await supabase.storage
+        .from("payment-proofs")
+        .upload(
+          filePath,
+          paymentProofFile,
+          {
+            cacheControl: "3600",
+            upsert: false,
+          }
+        );
+
+    if (error) {
+      throw new Error(
+        `Payment proof upload failed: ${error.message}`
+      );
+    }
+
+    const { data } =
+      supabase.storage
+        .from("payment-proofs")
+        .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  }
+
+  async function validateLiveStockBeforeOrder() {
+    const foodIds =
+      cartItems.map(
+        (item) => item.id
+      );
+
+    const { data, error } =
+      await supabase
+        .from("foods")
+        .select(
+          "id, name, stock, user_id, seller_id"
+        )
+        .in("id", foodIds);
+
+    if (error) {
+      throw new Error(
+        error.message
+      );
+    }
+
+    const latestFoodMap =
+      new Map();
+
+    (data || []).forEach(
+      (foodItem) => {
+        latestFoodMap.set(
+          String(foodItem.id),
+          foodItem
+        );
+      }
+    );
+
+    for (
+      const cartItem of
+      cartItems
+    ) {
+      const latestFood =
+        latestFoodMap.get(
+          String(cartItem.id)
+        );
+
+      if (!latestFood) {
+        throw new Error(
+          `${cartItem.name} is no longer available.`
+        );
+      }
+
+      const liveStock =
+        Number(
+          latestFood.stock || 0
+        );
+
+      const requestedQuantity =
+        Number(
+          cartItem.quantity || 0
+        );
+
+      if (liveStock <= 0) {
+        throw new Error(
+          `${cartItem.name} is sold out.`
+        );
+      }
+
+      if (
+        requestedQuantity >
+        liveStock
+      ) {
+        throw new Error(
+          `${cartItem.name} has only ${liveStock} left. Please update your cart.`
+        );
+      }
+    }
+  }
+
+  function validateCheckout() {
     const nextErrors = {};
 
     if (
-      orderTiming === "scheduled"
+      !formData.fullName.trim()
+    ) {
+      nextErrors.fullName =
+        "Please enter the customer name.";
+    }
+
+    if (
+      !formData.phone.trim()
+    ) {
+      nextErrors.phone =
+        "A phone number is required in the profile.";
+    }
+
+    if (
+      !formData.flat.trim()
+    ) {
+      nextErrors.flat =
+        formData.deliveryType ===
+        "Self pickup"
+          ? "Please confirm your flat or apartment details."
+          : "Please enter the complete delivery address.";
+    }
+
+    if (
+      formData.deliveryType ===
+        "Doorstep delivery" &&
+      !deliveryAvailable
+    ) {
+      nextErrors.deliveryType =
+        "Doorstep delivery is unavailable.";
+    }
+
+    if (
+      formData.deliveryType ===
+        "Self pickup" &&
+      !pickupAvailable
+    ) {
+      nextErrors.deliveryType =
+        "Self pickup is unavailable.";
+    }
+
+    if (
+      orderTiming ===
+      "scheduled"
     ) {
       if (!scheduledDate) {
         nextErrors.scheduledDate =
@@ -539,93 +1581,490 @@ export default function Cart() {
         nextErrors.scheduledTime =
           "Please select a time.";
       }
+    }
 
-      if (
-        scheduledDate &&
-        scheduledTime
-      ) {
-        const scheduledDateTime =
-          new Date(
-            `${scheduledDate}T${scheduledTime}:00`
-          );
-
-        if (
-          Number.isNaN(
-            scheduledDateTime.getTime()
-          )
-        ) {
-          nextErrors.scheduledTime =
-            "Please select a valid schedule.";
-        } else if (
-          scheduledDateTime.getTime() <=
-          Date.now()
-        ) {
-          nextErrors.scheduledTime =
-            "Please select a future time.";
-        }
-      }
+    if (
+      !paymentProofFile &&
+      !paymentReference.trim()
+    ) {
+      nextErrors.payment =
+        "Upload the UPI payment screenshot or enter the transaction reference.";
     }
 
     setErrors(nextErrors);
 
     if (
-      Object.keys(nextErrors)
-        .length > 0
+      Object.keys(
+        nextErrors
+      ).length > 0
     ) {
+      if (
+        nextErrors.fullName ||
+        nextErrors.phone
+      ) {
+        setShowContactEditor(
+          true
+        );
+      }
+
+      if (
+        nextErrors.flat ||
+        nextErrors.deliveryType
+      ) {
+        setShowDeliveryEditor(
+          true
+        );
+      }
+
+      if (
+        nextErrors.scheduledDate ||
+        nextErrors.scheduledTime
+      ) {
+        setShowTimingEditor(
+          true
+        );
+      }
+
+      return false;
+    }
+
+    return true;
+  }
+
+  async function handlePlaceOrder() {
+    if (!user) {
+      navigate(
+        "/customer-login"
+      );
+
       return;
     }
 
-    navigate("/checkout");
+    if (!validateCheckout()) {
+      return;
+    }
+
+    if (!cartItems.length) {
+      setErrors({
+        general:
+          "Your cart is empty.",
+      });
+
+      return;
+    }
+
+    const kitchenId =
+      getKitchenIdFromCart();
+
+    if (
+      kitchenId ===
+      "MIXED_KITCHENS"
+    ) {
+      setErrors({
+        general:
+          "Please order from one kitchen at a time.",
+      });
+
+      return;
+    }
+
+    if (!kitchenId) {
+      setErrors({
+        general:
+          "Kitchen details are missing. Please add the dishes again.",
+      });
+
+      return;
+    }
+
+    setLoading(true);
+    setPaymentMessage("");
+
+    try {
+      const latestKitchenSettings =
+        await fetchKitchenSettings(
+          kitchenId
+        );
+
+      const latestSellerPackingCharge =
+        getSafePackingCharge(
+          latestKitchenSettings
+            .packing_charge
+        );
+
+      const latestEffectivePackingCharge =
+        packingRequired
+          ? latestSellerPackingCharge
+          : 0;
+
+      setPackingCharge(
+        latestSellerPackingCharge
+      );
+
+      if (
+        latestKitchenSettings
+          .delivery_available ===
+          false &&
+        latestKitchenSettings
+          .pickup_available ===
+          false
+      ) {
+        setDeliveryAvailable(
+          false
+        );
+
+        setPickupAvailable(
+          false
+        );
+
+        throw new Error(
+          "This kitchen is currently not accepting delivery or pickup orders."
+        );
+      }
+
+      if (
+        formData.deliveryType ===
+          "Doorstep delivery" &&
+        latestKitchenSettings
+          .delivery_available ===
+          false
+      ) {
+        setDeliveryAvailable(
+          false
+        );
+
+        if (
+          latestKitchenSettings
+            .pickup_available
+        ) {
+          setPickupAvailable(
+            true
+          );
+
+          setFormData(
+            (current) => ({
+              ...current,
+
+              deliveryType:
+                "Self pickup",
+            })
+          );
+        }
+
+        throw new Error(
+          "This kitchen has turned off delivery. Please select self pickup."
+        );
+      }
+
+      if (
+        formData.deliveryType ===
+          "Self pickup" &&
+        latestKitchenSettings
+          .pickup_available ===
+          false
+      ) {
+        setPickupAvailable(
+          false
+        );
+
+        if (
+          latestKitchenSettings
+            .delivery_available
+        ) {
+          setDeliveryAvailable(
+            true
+          );
+
+          setFormData(
+            (current) => ({
+              ...current,
+
+              deliveryType:
+                "Doorstep delivery",
+            })
+          );
+        }
+
+        throw new Error(
+          "This kitchen has turned off self pickup. Please select delivery."
+        );
+      }
+
+      if (
+        orderTiming ===
+          "scheduled" &&
+        latestKitchenSettings
+          .accept_scheduled_orders !==
+          true
+      ) {
+        setKitchenAcceptsScheduledOrders(
+          false
+        );
+
+        setOrderTiming("now");
+        setScheduledDate("");
+        setScheduledTime("");
+
+        throw new Error(
+          "This kitchen is not accepting scheduled orders right now."
+        );
+      }
+
+      const scheduledFor =
+        getScheduledDateTime();
+
+      await validateLiveStockBeforeOrder();
+
+      const paymentProofUrl =
+        await uploadPaymentProof();
+
+      const latestTotalAmount =
+        subtotalAmount +
+        latestEffectivePackingCharge +
+        PLATFORM_FEE +
+        deliveryFee;
+
+      const orderPayload = {
+        user_id: user.id,
+
+        seller_id: kitchenId,
+
+        customer_name:
+          formData.fullName.trim(),
+
+        phone:
+          formData.phone.trim(),
+
+        flat:
+          formData.flat.trim(),
+
+        delivery_type:
+          formData.deliveryType,
+
+        notes:
+          formData.notes.trim(),
+
+        subtotal_amount:
+          subtotalAmount,
+
+        packing_required:
+          packingRequired,
+
+        packing_charge:
+          latestEffectivePackingCharge,
+
+        platform_fee:
+          PLATFORM_FEE,
+
+        delivery_fee:
+          deliveryFee,
+
+        total_amount:
+          latestTotalAmount,
+
+        status: "confirmed",
+
+        items: cartItems,
+
+        scheduled_order:
+          orderTiming ===
+          "scheduled",
+
+        scheduled_for:
+          scheduledFor,
+
+        payment_method:
+          paymentMethod,
+
+        payment_status:
+          paymentProofUrl
+            ? "proof_submitted"
+            : "reference_submitted",
+
+        payment_reference:
+          paymentReference.trim(),
+
+        payment_proof_url:
+          paymentProofUrl,
+      };
+
+      const {
+        error: stockError,
+      } = await supabase.rpc(
+        "decrement_food_stock",
+        {
+          order_items:
+            cartItems,
+        }
+      );
+
+      if (stockError) {
+        throw new Error(
+          stockError.message
+        );
+      }
+
+      const {
+        error: orderError,
+      } = await supabase
+        .from("orders")
+        .insert([
+          orderPayload,
+        ]);
+
+      if (orderError) {
+        throw new Error(
+          orderError.message
+        );
+      }
+
+      localStorage.setItem(
+        getCheckoutStorageKey(),
+        JSON.stringify({
+          fullName:
+            formData.fullName,
+
+          flat:
+            formData.flat,
+
+          deliveryType:
+            formData.deliveryType,
+
+          notes: "",
+
+          orderTiming,
+
+          scheduledDate,
+
+          scheduledTime,
+
+          paymentReference:
+            "",
+
+          packingRequired,
+        })
+      );
+
+      localStorage.removeItem(
+        CART_TIMING_STORAGE_KEY
+      );
+
+      localStorage.removeItem(
+        LEGACY_CART_TIMING_STORAGE_KEY
+      );
+
+      clearCart();
+
+      setOrderPlaced(true);
+
+      window.setTimeout(() => {
+        navigate("/orders");
+      }, 1500);
+    } catch (error) {
+      console.error(
+        "ORDER PLACE ERROR:",
+        error
+      );
+
+      const errorMessage =
+        error?.message ||
+        "Could not place order. Please try again.";
+
+      setErrors(
+        (current) => ({
+          ...current,
+          general:
+            errorMessage,
+        })
+      );
+
+      setPaymentMessage(
+        `Could not place order: ${errorMessage}`
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
-  if (cartItems.length === 0) {
+  if (orderPlaced) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#FFF8EC] px-4 py-8 text-[#181411]">
+        <div
+          className={`w-full max-w-md p-7 text-center ${CARD}`}
+        >
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#D8C9B3] bg-[#FFF0DF] text-4xl">
+            🎉
+          </div>
+
+          <p className="mt-6 text-xs font-black uppercase tracking-wide text-[#CF743D]">
+            {orderTiming ===
+            "scheduled"
+              ? "Order Scheduled"
+              : "Order Confirmed"}
+          </p>
+
+          <h1 className="mt-3 text-3xl font-black leading-tight text-[#181411]">
+            {orderTiming ===
+            "scheduled"
+              ? "Your order has been scheduled."
+              : "Your food is now being prepared."}
+          </h1>
+
+          <p className="mt-4 text-sm font-semibold leading-relaxed text-[#6B6258]">
+            Redirecting you to
+            live order tracking.
+          </p>
+
+          <Link
+            to="/orders"
+            className="mt-7 block rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 font-black text-white active:scale-95"
+          >
+            Track My Order
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  if (
+    cartItems.length === 0
+  ) {
     return (
       <main className="min-h-screen bg-[#FFF8EC] px-4 py-5 pb-28 text-[#181411]">
         <div className="mx-auto max-w-md">
-          <header className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
-                Cart
-              </p>
+          <button
+            type="button"
+            onClick={() =>
+              navigate(-1)
+            }
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-[#D8C9B3] bg-white/95 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
+            aria-label="Go back"
+          >
+            <BackIcon />
+          </button>
 
-              <h1 className="mt-1 text-3xl font-black tracking-tight text-[#3F5128]">
-                Your Cart
-              </h1>
-
-              <p className="mt-1 text-sm font-bold text-[#6B6258]">
-                No items added yet
-              </p>
-            </div>
-
-            <Link
-              to="/favorites"
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#CF743D] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
-              aria-label="Favorites"
-            >
-              <HeartIcon />
-            </Link>
-          </header>
-
-          <section className="mt-6 rounded-[30px] border border-[#EADFCE] bg-white/90 p-8 text-center shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+          <section
+            className={`mt-6 p-8 text-center ${CARD}`}
+          >
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#D8C9B3] bg-[#FFF0DF] text-4xl">
               🛒
             </div>
 
-            <h2 className="mt-5 text-2xl font-black text-[#181411]">
+            <h1 className="mt-5 text-2xl font-black text-[#181411]">
               Your cart is empty
-            </h2>
+            </h1>
 
-            <p className="mx-auto mt-2 max-w-xs text-sm font-semibold leading-relaxed text-[#6B6258]">
-              Add fresh homemade food
-              from nearby kitchens to
-              continue.
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
+              Add dishes from the
+              marketplace before
+              checkout.
             </p>
 
             <Link
               to="/marketplace"
-              className="mt-6 block rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 text-center text-sm font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-[0.98]"
+              className="mt-6 block rounded-2xl border border-[#3F5128] bg-[#3F5128] py-4 text-center text-sm font-black text-white"
             >
-              Explore Food
+              Explore Marketplace
             </Link>
           </section>
         </div>
@@ -634,59 +2073,74 @@ export default function Cart() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FFF8EC] px-4 py-5 pb-36 text-[#181411]">
+    <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-40 text-[#181411]">
       <div className="mx-auto max-w-md">
-        <header className="flex items-start justify-between gap-3">
-          <div>
+        <header className="flex items-start gap-3">
+          <button
+            type="button"
+            onClick={() =>
+              navigate(-1)
+            }
+            className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#D8C9B3] bg-white/95 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
+            aria-label="Go back"
+          >
+            <BackIcon />
+          </button>
+
+          <div className="min-w-0 flex-1">
             <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
-              Cart
+              Checkout
             </p>
 
-            <h1 className="mt-1 text-3xl font-black tracking-tight text-[#3F5128]">
-              Your Cart
+            <h1 className="mt-1 text-3xl font-black leading-tight text-[#3F5128]">
+              Confirm your order
             </h1>
 
-            <p className="mt-1 text-sm font-bold text-[#6B6258]">
+            <p className="mt-1 truncate text-sm font-semibold text-[#6B6258]">
+              {kitchenName} •{" "}
               {totalQuantity}{" "}
               {totalQuantity === 1
                 ? "item"
-                : "items"}{" "}
-              from {kitchenCount}{" "}
-              {kitchenCount === 1
-                ? "kitchen"
-                : "kitchens"}
+                : "items"}
             </p>
           </div>
-
-          <Link
-            to="/favorites"
-            className="flex h-12 w-12 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#CF743D] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
-            aria-label="Favorites"
-          >
-            <HeartIcon />
-          </Link>
         </header>
 
-        <section className="mt-5 overflow-hidden rounded-[30px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]">
-          <div className="divide-y divide-[#F1E8DC]">
-            {cartItems.map((item) => {
-              const kitchenName =
-                getKitchenName(item);
+        {errors.general ? (
+          <p className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-black text-red-600">
+            {errors.general}
+          </p>
+        ) : null}
 
-              return (
-                <article
-                  key={item.id}
-                  className="p-4"
-                >
-                  <div className="flex items-center gap-3">
+        <section className="mt-5">
+          <SectionHeading
+            number="1"
+            eyebrow="Final items"
+            title="Review your food"
+          />
+
+          <div
+            className={`mt-3 overflow-hidden ${CARD}`}
+          >
+            <div className="divide-y divide-[#EADFCE]">
+              {cartItems.map(
+                (item) => (
+                  <article
+                    key={item.id}
+                    className="flex gap-3 p-4"
+                  >
                     <Link
                       to={`/food/${item.id}`}
-                      className="h-[64px] w-[64px] shrink-0 overflow-hidden rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF]"
+                      className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF]"
                     >
                       {item.image ? (
                         <img
-                          src={item.image}
-                          alt={item.name}
+                          src={
+                            item.image
+                          }
+                          alt={
+                            item.name
+                          }
                           className="h-full w-full object-cover"
                         />
                       ) : (
@@ -697,368 +2151,933 @@ export default function Cart() {
                     </Link>
 
                     <div className="min-w-0 flex-1">
-                      <Link
-                        to={`/food/${item.id}`}
-                      >
-                        <h2 className="truncate text-base font-black leading-tight text-[#181411]">
-                          {item.name}
-                        </h2>
-                      </Link>
-
-                      <p className="mt-1 truncate text-sm font-semibold text-[#6B6258]">
-                        {kitchenName}
+                      <p className="truncate text-sm font-black text-[#181411]">
+                        {item.name}
                       </p>
 
-                      <p className="mt-1 text-sm font-black text-[#3F5128]">
-                        ₹{item.price}
+                      <p className="mt-1 truncate text-xs font-semibold text-[#6B6258]">
+                        {getKitchenName(
+                          item
+                        )}
+                      </p>
+
+                      <p className="mt-2 text-xs font-bold text-[#6B6258]">
+                        Qty{" "}
+                        {
+                          item.quantity
+                        }{" "}
+                        × ₹
+                        {formatMoney(
+                          item.price
+                        )}
                       </p>
                     </div>
 
-                    <div className="flex shrink-0 items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          decreaseQuantity(
-                            item.id
+                    <p className="shrink-0 text-sm font-black text-[#3F5128]">
+                      ₹
+                      {formatMoney(
+                        Number(
+                          item.price ||
+                            0
+                        ) *
+                          Number(
+                            item.quantity ||
+                              0
                           )
-                        }
-                        className="flex h-9 w-9 items-center justify-center rounded-full border border-[#EADFCE] bg-[#FFFDF7] text-lg font-black text-[#3F5128] shadow-inner active:scale-95"
-                        aria-label={`Decrease ${item.name}`}
-                      >
-                        −
-                      </button>
+                      )}
+                    </p>
+                  </article>
+                )
+              )}
+            </div>
 
-                      <span className="min-w-4 text-center text-base font-black text-[#181411]">
-                        {item.quantity}
-                      </span>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          increaseQuantity(
-                            item.id
-                          )
-                        }
-                        className="flex h-9 w-9 items-center justify-center rounded-full border border-[#EADFCE] bg-[#FFFDF7] text-lg font-black text-[#3F5128] shadow-inner active:scale-95"
-                        aria-label={`Increase ${item.name}`}
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-
-          <div className="border-t border-[#F1E8DC] px-5 py-4">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center justify-between border-t border-[#EADFCE] bg-[#FFFDF7] px-4 py-3">
               <Link
-                to="/marketplace"
-                className="inline-flex items-center gap-2 text-sm font-black text-[#3F5128] active:scale-95"
+                to="/cart"
+                className="text-xs font-black text-[#CF743D]"
               >
-                <span className="text-lg leading-none">
-                  +
-                </span>
-
-                <span>
-                  Add more items
-                </span>
+                Edit cart
               </Link>
 
-              <button
-                type="button"
-                onClick={clearCart}
-                className="text-sm font-black text-red-500 active:scale-95"
-              >
-                Clear
-              </button>
+              <p className="text-sm font-black text-[#3F5128]">
+                Subtotal ₹
+                {formatMoney(
+                  subtotalAmount
+                )}
+              </p>
             </div>
           </div>
         </section>
 
         <section className="mt-7">
-          <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
-            Order Timing
-          </p>
+          <SectionHeading
+            number="2"
+            eyebrow="Packaging"
+            title="Choose packaging"
+          />
 
-          <h2 className="mt-2 text-2xl font-black text-[#181411]">
-            When should we prepare it?
-          </h2>
-
-          <div className="mt-5 space-y-4">
+          <div className="mt-3 grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={selectOrderNow}
-              className={`w-full rounded-[24px] border p-5 text-left transition-all active:scale-[0.99] ${
-                orderTiming === "now"
-                  ? "border-[#CF743D] bg-[#FFF0DF] shadow-[5px_5px_14px_rgba(63,81,40,0.05),-5px_-5px_14px_rgba(255,255,255,0.95)]"
-                  : "border-[#EADFCE] bg-white/90 shadow-[5px_5px_14px_rgba(63,81,40,0.05),-5px_-5px_14px_rgba(255,255,255,0.95)]"
+              onClick={() =>
+                setPackingRequired(
+                  true
+                )
+              }
+              className={`rounded-[22px] border p-4 text-left transition-all active:scale-[0.98] ${
+                packingRequired
+                  ? "border-[#3F5128] bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15"
+                  : "border-[#D8C9B3] bg-white/95 text-[#181411]"
               }`}
             >
-              <div className="flex items-center gap-4">
-                <div
-                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full border ${
-                    orderTiming === "now"
-                      ? "border-[#CF743D]/35 bg-white/80 text-[#CF743D]"
-                      : "border-[#EADFCE] bg-[#FFFDF7] text-[#3F5128]"
-                  }`}
-                >
-                  ⚡
-                </div>
+              <p className="text-sm font-black">
+                Pack my order
+              </p>
 
-                <div className="min-w-0">
-                  <p className="text-lg font-black text-[#181411]">
-                    Order Now
-                  </p>
+              <p
+                className={`mt-1 text-xs font-semibold ${
+                  packingRequired
+                    ? "text-white/75"
+                    : "text-[#6B6258]"
+                }`}
+              >
+                Secure takeaway
+                packing
+              </p>
 
-                  <p className="mt-1 text-sm font-semibold text-[#6B6258]">
-                    Place the order
-                    immediately.
-                  </p>
-                </div>
-              </div>
+              <p className="mt-3 text-lg font-black">
+                +₹
+                {formatMoney(
+                  sellerPackingCharge
+                )}
+              </p>
             </button>
 
             <button
               type="button"
-              onClick={
-                selectScheduledOrder
+              onClick={() =>
+                setPackingRequired(
+                  false
+                )
               }
-              className={`w-full rounded-[24px] border p-5 text-left transition-all active:scale-[0.99] ${
-                orderTiming ===
-                "scheduled"
-                  ? "border-[#3F5128] bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15"
-                  : "border-[#EADFCE] bg-white/90 text-[#181411] shadow-[5px_5px_14px_rgba(63,81,40,0.05),-5px_-5px_14px_rgba(255,255,255,0.95)]"
+              className={`rounded-[22px] border p-4 text-left transition-all active:scale-[0.98] ${
+                !packingRequired
+                  ? "border-[#CF743D] bg-[#FFF0DF] text-[#181411] shadow-md"
+                  : "border-[#D8C9B3] bg-white/95 text-[#181411]"
               }`}
             >
-              <div className="flex items-center gap-4">
-                <div
-                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full border ${
-                    orderTiming ===
-                    "scheduled"
-                      ? "border-white/10 bg-white/15 text-white"
-                      : "border-[#EADFCE] bg-[#FFFDF7] text-[#3F5128]"
-                  }`}
-                >
-                  🕒
-                </div>
+              <p className="text-sm font-black">
+                No extra packing
+              </p>
 
-                <div className="min-w-0">
-                  <p
-                    className={`text-lg font-black ${
-                      orderTiming ===
-                      "scheduled"
-                        ? "text-white"
-                        : "text-[#181411]"
-                    }`}
-                  >
-                    Schedule Later
-                  </p>
+              <p className="mt-1 text-xs font-semibold text-[#6B6258]">
+                Choose only when
+                suitable
+              </p>
 
-                  <p
-                    className={`mt-1 text-sm font-semibold ${
-                      orderTiming ===
-                      "scheduled"
-                        ? "text-white/75"
-                        : "text-[#6B6258]"
-                    }`}
-                  >
-                    {orderTiming ===
-                    "scheduled"
-                      ? `${selectedDateLabel} • ${selectedTimeLabel}`
-                      : "Choose date and time."}
-                  </p>
-                </div>
+              <p className="mt-3 text-lg font-black text-[#3F5128]">
+                ₹0
+              </p>
+            </button>
+          </div>
+        </section>
+
+        <section className="mt-7">
+          <SectionHeading
+            number="3"
+            eyebrow="Order timing"
+            title="When should we prepare it?"
+          />
+
+          {errors.timing ? (
+            <p className="mt-3 text-xs font-black text-red-600">
+              {errors.timing}
+            </p>
+          ) : null}
+
+          <div
+            className={`mt-3 overflow-hidden ${CARD}`}
+          >
+            <button
+              type="button"
+              onClick={() =>
+                selectOrderTiming(
+                  "now"
+                )
+              }
+              className="flex w-full items-center gap-3 border-b border-[#EADFCE] p-4 text-left"
+            >
+              <div
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border ${
+                  orderTiming ===
+                  "now"
+                    ? "border-[#CF743D] bg-[#FFF0DF] text-[#CF743D]"
+                    : "border-[#D8C9B3] bg-[#FFFDF7] text-[#6B6258]"
+                }`}
+              >
+                ⚡
               </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="font-black text-[#181411]">
+                  Prepare now
+                </p>
+
+                <p className="mt-1 text-xs font-semibold text-[#6B6258]">
+                  Estimated in
+                  30–40 mins
+                </p>
+              </div>
+
+              <RadioMark
+                active={
+                  orderTiming ===
+                  "now"
+                }
+              />
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                selectOrderTiming(
+                  "scheduled"
+                )
+              }
+              disabled={
+                checkingKitchenSettings ||
+                !kitchenAcceptsScheduledOrders
+              }
+              className="flex w-full items-center gap-3 p-4 text-left disabled:cursor-not-allowed disabled:opacity-55"
+            >
+              <div
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border ${
+                  orderTiming ===
+                  "scheduled"
+                    ? "border-[#3F5128] bg-[#3F5128] text-white"
+                    : "border-[#D8C9B3] bg-[#FFFDF7] text-[#6B6258]"
+                }`}
+              >
+                🕒
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="font-black text-[#181411]">
+                  Want this later?
+                  Schedule it
+                </p>
+
+                <p className="mt-1 truncate text-xs font-semibold text-[#6B6258]">
+                  {orderTiming ===
+                    "scheduled" &&
+                  formattedSchedule
+                    ? formattedSchedule
+                    : kitchenAcceptsScheduledOrders
+                    ? "Choose a date and time"
+                    : "Scheduling unavailable"}
+                </p>
+              </div>
+
+              <RadioMark
+                active={
+                  orderTiming ===
+                  "scheduled"
+                }
+              />
             </button>
 
             {orderTiming ===
-            "scheduled" ? (
-              <div className="rounded-[24px] border border-[#D8C9B3] bg-white/95 p-4 shadow-[5px_5px_14px_rgba(63,81,40,0.05),-5px_-5px_14px_rgba(255,255,255,0.95)]">
-                <div>
-                  <div className="mb-3 flex items-center gap-2">
-                    <span className="text-[#CF743D]">
-                      <CalendarIcon />
-                    </span>
+              "scheduled" &&
+            showTimingEditor ? (
+              <div className="border-t border-[#EADFCE] bg-[#FFFDF7] p-4">
+                <p className="text-[11px] font-black uppercase tracking-wide text-[#CF743D]">
+                  Select date
+                </p>
 
-                    <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
-                      Select date
-                    </p>
-                  </div>
+                {errors.scheduledDate ? (
+                  <p className="mt-2 text-xs font-black text-red-600">
+                    {
+                      errors.scheduledDate
+                    }
+                  </p>
+                ) : null}
 
-                  {errors.scheduledDate ? (
-                    <p className="mb-3 text-xs font-black text-red-500">
-                      {
-                        errors.scheduledDate
-                      }
-                    </p>
-                  ) : null}
+                <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-2 scrollbar-hide">
+                  {dateOptions.map(
+                    (option) => {
+                      const active =
+                        option.value ===
+                        scheduledDate;
 
-                  <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2 scrollbar-hide">
-                    {dateOptions.map(
-                      (option) => {
-                        const active =
-                          scheduledDate ===
-                          option.value;
-
-                        return (
-                          <button
-                            key={
+                      return (
+                        <button
+                          key={
+                            option.value
+                          }
+                          type="button"
+                          onClick={() =>
+                            selectScheduleDate(
                               option.value
+                            )
+                          }
+                          className={`min-w-[96px] shrink-0 rounded-2xl border px-3 py-3 text-left active:scale-95 ${
+                            active
+                              ? "border-[#3F5128] bg-[#3F5128] text-white"
+                              : "border-[#D8C9B3] bg-white text-[#3F5128]"
+                          }`}
+                        >
+                          <p className="text-xs font-black">
+                            {
+                              option.day
                             }
-                            type="button"
-                            onClick={() =>
-                              selectScheduleDate(
-                                option.value
-                              )
-                            }
-                            aria-pressed={
+                          </p>
+
+                          <p
+                            className={`mt-1 text-xs font-bold ${
                               active
-                            }
-                            className={`min-w-[96px] shrink-0 rounded-2xl border px-3 py-3 text-left transition-all active:scale-95 ${
-                              active
-                                ? "border-[#3F5128] bg-[#3F5128] text-white shadow-md shadow-[#3F5128]/15"
-                                : "border-[#D8C9B3] bg-[#FFFDF7] text-[#3F5128]"
+                                ? "text-white/75"
+                                : "text-[#6B6258]"
                             }`}
                           >
-                            <p className="text-xs font-black">
-                              {
-                                option.dayLabel
-                              }
-                            </p>
-
-                            <p
-                              className={`mt-1 text-sm font-bold ${
-                                active
-                                  ? "text-white/75"
-                                  : "text-[#6B6258]"
-                              }`}
-                            >
-                              {
-                                option.shortDateLabel
-                              }
-                            </p>
-                          </button>
-                        );
-                      }
-                    )}
-                  </div>
-                </div>
-
-                <div className="mt-5">
-                  <div className="mb-3 flex items-center gap-2">
-                    <span className="text-[#CF743D]">
-                      <ClockIcon />
-                    </span>
-
-                    <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
-                      Select time
-                    </p>
-                  </div>
-
-                  {errors.scheduledTime ? (
-                    <p className="mb-3 text-xs font-black text-red-500">
-                      {
-                        errors.scheduledTime
-                      }
-                    </p>
-                  ) : null}
-
-                  {availableTimeOptions.length ===
-                  0 ? (
-                    <div className="rounded-2xl border border-red-200 bg-red-50 p-4">
-                      <p className="text-sm font-black text-red-600">
-                        No time slots
-                        available today.
-                      </p>
-
-                      <p className="mt-1 text-xs font-semibold text-red-500">
-                        Select tomorrow or
-                        another date.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="max-h-[288px] overflow-y-auto rounded-2xl border border-[#EADFCE] bg-[#FFFDF7] p-3">
-                      <div className="grid grid-cols-3 gap-2">
-                        {availableTimeOptions.map(
-                          (option) => {
-                            const active =
-                              scheduledTime ===
-                              option.value;
-
-                            return (
-                              <button
-                                key={
-                                  option.value
-                                }
-                                type="button"
-                                onClick={() =>
-                                  selectScheduleTime(
-                                    option.value
-                                  )
-                                }
-                                aria-pressed={
-                                  active
-                                }
-                                className={`h-12 rounded-2xl border px-2 text-xs font-black transition-all active:scale-95 ${
-                                  active
-                                    ? "border-[#CF743D] bg-[#CF743D] text-white shadow-md shadow-[#CF743D]/20"
-                                    : "border-[#D8C9B3] bg-white text-[#3F5128]"
-                                }`}
-                              >
-                                {
-                                  option.label
-                                }
-                              </button>
-                            );
-                          }
-                        )}
-                      </div>
-                    </div>
+                            {
+                              option.date
+                            }
+                          </p>
+                        </button>
+                      );
+                    }
                   )}
                 </div>
 
-                {scheduledDate &&
-                scheduledTime ? (
-                  <div className="mt-5 rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF] p-4">
-                    <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
-                      Selected schedule
-                    </p>
+                <label className="mt-3 block">
+                  <span className="text-[11px] font-black uppercase tracking-wide text-[#CF743D]">
+                    Select time
+                  </span>
 
-                    <p className="mt-2 font-black text-[#3F5128]">
-                      {selectedDateLabel}
-                    </p>
+                  {errors.scheduledTime ? (
+                    <span className="mt-2 block text-xs font-black text-red-600">
+                      {
+                        errors.scheduledTime
+                      }
+                    </span>
+                  ) : null}
 
-                    <p className="mt-1 text-sm font-bold text-[#6B6258]">
-                      {selectedTimeLabel}
-                    </p>
-                  </div>
-                ) : null}
+                  <select
+                    value={
+                      scheduledTime
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      selectScheduleTime(
+                        event.target
+                          .value
+                      )
+                    }
+                    className={`${INPUT} mt-3`}
+                  >
+                    <option value="">
+                      Select time
+                    </option>
+
+                    {availableTimeOptions.map(
+                      (option) => (
+                        <option
+                          key={
+                            option.value
+                          }
+                          value={
+                            option.value
+                          }
+                        >
+                          {
+                            option.label
+                          }
+                        </option>
+                      )
+                    )}
+                  </select>
+                </label>
               </div>
+            ) : null}
+          </div>
+        </section>
+
+        <section className="mt-7">
+          <SectionHeading
+            number="4"
+            eyebrow="Confirmation"
+            title="Delivery and total"
+          />
+
+          <div
+            className={`mt-3 overflow-hidden ${CARD}`}
+          >
+            <ConfirmationRow
+              icon="⚡"
+              title={
+                orderTiming ===
+                "scheduled"
+                  ? "Scheduled order"
+                  : "Delivery in 30–40 mins"
+              }
+              subtitle={
+                orderTiming ===
+                "scheduled"
+                  ? formattedSchedule ||
+                    "Select a date and time"
+                  : "Want this later? Use the schedule option above"
+              }
+              onClick={() => {
+                if (
+                  orderTiming ===
+                  "scheduled"
+                ) {
+                  setShowTimingEditor(
+                    (current) =>
+                      !current
+                  );
+                }
+              }}
+              showChevron={
+                orderTiming ===
+                "scheduled"
+              }
+            />
+
+            <ConfirmationRow
+              icon={
+                formData.deliveryType ===
+                "Self pickup"
+                  ? "🛍️"
+                  : "📍"
+              }
+              title={
+                formData.deliveryType ===
+                "Self pickup"
+                  ? "Pickup from kitchen"
+                  : "Delivery at Home"
+              }
+              subtitle={
+                formData.flat ||
+                "Add delivery address"
+              }
+              onClick={() =>
+                setShowDeliveryEditor(
+                  (current) =>
+                    !current
+                )
+              }
+              error={
+                errors.flat ||
+                errors.deliveryType
+              }
+            />
+
+            {showDeliveryEditor ? (
+              <div className="border-b border-[#EADFCE] bg-[#FFFDF7] p-4">
+                {errors.deliveryType ? (
+                  <p className="mb-3 text-xs font-black text-red-600">
+                    {
+                      errors.deliveryType
+                    }
+                  </p>
+                ) : null}
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      selectDeliveryType(
+                        "Doorstep delivery"
+                      )
+                    }
+                    disabled={
+                      !deliveryAvailable
+                    }
+                    className={`rounded-2xl border p-3 text-left disabled:cursor-not-allowed disabled:opacity-50 ${
+                      formData.deliveryType ===
+                      "Doorstep delivery"
+                        ? "border-[#3F5128] bg-[#3F5128] text-white"
+                        : "border-[#D8C9B3] bg-white text-[#181411]"
+                    }`}
+                  >
+                    <p className="text-sm font-black">
+                      Delivery
+                    </p>
+
+                    <p className="mt-1 text-[10px] font-semibold opacity-75">
+                      To your address
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      selectDeliveryType(
+                        "Self pickup"
+                      )
+                    }
+                    disabled={
+                      !pickupAvailable
+                    }
+                    className={`rounded-2xl border p-3 text-left disabled:cursor-not-allowed disabled:opacity-50 ${
+                      formData.deliveryType ===
+                      "Self pickup"
+                        ? "border-[#CF743D] bg-[#FFF0DF] text-[#181411]"
+                        : "border-[#D8C9B3] bg-white text-[#181411]"
+                    }`}
+                  >
+                    <p className="text-sm font-black">
+                      Pickup
+                    </p>
+
+                    <p className="mt-1 text-[10px] font-semibold text-[#6B6258]">
+                      Collect yourself
+                    </p>
+                  </button>
+                </div>
+
+                <label className="mt-4 block">
+                  <span className="text-[11px] font-black uppercase tracking-wide text-[#6B6258]">
+                    Address / flat
+                    details
+                  </span>
+
+                  {errors.flat ? (
+                    <span className="mt-2 block text-xs font-black text-red-600">
+                      {errors.flat}
+                    </span>
+                  ) : null}
+
+                  <textarea
+                    name="flat"
+                    value={
+                      formData.flat
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    rows="3"
+                    className={`${INPUT} mt-2 resize-none`}
+                    placeholder="Flat, floor, block and apartment"
+                  />
+                </label>
+              </div>
+            ) : null}
+
+            <ConfirmationRow
+              icon="📝"
+              title="Delivery instructions"
+              subtitle={
+                formData.notes ||
+                "Add instructions for delivery partner"
+              }
+              onClick={() =>
+                setShowNotesEditor(
+                  (current) =>
+                    !current
+                )
+              }
+            />
+
+            {showNotesEditor ? (
+              <div className="border-b border-[#EADFCE] bg-[#FFFDF7] p-4">
+                <textarea
+                  name="notes"
+                  value={
+                    formData.notes
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  rows="3"
+                  className={`${INPUT} resize-none`}
+                  placeholder="Gate, landmark, call instructions or food note"
+                />
+              </div>
+            ) : null}
+
+            <ConfirmationRow
+              icon="☎️"
+              title={
+                formData.fullName ||
+                "Customer details"
+              }
+              subtitle={
+                formData.phone ||
+                "Add contact details"
+              }
+              onClick={() =>
+                setShowContactEditor(
+                  (current) =>
+                    !current
+                )
+              }
+              error={
+                errors.fullName ||
+                errors.phone
+              }
+            />
+
+            {showContactEditor ? (
+              <div className="border-b border-[#EADFCE] bg-[#FFFDF7] p-4">
+                <label className="block">
+                  <span className="text-[11px] font-black uppercase tracking-wide text-[#6B6258]">
+                    Customer name
+                  </span>
+
+                  {errors.fullName ? (
+                    <span className="mt-2 block text-xs font-black text-red-600">
+                      {
+                        errors.fullName
+                      }
+                    </span>
+                  ) : null}
+
+                  <input
+                    name="fullName"
+                    value={
+                      formData.fullName
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    className={`${INPUT} mt-2`}
+                    placeholder="Full name"
+                  />
+                </label>
+
+                <label className="mt-4 block">
+                  <span className="text-[11px] font-black uppercase tracking-wide text-[#6B6258]">
+                    Phone number
+                  </span>
+
+                  {errors.phone ? (
+                    <span className="mt-2 block text-xs font-black text-red-600">
+                      {errors.phone}
+                    </span>
+                  ) : null}
+
+                  <input
+                    name="phone"
+                    value={
+                      formData.phone
+                    }
+                    disabled
+                    className={`${INPUT} mt-2`}
+                    placeholder="Saved phone number"
+                  />
+
+                  <p className="mt-2 text-[10px] font-semibold text-[#6B6258]">
+                    The phone number
+                    is taken from your
+                    NeFo profile.
+                  </p>
+                </label>
+              </div>
+            ) : null}
+
+            <ConfirmationRow
+              icon="🧾"
+              title={`Total Bill ₹${formatMoney(
+                totalAmount
+              )}`}
+              subtitle="Including packing and platform fee"
+              onClick={() =>
+                setShowBillDetails(
+                  (current) =>
+                    !current
+                )
+              }
+            />
+
+            {showBillDetails ? (
+              <div className="space-y-3 border-t border-[#EADFCE] bg-[#FFFDF7] p-4">
+                <BillRow
+                  label="Food subtotal"
+                  value={`₹${formatMoney(
+                    subtotalAmount
+                  )}`}
+                />
+
+                <BillRow
+                  label="Packaging"
+                  value={`₹${formatMoney(
+                    effectivePackingCharge
+                  )}`}
+                />
+
+                <BillRow
+                  label="Platform fee"
+                  value={`₹${formatMoney(
+                    PLATFORM_FEE
+                  )}`}
+                />
+
+                <BillRow
+                  label="Delivery fee"
+                  value={
+                    deliveryFee === 0
+                      ? "FREE"
+                      : `₹${formatMoney(
+                          deliveryFee
+                        )}`
+                  }
+                  positive={
+                    deliveryFee === 0
+                  }
+                />
+
+                <div className="flex items-center justify-between border-t border-[#D8C9B3] pt-3">
+                  <p className="font-black text-[#181411]">
+                    Final total
+                  </p>
+
+                  <p className="text-lg font-black text-[#3F5128]">
+                    ₹
+                    {formatMoney(
+                      totalAmount
+                    )}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </section>
+
+        <section className="mt-7">
+          <SectionHeading
+            number="5"
+            eyebrow="Payment"
+            title="Pay securely by UPI"
+          />
+
+          <div
+            className={`mt-3 p-4 ${CARD}`}
+          >
+            <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF] p-4">
+              <div className="min-w-0">
+                <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
+                  Payable amount
+                </p>
+
+                <p className="mt-1 text-2xl font-black text-[#3F5128]">
+                  ₹
+                  {formatMoney(
+                    totalAmount
+                  )}
+                </p>
+
+                <p className="mt-1 truncate text-xs font-semibold text-[#6B6258]">
+                  UPI ID:{" "}
+                  {NeFo_UPI_ID}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  copyToClipboard(
+                    NeFo_UPI_ID,
+                    "UPI ID"
+                  )
+                }
+                className="shrink-0 rounded-xl border border-[#D8C9B3] bg-white px-3 py-2 text-xs font-black text-[#3F5128]"
+              >
+                Copy
+              </button>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <a
+                href={upiPaymentLink}
+                className="flex h-12 items-center justify-center rounded-2xl border border-[#3F5128] bg-[#3F5128] text-sm font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-[0.98]"
+              >
+                Pay via UPI App
+              </a>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowQr(
+                    (current) =>
+                      !current
+                  )
+                }
+                className="h-12 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] text-sm font-black text-[#3F5128] active:scale-[0.98]"
+              >
+                {showQr
+                  ? "Hide QR"
+                  : "Scan QR"}
+              </button>
+            </div>
+
+            {showQr ? (
+              <div className="mt-4 rounded-[22px] border border-[#D8C9B3] bg-[#FFFDF7] p-4 text-center">
+                <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
+                  Scan and pay
+                </p>
+
+                <div className="mx-auto mt-3 w-fit rounded-3xl border border-[#EADFCE] bg-white p-3">
+                  <img
+                    src={qrCodeUrl}
+                    alt="NeFo UPI QR code"
+                    className="h-48 w-48 object-contain"
+                  />
+                </div>
+
+                <p className="mt-3 text-lg font-black text-[#3F5128]">
+                  ₹
+                  {formatMoney(
+                    totalAmount
+                  )}
+                </p>
+              </div>
+            ) : null}
+
+            {errors.payment ? (
+              <p className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-3 text-xs font-black text-red-600">
+                {errors.payment}
+              </p>
+            ) : null}
+
+            <div className="mt-4">
+              <input
+                ref={
+                  paymentProofInputRef
+                }
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={
+                  handlePaymentProofChange
+                }
+                className="hidden"
+              />
+
+              <button
+                type="button"
+                onClick={() =>
+                  paymentProofInputRef.current?.click()
+                }
+                className="w-full rounded-2xl border border-dashed border-[#CF743D] bg-[#FFF8EC] px-4 py-4 text-left active:scale-[0.99]"
+              >
+                <p className="text-sm font-black text-[#181411]">
+                  Upload payment
+                  screenshot
+                </p>
+
+                <p className="mt-1 text-xs font-semibold text-[#6B6258]">
+                  JPG, PNG or WEBP
+                  up to 5 MB
+                </p>
+              </button>
+
+              {paymentProofPreview ? (
+                <div className="mt-3 overflow-hidden rounded-2xl border border-[#D8C9B3] bg-white p-3">
+                  <img
+                    src={
+                      paymentProofPreview
+                    }
+                    alt="Payment proof preview"
+                    className="max-h-56 w-full rounded-xl object-contain"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={
+                      removePaymentProof
+                    }
+                    className="mt-3 w-full rounded-xl border border-red-200 bg-red-50 py-2.5 text-xs font-black text-red-600"
+                  >
+                    Remove screenshot
+                  </button>
+                </div>
+              ) : null}
+            </div>
+
+            <label className="mt-4 block">
+              <span className="text-[11px] font-black uppercase tracking-wide text-[#6B6258]">
+                UPI transaction
+                reference
+              </span>
+
+              <input
+                value={
+                  paymentReference
+                }
+                onChange={(
+                  event
+                ) => {
+                  setPaymentReference(
+                    event.target.value
+                  );
+
+                  setErrors(
+                    (current) => ({
+                      ...current,
+                      payment: "",
+                    })
+                  );
+                }}
+                className={`${INPUT} mt-2`}
+                placeholder="Enter transaction ID or reference"
+              />
+            </label>
+
+            {paymentMessage ? (
+              <p className="mt-3 text-xs font-black text-[#0B8F80]">
+                {paymentMessage}
+              </p>
             ) : null}
           </div>
         </section>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-[950] border-t border-[#EADFCE] bg-[#FFF8EC]/95 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl">
+      <div className="fixed bottom-0 left-0 right-0 z-[950] border-t border-[#D8C9B3] bg-[#FFF8EC]/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl">
         <div className="mx-auto flex max-w-md items-center gap-3">
-          <div className="shrink-0 rounded-2xl border border-[#EADFCE] bg-white/90 px-4 py-3 text-left shadow-[4px_4px_12px_rgba(63,81,40,0.06),-4px_-4px_12px_rgba(255,255,255,0.95)]">
-            <p className="text-[10px] font-black uppercase text-[#6B6258]">
-              Total
+          <div className="min-w-0 shrink-0">
+            <p className="text-[9px] font-black uppercase tracking-wide text-[#6B6258]">
+              Pay using
             </p>
 
-            <p className="text-xl font-black text-[#3F5128]">
-              ₹{finalTotal}
+            <p className="mt-1 text-xs font-black text-[#3F5128]">
+              UPI
+            </p>
+          </div>
+
+          <div className="ml-auto min-w-[72px]">
+            <p className="text-lg font-black leading-none text-[#181411]">
+              ₹
+              {formatMoney(
+                totalAmount
+              )}
+            </p>
+
+            <p className="mt-1 text-[9px] font-black uppercase text-[#6B6258]">
+              Total
             </p>
           </div>
 
           <button
             type="button"
-            onClick={handleCheckout}
-            className="h-[58px] flex-1 rounded-2xl border border-[#3F5128] bg-[#3F5128] text-center text-sm font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-[0.98]"
+            onClick={
+              handlePlaceOrder
+            }
+            disabled={
+              loading ||
+              checkoutBlocked
+            }
+            className="h-14 min-w-[142px] flex-1 rounded-2xl border border-[#3F5128] bg-[#3F5128] px-4 text-sm font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Checkout • ₹{finalTotal}
+            {loading
+              ? "Checking..."
+              : checkoutBlocked
+              ? "Unavailable"
+              : orderTiming ===
+                "scheduled"
+              ? "Schedule Order"
+              : "Place Order"}
           </button>
         </div>
       </div>
@@ -1066,60 +3085,138 @@ export default function Cart() {
   );
 }
 
-function HeartIcon() {
+function SectionHeading({
+  number,
+  eyebrow,
+  title,
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-[#3F5128] bg-[#3F5128] text-sm font-black text-white">
+        {number}
+      </div>
+
+      <div>
+        <p className="text-[10px] font-black uppercase tracking-wide text-[#CF743D]">
+          {eyebrow}
+        </p>
+
+        <h2 className="mt-1 text-xl font-black text-[#181411]">
+          {title}
+        </h2>
+      </div>
+    </div>
+  );
+}
+
+function ConfirmationRow({
+  icon,
+  title,
+  subtitle,
+  onClick,
+  error = "",
+  showChevron = true,
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-start gap-3 border-b border-[#EADFCE] p-4 text-left last:border-b-0"
+    >
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#EADFCE] bg-[#FFFDF7] text-lg">
+        {icon}
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-black text-[#181411]">
+          {title}
+        </p>
+
+        {error ? (
+          <p className="mt-1 text-xs font-black text-red-600">
+            {error}
+          </p>
+        ) : (
+          <p className="mt-1 line-clamp-2 text-xs font-semibold leading-relaxed text-[#6B6258]">
+            {subtitle}
+          </p>
+        )}
+      </div>
+
+      {showChevron ? (
+        <ChevronRightIcon />
+      ) : null}
+    </button>
+  );
+}
+
+function BillRow({
+  label,
+  value,
+  positive = false,
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 text-sm">
+      <p className="text-[#6B6258]">
+        {label}
+      </p>
+
+      <p
+        className={`font-black ${
+          positive
+            ? "text-green-700"
+            : "text-[#181411]"
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function RadioMark({
+  active,
+}) {
+  return (
+    <span
+      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+        active
+          ? "border-[#3F5128] bg-[#3F5128]"
+          : "border-[#B7AA99] bg-white"
+      }`}
+    >
+      {active ? (
+        <span className="h-2 w-2 rounded-full bg-white" />
+      ) : null}
+    </span>
+  );
+}
+
+function BackIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
       className="h-5 w-5"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2.2"
+      strokeWidth="2.4"
     >
-      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" />
+      <path d="M19 12H5" />
+      <path d="M12 19l-7-7 7-7" />
     </svg>
   );
 }
 
-function CalendarIcon() {
+function ChevronRightIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="h-4 w-4"
+      className="mt-1 h-4 w-4 shrink-0 text-[#6B6258]"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2.2"
+      strokeWidth="2.5"
     >
-      <rect
-        x="3"
-        y="4"
-        width="18"
-        height="17"
-        rx="2"
-      />
-
-      <path d="M8 2v4" />
-      <path d="M16 2v4" />
-      <path d="M3 10h18" />
-    </svg>
-  );
-}
-
-function ClockIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-    >
-      <circle
-        cx="12"
-        cy="12"
-        r="9"
-      />
-
-      <path d="M12 7v5l3 2" />
+      <path d="m9 18 6-6-6-6" />
     </svg>
   );
 }
