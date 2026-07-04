@@ -6,6 +6,8 @@ import {
 import { Capacitor } from "@capacitor/core";
 import { supabase } from "../lib/supabaseClient";
 
+const LOGO_SRC = "/nefo-logo.png";
+
 const CARD =
   "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
@@ -804,37 +806,50 @@ export default function CustomerLogin() {
       : "Email or mobile number";
 
   return (
-    <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-28 text-[#181411]">
-      <div className="mx-auto max-w-md">
-        <header className="flex items-center gap-3">
+    <main className="min-h-screen bg-[#FFF8EC] px-3 py-3 pb-28 text-[#181411] sm:px-4 sm:py-5">
+      <div className="mx-auto w-full max-w-md">
+        <header>
           <Link
             to="/"
-            className="flex min-w-0 items-center gap-3"
+            className="flex w-full items-center gap-4 rounded-[26px] border border-[#EADFCE] bg-[#FFFDF7]/95 px-4 py-3 shadow-[6px_6px_18px_rgba(63,81,40,0.07),-6px_-6px_18px_rgba(255,255,255,0.95)] transition-transform active:scale-[0.99]"
+            aria-label="Go to NeFo home"
           >
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#EADFCE] bg-white/90 shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]">
+            <div className="flex h-[66px] w-[66px] shrink-0 items-center justify-center overflow-hidden rounded-[22px] border border-[#D8C9B3] bg-[#FFF8EC] shadow-[inset_2px_2px_6px_rgba(63,81,40,0.04),inset_-2px_-2px_6px_rgba(255,255,255,0.95)]">
               <img
-                src="/Nefo-logo.png"
-                alt="NeFo"
-                className="h-full w-full scale-[1.65] object-cover"
+                src={LOGO_SRC}
+                alt="NeFo logo"
+                className="h-full w-full scale-[1.12] object-cover object-center"
               />
             </div>
 
-            <div className="min-w-0">
-              <p className="text-xl font-black text-[#3F5128]">
-                NeFo
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline gap-2">
+                <p className="text-[26px] font-black leading-none tracking-tight text-[#3F5128]">
+                  NeFo
+                </p>
+
+                <span className="h-2 w-2 rounded-full bg-[#CF743D]" />
+              </div>
+
+              <p className="mt-2 text-[11px] font-black uppercase tracking-[0.14em] text-[#6B6258]">
+                Neighbour Food
               </p>
 
-              <p className="text-[10px] font-black uppercase tracking-wide text-[#6B6258]">
-                NEIGHBOUR FOOD
+              <p className="mt-1 truncate text-[10px] font-bold text-[#9A8E80]">
+                Homemade food from kitchens near you
               </p>
+            </div>
+
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#EADFCE] bg-white text-[#3F5128]">
+              <ChevronRightIcon />
             </div>
           </Link>
         </header>
 
         <section
-          className={`mt-5 overflow-hidden ${CARD}`}
+          className={`mt-4 overflow-hidden ${CARD}`}
         >
-          <div className="relative overflow-hidden bg-[#3F5128] p-5 text-white">
+          <div className="relative overflow-hidden bg-[#3F5128] p-5 text-white sm:p-6">
             <div className="absolute -right-10 -top-12 h-40 w-40 rounded-full bg-white/10" />
 
             <div className="absolute -bottom-12 -left-12 h-36 w-36 rounded-full bg-[#CF743D]/20" />
@@ -1291,5 +1306,19 @@ function Field({
 
       {children}
     </label>
+  );
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+    >
+      <path d="m9 18 6-6-6-6" />
+    </svg>
   );
 }
