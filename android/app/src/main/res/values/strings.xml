@@ -1,6 +1,6 @@
 ﻿<resources>
-    <string name="app_name">Nefo</string>
-    <string name="title_activity_main">Nefo</string>
+    <string name="app_name">NeFo</string>
+<string name="title_activity_main">NeFo</string>
     <string name="package_name">com.nefo.app</string>
     <string name="custom_url_scheme">com.nefo.app</string>
 </resources>
