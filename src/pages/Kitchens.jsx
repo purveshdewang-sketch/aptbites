@@ -13,7 +13,7 @@ import Home from "./pages/Home";
 import Kitchens from "./pages/Kitchens";
 import CustomerLogin from "./pages/CustomerLogin";
 import SellerLogin from "./pages/SellerLogin";
-import SellerDashboard from "./pages/SellerDashboard";
+import SellerDashboard from "./SellerDashboard";
 import SellerRegistration from "./pages/SellerRegistration";
 import OwnerSellerApplications from "./pages/OwnerSellerApplications";
 import Cart from "./pages/Cart";
