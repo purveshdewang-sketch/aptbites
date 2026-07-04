@@ -28,15 +28,115 @@ const KITCHEN_MENU_CATEGORIES = [
   "Specials",
 ];
 
+const COMPLETED_ORDER_STATUSES =
+  new Set([
+    "completed",
+    "delivered",
+  ]);
+
+function createRealtimeChannelName(
+  foodId
+) {
+  const uniquePart =
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID ===
+      "function"
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2)}`;
+
+  return `NeFo-food-details-${foodId}-${uniquePart}`;
+}
+
+function normalizeText(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase();
+}
+
+function parseOrderItems(value) {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (
+    typeof value !== "string"
+  ) {
+    return [];
+  }
+
+  try {
+    const parsedValue =
+      JSON.parse(value);
+
+    return Array.isArray(
+      parsedValue
+    )
+      ? parsedValue
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function getOrderedFoodId(item) {
+  return String(
+    item?.id ||
+      item?.food_id ||
+      item?.foodId ||
+      ""
+  );
+}
+
+function orderContainsFood(
+  order,
+  foodId
+) {
+  const targetFoodId =
+    String(foodId || "");
+
+  if (!targetFoodId) {
+    return false;
+  }
+
+  return parseOrderItems(
+    order?.items
+  ).some(
+    (item) =>
+      getOrderedFoodId(item) ===
+      targetFoodId
+  );
+}
+
+function isRowLevelSecurityError(
+  error
+) {
+  const errorText =
+    normalizeText(
+      error?.message
+    );
+
+  return (
+    errorText.includes(
+      "row-level security"
+    ) ||
+    errorText.includes(
+      "violates row-level security policy"
+    )
+  );
+}
+
 function getFavoriteId(item) {
   return String(item?.id || "");
 }
 
 function readFavorites() {
   try {
-    const saved = localStorage.getItem(
-      FAVORITES_STORAGE_KEY
-    );
+    const saved =
+      localStorage.getItem(
+        FAVORITES_STORAGE_KEY
+      );
 
     const parsed = saved
       ? JSON.parse(saved)
@@ -67,7 +167,9 @@ function isItemFavorite(item) {
   const itemId =
     getFavoriteId(item);
 
-  if (!itemId) return false;
+  if (!itemId) {
+    return false;
+  }
 
   return readFavorites().some(
     (favoriteItem) =>
@@ -133,7 +235,9 @@ function getFoodRating(
   foodId
 ) {
   const ratingData =
-    ratingMap[String(foodId)] || {
+    ratingMap[
+      String(foodId)
+    ] || {
       total: 0,
       count: 0,
     };
@@ -145,7 +249,8 @@ function getFoodRating(
           ratingData.count
         : 0,
 
-    count: ratingData.count,
+    count:
+      ratingData.count,
   };
 }
 
@@ -227,14 +332,35 @@ export default function FoodDetails() {
     setRatingError,
   ] = useState("");
 
-  const cartItem = cartItems.find(
-    (currentCartItem) =>
-      String(currentCartItem.id) ===
-      String(id)
+  const [
+    canRateFood,
+    setCanRateFood,
+  ] = useState(false);
+
+  const [
+    ratingEligibilityLoading,
+    setRatingEligibilityLoading,
+  ] = useState(true);
+
+  const [
+    ratingEligibilityMessage,
+    setRatingEligibilityMessage,
+  ] = useState(
+    "Complete an order containing this dish to rate it."
   );
 
+  const cartItem =
+    cartItems.find(
+      (currentCartItem) =>
+        String(
+          currentCartItem.id
+        ) === String(id)
+    );
+
   const quantity = cartItem
-    ? Number(cartItem.quantity || 0)
+    ? Number(
+        cartItem.quantity || 0
+      )
     : 0;
 
   const computedCartCount =
@@ -254,7 +380,10 @@ export default function FoodDetails() {
           ),
         0
       );
-    }, [cartCount, cartItems]);
+    }, [
+      cartCount,
+      cartItems,
+    ]);
 
   const stock = Number(
     food?.stock || 0
@@ -273,13 +402,15 @@ export default function FoodDetails() {
 
   const kitchenIsClosed =
     kitchenOnline === false ||
-    food?.seller_online === false;
+    food?.seller_online ===
+      false;
 
   const fulfillmentUnavailable =
     deliveryAvailable === false &&
     pickupAvailable === false;
 
-  const isSoldOut = stock <= 0;
+  const isSoldOut =
+    stock <= 0;
 
   const isBlocked =
     kitchenIsClosed ||
@@ -292,32 +423,38 @@ export default function FoodDetails() {
     "30-40 min";
 
   useEffect(() => {
+    let componentActive = true;
+
     setSelectedKitchenCategory(
       "All"
     );
 
     fetchFoodDetails();
+    fetchRatingEligibility(id);
 
-    const foodsChannel = supabase
-      .channel(
-        `food-details-foods-${id}`
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "foods",
-        },
-        () =>
-          fetchFoodDetails(false)
-      )
-      .subscribe();
-
-    const profilesChannel =
+    const realtimeChannel =
       supabase
         .channel(
-          `food-details-profiles-${id}`
+          createRealtimeChannelName(
+            id
+          )
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "foods",
+          },
+          () => {
+            if (
+              componentActive
+            ) {
+              fetchFoodDetails(
+                false
+              );
+            }
+          }
         )
         .on(
           "postgres_changes",
@@ -326,45 +463,82 @@ export default function FoodDetails() {
             schema: "public",
             table: "profiles",
           },
-          () =>
-            fetchFoodDetails(false)
+          () => {
+            if (
+              componentActive
+            ) {
+              fetchFoodDetails(
+                false
+              );
+            }
+          }
         )
-        .subscribe();
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table:
+              "food_ratings",
+          },
+          () => {
+            if (
+              componentActive
+            ) {
+              fetchFoodDetails(
+                false
+              );
+            }
+          }
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "orders",
+          },
+          () => {
+            if (
+              componentActive
+            ) {
+              fetchRatingEligibility(
+                id
+              );
+            }
+          }
+        );
 
-    const ratingsChannel = supabase
-      .channel(
-        `food-details-ratings-${id}`
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "food_ratings",
-        },
-        () =>
-          fetchFoodDetails(false)
-      )
-      .subscribe();
+    realtimeChannel.subscribe(
+      (status) => {
+        if (
+          status ===
+          "CHANNEL_ERROR"
+        ) {
+          console.error(
+            "NeFo Food Details realtime channel failed."
+          );
+        }
+      }
+    );
 
     return () => {
-      supabase.removeChannel(
-        foodsChannel
-      );
+      componentActive = false;
 
-      supabase.removeChannel(
-        profilesChannel
-      );
-
-      supabase.removeChannel(
-        ratingsChannel
+      void supabase.removeChannel(
+        realtimeChannel
       );
     };
-  }, [id, user?.id]);
+  }, [
+    id,
+    user?.id,
+  ]);
 
   useEffect(() => {
     function syncFavoriteState() {
-      if (!food) return;
+      if (!food) {
+        return;
+      }
 
       setLiked(
         isItemFavorite(food)
@@ -397,7 +571,8 @@ export default function FoodDetails() {
   function showToast({
     icon = "✅",
     title = "Done",
-    message: toastMessage = "",
+    message:
+      toastMessage = "",
     actionLabel = "",
     href = "",
   }) {
@@ -414,17 +589,164 @@ export default function FoodDetails() {
     }, 1600);
   }
 
+  async function fetchRatingEligibility(
+    foodId
+  ) {
+    if (!user?.id) {
+      setCanRateFood(false);
+
+      setRatingEligibilityLoading(
+        false
+      );
+
+      setRatingEligibilityMessage(
+        "Please sign in before rating this dish."
+      );
+
+      return;
+    }
+
+    if (!foodId) {
+      setCanRateFood(false);
+
+      setRatingEligibilityLoading(
+        false
+      );
+
+      setRatingEligibilityMessage(
+        "This dish cannot be rated right now."
+      );
+
+      return;
+    }
+
+    setRatingEligibilityLoading(
+      true
+    );
+
+    setRatingEligibilityMessage(
+      "Checking whether this dish can be rated..."
+    );
+
+    const {
+      data: rpcResult,
+      error: rpcError,
+    } = await supabase.rpc(
+      "user_can_rate_food",
+      {
+        target_food_id:
+          String(foodId),
+      }
+    );
+
+    if (!rpcError) {
+      const eligible =
+        rpcResult === true;
+
+      setCanRateFood(
+        eligible
+      );
+
+      setRatingEligibilityLoading(
+        false
+      );
+
+      setRatingEligibilityMessage(
+        eligible
+          ? "You can rate this dish because it appears in a completed order."
+          : "Complete an order containing this dish to rate it."
+      );
+
+      return;
+    }
+
+    const {
+      data: orderRows,
+      error: orderError,
+    } = await supabase
+      .from("orders")
+      .select(
+        "id, items, status, created_at"
+      )
+      .eq(
+        "user_id",
+        user.id
+      )
+      .order(
+        "created_at",
+        {
+          ascending: false,
+        }
+      )
+      .limit(100);
+
+    if (orderError) {
+      console.error(
+        "Rating eligibility check failed:",
+        rpcError?.message ||
+          orderError.message
+      );
+
+      setCanRateFood(false);
+
+      setRatingEligibilityLoading(
+        false
+      );
+
+      setRatingEligibilityMessage(
+        "Rating eligibility could not be verified. Please try again."
+      );
+
+      return;
+    }
+
+    const eligible = (
+      orderRows || []
+    ).some((order) => {
+      const status =
+        normalizeText(
+          order?.status
+        );
+
+      return (
+        COMPLETED_ORDER_STATUSES.has(
+          status
+        ) &&
+        orderContainsFood(
+          order,
+          foodId
+        )
+      );
+    });
+
+    setCanRateFood(
+      eligible
+    );
+
+    setRatingEligibilityLoading(
+      false
+    );
+
+    setRatingEligibilityMessage(
+      eligible
+        ? "You can rate this dish because it appears in a completed order."
+        : "Complete an order containing this dish to rate it."
+    );
+  }
+
   async function fetchKitchenProfile(
     kitchenId
   ) {
     if (!kitchenId) {
       return {
         seller_online: true,
-        seller_kitchen_name: "",
+        seller_kitchen_name:
+          "",
         seller_door_no: "",
         seller_about: "",
         seller_specialty: "",
-        delivery_available: true,
+        delivery_available:
+          true,
         pickup_available: true,
         avatar_url: "",
       };
@@ -438,7 +760,10 @@ export default function FoodDetails() {
       .select(
         "id, seller_online, seller_kitchen_name, seller_door_no, seller_about, seller_specialty, delivery_available, pickup_available, avatar_url"
       )
-      .eq("id", kitchenId)
+      .eq(
+        "id",
+        kitchenId
+      )
       .maybeSingle();
 
     if (!error) {
@@ -452,10 +777,12 @@ export default function FoodDetails() {
           "",
 
         seller_door_no:
-          data?.seller_door_no || "",
+          data?.seller_door_no ||
+          "",
 
         seller_about:
-          data?.seller_about || "",
+          data?.seller_about ||
+          "",
 
         seller_specialty:
           data?.seller_specialty ||
@@ -481,7 +808,10 @@ export default function FoodDetails() {
       .select(
         "id, seller_online, seller_kitchen_name, seller_about, seller_specialty, delivery_available, pickup_available"
       )
-      .eq("id", kitchenId)
+      .eq(
+        "id",
+        kitchenId
+      )
       .maybeSingle();
 
     return {
@@ -491,17 +821,20 @@ export default function FoodDetails() {
 
       seller_kitchen_name:
         fallbackData
-          ?.seller_kitchen_name || "",
+          ?.seller_kitchen_name ||
+        "",
 
       seller_door_no: "",
 
       seller_about:
-        fallbackData?.seller_about ||
+        fallbackData
+          ?.seller_about ||
         "",
 
       seller_specialty:
         fallbackData
-          ?.seller_specialty || "",
+          ?.seller_specialty ||
+        "",
 
       delivery_available:
         fallbackData
@@ -543,6 +876,7 @@ export default function FoodDetails() {
 
       setFood(null);
       setLoading(false);
+
       return;
     }
 
@@ -555,6 +889,7 @@ export default function FoodDetails() {
       );
 
       setLoading(false);
+
       return;
     }
 
@@ -570,7 +905,8 @@ export default function FoodDetails() {
     const finalKitchenName =
       kitchenProfile
         .seller_kitchen_name ||
-      foodData.seller_kitchen_name ||
+      foodData
+        .seller_kitchen_name ||
       foodData.seller ||
       "Home Kitchen";
 
@@ -591,7 +927,8 @@ export default function FoodDetails() {
 
     const currentSellerNames = [
       finalKitchenName,
-      foodData.seller_kitchen_name,
+      foodData
+        .seller_kitchen_name,
       foodData.seller,
     ]
       .filter(Boolean)
@@ -621,8 +958,12 @@ export default function FoodDetails() {
         const sameKitchenId =
           kitchenId &&
           itemKitchenId &&
-          String(itemKitchenId) ===
-            String(kitchenId);
+          String(
+            itemKitchenId
+          ) ===
+            String(
+              kitchenId
+            );
 
         const sameKitchenName =
           itemNames.some((name) =>
@@ -643,10 +984,14 @@ export default function FoodDetails() {
           foodData,
           ...matchingKitchenFoods,
         ]
-          .map((item) => item.id)
+          .map(
+            (item) =>
+              item.id
+          )
           .filter(
             (foodId) =>
-              foodId !== undefined &&
+              foodId !==
+                undefined &&
               foodId !== null
           )
       ),
@@ -655,7 +1000,8 @@ export default function FoodDetails() {
     let ratingRows = [];
 
     if (
-      relevantFoodIds.length > 0
+      relevantFoodIds.length >
+      0
     ) {
       const {
         data: ratingsData,
@@ -681,7 +1027,9 @@ export default function FoodDetails() {
     }
 
     const ratingMap =
-      buildRatingMap(ratingRows);
+      buildRatingMap(
+        ratingRows
+      );
 
     const currentFoodRating =
       getFoodRating(
@@ -696,20 +1044,25 @@ export default function FoodDetails() {
               String(
                 ratingRow.food_id
               ) ===
-                String(foodData.id) &&
+                String(
+                  foodData.id
+                ) &&
               String(
                 ratingRow.user_id
-              ) === String(user.id)
+              ) ===
+                String(user.id)
           )
         : null;
 
     const enrichedFood = {
       ...foodData,
 
-      seller_id: kitchenId,
+      seller_id:
+        kitchenId,
 
       seller_online:
-        kitchenProfile.seller_online,
+        kitchenProfile
+          .seller_online,
 
       seller_kitchen_name:
         finalKitchenName,
@@ -717,23 +1070,27 @@ export default function FoodDetails() {
       seller_door_no:
         kitchenProfile
           .seller_door_no ||
-        foodData.seller_door_no ||
+        foodData
+          .seller_door_no ||
         "",
 
       seller_about:
         kitchenProfile
           .seller_about ||
-        foodData.seller_about ||
+        foodData
+          .seller_about ||
         "",
 
       seller_specialty:
         kitchenProfile
           .seller_specialty ||
-        foodData.seller_specialty ||
+        foodData
+          .seller_specialty ||
         "",
 
       seller_avatar_url:
-        kitchenProfile.avatar_url ||
+        kitchenProfile
+          .avatar_url ||
         "",
 
       delivery_available:
@@ -745,7 +1102,8 @@ export default function FoodDetails() {
           .pickup_available,
 
       rating_average:
-        currentFoodRating.average,
+        currentFoodRating
+          .average,
 
       rating_count:
         currentFoodRating.count,
@@ -780,19 +1138,22 @@ export default function FoodDetails() {
             seller_kitchen_name:
               kitchenProfile
                 .seller_kitchen_name ||
-              item.seller_kitchen_name ||
+              item
+                .seller_kitchen_name ||
               item.seller ||
               finalKitchenName,
 
             seller_door_no:
               kitchenProfile
                 .seller_door_no ||
-              item.seller_door_no ||
+              item
+                .seller_door_no ||
               "",
 
             seller_avatar_url:
               kitchenProfile
-                .avatar_url || "",
+                .avatar_url ||
+              "",
 
             delivery_available:
               kitchenProfile
@@ -810,7 +1171,9 @@ export default function FoodDetails() {
           };
         });
 
-    setFood(enrichedFood);
+    setFood(
+      enrichedFood
+    );
 
     setLiked(
       isItemFavorite(
@@ -819,7 +1182,8 @@ export default function FoodDetails() {
     );
 
     setKitchenOnline(
-      kitchenProfile.seller_online
+      kitchenProfile
+        .seller_online
     );
 
     setDeliveryAvailable(
@@ -828,7 +1192,8 @@ export default function FoodDetails() {
     );
 
     setPickupAvailable(
-      kitchenProfile.pickup_available
+      kitchenProfile
+        .pickup_available
     );
 
     setRatingAverage(
@@ -841,7 +1206,8 @@ export default function FoodDetails() {
 
     setUserRating(
       Number(
-        currentUserRating?.rating ||
+        currentUserRating
+          ?.rating ||
           0
       )
     );
@@ -864,7 +1230,28 @@ export default function FoodDetails() {
       return;
     }
 
-    if (!food?.id) return;
+    if (!food?.id) {
+      return;
+    }
+
+    if (
+      ratingEligibilityLoading
+    ) {
+      setRatingError(
+        "Please wait while NeFo checks whether this dish can be rated."
+      );
+
+      return;
+    }
+
+    if (!canRateFood) {
+      setRatingError(
+        ratingEligibilityMessage ||
+          "Complete an order containing this dish to rate it."
+      );
+
+      return;
+    }
 
     if (
       ratingValue < 1 ||
@@ -876,34 +1263,54 @@ export default function FoodDetails() {
     setRatingSaving(true);
     setRatingError("");
 
-    const {
-      error,
-    } = await supabase
-      .from("food_ratings")
-      .upsert(
-        {
-          food_id: food.id,
-          user_id: user.id,
-          rating: ratingValue,
-          updated_at:
-            new Date().toISOString(),
-        },
-        {
-          onConflict:
-            "food_id,user_id",
-        }
-      );
+    const { error } =
+      await supabase
+        .from("food_ratings")
+        .upsert(
+          {
+            food_id: food.id,
+            user_id: user.id,
+            rating:
+              ratingValue,
+            updated_at:
+              new Date()
+                .toISOString(),
+          },
+          {
+            onConflict:
+              "food_id,user_id",
+          }
+        );
 
     if (error) {
       setRatingError(
-        `Rating could not be saved: ${error.message}`
+        isRowLevelSecurityError(
+          error
+        )
+          ? "Complete an order containing this dish before rating it."
+          : `Rating could not be saved: ${error.message}`
       );
 
+      if (
+        isRowLevelSecurityError(
+          error
+        )
+      ) {
+        setCanRateFood(false);
+
+        setRatingEligibilityMessage(
+          "Complete an order containing this dish to rate it."
+        );
+      }
+
       setRatingSaving(false);
+
       return;
     }
 
-    setUserRating(ratingValue);
+    setUserRating(
+      ratingValue
+    );
 
     showToast({
       icon: "⭐",
@@ -911,7 +1318,9 @@ export default function FoodDetails() {
       message: `You rated ${food.name} ${ratingValue} out of 5.`,
     });
 
-    await fetchFoodDetails(false);
+    await fetchFoodDetails(
+      false
+    );
 
     setRatingSaving(false);
   }
@@ -925,9 +1334,11 @@ export default function FoodDetails() {
           ) > 0 &&
           item.seller_online !==
             false &&
-          (item.delivery_available !==
+          (item
+            .delivery_available !==
             false ||
-            item.pickup_available !==
+            item
+              .pickup_available !==
               false)
       );
     }, [kitchenFoods]);
@@ -935,12 +1346,15 @@ export default function FoodDetails() {
   const kitchenCategoryCounts =
     useMemo(() => {
       const counts = {
-        All: kitchenFoods.length,
+        All:
+          kitchenFoods.length,
       };
 
       KITCHEN_MENU_CATEGORIES.forEach(
         (categoryName) => {
-          counts[categoryName] = 0;
+          counts[
+            categoryName
+          ] = 0;
         }
       );
 
@@ -951,10 +1365,13 @@ export default function FoodDetails() {
             "Meals";
 
           if (
-            counts[itemCategory] !==
-            undefined
+            counts[
+              itemCategory
+            ] !== undefined
           ) {
-            counts[itemCategory] += 1;
+            counts[
+              itemCategory
+            ] += 1;
           }
         }
       );
@@ -983,7 +1400,9 @@ export default function FoodDetails() {
     ]);
 
   function handleAddToCart() {
-    if (!food) return;
+    if (!food) {
+      return;
+    }
 
     if (kitchenIsClosed) {
       alert(
@@ -1015,7 +1434,9 @@ export default function FoodDetails() {
   }
 
   function handleIncrease() {
-    if (quantity >= stock) {
+    if (
+      quantity >= stock
+    ) {
       alert(
         "You have reached the available stock limit."
       );
@@ -1023,20 +1444,28 @@ export default function FoodDetails() {
       return;
     }
 
-    increaseQuantity(food.id);
+    increaseQuantity(
+      food.id
+    );
   }
 
   function handleDecrease() {
-    decreaseQuantity(food.id);
+    decreaseQuantity(
+      food.id
+    );
   }
 
   function handleToggleFavorite() {
-    if (!food) return;
+    if (!food) {
+      return;
+    }
 
     const itemId =
       getFavoriteId(food);
 
-    if (!itemId) return;
+    if (!itemId) {
+      return;
+    }
 
     const currentFavorites =
       readFavorites();
@@ -1091,7 +1520,10 @@ export default function FoodDetails() {
       ),
     ];
 
-    saveFavorites(nextFavorites);
+    saveFavorites(
+      nextFavorites
+    );
+
     setLiked(true);
 
     showToast({
@@ -1168,7 +1600,9 @@ export default function FoodDetails() {
   }
 
   function getTypeLabel() {
-    return food?.type || "Veg";
+    return (
+      food?.type || "Veg"
+    );
   }
 
   if (loading) {
@@ -1181,7 +1615,8 @@ export default function FoodDetails() {
             </div>
 
             <p className="mt-4 font-bold text-[#51615D]">
-              Loading dish details...
+              Loading dish
+              details...
             </p>
           </div>
         </div>
@@ -1209,7 +1644,7 @@ export default function FoodDetails() {
 
             <Link
               to="/marketplace"
-              className="mt-7 block rounded-2xl bg-[#073B35] py-4 font-black text-white shadow-lg shadow-[#073B35]/15"
+              className="mt-7 block rounded-2xl border border-[#073B35] bg-[#073B35] py-4 font-black text-white shadow-lg shadow-[#073B35]/15"
             >
               Back to Marketplace
             </Link>
@@ -1235,7 +1670,9 @@ export default function FoodDetails() {
 
               {toast.message ? (
                 <p className="mt-1 truncate text-sm font-semibold text-[#51615D]">
-                  {toast.message}
+                  {
+                    toast.message
+                  }
                 </p>
               ) : null}
             </div>
@@ -1247,21 +1684,23 @@ export default function FoodDetails() {
               to={toast.href}
               className="mt-4 block rounded-2xl border border-[#073B35] bg-[#073B35] py-3 text-center font-black text-white"
             >
-              {toast.actionLabel}
+              {
+                toast.actionLabel
+              }
             </Link>
           ) : null}
         </div>
       ) : null}
 
       <section className="mx-auto max-w-md px-4 pb-6 pt-3">
-        <div className="relative overflow-hidden rounded-[30px] bg-[#D7F5EF] shadow-[8px_8px_22px_rgba(7,59,53,0.1),-8px_-8px_22px_rgba(255,255,255,0.95)]">
+        <div className="relative overflow-hidden rounded-[30px] border border-[#BDEFE6] bg-[#D7F5EF] shadow-[8px_8px_22px_rgba(7,59,53,0.1),-8px_-8px_22px_rgba(255,255,255,0.95)]">
           <div className="absolute left-3 right-3 top-3 z-20 flex items-center justify-between">
             <button
               type="button"
               onClick={() =>
                 navigate(-1)
               }
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[#073B35] shadow-lg shadow-black/10 backdrop-blur active:scale-95"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-[#BDEFE6] bg-white/90 text-[#073B35] shadow-lg shadow-black/10 backdrop-blur active:scale-95"
               aria-label="Go back"
             >
               <BackIcon />
@@ -1272,7 +1711,7 @@ export default function FoodDetails() {
               onClick={
                 handleToggleFavorite
               }
-              className={`flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-lg shadow-black/10 backdrop-blur active:scale-95 ${
+              className={`flex h-10 w-10 items-center justify-center rounded-full border border-[#BDEFE6] bg-white/90 shadow-lg shadow-black/10 backdrop-blur active:scale-95 ${
                 liked
                   ? "text-red-500"
                   : "text-[#073B35]"
@@ -1310,13 +1749,16 @@ export default function FoodDetails() {
 
           {isBlocked ? (
             <div className="absolute inset-0 flex items-center justify-center bg-black/45 px-5 text-center">
-              <div className="rounded-3xl bg-white/95 px-5 py-4 shadow-xl">
+              <div className="rounded-3xl border border-[#BDEFE6] bg-white/95 px-5 py-4 shadow-xl">
                 <p className="text-lg font-black text-[#073B35]">
-                  {getMainButtonLabel()}
+                  {
+                    getMainButtonLabel()
+                  }
                 </p>
 
                 <p className="mt-1 text-xs font-semibold text-[#51615D]">
-                  Ordering is temporarily
+                  Ordering is
+                  temporarily
                   unavailable.
                 </p>
               </div>
@@ -1371,7 +1813,8 @@ export default function FoodDetails() {
 
                   <p className="mt-1 text-[10px] font-bold text-[#51615D]">
                     {ratingCount}{" "}
-                    {ratingCount === 1
+                    {ratingCount ===
+                    1
                       ? "rating"
                       : "ratings"}
                   </p>
@@ -1396,10 +1839,11 @@ export default function FoodDetails() {
             </p>
 
             <span
-              className={`rounded-full px-3 py-1 text-[10px] font-black ${
-                food.type === "Non-Veg"
-                  ? "bg-red-50 text-red-600"
-                  : "bg-[#41D3BD]/15 text-[#073B35]"
+              className={`rounded-full border px-3 py-1 text-[10px] font-black ${
+                food.type ===
+                "Non-Veg"
+                  ? "border-red-200 bg-red-50 text-red-600"
+                  : "border-[#BDEFE6] bg-[#41D3BD]/15 text-[#073B35]"
               }`}
             >
               {getTypeLabel()}
@@ -1408,12 +1852,15 @@ export default function FoodDetails() {
 
           {food.description ? (
             <p className="mt-4 text-sm font-semibold leading-relaxed text-[#51615D]">
-              {food.description}
+              {
+                food.description
+              }
             </p>
           ) : (
             <p className="mt-4 text-sm font-semibold leading-relaxed text-[#51615D]">
               Fresh homemade food
-              prepared by {kitchenName}.
+              prepared by{" "}
+              {kitchenName}.
             </p>
           )}
 
@@ -1440,13 +1887,54 @@ export default function FoodDetails() {
               label={
                 ratingCount > 0
                   ? `${ratingCount} ${
-                      ratingCount === 1
+                      ratingCount ===
+                      1
                         ? "rating"
                         : "ratings"
                     }`
-                  : "Be the first to rate"
+                  : "No ratings yet"
               }
             />
+          </div>
+
+          <div className="mt-4 rounded-[24px] border border-[#E8F4F1] bg-white/90 p-4 shadow-[6px_6px_16px_rgba(7,59,53,0.06),-6px_-6px_16px_rgba(255,255,255,0.95)]">
+            <h2 className="text-base font-black text-[#111827]">
+              About Kitchen
+            </h2>
+
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
+              {food.seller_about ||
+                `${kitchenName} serves fresh homemade food prepared with care.`}
+            </p>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {food.seller_specialty ? (
+                <span className="rounded-full border border-[#BDEFE6] bg-[#41D3BD]/12 px-3 py-1.5 text-[10px] font-black text-[#073B35]">
+                  {
+                    food.seller_specialty
+                  }
+                </span>
+              ) : null}
+
+              {sellerDoorNo ? (
+                <span className="rounded-full border border-[#E8F4F1] bg-[#FFFFF2] px-3 py-1.5 text-[10px] font-black text-[#073B35]">
+                  Door No.{" "}
+                  {sellerDoorNo}
+                </span>
+              ) : null}
+
+              <span
+                className={`rounded-full border px-3 py-1.5 text-[10px] font-black ${
+                  kitchenIsClosed
+                    ? "border-red-200 bg-red-50 text-red-600"
+                    : "border-green-200 bg-green-50 text-green-700"
+                }`}
+              >
+                {
+                  getKitchenStatusText()
+                }
+              </span>
+            </div>
           </div>
 
           <section className="mt-4 rounded-[24px] border border-[#BDEFE6] bg-white/95 p-4 shadow-[6px_6px_16px_rgba(7,59,53,0.06),-6px_-6px_16px_rgba(255,255,255,0.95)]">
@@ -1457,9 +1945,11 @@ export default function FoodDetails() {
                 </p>
 
                 <p className="mt-1 text-xs font-semibold text-[#51615D]">
-                  Your rating updates the
-                  live score for this
-                  food item.
+                  Ratings are
+                  available after a
+                  completed order
+                  containing this
+                  dish.
                 </p>
               </div>
 
@@ -1470,6 +1960,31 @@ export default function FoodDetails() {
                 </span>
               ) : null}
             </div>
+
+            {ratingEligibilityLoading ? (
+              <div className="mt-3 rounded-2xl border border-[#D8EAE6] bg-[#F7FCFA] p-3">
+                <p className="text-xs font-black text-[#51615D]">
+                  Checking rating
+                  eligibility...
+                </p>
+              </div>
+            ) : !canRateFood ? (
+              <div className="mt-3 rounded-2xl border border-[#F3C06E] bg-[#FFF8E7] p-3">
+                <p className="text-xs font-black text-[#8A5A00]">
+                  {
+                    ratingEligibilityMessage
+                  }
+                </p>
+              </div>
+            ) : (
+              <div className="mt-3 rounded-2xl border border-[#BDEFE6] bg-[#F3FCFA] p-3">
+                <p className="text-xs font-black text-[#0B8F80]">
+                  Verified
+                  purchase: you can
+                  rate this dish.
+                </p>
+              </div>
+            )}
 
             {ratingError ? (
               <p className="mt-3 rounded-2xl border border-red-200 bg-red-50 p-3 text-xs font-black text-red-600">
@@ -1484,9 +1999,16 @@ export default function FoodDetails() {
                     ratingValue <=
                     userRating;
 
+                  const disabled =
+                    ratingSaving ||
+                    ratingEligibilityLoading ||
+                    !canRateFood;
+
                   return (
                     <button
-                      key={ratingValue}
+                      key={
+                        ratingValue
+                      }
                       type="button"
                       onClick={() =>
                         submitRating(
@@ -1494,10 +2016,12 @@ export default function FoodDetails() {
                         )
                       }
                       disabled={
-                        ratingSaving
+                        disabled
                       }
-                      className={`flex h-11 flex-1 items-center justify-center rounded-2xl border text-2xl transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 ${
-                        active
+                      className={`flex h-11 flex-1 items-center justify-center rounded-2xl border text-2xl transition-all active:scale-95 disabled:cursor-not-allowed ${
+                        disabled
+                          ? "border-[#E2E9E7] bg-[#F7F7F4] text-[#C7D0CE] opacity-80"
+                          : active
                           ? "border-[#F3C06E] bg-[#FFF8E7] text-[#F59E0B]"
                           : "border-[#D8EAE6] bg-[#FFFDF7] text-[#B9C7C4]"
                       }`}
@@ -1516,7 +2040,11 @@ export default function FoodDetails() {
             </div>
 
             <p className="mt-3 text-center text-[10px] font-bold text-[#51615D]">
-              {ratingSaving
+              {ratingEligibilityLoading
+                ? "Checking your completed orders..."
+                : !canRateFood
+                ? "Complete an eligible order to unlock dish ratings."
+                : ratingSaving
                 ? "Saving your rating..."
                 : userRating > 0
                 ? "Tap another star to update your rating."
@@ -1524,49 +2052,13 @@ export default function FoodDetails() {
             </p>
           </section>
 
-          <div className="mt-4 rounded-[24px] border border-[#E8F4F1] bg-white/90 p-4 shadow-[6px_6px_16px_rgba(7,59,53,0.06),-6px_-6px_16px_rgba(255,255,255,0.95)]">
-            <h2 className="text-base font-black text-[#111827]">
-              About Kitchen
-            </h2>
-
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#51615D]">
-              {food.seller_about ||
-                `${kitchenName} serves fresh homemade food prepared with care.`}
-            </p>
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              {food.seller_specialty ? (
-                <span className="rounded-full bg-[#41D3BD]/12 px-3 py-1.5 text-[10px] font-black text-[#073B35]">
-                  {
-                    food.seller_specialty
-                  }
-                </span>
-              ) : null}
-
-              {sellerDoorNo ? (
-                <span className="rounded-full bg-[#FFFFF2] px-3 py-1.5 text-[10px] font-black text-[#073B35]">
-                  Door No.{" "}
-                  {sellerDoorNo}
-                </span>
-              ) : null}
-
-              <span
-                className={`rounded-full px-3 py-1.5 text-[10px] font-black ${
-                  kitchenIsClosed
-                    ? "bg-red-50 text-red-600"
-                    : "bg-green-50 text-green-700"
-                }`}
-              >
-                {getKitchenStatusText()}
-              </span>
-            </div>
-          </div>
-
           {getAvailabilityText() ? (
             <p
               className={`mt-3 text-xs font-black ${getAvailabilityClass()}`}
             >
-              {getAvailabilityText()}
+              {
+                getAvailabilityText()
+              }
             </p>
           ) : null}
         </section>
@@ -1593,7 +2085,8 @@ export default function FoodDetails() {
             </Link>
           </div>
 
-          {kitchenFoods.length > 0 ? (
+          {kitchenFoods.length >
+          0 ? (
             <div className="-mx-4 overflow-x-auto px-4 pb-2 scrollbar-hide">
               <div className="flex min-w-max gap-2">
                 <button
@@ -1603,16 +2096,16 @@ export default function FoodDetails() {
                       "All"
                     )
                   }
-                  className={`shrink-0 rounded-full px-4 py-2 text-[11px] font-black ${
+                  className={`shrink-0 rounded-full border px-4 py-2 text-[11px] font-black ${
                     selectedKitchenCategory ===
                     "All"
-                      ? "bg-[#073B35] text-white"
-                      : "bg-white/90 text-[#51615D]"
+                      ? "border-[#073B35] bg-[#073B35] text-white"
+                      : "border-[#E8F4F1] bg-white/90 text-[#51615D]"
                   }`}
                 >
                   All (
-                  {kitchenCategoryCounts.All ||
-                    0}
+                  {kitchenCategoryCounts
+                    .All || 0}
                   )
                 </button>
 
@@ -1633,11 +2126,11 @@ export default function FoodDetails() {
                           categoryName
                         )
                       }
-                      className={`shrink-0 rounded-full px-4 py-2 text-[11px] font-black ${
+                      className={`shrink-0 rounded-full border px-4 py-2 text-[11px] font-black ${
                         selectedKitchenCategory ===
                         categoryName
-                          ? "bg-[#073B35] text-white"
-                          : "bg-white/90 text-[#51615D]"
+                          ? "border-[#073B35] bg-[#073B35] text-white"
+                          : "border-[#E8F4F1] bg-white/90 text-[#51615D]"
                       }`}
                     >
                       {categoryName} (
@@ -1654,15 +2147,16 @@ export default function FoodDetails() {
             </div>
           ) : null}
 
-          {kitchenFoods.length === 0 ? (
+          {kitchenFoods.length ===
+          0 ? (
             <div className="rounded-[24px] border border-[#E8F4F1] bg-white/90 p-5 text-center shadow-[6px_6px_16px_rgba(7,59,53,0.06),-6px_-6px_16px_rgba(255,255,255,0.95)]">
               <div className="text-3xl">
                 🍽️
               </div>
 
               <p className="mt-3 font-black text-[#111827]">
-                No other dishes from
-                this kitchen.
+                No other dishes
+                from this kitchen.
               </p>
 
               <p className="mt-1 text-sm font-semibold text-[#51615D]">
@@ -1715,7 +2209,9 @@ export default function FoodDetails() {
               onClick={
                 handleDecrease
               }
-              disabled={quantity <= 0}
+              disabled={
+                quantity <= 0
+              }
               className={`flex h-14 w-12 items-center justify-center text-xl font-black ${
                 quantity <= 0
                   ? "cursor-not-allowed text-[#B8C9C5]"
@@ -1757,16 +2253,20 @@ export default function FoodDetails() {
           isBlocked ? (
             <button
               type="button"
-              onClick={handleAddToCart}
+              onClick={
+                handleAddToCart
+              }
               disabled={isBlocked}
-              className={`h-14 flex-1 rounded-2xl text-sm font-black transition-all active:scale-[0.98] ${
+              className={`h-14 flex-1 rounded-2xl border text-sm font-black transition-all active:scale-[0.98] ${
                 isBlocked
-                  ? "cursor-not-allowed border border-red-100 bg-[#EAF7F4] text-[#8AA5A0]"
-                  : "bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
+                  ? "cursor-not-allowed border-red-100 bg-[#EAF7F4] text-[#8AA5A0]"
+                  : "border-[#073B35] bg-[#073B35] text-white shadow-lg shadow-[#073B35]/15"
               }`}
             >
               <span className="block">
-                {getMainButtonLabel()}
+                {
+                  getMainButtonLabel()
+                }
               </span>
 
               {!isBlocked ? (
@@ -1778,13 +2278,18 @@ export default function FoodDetails() {
           ) : (
             <Link
               to="/cart"
-              className="flex h-14 flex-1 flex-col items-center justify-center rounded-2xl bg-[#073B35] text-sm font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.98]"
+              className="flex h-14 flex-1 flex-col items-center justify-center rounded-2xl border border-[#073B35] bg-[#073B35] text-sm font-black text-white shadow-lg shadow-[#073B35]/15 active:scale-[0.98]"
             >
-              <span>Go to Cart</span>
+              <span>
+                Go to Cart
+              </span>
 
               <span className="text-[10px] font-bold opacity-80">
-                {computedCartCount}{" "}
-                {computedCartCount === 1
+                {
+                  computedCartCount
+                }{" "}
+                {computedCartCount ===
+                1
                   ? "item"
                   : "items"}
               </span>
