@@ -3,6 +3,7 @@ import {
   Link,
   useNavigate,
 } from "react-router-dom";
+import { Capacitor } from "@capacitor/core";
 import { supabase } from "../lib/supabaseClient";
 
 const CARD =
@@ -14,6 +15,17 @@ const SOFT_CARD =
 const INPUT =
   "w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-base font-semibold text-[#181411] outline-none placeholder:text-[#9A8E80] focus:border-[#CF743D] focus:bg-white";
 
+const NATIVE_RESET_REDIRECT_URL =
+  "com.nefo.app://reset-password";
+
+function getPasswordResetRedirectUrl() {
+  if (Capacitor.isNativePlatform()) {
+    return NATIVE_RESET_REDIRECT_URL;
+  }
+
+  return `${window.location.origin}/reset-password`;
+}
+
 function isEmailIdentifier(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
     String(value || "").trim()
@@ -21,7 +33,9 @@ function isEmailIdentifier(value) {
 }
 
 function normalizePhone(value) {
-  let digits = String(value || "").replace(/\D/g, "");
+  let digits = String(
+    value || ""
+  ).replace(/\D/g, "");
 
   if (
     digits.length === 12 &&
@@ -40,15 +54,19 @@ function normalizePhone(value) {
   return digits;
 }
 
-async function getFunctionErrorMessage(error) {
+async function getFunctionErrorMessage(
+  error
+) {
   try {
     const response = error?.context;
 
     if (
       response &&
-      typeof response.json === "function"
+      typeof response.json ===
+        "function"
     ) {
-      const body = await response.json();
+      const body =
+        await response.json();
 
       return (
         body?.error ||
@@ -57,7 +75,7 @@ async function getFunctionErrorMessage(error) {
       );
     }
   } catch {
-    // Use the normal error message below.
+    // Use the standard function error.
   }
 
   return (
@@ -128,13 +146,17 @@ export default function CustomerLogin() {
   }
 
   function handleChange(event) {
-    const { name, value } =
-      event.target;
+    const {
+      name,
+      value,
+    } = event.target;
 
-    setFormData((currentData) => ({
-      ...currentData,
-      [name]: value,
-    }));
+    setFormData(
+      (currentData) => ({
+        ...currentData,
+        [name]: value,
+      })
+    );
 
     setErrors(
       (currentErrors) => ({
@@ -148,7 +170,10 @@ export default function CustomerLogin() {
   }
 
   function cleanPhone(phone) {
-    return phone.replace(/\D/g, "");
+    return phone.replace(
+      /\D/g,
+      ""
+    );
   }
 
   function buildFlatAddress() {
@@ -161,7 +186,9 @@ export default function CustomerLogin() {
       .join(" ");
   }
 
-  function setLoginError(errorMessage) {
+  function setLoginError(
+    errorMessage
+  ) {
     const cleanMessage = String(
       errorMessage || ""
     ).toLowerCase();
@@ -195,9 +222,15 @@ export default function CustomerLogin() {
     }
 
     if (
-      cleanMessage.includes("email") ||
-      cleanMessage.includes("mobile") ||
-      cleanMessage.includes("phone")
+      cleanMessage.includes(
+        "email"
+      ) ||
+      cleanMessage.includes(
+        "mobile"
+      ) ||
+      cleanMessage.includes(
+        "phone"
+      )
     ) {
       setErrors(
         (currentErrors) => ({
@@ -230,7 +263,9 @@ export default function CustomerLogin() {
       general: "",
     };
 
-    if (!formData.fullName.trim()) {
+    if (
+      !formData.fullName.trim()
+    ) {
       nextErrors.fullName =
         "Full name is required.";
     }
@@ -239,7 +274,9 @@ export default function CustomerLogin() {
       nextErrors.phone =
         "Phone number is required.";
     } else if (
-      cleanPhone(formData.phone).length < 10
+      cleanPhone(
+        formData.phone
+      ).length < 10
     ) {
       nextErrors.phone =
         "Please enter a valid phone number.";
@@ -261,13 +298,17 @@ export default function CustomerLogin() {
       nextErrors.email =
         "Email address is required.";
     } else if (
-      !isEmailIdentifier(formData.email)
+      !isEmailIdentifier(
+        formData.email
+      )
     ) {
       nextErrors.email =
         "Please enter a valid email address.";
     }
 
-    if (!formData.password.trim()) {
+    if (
+      !formData.password.trim()
+    ) {
       nextErrors.password =
         "Password is required.";
     }
@@ -297,14 +338,20 @@ export default function CustomerLogin() {
       nextErrors.email =
         "Email address or mobile number is required.";
     } else if (
-      !isEmailIdentifier(identifier) &&
-      normalizePhone(identifier).length !== 10
+      !isEmailIdentifier(
+        identifier
+      ) &&
+      normalizePhone(
+        identifier
+      ).length !== 10
     ) {
       nextErrors.email =
         "Enter a valid email address or 10-digit mobile number.";
     }
 
-    if (!formData.password.trim()) {
+    if (
+      !formData.password.trim()
+    ) {
       nextErrors.password =
         "Password is required.";
     }
@@ -334,7 +381,11 @@ export default function CustomerLogin() {
       return;
     }
 
-    if (!isEmailIdentifier(identifier)) {
+    if (
+      !isEmailIdentifier(
+        identifier
+      )
+    ) {
       setErrors(
         (currentErrors) => ({
           ...currentErrors,
@@ -349,7 +400,8 @@ export default function CustomerLogin() {
     setResettingPassword(true);
     setMessage("");
 
-    const redirectTo = `${window.location.origin}/reset-password`;
+    const redirectTo =
+      getPasswordResetRedirectUrl();
 
     const { error } =
       await supabase.auth.resetPasswordForEmail(
@@ -372,7 +424,7 @@ export default function CustomerLogin() {
     }
 
     setMessage(
-      "Password reset link sent to your email."
+      "Password reset link sent. Open the newest link from your email."
     );
 
     setResettingPassword(false);
@@ -385,11 +437,18 @@ export default function CustomerLogin() {
     const password =
       formData.password;
 
-    if (isEmailIdentifier(identifier)) {
-      return supabase.auth.signInWithPassword({
-        email: identifier.toLowerCase(),
-        password,
-      });
+    if (
+      isEmailIdentifier(
+        identifier
+      )
+    ) {
+      return supabase.auth.signInWithPassword(
+        {
+          email:
+            identifier.toLowerCase(),
+          password,
+        }
+      );
     }
 
     const normalizedPhone =
@@ -398,15 +457,17 @@ export default function CustomerLogin() {
     const {
       data: functionData,
       error: functionError,
-    } = await supabase.functions.invoke(
-      "phone-login",
-      {
-        body: {
-          phone: normalizedPhone,
-          password,
-        },
-      }
-    );
+    } =
+      await supabase.functions.invoke(
+        "phone-login",
+        {
+          body: {
+            phone:
+              normalizedPhone,
+            password,
+          },
+        }
+      );
 
     if (functionError) {
       const errorMessage =
@@ -416,7 +477,9 @@ export default function CustomerLogin() {
 
       return {
         data: null,
-        error: new Error(errorMessage),
+        error: new Error(
+          errorMessage
+        ),
       };
     }
 
@@ -439,13 +502,19 @@ export default function CustomerLogin() {
     }
 
     return supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: refreshToken,
+      access_token:
+        accessToken,
+      refresh_token:
+        refreshToken,
     });
   }
 
-  async function handleSuccessfulLogin(user) {
-    if (selectedRole === "customer") {
+  async function handleSuccessfulLogin(
+    loggedInUser
+  ) {
+    if (
+      selectedRole === "customer"
+    ) {
       navigate("/", {
         replace: true,
       });
@@ -461,7 +530,10 @@ export default function CustomerLogin() {
       .select(
         "role, is_seller, seller_application_status"
       )
-      .eq("id", user.id)
+      .eq(
+        "id",
+        loggedInUser.id
+      )
       .maybeSingle();
 
     if (profileError) {
@@ -480,36 +552,47 @@ export default function CustomerLogin() {
       profile?.role || ""
     ).toLowerCase();
 
-    const applicationStatus = String(
-      profile?.seller_application_status ||
-        "not_applied"
-    ).toLowerCase();
+    const applicationStatus =
+      String(
+        profile?.seller_application_status ||
+          "not_applied"
+      ).toLowerCase();
 
     const isAdmin =
       profileRole === "admin";
 
     const isApprovedSeller =
       profileRole === "seller" &&
-      profile?.is_seller === true &&
-      applicationStatus === "approved";
+      profile?.is_seller ===
+        true &&
+      applicationStatus ===
+        "approved";
 
     if (
       isAdmin ||
       isApprovedSeller
     ) {
-      navigate("/seller-dashboard", {
-        replace: true,
-      });
+      navigate(
+        "/seller-dashboard",
+        {
+          replace: true,
+        }
+      );
 
       return;
     }
 
-    navigate("/seller-registration", {
-      replace: true,
-    });
+    navigate(
+      "/seller-registration",
+      {
+        replace: true,
+      }
+    );
   }
 
-  async function handleAuth(event) {
+  async function handleAuth(
+    event
+  ) {
     event.preventDefault();
 
     setLoading(true);
@@ -526,44 +609,53 @@ export default function CustomerLogin() {
         }
 
         const cleanedPhone =
-          cleanPhone(formData.phone);
+          cleanPhone(
+            formData.phone
+          );
 
         const flatAddress =
           buildFlatAddress();
 
-        const { data, error } =
-          await supabase.auth.signUp({
-            email:
-              formData.email
-                .trim()
-                .toLowerCase(),
+        const {
+          data,
+          error,
+        } =
+          await supabase.auth.signUp(
+            {
+              email:
+                formData.email
+                  .trim()
+                  .toLowerCase(),
 
-            password:
-              formData.password,
+              password:
+                formData.password,
 
-            options: {
-              data: {
-                full_name:
-                  formData.fullName.trim(),
+              options: {
+                data: {
+                  full_name:
+                    formData.fullName.trim(),
 
-                phone: cleanedPhone,
+                  phone:
+                    cleanedPhone,
 
-                apartment_name:
-                  formData.apartmentName.trim(),
+                  apartment_name:
+                    formData.apartmentName.trim(),
 
-                block:
-                  formData.block.trim(),
+                  block:
+                    formData.block.trim(),
 
-                flat_no:
-                  formData.flatNo.trim(),
+                  flat_no:
+                    formData.flatNo.trim(),
 
-                flat: flatAddress,
+                  flat:
+                    flatAddress,
 
-                role:
-                  selectedRole,
+                  role:
+                    selectedRole,
+                },
               },
-            },
-          });
+            }
+          );
 
         if (error) {
           setLoginError(
@@ -579,7 +671,8 @@ export default function CustomerLogin() {
 
         if (newUser) {
           const {
-            error: profileError,
+            error:
+              profileError,
           } = await supabase
             .from("profiles")
             .upsert({
@@ -588,7 +681,8 @@ export default function CustomerLogin() {
               full_name:
                 formData.fullName.trim(),
 
-              phone: cleanedPhone,
+              phone:
+                cleanedPhone,
 
               email:
                 formData.email
@@ -604,7 +698,8 @@ export default function CustomerLogin() {
               flat_no:
                 formData.flatNo.trim(),
 
-              flat: flatAddress,
+              flat:
+                flatAddress,
 
               role:
                 selectedRole,
@@ -629,7 +724,8 @@ export default function CustomerLogin() {
         }
 
         if (
-          selectedRole === "seller"
+          selectedRole ===
+          "seller"
         ) {
           navigate(
             "/seller-registration",
@@ -647,7 +743,9 @@ export default function CustomerLogin() {
         return;
       }
 
-      if (!validateLoginFields()) {
+      if (
+        !validateLoginFields()
+      ) {
         setLoading(false);
         return;
       }
@@ -715,9 +813,10 @@ export default function CustomerLogin() {
     clearErrors();
   }
 
-  const identifierLabel = isSignUp
-    ? "Email address"
-    : "Email address or mobile number";
+  const identifierLabel =
+    isSignUp
+      ? "Email address"
+      : "Email address or mobile number";
 
   const identifierPlaceholder =
     isSignUp
@@ -746,7 +845,7 @@ export default function CustomerLogin() {
               </p>
 
               <p className="text-[10px] font-black uppercase tracking-wide text-[#6B6258]">
-                Homemade nearby food
+                Neighbourhood food
               </p>
             </div>
           </Link>
@@ -769,9 +868,7 @@ export default function CustomerLogin() {
 
             <div className="relative z-10">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-[#F3C06E]">
-                <span>
-                  Community kitchens
-                </span>
+                Community kitchens
               </div>
 
               <h1 className="mt-5 text-4xl font-black leading-[0.95] tracking-tight">
@@ -823,7 +920,9 @@ export default function CustomerLogin() {
                   "seller"
                 }
                 onClick={() =>
-                  switchRole("seller")
+                  switchRole(
+                    "seller"
+                  )
                 }
                 label="Seller"
               />
@@ -933,7 +1032,9 @@ export default function CustomerLogin() {
               ) : null}
 
               <Field
-                label={identifierLabel}
+                label={
+                  identifierLabel
+                }
                 error={errors.email}
               >
                 <input
@@ -1145,7 +1246,9 @@ export default function CustomerLogin() {
 
             <button
               type="button"
-              onClick={toggleSignUpMode}
+              onClick={
+                toggleSignUpMode
+              }
               className="mt-5 w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 text-sm font-black text-[#3F5128] active:scale-95"
             >
               {isSignUp
