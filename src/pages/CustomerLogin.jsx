@@ -51,10 +51,9 @@ function isEmailIdentifier(value) {
 }
 
 function normalizePhone(value) {
-  let digits = String(value || "").replace(
-    /\D/g,
-    ""
-  );
+  let digits = String(
+    value || ""
+  ).replace(/\D/g, "");
 
   if (
     digits.length === 12 &&
@@ -73,15 +72,20 @@ function normalizePhone(value) {
   return digits;
 }
 
-async function getFunctionErrorMessage(error) {
+async function getFunctionErrorMessage(
+  error
+) {
   try {
-    const response = error?.context;
+    const response =
+      error?.context;
 
     if (
       response &&
-      typeof response.json === "function"
+      typeof response.json ===
+        "function"
     ) {
-      const body = await response.json();
+      const body =
+        await response.json();
 
       return (
         body?.error ||
@@ -141,12 +145,16 @@ export default function CustomerLogin() {
     useState(createEmptyErrors);
 
   function clearErrors() {
-    setErrors(createEmptyErrors());
+    setErrors(
+      createEmptyErrors()
+    );
   }
 
   function handleChange(event) {
-    const { name, value } =
-      event.target;
+    const {
+      name,
+      value,
+    } = event.target;
 
     setFormData(
       (currentData) => ({
@@ -167,10 +175,9 @@ export default function CustomerLogin() {
   }
 
   function cleanPhone(phone) {
-    return String(phone || "").replace(
-      /\D/g,
-      ""
-    );
+    return String(
+      phone || ""
+    ).replace(/\D/g, "");
   }
 
   function buildFlatAddress() {
@@ -183,10 +190,13 @@ export default function CustomerLogin() {
       .join(" ");
   }
 
-  function setLoginError(errorMessage) {
-    const cleanMessage = String(
-      errorMessage || ""
-    ).toLowerCase();
+  function setLoginError(
+    errorMessage
+  ) {
+    const cleanMessage =
+      String(
+        errorMessage || ""
+      ).toLowerCase();
 
     if (
       cleanMessage.includes(
@@ -217,9 +227,15 @@ export default function CustomerLogin() {
     }
 
     if (
-      cleanMessage.includes("email") ||
-      cleanMessage.includes("mobile") ||
-      cleanMessage.includes("phone")
+      cleanMessage.includes(
+        "email"
+      ) ||
+      cleanMessage.includes(
+        "mobile"
+      ) ||
+      cleanMessage.includes(
+        "phone"
+      )
     ) {
       setErrors(
         (currentErrors) => ({
@@ -247,17 +263,22 @@ export default function CustomerLogin() {
     const nextErrors =
       createEmptyErrors();
 
-    if (!formData.fullName.trim()) {
+    if (
+      !formData.fullName.trim()
+    ) {
       nextErrors.fullName =
         "Full name is required.";
     }
 
-    if (!formData.phone.trim()) {
+    if (
+      !formData.phone.trim()
+    ) {
       nextErrors.phone =
         "Phone number is required.";
     } else if (
-      cleanPhone(formData.phone)
-        .length < 10
+      cleanPhone(
+        formData.phone
+      ).length < 10
     ) {
       nextErrors.phone =
         "Please enter a valid phone number.";
@@ -270,12 +291,16 @@ export default function CustomerLogin() {
         "Apartment name is required.";
     }
 
-    if (!formData.flatNo.trim()) {
+    if (
+      !formData.flatNo.trim()
+    ) {
       nextErrors.flatNo =
         "Door or flat number is required.";
     }
 
-    if (!formData.email.trim()) {
+    if (
+      !formData.email.trim()
+    ) {
       nextErrors.email =
         "Email address is required.";
     } else if (
@@ -287,7 +312,9 @@ export default function CustomerLogin() {
         "Please enter a valid email address.";
     }
 
-    if (!formData.password.trim()) {
+    if (
+      !formData.password.trim()
+    ) {
       nextErrors.password =
         "Password is required.";
     }
@@ -321,7 +348,9 @@ export default function CustomerLogin() {
         "Enter a valid email address or 10-digit mobile number.";
     }
 
-    if (!formData.password.trim()) {
+    if (
+      !formData.password.trim()
+    ) {
       nextErrors.password =
         "Password is required.";
     }
@@ -389,7 +418,10 @@ export default function CustomerLogin() {
         })
       );
 
-      setResettingPassword(false);
+      setResettingPassword(
+        false
+      );
+
       return;
     }
 
@@ -483,7 +515,8 @@ export default function CustomerLogin() {
     loggedInUser
   ) {
     if (
-      selectedRole === "customer"
+      selectedRole ===
+      "customer"
     ) {
       navigate("/", {
         replace: true,
@@ -500,7 +533,10 @@ export default function CustomerLogin() {
       .select(
         "role, is_seller, seller_application_status"
       )
-      .eq("id", loggedInUser.id)
+      .eq(
+        "id",
+        loggedInUser.id
+      )
       .maybeSingle();
 
     if (profileError) {
@@ -515,9 +551,10 @@ export default function CustomerLogin() {
       return;
     }
 
-    const profileRole = String(
-      profile?.role || ""
-    ).toLowerCase();
+    const profileRole =
+      String(
+        profile?.role || ""
+      ).toLowerCase();
 
     const applicationStatus =
       String(
@@ -529,7 +566,8 @@ export default function CustomerLogin() {
       profileRole === "admin";
 
     const isApprovedSeller =
-      profileRole === "seller" &&
+      profileRole ===
+        "seller" &&
       profile?.is_seller ===
         true &&
       applicationStatus ===
@@ -628,6 +666,7 @@ export default function CustomerLogin() {
           );
 
           setLoading(false);
+
           return;
         }
 
@@ -676,13 +715,16 @@ export default function CustomerLogin() {
 
           if (profileError) {
             setErrors(
-              (currentErrors) => ({
+              (
+                currentErrors
+              ) => ({
                 ...currentErrors,
                 general: `Profile save failed: ${profileError.message}`,
               })
             );
 
             setLoading(false);
+
             return;
           }
         }
@@ -704,6 +746,7 @@ export default function CustomerLogin() {
         }
 
         setLoading(false);
+
         return;
       }
 
@@ -711,10 +754,14 @@ export default function CustomerLogin() {
         !validateLoginFields()
       ) {
         setLoading(false);
+
         return;
       }
 
-      const { data, error } =
+      const {
+        data,
+        error,
+      } =
         await signInWithIdentifier();
 
       if (error) {
@@ -723,6 +770,7 @@ export default function CustomerLogin() {
         );
 
         setLoading(false);
+
         return;
       }
 
@@ -732,7 +780,9 @@ export default function CustomerLogin() {
 
       if (!loggedInUser) {
         setErrors(
-          (currentErrors) => ({
+          (
+            currentErrors
+          ) => ({
             ...currentErrors,
             general:
               "Login failed. Please try again.",
@@ -740,6 +790,7 @@ export default function CustomerLogin() {
         );
 
         setLoading(false);
+
         return;
       }
 
@@ -748,7 +799,9 @@ export default function CustomerLogin() {
       );
     } catch (error) {
       setErrors(
-        (currentErrors) => ({
+        (
+          currentErrors
+        ) => ({
           ...currentErrors,
           general:
             error?.message ||
@@ -760,8 +813,13 @@ export default function CustomerLogin() {
     setLoading(false);
   }
 
-  function switchRole(nextRole) {
-    setSelectedRole(nextRole);
+  function switchRole(
+    nextRole
+  ) {
+    setSelectedRole(
+      nextRole
+    );
+
     setMessage("");
     clearErrors();
   }
@@ -787,45 +845,32 @@ export default function CustomerLogin() {
       : "Email or mobile number";
 
   return (
-    <main className="min-h-screen bg-[#FFF8EC] px-3 py-3 pb-28 text-[#181411] sm:px-4 sm:py-5">
+    <main className="min-h-screen bg-[#FFF8EC] px-4 py-3 pb-28 text-[#181411] sm:py-5">
       <div className="mx-auto w-full max-w-md">
-        <header>
+        <header className="flex items-center">
           <Link
             to="/"
-            className="flex w-full items-center gap-3 rounded-[26px] border border-[#EADFCE] bg-[#FFFDF7]/95 px-3 py-3 shadow-[6px_6px_18px_rgba(63,81,40,0.07),-6px_-6px_18px_rgba(255,255,255,0.95)] transition-transform active:scale-[0.99] sm:gap-4 sm:px-4"
+            className="flex min-w-0 items-center gap-3 active:opacity-80"
             aria-label="Go to NeFo home"
           >
-            <div className="flex h-[64px] w-[64px] shrink-0 items-center justify-center overflow-hidden rounded-[20px] border border-[#D8C9B3] bg-[#FFF8EC] p-1.5">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#EADFCE] bg-[#FFFDF7] p-1 shadow-[4px_4px_12px_rgba(63,81,40,0.06),-4px_-4px_12px_rgba(255,255,255,0.95)]">
               <BrandLogo />
             </div>
 
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <p className="text-[25px] font-black leading-none tracking-tight text-[#3F5128]">
-                  NeFo
-                </p>
+            <div className="min-w-0">
+              <p className="text-xl font-black leading-none tracking-tight text-[#3F5128]">
+                NeFo
+              </p>
 
-                <span className="h-2 w-2 rounded-full bg-[#CF743D]" />
-              </div>
-
-              <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-[#6B6258] sm:text-[11px]">
+              <p className="mt-1.5 text-[9px] font-black uppercase tracking-[0.12em] text-[#6B6258]">
                 Neighbour Food
               </p>
-
-              <p className="mt-1 truncate text-[9px] font-bold text-[#9A8E80] sm:text-[10px]">
-                Homemade food from
-                kitchens near you
-              </p>
-            </div>
-
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#EADFCE] bg-white text-[#3F5128]">
-              <ChevronRightIcon />
             </div>
           </Link>
         </header>
 
         <section
-          className={`mt-4 overflow-hidden ${CARD}`}
+          className={`mt-5 overflow-hidden ${CARD}`}
         >
           <div className="relative overflow-hidden bg-[#3F5128] p-5 text-white sm:p-6">
             <div className="absolute -right-10 -top-12 h-40 w-40 rounded-full bg-white/10" />
@@ -847,8 +892,9 @@ export default function CustomerLogin() {
 
               <p className="mt-4 text-sm font-semibold leading-relaxed text-white/75">
                 Sign in to order
-                homemade food or manage
-                your NeFo kitchen panel.
+                homemade food or
+                manage your NeFo
+                kitchen panel.
               </p>
 
               <div className="mt-5 grid grid-cols-2 gap-3">
@@ -924,7 +970,9 @@ export default function CustomerLogin() {
             {errors.general ? (
               <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4">
                 <p className="text-sm font-black text-red-700">
-                  {errors.general}
+                  {
+                    errors.general
+                  }
                 </p>
               </div>
             ) : null}
@@ -938,7 +986,9 @@ export default function CustomerLogin() {
             ) : null}
 
             <form
-              onSubmit={handleAuth}
+              onSubmit={
+                handleAuth
+              }
               className="mt-6 space-y-4"
             >
               {isSignUp ? (
@@ -1001,7 +1051,9 @@ export default function CustomerLogin() {
                 label={
                   identifierLabel
                 }
-                error={errors.email}
+                error={
+                  errors.email
+                }
               >
                 <input
                   type={
@@ -1188,11 +1240,12 @@ export default function CustomerLogin() {
                   </div>
 
                   <p className="mt-4 text-xs font-semibold leading-relaxed text-[#6B6258]">
-                    Address is used for
-                    order coordination.
-                    Kitchen/customer door
-                    details are not shown
-                    publicly.
+                    Address is used
+                    for order
+                    coordination.
+                    Kitchen/customer
+                    door details are
+                    not shown publicly.
                   </p>
                 </section>
               ) : null}
@@ -1427,20 +1480,5 @@ function Field({
 
       {children}
     </label>
-  );
-}
-
-function ChevronRightIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      aria-hidden="true"
-    >
-      <path d="m9 18 6-6-6-6" />
-    </svg>
   );
 }
