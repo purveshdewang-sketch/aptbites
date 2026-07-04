@@ -1,5 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
+import {
+  Link,
+  useSearchParams,
+} from "react-router-dom";
+
 import FoodCard from "../components/FoodCard";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
@@ -17,22 +27,35 @@ const CATEGORY_CHIPS = [
   "Tiffin",
 ];
 
-const FOOD_TYPE_CHIPS = ["All", "Veg", "Non-Veg"];
+const FOOD_TYPE_CHIPS = [
+  "All",
+  "Veg",
+  "Non-Veg",
+];
 
 const CARD =
   "rounded-[26px] border border-[#EADFCE] bg-white/95 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
-const FAVORITES_STORAGE_KEY = "NeFo_favorite_foods";
-const PREFERENCE_STORAGE_PREFIX = "NeFo_food_preferences";
+const FAVORITES_STORAGE_KEY =
+  "NeFo_favorite_foods";
 
-const RECOMMENDATION_MIN_ACCOUNT_AGE_DAYS = 3;
-const RECOMMENDATION_MIN_INTERACTION_SCORE = 8;
-const RECOMMENDATION_MIN_COMPLETED_ORDERS = 2;
+const PREFERENCE_STORAGE_PREFIX =
+  "NeFo_food_preferences";
 
-const COMPLETED_ORDER_STATUSES = new Set([
-  "completed",
-  "delivered",
-]);
+const RECOMMENDATION_MIN_ACCOUNT_AGE_DAYS =
+  3;
+
+const RECOMMENDATION_MIN_INTERACTION_SCORE =
+  8;
+
+const RECOMMENDATION_MIN_COMPLETED_ORDERS =
+  2;
+
+const COMPLETED_ORDER_STATUSES =
+  new Set([
+    "completed",
+    "delivered",
+  ]);
 
 const EMPTY_PREFERENCES = {
   categories: {},
@@ -42,10 +65,14 @@ const EMPTY_PREFERENCES = {
 };
 
 function normalizeText(value) {
-  return String(value || "").trim().toLowerCase();
+  return String(value || "")
+    .trim()
+    .toLowerCase();
 }
 
-function getPreferenceStorageKey(userId) {
+function getPreferenceStorageKey(
+  userId
+) {
   return `${PREFERENCE_STORAGE_PREFIX}_${userId}`;
 }
 
@@ -58,44 +85,54 @@ function createEmptyPreferences() {
   };
 }
 
-function readStoredPreferences(userId) {
+function readStoredPreferences(
+  userId
+) {
   if (!userId) {
     return createEmptyPreferences();
   }
 
   try {
-    const rawValue = window.localStorage.getItem(
-      getPreferenceStorageKey(userId)
-    );
+    const rawValue =
+      window.localStorage.getItem(
+        getPreferenceStorageKey(
+          userId
+        )
+      );
 
     if (!rawValue) {
       return createEmptyPreferences();
     }
 
-    const parsedValue = JSON.parse(rawValue);
+    const parsedValue =
+      JSON.parse(rawValue);
 
     return {
       categories:
         parsedValue?.categories &&
-        typeof parsedValue.categories === "object"
+        typeof parsedValue.categories ===
+          "object"
           ? parsedValue.categories
           : {},
 
       foodTypes:
         parsedValue?.foodTypes &&
-        typeof parsedValue.foodTypes === "object"
+        typeof parsedValue.foodTypes ===
+          "object"
           ? parsedValue.foodTypes
           : {},
 
       kitchens:
         parsedValue?.kitchens &&
-        typeof parsedValue.kitchens === "object"
+        typeof parsedValue.kitchens ===
+          "object"
           ? parsedValue.kitchens
           : {},
 
       searches:
         parsedValue?.searches &&
-        typeof parsedValue.searches === "object"
+        typeof parsedValue.searches ===
+          "object"
           ? parsedValue.searches
           : {},
     };
@@ -106,17 +143,23 @@ function readStoredPreferences(userId) {
 
 function readFavoriteFoodIds() {
   try {
-    const rawValue = window.localStorage.getItem(
-      FAVORITES_STORAGE_KEY
-    );
+    const rawValue =
+      window.localStorage.getItem(
+        FAVORITES_STORAGE_KEY
+      );
 
     if (!rawValue) {
       return [];
     }
 
-    const parsedValue = JSON.parse(rawValue);
+    const parsedValue =
+      JSON.parse(rawValue);
 
-    if (!Array.isArray(parsedValue)) {
+    if (
+      !Array.isArray(
+        parsedValue
+      )
+    ) {
       return [];
     }
 
@@ -126,7 +169,8 @@ function readFavoriteFoodIds() {
           .map((item) => {
             if (
               item &&
-              typeof item === "object"
+              typeof item ===
+                "object"
             ) {
               return String(
                 item.id ||
@@ -136,7 +180,9 @@ function readFavoriteFoodIds() {
               );
             }
 
-            return String(item || "");
+            return String(
+              item || ""
+            );
           })
           .filter(Boolean)
       ),
@@ -151,13 +197,19 @@ function parseOrderItems(value) {
     return value;
   }
 
-  if (typeof value !== "string") {
+  if (
+    typeof value !== "string"
+  ) {
     return [];
   }
 
   try {
-    const parsedValue = JSON.parse(value);
-    return Array.isArray(parsedValue)
+    const parsedValue =
+      JSON.parse(value);
+
+    return Array.isArray(
+      parsedValue
+    )
       ? parsedValue
       : [];
   } catch {
@@ -165,130 +217,227 @@ function parseOrderItems(value) {
   }
 }
 
-function addScore(map, key, score) {
-  const normalizedKey = normalizeText(key);
+function addScore(
+  map,
+  key,
+  score
+) {
+  const normalizedKey =
+    normalizeText(key);
 
-  if (!normalizedKey || !Number.isFinite(score)) {
+  if (
+    !normalizedKey ||
+    !Number.isFinite(score)
+  ) {
     return;
   }
 
   map.set(
     normalizedKey,
-    (map.get(normalizedKey) || 0) + score
+    (map.get(normalizedKey) ||
+      0) + score
   );
 }
 
-function sumPreferenceCounts(group) {
-  return Object.values(group || {}).reduce(
+function sumPreferenceCounts(
+  group
+) {
+  return Object.values(
+    group || {}
+  ).reduce(
     (total, value) =>
       total +
       Math.min(
         5,
-        Math.max(0, Number(value || 0))
+        Math.max(
+          0,
+          Number(value || 0)
+        )
       ),
     0
   );
 }
 
 function getFoodId(food) {
-  return String(food?.id || "");
+  return String(
+    food?.id || ""
+  );
 }
 
 export default function Home() {
   const { user } = useAuth();
   const { cartItems } = useCart();
 
-  const [searchParams] = useSearchParams();
+  const [searchParams] =
+    useSearchParams();
 
-  const searchInputRef = useRef(null);
-  const resultsRef = useRef(null);
-  const lastTrackedSearchRef = useRef("");
+  const searchInputRef =
+    useRef(null);
 
-  const [isSeller, setIsSeller] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [homeFoods, setHomeFoods] = useState([]);
-  const [profile, setProfile] = useState(null);
+  const resultsRef =
+    useRef(null);
 
-  const [activeCategory, setActiveCategory] =
-    useState("All");
+  const lastTrackedSearchRef =
+    useRef("");
 
-  const [activeFoodType, setActiveFoodType] =
-    useState("All");
+  const [
+    isSeller,
+    setIsSeller,
+  ] = useState(false);
 
-  const [searchText, setSearchText] =
-    useState("");
+  const [
+    isAdmin,
+    setIsAdmin,
+  ] = useState(false);
 
-  const [completedOrders, setCompletedOrders] =
-    useState([]);
+  const [
+    homeFoods,
+    setHomeFoods,
+  ] = useState([]);
 
-  const [favoriteFoodIds, setFavoriteFoodIds] =
-    useState([]);
+  const [
+    profile,
+    setProfile,
+  ] = useState(null);
 
-  const [preferenceSignals, setPreferenceSignals] =
-    useState(EMPTY_PREFERENCES);
+  const [
+    activeCategory,
+    setActiveCategory,
+  ] = useState("All");
 
-  const [loadingFoods, setLoadingFoods] =
-    useState(true);
+  const [
+    activeFoodType,
+    setActiveFoodType,
+  ] = useState("All");
 
-  const [foodError, setFoodError] =
-    useState("");
+  const [
+    searchText,
+    setSearchText,
+  ] = useState("");
+
+  const [
+    completedOrders,
+    setCompletedOrders,
+  ] = useState([]);
+
+  const [
+    favoriteFoodIds,
+    setFavoriteFoodIds,
+  ] = useState([]);
+
+  const [
+    preferenceSignals,
+    setPreferenceSignals,
+  ] = useState(
+    EMPTY_PREFERENCES
+  );
+
+  const [
+    loadingFoods,
+    setLoadingFoods,
+  ] = useState(true);
+
+  const [
+    foodError,
+    setFoodError,
+  ] = useState("");
 
   useEffect(() => {
     checkUserRole();
   }, [user]);
 
   useEffect(() => {
+    let isMounted = true;
+
     fetchHomeFoods();
 
-    const foodsChannel = supabase
-      .channel("merged-home-foods-channel")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "foods",
-        },
-        () => {
-          fetchHomeFoods(false);
-        }
-      )
-      .subscribe();
+    const channelName =
+      `NeFo-home-realtime-${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2)}`;
 
-    const profilesChannel = supabase
-      .channel("merged-home-profiles-channel")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "profiles",
-        },
-        () => {
-          fetchHomeFoods(false);
-          checkUserRole();
+    const realtimeChannel =
+      supabase
+        .channel(channelName)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "foods",
+          },
+          () => {
+            if (isMounted) {
+              fetchHomeFoods(false);
+            }
+          }
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "profiles",
+          },
+          () => {
+            if (isMounted) {
+              fetchHomeFoods(false);
+              checkUserRole();
+            }
+          }
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "food_ratings",
+          },
+          () => {
+            if (isMounted) {
+              fetchHomeFoods(false);
+            }
+          }
+        );
+
+    realtimeChannel.subscribe(
+      (status) => {
+        if (
+          status ===
+          "CHANNEL_ERROR"
+        ) {
+          console.error(
+            "NeFo Home realtime channel failed."
+          );
         }
-      )
-      .subscribe();
+      }
+    );
 
     return () => {
-      supabase.removeChannel(foodsChannel);
-      supabase.removeChannel(profilesChannel);
+      isMounted = false;
+
+      void supabase.removeChannel(
+        realtimeChannel
+      );
     };
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user?.id) {
       setCompletedOrders([]);
       setFavoriteFoodIds([]);
+
       setPreferenceSignals(
         createEmptyPreferences()
       );
+
       return;
     }
 
     setPreferenceSignals(
-      readStoredPreferences(user.id)
+      readStoredPreferences(
+        user.id
+      )
     );
 
     setFavoriteFoodIds(
@@ -317,10 +466,13 @@ export default function Home() {
   }, [user?.id]);
 
   useEffect(() => {
-    const query = searchParams.get("q");
+    const query =
+      searchParams.get("q");
 
     const shouldOpenSearch =
-      searchParams.get("search") === "1";
+      searchParams.get(
+        "search"
+      ) === "1";
 
     if (query) {
       setSearchText(query);
@@ -330,10 +482,12 @@ export default function Home() {
       window.setTimeout(() => {
         searchInputRef.current?.focus();
 
-        searchInputRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
+        searchInputRef.current?.scrollIntoView(
+          {
+            behavior: "smooth",
+            block: "center",
+          }
+        );
       }, 150);
     }
   }, [searchParams]);
@@ -344,33 +498,42 @@ export default function Home() {
     }
 
     const normalizedSearch =
-      normalizeText(searchText);
+      normalizeText(
+        searchText
+      );
 
-    if (normalizedSearch.length < 3) {
+    if (
+      normalizedSearch.length <
+      3
+    ) {
       return undefined;
     }
 
-    const timer = window.setTimeout(() => {
-      if (
-        lastTrackedSearchRef.current ===
-        normalizedSearch
-      ) {
-        return;
-      }
+    const timer =
+      window.setTimeout(() => {
+        if (
+          lastTrackedSearchRef.current ===
+          normalizedSearch
+        ) {
+          return;
+        }
 
-      lastTrackedSearchRef.current =
-        normalizedSearch;
+        lastTrackedSearchRef.current =
+          normalizedSearch;
 
-      recordPreferenceSignal(
-        "searches",
-        normalizedSearch
-      );
-    }, 1200);
+        recordPreferenceSignal(
+          "searches",
+          normalizedSearch
+        );
+      }, 1200);
 
     return () => {
       window.clearTimeout(timer);
     };
-  }, [searchText, user?.id]);
+  }, [
+    searchText,
+    user?.id,
+  ]);
 
   async function checkUserRole() {
     if (!user) {
@@ -380,11 +543,16 @@ export default function Home() {
       return;
     }
 
-    const metadataRole = String(
-      user?.user_metadata?.role || ""
-    ).toLowerCase();
+    const metadataRole =
+      String(
+        user?.user_metadata
+          ?.role || ""
+      ).toLowerCase();
 
-    let { data, error } = await supabase
+    let {
+      data,
+      error,
+    } = await supabase
       .from("profiles")
       .select(
         "role, is_seller, full_name, apartment_name, block, flat_no, flat, avatar_url"
@@ -393,45 +561,61 @@ export default function Home() {
       .maybeSingle();
 
     if (error) {
-      const fallbackResult = await supabase
-        .from("profiles")
-        .select(
-          "role, is_seller, full_name, apartment_name, block, flat_no, flat"
-        )
-        .eq("id", user.id)
-        .maybeSingle();
+      const fallbackResult =
+        await supabase
+          .from("profiles")
+          .select(
+            "role, is_seller, full_name, apartment_name, block, flat_no, flat"
+          )
+          .eq("id", user.id)
+          .maybeSingle();
 
-      data = fallbackResult.data;
-      error = fallbackResult.error;
+      data =
+        fallbackResult.data;
+
+      error =
+        fallbackResult.error;
     }
 
     if (error) {
       setIsSeller(
-        metadataRole === "seller" ||
-          metadataRole === "admin"
+        metadataRole ===
+          "seller" ||
+          metadataRole ===
+            "admin"
       );
 
-      setIsAdmin(metadataRole === "admin");
+      setIsAdmin(
+        metadataRole ===
+          "admin"
+      );
+
       setProfile(null);
       return;
     }
 
-    const profileRole = String(
-      data?.role || ""
-    ).toLowerCase();
+    const profileRole =
+      String(
+        data?.role || ""
+      ).toLowerCase();
 
     const adminAllowed =
-      profileRole === "admin" ||
-      metadataRole === "admin";
+      profileRole ===
+        "admin" ||
+      metadataRole ===
+        "admin";
 
     setProfile(data || null);
     setIsAdmin(adminAllowed);
 
     setIsSeller(
       adminAllowed ||
-        profileRole === "seller" ||
-        data?.is_seller === true ||
-        metadataRole === "seller"
+        profileRole ===
+          "seller" ||
+        data?.is_seller ===
+          true ||
+        metadataRole ===
+          "seller"
     );
   }
 
@@ -441,13 +625,24 @@ export default function Home() {
       return;
     }
 
-    const { data, error } = await supabase
+    const {
+      data,
+      error,
+    } = await supabase
       .from("orders")
-      .select("id, items, status, created_at")
-      .eq("user_id", user.id)
-      .order("created_at", {
-        ascending: false,
-      })
+      .select(
+        "id, items, status, created_at"
+      )
+      .eq(
+        "user_id",
+        user.id
+      )
+      .order(
+        "created_at",
+        {
+          ascending: false,
+        }
+      )
       .limit(60);
 
     if (error) {
@@ -455,14 +650,19 @@ export default function Home() {
       return;
     }
 
-    const completed = (data || []).filter(
-      (order) =>
-        COMPLETED_ORDER_STATUSES.has(
-          normalizeText(order.status)
+    const completed = (
+      data || []
+    ).filter((order) =>
+      COMPLETED_ORDER_STATUSES.has(
+        normalizeText(
+          order.status
         )
+      )
     );
 
-    setCompletedOrders(completed);
+    setCompletedOrders(
+      completed
+    );
   }
 
   function recordPreferenceSignal(
@@ -488,39 +688,50 @@ export default function Home() {
       return;
     }
 
-    setPreferenceSignals((current) => {
-      const currentGroup =
-        current?.[group] || {};
+    setPreferenceSignals(
+      (current) => {
+        const currentGroup =
+          current?.[group] ||
+          {};
 
-      const nextValue = Math.min(
-        12,
-        Number(
-          currentGroup[normalizedValue] || 0
-        ) + 1
-      );
+        const nextValue =
+          Math.min(
+            12,
+            Number(
+              currentGroup[
+                normalizedValue
+              ] || 0
+            ) + 1
+          );
 
-      const nextPreferences = {
-        ...createEmptyPreferences(),
-        ...current,
+        const nextPreferences = {
+          ...createEmptyPreferences(),
+          ...current,
 
-        [group]: {
-          ...currentGroup,
-          [normalizedValue]: nextValue,
-        },
-      };
+          [group]: {
+            ...currentGroup,
 
-      try {
-        window.localStorage.setItem(
-          getPreferenceStorageKey(user.id),
-          JSON.stringify(nextPreferences)
-        );
-      } catch {
-        // Recommendations can still use orders
-        // when local storage is unavailable.
+            [normalizedValue]:
+              nextValue,
+          },
+        };
+
+        try {
+          window.localStorage.setItem(
+            getPreferenceStorageKey(
+              user.id
+            ),
+            JSON.stringify(
+              nextPreferences
+            )
+          );
+        } catch {
+          // Recommendations can still use order data.
+        }
+
+        return nextPreferences;
       }
-
-      return nextPreferences;
-    });
+    );
   }
 
   async function fetchHomeFoods(
@@ -544,12 +755,17 @@ export default function Home() {
 
     if (foodFetchError) {
       setHomeFoods([]);
-      setFoodError(foodFetchError.message);
+
+      setFoodError(
+        foodFetchError.message
+      );
+
       setLoadingFoods(false);
       return;
     }
 
-    const foods = foodData || [];
+    const foods =
+      foodData || [];
 
     const kitchenIds = [
       ...new Set(
@@ -565,14 +781,20 @@ export default function Home() {
 
     let kitchenMap = {};
 
-    if (kitchenIds.length > 0) {
-      const { data: kitchenProfiles } =
-        await supabase
-          .from("profiles")
-          .select(
-            "id, seller_online, seller_kitchen_name, delivery_available, pickup_available"
-          )
-          .in("id", kitchenIds);
+    if (
+      kitchenIds.length > 0
+    ) {
+      const {
+        data: kitchenProfiles,
+      } = await supabase
+        .from("profiles")
+        .select(
+          "id, seller_online, seller_kitchen_name, delivery_available, pickup_available"
+        )
+        .in(
+          "id",
+          kitchenIds
+        );
 
       kitchenMap = (
         kitchenProfiles || []
@@ -582,7 +804,9 @@ export default function Home() {
           kitchenProfile
         ) => {
           result[
-            String(kitchenProfile.id)
+            String(
+              kitchenProfile.id
+            )
           ] = {
             seller_online:
               kitchenProfile.seller_online !==
@@ -609,20 +833,28 @@ export default function Home() {
 
     const ratingMap = {};
 
-    const { data: ratingData } =
-      await supabase
-        .from("food_ratings")
-        .select("food_id, rating");
+    const {
+      data: ratingData,
+    } = await supabase
+      .from("food_ratings")
+      .select(
+        "food_id, rating"
+      );
 
-    (ratingData || []).forEach(
+    (
+      ratingData || []
+    ).forEach(
       (ratingRow) => {
-        const foodId = String(
-          ratingRow.food_id || ""
-        );
+        const foodId =
+          String(
+            ratingRow.food_id ||
+              ""
+          );
 
-        const ratingValue = Number(
-          ratingRow.rating || 0
-        );
+        const ratingValue =
+          Number(
+            ratingRow.rating || 0
+          );
 
         if (
           !foodId ||
@@ -631,22 +863,27 @@ export default function Home() {
           return;
         }
 
-        if (!ratingMap[foodId]) {
+        if (
+          !ratingMap[foodId]
+        ) {
           ratingMap[foodId] = {
             total: 0,
             count: 0,
           };
         }
 
-        ratingMap[foodId].total +=
-          ratingValue;
+        ratingMap[
+          foodId
+        ].total += ratingValue;
 
-        ratingMap[foodId].count += 1;
+        ratingMap[
+          foodId
+        ].count += 1;
       }
     );
 
-    const enrichedFoods = foods.map(
-      (food) => {
+    const enrichedFoods =
+      foods.map((food) => {
         const kitchenId =
           food.user_id ||
           food.seller_id;
@@ -711,10 +948,12 @@ export default function Home() {
           rating_count:
             foodRating.count,
         };
-      }
+      });
+
+    setHomeFoods(
+      enrichedFoods
     );
 
-    setHomeFoods(enrichedFoods);
     setLoadingFoods(false);
   }
 
@@ -729,7 +968,8 @@ export default function Home() {
   function getInitial() {
     const name =
       profile?.full_name ||
-      user?.user_metadata?.full_name ||
+      user?.user_metadata
+        ?.full_name ||
       user?.email ||
       "N";
 
@@ -745,16 +985,28 @@ export default function Home() {
   }
 
   function scrollToAllFood() {
-    resultsRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
+    resultsRef.current?.scrollIntoView(
+      {
+        behavior: "smooth",
+        block: "start",
+      }
+    );
   }
 
-  function selectKitchen(kitchenName) {
-    setSearchText(kitchenName);
-    setActiveCategory("All");
-    setActiveFoodType("All");
+  function selectKitchen(
+    kitchenName
+  ) {
+    setSearchText(
+      kitchenName
+    );
+
+    setActiveCategory(
+      "All"
+    );
+
+    setActiveFoodType(
+      "All"
+    );
 
     recordPreferenceSignal(
       "kitchens",
@@ -766,7 +1018,9 @@ export default function Home() {
     }, 100);
   }
 
-  function handleCategorySelect(category) {
+  function handleCategorySelect(
+    category
+  ) {
     setActiveCategory(category);
 
     if (category !== "All") {
@@ -777,8 +1031,12 @@ export default function Home() {
     }
   }
 
-  function handleFoodTypeSelect(foodType) {
-    setActiveFoodType(foodType);
+  function handleFoodTypeSelect(
+    foodType
+  ) {
+    setActiveFoodType(
+      foodType
+    );
 
     if (foodType !== "All") {
       recordPreferenceSignal(
@@ -788,147 +1046,192 @@ export default function Home() {
     }
   }
 
-  const locationLabel = useMemo(() => {
-    const apartment =
-      profile?.apartment_name?.trim();
+  const locationLabel =
+    useMemo(() => {
+      const apartment =
+        profile?.apartment_name?.trim();
 
-    const block =
-      profile?.block?.trim();
+      const block =
+        profile?.block?.trim();
 
-    const flatNo =
-      profile?.flat_no?.trim();
+      const flatNo =
+        profile?.flat_no?.trim();
 
-    const flat =
-      profile?.flat?.trim();
-
-    if (apartment && block) {
-      return `${apartment}, ${block}`;
-    }
-
-    if (apartment) {
-      return apartment;
-    }
-
-    if (flatNo) {
-      return `Flat ${flatNo}`;
-    }
-
-    if (flat) {
-      return flat;
-    }
-
-    return "Set your location";
-  }, [profile]);
-
-  const cartCount = useMemo(() => {
-    return cartItems.reduce(
-      (total, item) =>
-        total +
-        Number(item.quantity || 0),
-      0
-    );
-  }, [cartItems]);
-
-  const categoryCounts = useMemo(() => {
-    const counts = {};
-
-    CATEGORY_CHIPS.forEach(
-      (category) => {
-        counts[category] = 0;
-      }
-    );
-
-    homeFoods.forEach((food) => {
-      const category = String(
-        food.category || "Meals"
-      ).trim();
-
-      counts.All += 1;
+      const flat =
+        profile?.flat?.trim();
 
       if (
-        counts[category] !== undefined
+        apartment &&
+        block
       ) {
-        counts[category] += 1;
+        return `${apartment}, ${block}`;
       }
-    });
 
-    return counts;
-  }, [homeFoods]);
+      if (apartment) {
+        return apartment;
+      }
 
-  const filteredFoods = useMemo(() => {
-    const search =
-      searchText
-        .trim()
-        .toLowerCase();
+      if (flatNo) {
+        return `Flat ${flatNo}`;
+      }
 
-    return homeFoods.filter((food) => {
-      const category = String(
-        food?.category || ""
-      ).toLowerCase();
+      if (flat) {
+        return flat;
+      }
 
-      const type = String(
-        food?.type || "Veg"
-      ).toLowerCase();
+      return "Set your location";
+    }, [profile]);
 
-      const name = String(
-        food?.name || ""
-      ).toLowerCase();
-
-      const kitchen = String(
-        getKitchenName(food)
-      ).toLowerCase();
-
-      const description = String(
-        food?.description || ""
-      ).toLowerCase();
-
-      const preparationTime = String(
-        food?.time || ""
-      ).toLowerCase();
-
-      const categoryMatch =
-        activeCategory === "All" ||
-        category ===
-          activeCategory.toLowerCase() ||
-        category.includes(
-          activeCategory.toLowerCase()
-        ) ||
-        name.includes(
-          activeCategory.toLowerCase()
-        );
-
-      const typeMatch =
-        activeFoodType === "All" ||
-        type ===
-          activeFoodType.toLowerCase();
-
-      const searchMatch =
-        !search ||
-        name.includes(search) ||
-        kitchen.includes(search) ||
-        category.includes(search) ||
-        type.includes(search) ||
-        description.includes(search) ||
-        preparationTime.includes(search);
-
-      return (
-        categoryMatch &&
-        typeMatch &&
-        searchMatch
+  const cartCount =
+    useMemo(() => {
+      return cartItems.reduce(
+        (total, item) =>
+          total +
+          Number(
+            item.quantity || 0
+          ),
+        0
       );
-    });
-  }, [
-    homeFoods,
-    activeCategory,
-    activeFoodType,
-    searchText,
-  ]);
+    }, [cartItems]);
+
+  const categoryCounts =
+    useMemo(() => {
+      const counts = {};
+
+      CATEGORY_CHIPS.forEach(
+        (category) => {
+          counts[category] = 0;
+        }
+      );
+
+      homeFoods.forEach(
+        (food) => {
+          const category =
+            String(
+              food.category ||
+                "Meals"
+            ).trim();
+
+          counts.All += 1;
+
+          if (
+            counts[category] !==
+            undefined
+          ) {
+            counts[
+              category
+            ] += 1;
+          }
+        }
+      );
+
+      return counts;
+    }, [homeFoods]);
+
+  const filteredFoods =
+    useMemo(() => {
+      const search =
+        searchText
+          .trim()
+          .toLowerCase();
+
+      return homeFoods.filter(
+        (food) => {
+          const category =
+            String(
+              food?.category ||
+                ""
+            ).toLowerCase();
+
+          const type =
+            String(
+              food?.type ||
+                "Veg"
+            ).toLowerCase();
+
+          const name =
+            String(
+              food?.name || ""
+            ).toLowerCase();
+
+          const kitchen =
+            String(
+              getKitchenName(
+                food
+              )
+            ).toLowerCase();
+
+          const description =
+            String(
+              food?.description ||
+                ""
+            ).toLowerCase();
+
+          const preparationTime =
+            String(
+              food?.time || ""
+            ).toLowerCase();
+
+          const categoryMatch =
+            activeCategory ===
+              "All" ||
+            category ===
+              activeCategory.toLowerCase() ||
+            category.includes(
+              activeCategory.toLowerCase()
+            ) ||
+            name.includes(
+              activeCategory.toLowerCase()
+            );
+
+          const typeMatch =
+            activeFoodType ===
+              "All" ||
+            type ===
+              activeFoodType.toLowerCase();
+
+          const searchMatch =
+            !search ||
+            name.includes(
+              search
+            ) ||
+            kitchen.includes(
+              search
+            ) ||
+            category.includes(
+              search
+            ) ||
+            type.includes(
+              search
+            ) ||
+            description.includes(
+              search
+            ) ||
+            preparationTime.includes(
+              search
+            );
+
+          return (
+            categoryMatch &&
+            typeMatch &&
+            searchMatch
+          );
+        }
+      );
+    }, [
+      homeFoods,
+      activeCategory,
+      activeFoodType,
+      searchText,
+    ]);
 
   const recommendationContext =
     useMemo(() => {
       const accountCreatedAt =
         user?.created_at
-          ? new Date(user.created_at)
+          ? new Date(
+              user.created_at
+            )
           : null;
 
       const accountAgeMs =
@@ -944,12 +1247,17 @@ export default function Home() {
         Math.max(
           0,
           accountAgeMs /
-            (1000 * 60 * 60 * 24)
+            (1000 *
+              60 *
+              60 *
+              24)
         );
 
       const interactionScore =
-        completedOrders.length * 6 +
-        favoriteFoodIds.length * 4 +
+        completedOrders.length *
+          6 +
+        favoriteFoodIds.length *
+          4 +
         sumPreferenceCounts(
           preferenceSignals.categories
         ) +
@@ -985,379 +1293,494 @@ export default function Home() {
       preferenceSignals,
     ]);
 
-  const recommendedFoods = useMemo(() => {
-    if (
-      !recommendationContext.eligible ||
-      homeFoods.length === 0
-    ) {
-      return [];
-    }
+  const recommendedFoods =
+    useMemo(() => {
+      if (
+        !recommendationContext.eligible ||
+        homeFoods.length === 0
+      ) {
+        return [];
+      }
 
-    const foodIdScores = new Map();
-    const nameScores = new Map();
-    const categoryScores = new Map();
-    const typeScores = new Map();
-    const kitchenScores = new Map();
-    const searchScores = new Map();
+      const foodIdScores =
+        new Map();
 
-    completedOrders.forEach((order) => {
-      parseOrderItems(order.items).forEach(
-        (item) => {
-          const quantity = Math.max(
-            1,
-            Number(item?.quantity || 1)
-          );
+      const nameScores =
+        new Map();
+
+      const categoryScores =
+        new Map();
+
+      const typeScores =
+        new Map();
+
+      const kitchenScores =
+        new Map();
+
+      const searchScores =
+        new Map();
+
+      completedOrders.forEach(
+        (order) => {
+          parseOrderItems(
+            order.items
+          ).forEach((item) => {
+            const quantity =
+              Math.max(
+                1,
+                Number(
+                  item?.quantity ||
+                    1
+                )
+              );
+
+            addScore(
+              foodIdScores,
+              item?.id ||
+                item?.food_id ||
+                item?.foodId,
+              10 * quantity
+            );
+
+            addScore(
+              nameScores,
+              item?.name ||
+                item?.food_name,
+              8 * quantity
+            );
+
+            addScore(
+              categoryScores,
+              item?.category,
+              5 * quantity
+            );
+
+            addScore(
+              typeScores,
+              item?.type,
+              4 * quantity
+            );
+
+            addScore(
+              kitchenScores,
+              item?.seller_kitchen_name ||
+                item?.seller ||
+                item?.kitchen_name,
+              5 * quantity
+            );
+          });
+        }
+      );
+
+      favoriteFoodIds.forEach(
+        (foodId) => {
+          const favoriteFood =
+            homeFoods.find(
+              (food) =>
+                getFoodId(food) ===
+                String(foodId)
+            );
+
+          if (!favoriteFood) {
+            return;
+          }
 
           addScore(
             foodIdScores,
-            item?.id ||
-              item?.food_id ||
-              item?.foodId,
-            10 * quantity
-          );
-
-          addScore(
-            nameScores,
-            item?.name ||
-              item?.food_name,
-            8 * quantity
+            favoriteFood.id,
+            8
           );
 
           addScore(
             categoryScores,
-            item?.category,
-            5 * quantity
+            favoriteFood.category,
+            3
           );
 
           addScore(
             typeScores,
-            item?.type,
-            4 * quantity
+            favoriteFood.type,
+            2
           );
 
           addScore(
             kitchenScores,
-            item?.seller_kitchen_name ||
-              item?.seller ||
-              item?.kitchen_name,
-            5 * quantity
+            getKitchenName(
+              favoriteFood
+            ),
+            3
           );
         }
       );
-    });
 
-    favoriteFoodIds.forEach((foodId) => {
-      const favoriteFood =
-        homeFoods.find(
-          (food) =>
-            getFoodId(food) ===
-            String(foodId)
-        );
-
-      if (!favoriteFood) {
-        return;
-      }
-
-      addScore(
-        foodIdScores,
-        favoriteFood.id,
-        8
+      Object.entries(
+        preferenceSignals.categories ||
+          {}
+      ).forEach(
+        ([key, count]) => {
+          addScore(
+            categoryScores,
+            key,
+            Math.min(
+              5,
+              Number(count || 0)
+            ) * 3
+          );
+        }
       );
 
-      addScore(
-        categoryScores,
-        favoriteFood.category,
-        3
+      Object.entries(
+        preferenceSignals.foodTypes ||
+          {}
+      ).forEach(
+        ([key, count]) => {
+          addScore(
+            typeScores,
+            key,
+            Math.min(
+              5,
+              Number(count || 0)
+            ) * 2
+          );
+        }
       );
 
-      addScore(
-        typeScores,
-        favoriteFood.type,
-        2
+      Object.entries(
+        preferenceSignals.kitchens ||
+          {}
+      ).forEach(
+        ([key, count]) => {
+          addScore(
+            kitchenScores,
+            key,
+            Math.min(
+              5,
+              Number(count || 0)
+            ) * 3
+          );
+        }
       );
 
-      addScore(
-        kitchenScores,
-        getKitchenName(favoriteFood),
-        3
+      Object.entries(
+        preferenceSignals.searches ||
+          {}
+      ).forEach(
+        ([key, count]) => {
+          addScore(
+            searchScores,
+            key,
+            Math.min(
+              5,
+              Number(count || 0)
+            ) * 2
+          );
+        }
       );
-    });
 
-    Object.entries(
-      preferenceSignals.categories || {}
-    ).forEach(([key, count]) => {
-      addScore(
-        categoryScores,
-        key,
-        Math.min(5, Number(count || 0)) *
-          3
-      );
-    });
+      return homeFoods
+        .filter((food) => {
+          const stock =
+            Number(
+              food.stock || 0
+            );
 
-    Object.entries(
-      preferenceSignals.foodTypes || {}
-    ).forEach(([key, count]) => {
-      addScore(
-        typeScores,
-        key,
-        Math.min(5, Number(count || 0)) *
-          2
-      );
-    });
+          return (
+            stock > 0 &&
+            food.seller_online !==
+              false &&
+            (food.delivery_available !==
+              false ||
+              food.pickup_available !==
+                false)
+          );
+        })
+        .map((food) => {
+          const foodId =
+            normalizeText(
+              food.id
+            );
 
-    Object.entries(
-      preferenceSignals.kitchens || {}
-    ).forEach(([key, count]) => {
-      addScore(
-        kitchenScores,
-        key,
-        Math.min(5, Number(count || 0)) *
-          3
-      );
-    });
+          const name =
+            normalizeText(
+              food.name
+            );
 
-    Object.entries(
-      preferenceSignals.searches || {}
-    ).forEach(([key, count]) => {
-      addScore(
-        searchScores,
-        key,
-        Math.min(5, Number(count || 0)) *
-          2
-      );
-    });
+          const category =
+            normalizeText(
+              food.category
+            );
 
-    return homeFoods
-      .filter((food) => {
-        const stock = Number(
-          food.stock || 0
-        );
+          const type =
+            normalizeText(
+              food.type ||
+                "Veg"
+            );
 
-        return (
-          stock > 0 &&
-          food.seller_online !== false &&
-          (food.delivery_available !==
-            false ||
-            food.pickup_available !==
-              false)
-        );
-      })
-      .map((food) => {
-        const foodId =
-          normalizeText(food.id);
+          const kitchen =
+            normalizeText(
+              getKitchenName(
+                food
+              )
+            );
 
-        const name =
-          normalizeText(food.name);
+          let score =
+            foodIdScores.get(
+              foodId
+            ) || 0;
 
-        const category =
-          normalizeText(food.category);
+          score +=
+            nameScores.get(
+              name
+            ) || 0;
 
-        const type =
-          normalizeText(
-            food.type || "Veg"
+          score +=
+            categoryScores.get(
+              category
+            ) || 0;
+
+          score +=
+            typeScores.get(
+              type
+            ) || 0;
+
+          score +=
+            kitchenScores.get(
+              kitchen
+            ) || 0;
+
+          searchScores.forEach(
+            (
+              searchScore,
+              searchTerm
+            ) => {
+              if (
+                name.includes(
+                  searchTerm
+                ) ||
+                category.includes(
+                  searchTerm
+                ) ||
+                kitchen.includes(
+                  searchTerm
+                )
+              ) {
+                score +=
+                  searchScore;
+              }
+            }
           );
 
-        const kitchen =
-          normalizeText(
-            getKitchenName(food)
-          );
+          score +=
+            Math.min(
+              5,
+              Number(
+                food.rating_average ||
+                  0
+              )
+            ) * 0.6;
 
-        let score =
-          foodIdScores.get(foodId) || 0;
+          score +=
+            Math.min(
+              2,
+              Number(
+                food.rating_count ||
+                  0
+              ) * 0.08
+            );
 
-        score +=
-          nameScores.get(name) || 0;
-
-        score +=
-          categoryScores.get(category) ||
-          0;
-
-        score +=
-          typeScores.get(type) || 0;
-
-        score +=
-          kitchenScores.get(kitchen) || 0;
-
-        searchScores.forEach(
+          return {
+            food,
+            score,
+          };
+        })
+        .filter(
+          (entry) =>
+            entry.score > 0
+        )
+        .sort(
           (
-            searchScore,
-            searchTerm
+            first,
+            second
           ) => {
             if (
-              name.includes(searchTerm) ||
-              category.includes(
-                searchTerm
-              ) ||
-              kitchen.includes(searchTerm)
+              second.score !==
+              first.score
             ) {
-              score += searchScore;
+              return (
+                second.score -
+                first.score
+              );
             }
-          }
-        );
 
-        score +=
-          Math.min(
-            5,
-            Number(
-              food.rating_average || 0
-            )
-          ) * 0.6;
-
-        score += Math.min(
-          2,
-          Number(
-            food.rating_count || 0
-          ) * 0.08
-        );
-
-        return {
-          food,
-          score,
-        };
-      })
-      .filter(
-        (entry) => entry.score > 0
-      )
-      .sort((first, second) => {
-        if (
-          second.score !== first.score
-        ) {
-          return (
-            second.score - first.score
-          );
-        }
-
-        return (
-          Number(
-            second.food.rating_average ||
-              0
-          ) -
-          Number(
-            first.food.rating_average ||
-              0
-          )
-        );
-      })
-      .slice(0, 5)
-      .map((entry) => entry.food);
-  }, [
-    recommendationContext.eligible,
-    homeFoods,
-    completedOrders,
-    favoriteFoodIds,
-    preferenceSignals,
-  ]);
-
-  const popularKitchens = useMemo(() => {
-    const kitchenMap = new Map();
-
-    homeFoods
-      .filter((food) => {
-        const stock = Number(
-          food.stock || 0
-        );
-
-        return (
-          stock > 0 &&
-          food.seller_online !== false &&
-          (food.delivery_available !==
-            false ||
-            food.pickup_available !==
-              false)
-        );
-      })
-      .forEach((food) => {
-        const kitchenName =
-          getKitchenName(food);
-
-        const kitchenKey = String(
-          food.seller_id ||
-            food.user_id ||
-            kitchenName.toLowerCase()
-        );
-
-        if (
-          !kitchenMap.has(kitchenKey)
-        ) {
-          kitchenMap.set(kitchenKey, {
-            id: kitchenKey,
-            name: kitchenName,
-            image: food.image || "",
-            items: [],
-            ratingTotal: 0,
-            ratingCount: 0,
-          });
-        }
-
-        const kitchen =
-          kitchenMap.get(kitchenKey);
-
-        kitchen.items.push(food);
-
-        if (
-          !kitchen.image &&
-          food.image
-        ) {
-          kitchen.image =
-            food.image;
-        }
-
-        const foodRatingCount =
-          Number(
-            food.rating_count || 0
-          );
-
-        const foodRatingAverage =
-          Number(
-            food.rating_average || 0
-          );
-
-        kitchen.ratingTotal +=
-          foodRatingAverage *
-          foodRatingCount;
-
-        kitchen.ratingCount +=
-          foodRatingCount;
-      });
-
-    return Array.from(
-      kitchenMap.values()
-    )
-      .map((kitchen) => ({
-        ...kitchen,
-
-        ratingAverage:
-          kitchen.ratingCount > 0
-            ? kitchen.ratingTotal /
-              kitchen.ratingCount
-            : 0,
-      }))
-      .sort(
-        (
-          firstKitchen,
-          secondKitchen
-        ) => {
-          if (
-            secondKitchen.ratingCount !==
-            firstKitchen.ratingCount
-          ) {
             return (
-              secondKitchen.ratingCount -
-              firstKitchen.ratingCount
+              Number(
+                second.food
+                  .rating_average ||
+                  0
+              ) -
+              Number(
+                first.food
+                  .rating_average ||
+                  0
+              )
+            );
+          }
+        )
+        .slice(0, 5)
+        .map(
+          (entry) =>
+            entry.food
+        );
+    }, [
+      recommendationContext.eligible,
+      homeFoods,
+      completedOrders,
+      favoriteFoodIds,
+      preferenceSignals,
+    ]);
+
+  const popularKitchens =
+    useMemo(() => {
+      const kitchenMap =
+        new Map();
+
+      homeFoods
+        .filter((food) => {
+          const stock =
+            Number(
+              food.stock || 0
+            );
+
+          return (
+            stock > 0 &&
+            food.seller_online !==
+              false &&
+            (food.delivery_available !==
+              false ||
+              food.pickup_available !==
+                false)
+          );
+        })
+        .forEach((food) => {
+          const kitchenName =
+            getKitchenName(food);
+
+          const kitchenKey =
+            String(
+              food.seller_id ||
+                food.user_id ||
+                kitchenName.toLowerCase()
+            );
+
+          if (
+            !kitchenMap.has(
+              kitchenKey
+            )
+          ) {
+            kitchenMap.set(
+              kitchenKey,
+              {
+                id:
+                  kitchenKey,
+
+                name:
+                  kitchenName,
+
+                image:
+                  food.image ||
+                  "",
+
+                items: [],
+
+                ratingTotal:
+                  0,
+
+                ratingCount:
+                  0,
+              }
             );
           }
 
-          return (
-            secondKitchen.items.length -
-            firstKitchen.items.length
+          const kitchen =
+            kitchenMap.get(
+              kitchenKey
+            );
+
+          kitchen.items.push(
+            food
           );
-        }
+
+          if (
+            !kitchen.image &&
+            food.image
+          ) {
+            kitchen.image =
+              food.image;
+          }
+
+          const foodRatingCount =
+            Number(
+              food.rating_count ||
+                0
+            );
+
+          const foodRatingAverage =
+            Number(
+              food.rating_average ||
+                0
+            );
+
+          kitchen.ratingTotal +=
+            foodRatingAverage *
+            foodRatingCount;
+
+          kitchen.ratingCount +=
+            foodRatingCount;
+        });
+
+      return Array.from(
+        kitchenMap.values()
       )
-      .slice(0, 8);
-  }, [homeFoods]);
+        .map((kitchen) => ({
+          ...kitchen,
+
+          ratingAverage:
+            kitchen.ratingCount >
+            0
+              ? kitchen.ratingTotal /
+                kitchen.ratingCount
+              : 0,
+        }))
+        .sort(
+          (
+            firstKitchen,
+            secondKitchen
+          ) => {
+            if (
+              secondKitchen.ratingCount !==
+              firstKitchen.ratingCount
+            ) {
+              return (
+                secondKitchen.ratingCount -
+                firstKitchen.ratingCount
+              );
+            }
+
+            return (
+              secondKitchen.items
+                .length -
+              firstKitchen.items
+                .length
+            );
+          }
+        )
+        .slice(0, 8);
+    }, [homeFoods]);
 
   const hasActiveFilters =
-    Boolean(searchText.trim()) ||
+    Boolean(
+      searchText.trim()
+    ) ||
     activeCategory !== "All" ||
     activeFoodType !== "All";
 
@@ -1420,7 +1843,9 @@ export default function Home() {
             >
               {profile?.avatar_url ? (
                 <img
-                  src={profile.avatar_url}
+                  src={
+                    profile.avatar_url
+                  }
                   alt="Profile"
                   className="h-full w-full object-cover"
                 />
@@ -1436,7 +1861,9 @@ export default function Home() {
             <SearchIcon />
 
             <input
-              ref={searchInputRef}
+              ref={
+                searchInputRef
+              }
               value={searchText}
               onChange={(event) =>
                 setSearchText(
@@ -1453,7 +1880,7 @@ export default function Home() {
                 onClick={() =>
                   setSearchText("")
                 }
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FFF0DF] text-lg font-black text-[#CF743D]"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#EADFCE] bg-[#FFF0DF] text-lg font-black text-[#CF743D]"
                 aria-label="Clear search"
               >
                 ×
@@ -1472,7 +1899,9 @@ export default function Home() {
 
                 return (
                   <button
-                    key={foodType}
+                    key={
+                      foodType
+                    }
                     type="button"
                     onClick={() =>
                       handleFoodTypeSelect(
@@ -1485,7 +1914,8 @@ export default function Home() {
                         : "border-[#EADFCE] bg-white/80 text-[#6B6258]"
                     }`}
                   >
-                    {foodType === "All"
+                    {foodType ===
+                    "All"
                       ? "All food"
                       : foodType}
                   </button>
@@ -1505,7 +1935,9 @@ export default function Home() {
 
                 return (
                   <button
-                    key={category}
+                    key={
+                      category
+                    }
                     type="button"
                     onClick={() =>
                       handleCategorySelect(
@@ -1520,7 +1952,8 @@ export default function Home() {
                   >
                     {category}
 
-                    {category === "All" ? (
+                    {category ===
+                    "All" ? (
                       <span className="ml-1 opacity-70">
                         (
                         {categoryCounts.All ||
@@ -1549,23 +1982,28 @@ export default function Home() {
               </p>
 
               <h2 className="mt-1 text-xl font-black">
-                {isSeller || isAdmin
+                {isSeller ||
+                isAdmin
                   ? "Manage your kitchen"
                   : "Sell on NeFo"}
               </h2>
 
               <p className="mt-1 text-sm font-semibold text-white/75">
-                {isSeller || isAdmin
+                {isSeller ||
+                isAdmin
                   ? "Manage orders, food and availability."
                   : "Start selling homemade food nearby."}
               </p>
             </div>
 
             <Link
-              to={sellFoodPath}
+              to={
+                sellFoodPath
+              }
               className="shrink-0 rounded-full border border-[#CF743D] bg-[#CF743D] px-5 py-3 text-sm font-black text-white shadow-lg shadow-black/10 active:scale-95"
             >
-              {isSeller || isAdmin
+              {isSeller ||
+              isAdmin
                 ? "Open"
                 : "Start"}
             </Link>
@@ -1585,7 +2023,8 @@ export default function Home() {
 
               <p className="mt-1 text-xs font-semibold text-[#6B6258]">
                 Based on your orders,
-                favourites and food activity.
+                favourites and food
+                activity.
               </p>
             </div>
 
@@ -1604,12 +2043,21 @@ export default function Home() {
 
         {!hasActiveFilters ? (
           <section className="mt-6">
-            <div className="mb-3 flex items-center justify-between">
+            <div className="mb-3 flex items-center justify-between gap-3">
               <h2 className="text-lg font-black text-[#3F5128]">
                 Kitchens
               </h2>
 
-              onClick={scrollToAllFood}
+              <button
+                type="button"
+                onClick={
+                  scrollToAllFood
+                }
+                className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-2 text-xs font-black text-[#3F5128] active:scale-95"
+              >
+                View all
+                <ChevronRightIcon />
+              </button>
             </div>
 
             {loadingFoods ? (
@@ -1625,8 +2073,12 @@ export default function Home() {
                   {popularKitchens.map(
                     (kitchen) => (
                       <KitchenCard
-                        key={kitchen.id}
-                        kitchen={kitchen}
+                        key={
+                          kitchen.id
+                        }
+                        kitchen={
+                          kitchen
+                        }
                         onSelect={
                           selectKitchen
                         }
@@ -1651,12 +2103,14 @@ export default function Home() {
           <div className="mb-4 flex items-end justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[11px] font-black uppercase tracking-wide text-[#CF743D]">
-               Search
+                Search
               </p>
 
               {!loadingFoods ? (
                 <p className="mt-1 text-xs font-semibold text-[#6B6258]">
-                  {filteredFoods.length}{" "}
+                  {
+                    filteredFoods.length
+                  }{" "}
                   {filteredFoods.length ===
                   1
                     ? "dish"
@@ -1669,7 +2123,9 @@ export default function Home() {
             {hasActiveFilters ? (
               <button
                 type="button"
-                onClick={clearFilters}
+                onClick={
+                  clearFilters
+                }
                 className="shrink-0 rounded-full border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-2 text-xs font-black text-[#3F5128] active:scale-95"
               >
                 Clear
@@ -1680,7 +2136,8 @@ export default function Home() {
           {foodError ? (
             <div className="rounded-[24px] border border-red-200 bg-red-50 p-5">
               <p className="font-black text-red-600">
-                Food could not be loaded
+                Food could not be
+                loaded
               </p>
 
               <p className="mt-1 text-sm font-semibold text-red-500">
@@ -1692,7 +2149,7 @@ export default function Home() {
                 onClick={() =>
                   fetchHomeFoods()
                 }
-                className="mt-4 rounded-2xl bg-red-600 px-5 py-3 text-sm font-black text-white"
+                className="mt-4 rounded-2xl border border-red-600 bg-red-600 px-5 py-3 text-sm font-black text-white"
               >
                 Try Again
               </button>
@@ -1735,7 +2192,9 @@ export default function Home() {
 
               <button
                 type="button"
-                onClick={clearFilters}
+                onClick={
+                  clearFilters
+                }
                 className="mt-5 rounded-2xl border border-[#3F5128] bg-[#3F5128] px-6 py-3 text-sm font-black text-white"
               >
                 Show All Food
@@ -1756,15 +2215,21 @@ function KitchenCard({
     <button
       type="button"
       onClick={() =>
-        onSelect(kitchen.name)
+        onSelect(
+          kitchen.name
+        )
       }
       className="w-[138px] shrink-0 overflow-hidden rounded-[24px] border border-[#EADFCE] bg-white/90 text-left shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-[0.98]"
     >
       <div className="h-[98px] overflow-hidden bg-[#FFF0DF]">
         {kitchen.image ? (
           <img
-            src={kitchen.image}
-            alt={kitchen.name}
+            src={
+              kitchen.image
+            }
+            alt={
+              kitchen.name
+            }
             className="h-full w-full object-cover"
           />
         ) : (
@@ -1779,7 +2244,8 @@ function KitchenCard({
           {kitchen.name}
         </h3>
 
-        {kitchen.ratingCount > 0 ? (
+        {kitchen.ratingCount >
+        0 ? (
           <div className="mt-1 flex items-center gap-1 text-[10px] font-bold text-[#6B6258]">
             <span className="text-[#F59E0B]">
               ★
@@ -1792,13 +2258,20 @@ function KitchenCard({
             </span>
 
             <span>
-              ({kitchen.ratingCount})
+              (
+              {
+                kitchen.ratingCount
+              }
+              )
             </span>
           </div>
         ) : (
           <p className="mt-1 text-[10px] font-bold text-[#6B6258]">
-            {kitchen.items.length}{" "}
-            {kitchen.items.length === 1
+            {
+              kitchen.items.length
+            }{" "}
+            {kitchen.items.length ===
+            1
               ? "dish"
               : "dishes"}
           </p>
@@ -1808,7 +2281,10 @@ function KitchenCard({
   );
 }
 
-function EmptyCard({ title, text }) {
+function EmptyCard({
+  title,
+  text,
+}) {
   return (
     <div className="relative overflow-hidden rounded-[24px] border border-[#EADFCE] bg-white/85 p-6 text-center shadow-[6px_6px_16px_rgba(63,81,40,0.06),-6px_-6px_16px_rgba(255,255,255,0.95)]">
       <div className="pointer-events-none absolute -left-7 bottom-0 text-[90px] leading-none text-[#EADFCE]/70">
@@ -1899,8 +2375,18 @@ function CartIcon() {
     >
       <path d="M6 6h15l-1.5 9h-12L6 6z" />
       <path d="M6 6L5 3H2" />
-      <circle cx="9" cy="20" r="1.5" />
-      <circle cx="18" cy="20" r="1.5" />
+
+      <circle
+        cx="9"
+        cy="20"
+        r="1.5"
+      />
+
+      <circle
+        cx="18"
+        cy="20"
+        r="1.5"
+      />
     </svg>
   );
 }
@@ -1914,7 +2400,12 @@ function SearchIcon() {
       stroke="currentColor"
       strokeWidth="2.2"
     >
-      <circle cx="11" cy="11" r="7" />
+      <circle
+        cx="11"
+        cy="11"
+        r="7"
+      />
+
       <path d="M20 20l-3.5-3.5" />
     </svg>
   );
