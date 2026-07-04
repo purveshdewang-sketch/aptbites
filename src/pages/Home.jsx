@@ -22,8 +22,8 @@ const FOOD_TYPE_CHIPS = ["All", "Veg", "Non-Veg"];
 const CARD =
   "rounded-[26px] border border-[#EADFCE] bg-white/95 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
-const FAVORITES_STORAGE_KEY = "Nefo_favorite_foods";
-const PREFERENCE_STORAGE_PREFIX = "Nefo_food_preferences";
+const FAVORITES_STORAGE_KEY = "NeFo_favorite_foods";
+const PREFERENCE_STORAGE_PREFIX = "NeFo_food_preferences";
 
 const RECOMMENDATION_MIN_ACCOUNT_AGE_DAYS = 3;
 const RECOMMENDATION_MIN_INTERACTION_SCORE = 8;
@@ -304,13 +304,13 @@ export default function Home() {
     }
 
     window.addEventListener(
-      "Nefo_favorites_updated",
+      "NeFo_favorites_updated",
       handleFavoritesUpdated
     );
 
     return () => {
       window.removeEventListener(
-        "Nefo_favorites_updated",
+        "NeFo_favorites_updated",
         handleFavoritesUpdated
       );
     };
@@ -1377,7 +1377,7 @@ export default function Home() {
         <header className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="text-[34px] font-black leading-none tracking-tight text-[#3F5128]">
-              Nefo
+              NeFo
             </h1>
 
             <Link
@@ -1551,7 +1551,7 @@ export default function Home() {
               <h2 className="mt-1 text-xl font-black">
                 {isSeller || isAdmin
                   ? "Manage your kitchen"
-                  : "Sell on Nefo"}
+                  : "Sell on NeFo"}
               </h2>
 
               <p className="mt-1 text-sm font-semibold text-white/75">

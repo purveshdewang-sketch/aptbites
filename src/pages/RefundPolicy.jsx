@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 
-const SUPPORT_EMAIL = "nefosupport@gmail.com";
+const SUPPORT_EMAIL = "NeFosupport@gmail.com";
 
 const CARD =
   "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
@@ -13,7 +13,7 @@ const eligibleRefunds = [
   "The kitchen rejects or cannot fulfil the order.",
   "Payment is deducted but the order is not successfully placed.",
   "Wrong item, missing item, or verified quantity issue is confirmed.",
-  "A valid service issue is confirmed by Nefo support.",
+  "A valid service issue is confirmed by NeFo support.",
 ];
 
 const nonRefundCases = [
@@ -41,7 +41,7 @@ export default function RefundPolicy() {
 
           <div className="min-w-0 flex-1">
             <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
-              Nefo Policy
+              NeFo Policy
             </p>
 
             <h1 className="mt-1 text-3xl font-black leading-tight text-[#3F5128]">
@@ -51,7 +51,7 @@ export default function RefundPolicy() {
 
             <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               This policy explains how cancellations and refunds are handled for
-              orders placed through Nefo.
+              orders placed through NeFo.
             </p>
           </div>
         </header>
@@ -128,7 +128,7 @@ export default function RefundPolicy() {
           <p className="mt-4 text-sm font-semibold leading-relaxed text-[#6B6258]">
             Because food is freshly prepared by community kitchens, refund
             eligibility depends on order status, preparation stage, seller
-            response, payment status, and verification by Nefo support.
+            response, payment status, and verification by NeFo support.
           </p>
 
           <div className="mt-5 rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF] p-4">
@@ -161,11 +161,11 @@ export default function RefundPolicy() {
               </p>
 
               <h2 className="mt-2 text-2xl font-black">
-                Contact Nefo Support
+                Contact NeFo Support
               </h2>
 
               <p className="mt-3 text-sm font-semibold leading-relaxed text-white/75">
-                For refund or cancellation support, contact Nefo support with
+                For refund or cancellation support, contact NeFo support with
                 your order ID, payment reference, amount, and issue details.
               </p>
 
@@ -201,7 +201,7 @@ export default function RefundPolicy() {
           </p>
 
           <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
-            This policy is written for Nefo’s operating flow. Legal review is
+            This policy is written for NeFo’s operating flow. Legal review is
             recommended before commercial launch.
           </p>
         </section>

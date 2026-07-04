@@ -13,8 +13,8 @@ export default function SellerGate({ children }) {
   const { user } = useAuth();
 
   const unlockKey = user
-    ? `Nefo_seller_unlocked_${user.id}`
-    : "Nefo_seller_unlocked";
+    ? `NeFo_seller_unlocked_${user.id}`
+    : "NeFo_seller_unlocked";
 
   const [unlocked, setUnlocked] = useState(
     sessionStorage.getItem(unlockKey) === "yes"
@@ -35,8 +35,8 @@ export default function SellerGate({ children }) {
     if (user?.email) setEmail(user.email);
 
     const currentUnlockKey = user
-      ? `Nefo_seller_unlocked_${user.id}`
-      : "Nefo_seller_unlocked";
+      ? `NeFo_seller_unlocked_${user.id}`
+      : "NeFo_seller_unlocked";
 
     setUnlocked(sessionStorage.getItem(currentUnlockKey) === "yes");
   }, [user]);
@@ -143,7 +143,7 @@ export default function SellerGate({ children }) {
         return;
       }
 
-      sessionStorage.setItem(`Nefo_seller_unlocked_${verifiedUser.id}`, "yes");
+      sessionStorage.setItem(`NeFo_seller_unlocked_${verifiedUser.id}`, "yes");
       setUnlocked(true);
       setMessage("Seller dashboard unlocked.");
     } catch (error) {
@@ -167,15 +167,15 @@ export default function SellerGate({ children }) {
           <Link to="/" className="flex min-w-0 items-center gap-3">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#D7F5EF] bg-white/90 shadow-[6px_6px_16px_rgba(7,59,53,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]">
               <img
-                src="/Nefo-logo.png"
-                alt="Nefo"
+                src="/NeFo-logo.png"
+                alt="NeFo"
                 className="h-full w-full scale-[1.65] object-cover"
               />
             </div>
 
             <div className="min-w-0">
               <p className="truncate text-xl font-black text-[#073B35]">
-                Nefo
+                NeFo
               </p>
               <p className="text-[10px] font-black uppercase tracking-wide text-[#51615D]">
                 Seller Security

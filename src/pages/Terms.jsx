@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 
-const SUPPORT_EMAIL = "nefosupport@gmail.com";
+const SUPPORT_EMAIL = "NeFosupport@gmail.com";
 
 const CARD =
   "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
@@ -12,7 +12,7 @@ const termsSections = [
   {
     title: "Platform Role",
     text:
-      "Nefo connects customers with neighbourhood home food sellers and community kitchens. Food is prepared and supplied by individual sellers listed on the platform.",
+      "NeFo connects customers with neighbourhood home food sellers and community kitchens. Food is prepared and supplied by individual sellers listed on the platform.",
   },
   {
     title: "Customer Responsibility",
@@ -37,12 +37,12 @@ const termsSections = [
   {
     title: "Cancellations and Refunds",
     text:
-      "Cancellations and refunds are governed by Nefo’s Refund & Cancellation Policy. Food orders are time-sensitive, and refund eligibility may depend on the preparation stage and verified issue.",
+      "Cancellations and refunds are governed by NeFo’s Refund & Cancellation Policy. Food orders are time-sensitive, and refund eligibility may depend on the preparation stage and verified issue.",
   },
   {
     title: "Food Safety",
     text:
-      "Nefo expects sellers to follow safe and hygienic food preparation practices. Customers should exercise discretion while ordering homemade food and should review available dish and seller information.",
+      "NeFo expects sellers to follow safe and hygienic food preparation practices. Customers should exercise discretion while ordering homemade food and should review available dish and seller information.",
   },
   {
     title: "Privacy and Location",
@@ -52,11 +52,11 @@ const termsSections = [
   {
     title: "Account Use",
     text:
-      "Users must provide accurate account information and must not misuse the platform, create fake orders, interfere with app operations, or use Nefo for unlawful activity.",
+      "Users must provide accurate account information and must not misuse the platform, create fake orders, interfere with app operations, or use NeFo for unlawful activity.",
   },
   {
     title: "Support Contact",
-    text: `For questions about orders, refunds, privacy, seller accounts, or platform rules, contact Nefo support by email at ${SUPPORT_EMAIL}.`,
+    text: `For questions about orders, refunds, privacy, seller accounts, or platform rules, contact NeFo support by email at ${SUPPORT_EMAIL}.`,
   },
 ];
 
@@ -78,7 +78,7 @@ export default function Terms() {
 
           <div className="min-w-0 flex-1">
             <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
-              Nefo Policy
+              NeFo Policy
             </p>
 
             <h1 className="mt-1 text-3xl font-black leading-tight text-[#3F5128]">
@@ -87,7 +87,7 @@ export default function Terms() {
             </h1>
 
             <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
-              By using Nefo, you agree to these terms for using our
+              By using NeFo, you agree to these terms for using our
               neighbourhood homemade food ordering platform.
             </p>
           </div>
@@ -139,11 +139,11 @@ export default function Terms() {
           </p>
 
           <h2 className="mt-1 text-2xl font-black leading-tight text-[#181411]">
-            Use Nefo responsibly
+            Use NeFo responsibly
           </h2>
 
           <p className="mt-4 text-sm font-semibold leading-relaxed text-[#6B6258]">
-            Customers and sellers must use Nefo honestly and responsibly. Fake
+            Customers and sellers must use NeFo honestly and responsibly. Fake
             orders, misleading listings, false complaints, abusive behaviour, or
             misuse of payment and support systems may lead to account
             restrictions.
@@ -161,12 +161,12 @@ export default function Terms() {
               </p>
 
               <h2 className="mt-2 text-2xl font-black">
-                Contact Nefo Support
+                Contact NeFo Support
               </h2>
 
               <p className="mt-3 text-sm font-semibold leading-relaxed text-white/75">
                 For questions about orders, refunds, privacy, seller accounts, or
-                platform rules, contact Nefo support by email.
+                platform rules, contact NeFo support by email.
               </p>
 
               <a
@@ -205,7 +205,7 @@ export default function Terms() {
           </h2>
 
           <p className="mt-4 text-sm font-semibold leading-relaxed text-[#6B6258]">
-            These terms should be read together with Nefo’s Refund &
+            These terms should be read together with NeFo’s Refund &
             Cancellation Policy and Privacy Policy.
           </p>
 
@@ -232,7 +232,7 @@ export default function Terms() {
           </p>
 
           <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
-            This policy is written for Nefo’s operating flow. Legal review is
+            This policy is written for NeFo’s operating flow. Legal review is
             recommended before commercial launch.
           </p>
         </section>

@@ -12,10 +12,10 @@ import { Capacitor } from "@capacitor/core";
 import { supabase } from "../lib/supabaseClient";
 
 const RECOVERY_STORAGE_KEY =
-  "Nefo_password_recovery_url";
+  "NeFo_password_recovery_url";
 
 const NATIVE_RESET_REDIRECT_URL =
-  "com.nefo.app://reset-password";
+  "com.NeFo.app://reset-password";
 
 const CARD =
   "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
@@ -163,7 +163,7 @@ export default function ResetPassword() {
     }
 
     window.addEventListener(
-      "Nefo_password_recovery_link",
+      "NeFo_password_recovery_link",
       handleNativeRecoveryLink
     );
 
@@ -190,7 +190,7 @@ export default function ResetPassword() {
 
     return () => {
       window.removeEventListener(
-        "Nefo_password_recovery_link",
+        "NeFo_password_recovery_link",
         handleNativeRecoveryLink
       );
 
@@ -560,15 +560,15 @@ export default function ResetPassword() {
           >
             <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#EADFCE] bg-white/90 shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]">
               <img
-                src="/Nefo-logo.png"
-                alt="Nefo"
+                src="/NeFo-logo.png"
+                alt="NeFo"
                 className="h-full w-full scale-[1.65] object-cover"
               />
             </div>
 
             <div className="min-w-0">
               <p className="truncate text-xl font-black text-[#3F5128]">
-                Nefo
+                NeFo
               </p>
 
               <p className="text-[10px] font-black uppercase tracking-wide text-[#6B6258]">
@@ -611,7 +611,7 @@ export default function ResetPassword() {
                 Request a secure reset
                 link by email, then
                 create a fresh password
-                for your Nefo account.
+                for your NeFo account.
               </p>
 
               <div className="mt-5 grid grid-cols-3 gap-2">
@@ -867,7 +867,7 @@ export default function ResetPassword() {
 
               <p className="mt-1 text-xs font-semibold leading-relaxed text-[#6B6258]">
                 {mode === "request"
-                  ? "Open the newest reset email on the Android phone where Nefo is installed."
+                  ? "Open the newest reset email on the Android phone where NeFo is installed."
                   : "You will be signed out automatically. Sign in again with your new password."}
               </p>
             </section>

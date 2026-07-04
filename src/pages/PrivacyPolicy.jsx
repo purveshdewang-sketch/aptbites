@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 
-const SUPPORT_EMAIL = "nefosupport@gmail.com";
+const SUPPORT_EMAIL = "NeFosupport@gmail.com";
 
 const CARD =
   "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
@@ -12,7 +12,7 @@ const sections = [
   {
     title: "Information We Collect",
     text:
-      "We may collect your name, phone number, email address, apartment or flat details, order details, seller profile details, payment reference details, and basic app usage information required to operate Nefo.",
+      "We may collect your name, phone number, email address, apartment or flat details, order details, seller profile details, payment reference details, and basic app usage information required to operate NeFo.",
   },
   {
     title: "How We Use Information",
@@ -32,7 +32,7 @@ const sections = [
   {
     title: "Payments",
     text:
-      "Payment processing may be handled through third-party payment or UPI providers. Nefo does not intentionally store sensitive card, banking, or UPI PIN credentials inside the app.",
+      "Payment processing may be handled through third-party payment or UPI providers. NeFo does not intentionally store sensitive card, banking, or UPI PIN credentials inside the app.",
   },
   {
     title: "Data Security",
@@ -46,7 +46,7 @@ const sections = [
   },
   {
     title: "Contact",
-    text: `For privacy-related questions, account concerns, or data correction requests, contact Nefo support by email at ${SUPPORT_EMAIL}.`,
+    text: `For privacy-related questions, account concerns, or data correction requests, contact NeFo support by email at ${SUPPORT_EMAIL}.`,
   },
 ];
 
@@ -68,7 +68,7 @@ export default function PrivacyPolicy() {
 
           <div className="min-w-0 flex-1">
             <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
-              Nefo Policy
+              NeFo Policy
             </p>
 
             <h1 className="mt-1 text-3xl font-black leading-tight text-[#3F5128]">
@@ -77,7 +77,7 @@ export default function PrivacyPolicy() {
             </h1>
 
             <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
-              Nefo respects your privacy. This policy explains what information
+              NeFo respects your privacy. This policy explains what information
               we collect and how it is used to operate orders, support, and
               community kitchen services.
             </p>
@@ -96,7 +96,7 @@ export default function PrivacyPolicy() {
               </p>
 
               <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
-                Nefo should avoid publicly exposing exact kitchen door/location
+                NeFo should avoid publicly exposing exact kitchen door/location
                 details. Order and pickup coordination should happen through
                 controlled app or support flows.
               </p>
@@ -137,7 +137,7 @@ export default function PrivacyPolicy() {
               </p>
 
               <h2 className="mt-2 text-2xl font-black">
-                Contact Nefo Support
+                Contact NeFo Support
               </h2>
 
               <p className="mt-3 text-sm font-semibold leading-relaxed text-white/75">
@@ -177,7 +177,7 @@ export default function PrivacyPolicy() {
           </p>
 
           <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
-            This policy is written for the Nefo app’s operating flow. Legal
+            This policy is written for the NeFo app’s operating flow. Legal
             review is recommended before commercial launch.
           </p>
         </section>

@@ -310,7 +310,7 @@ export default function SellerRegistration() {
               </p>
 
               <p className="mt-2 text-sm font-semibold leading-relaxed text-yellow-700/80">
-                Please wait up to 2 working days. The Nefo owner/admin will
+                Please wait up to 2 working days. The NeFo owner/admin will
                 review your kitchen details.
               </p>
             </div>
@@ -355,7 +355,7 @@ export default function SellerRegistration() {
           </div>
 
           <div>
-            <p className="font-black text-[#3F5128]">Apply to sell on Nefo</p>
+            <p className="font-black text-[#3F5128]">Apply to sell on NeFo</p>
 
             <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
               Submit your kitchen details. The owner will review and approve
@@ -390,7 +390,7 @@ export default function SellerRegistration() {
             </h1>
 
             <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
-              You need a Nefo account before applying as a seller.
+              You need a NeFo account before applying as a seller.
             </p>
 
             <Link
@@ -425,7 +425,7 @@ export default function SellerRegistration() {
 
             <h1 className="mt-1 text-3xl font-black leading-tight text-[#3F5128]">
               Apply to sell
-              <span className="block text-[#181411]">on Nefo</span>
+              <span className="block text-[#181411]">on NeFo</span>
             </h1>
 
             <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">

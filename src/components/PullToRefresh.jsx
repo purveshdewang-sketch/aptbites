@@ -193,7 +193,7 @@ export default function PullToRefresh({
       updateDistance(TRIGGER_DISTANCE);
 
       window.dispatchEvent(
-        new CustomEvent("nefo:refresh", {
+        new CustomEvent("NeFo:refresh", {
           detail: {
             source: "pull-to-refresh",
           },

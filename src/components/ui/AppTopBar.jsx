@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 
 export default function AppTopBar({
-  title = "Nefo",
+  title = "NeFo",
   subtitle = "",
   backTo = "",
   right = null,
@@ -52,8 +52,8 @@ export default function AppTopBar({
             aria-label="Go home"
           >
             <img
-              src="/Nefo-logo.png"
-              alt="Nefo"
+              src="/NeFo-logo.png"
+              alt="NeFo"
               className="h-full w-full scale-[1.65] object-cover"
             />
           </Link>

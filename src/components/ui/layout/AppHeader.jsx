@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 export default function AppHeader({
-  title = "Nefo",
+  title = "NeFo",
   subtitle = "",
   showBack = false,
   rightAction = null,

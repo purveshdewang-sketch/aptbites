@@ -12,7 +12,7 @@ import {
 import { useCart } from "../context/CartContext";
 
 const CART_TIMING_STORAGE_KEY =
-  "Nefo_cart_order_timing";
+  "NeFo_cart_order_timing";
 
 const MINIMUM_SCHEDULE_NOTICE_MINUTES = 30;
 

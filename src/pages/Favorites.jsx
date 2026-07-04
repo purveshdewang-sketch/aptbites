@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 
-const FAVORITES_STORAGE_KEY = "Nefo_favorite_foods";
+const FAVORITES_STORAGE_KEY = "NeFo_favorite_foods";
 
 const CARD =
   "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
@@ -22,7 +22,7 @@ function readFavorites() {
 
 function saveFavorites(favorites) {
   localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
-  window.dispatchEvent(new CustomEvent("Nefo_favorites_updated"));
+  window.dispatchEvent(new CustomEvent("NeFo_favorites_updated"));
 }
 
 function getFavoriteId(item) {
@@ -42,11 +42,11 @@ export default function Favorites() {
       setFavorites(readFavorites());
     }
 
-    window.addEventListener("Nefo_favorites_updated", syncFavorites);
+    window.addEventListener("NeFo_favorites_updated", syncFavorites);
     window.addEventListener("storage", syncFavorites);
 
     return () => {
-      window.removeEventListener("Nefo_favorites_updated", syncFavorites);
+      window.removeEventListener("NeFo_favorites_updated", syncFavorites);
       window.removeEventListener("storage", syncFavorites);
     };
   }, []);
@@ -88,7 +88,7 @@ export default function Favorites() {
   }
 
   function getImage(item) {
-    return item.image || "/Nefo-logo.png";
+    return item.image || "/NeFo-logo.png";
   }
 
   function getCartQuantity(item) {

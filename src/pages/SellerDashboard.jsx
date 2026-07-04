@@ -97,7 +97,7 @@ export default function SellerDashboard() {
     if (!user) return;
 
     const savedSellerName = localStorage.getItem(
-      `Nefo_seller_name_${user.id}`
+      `NeFo_seller_name_${user.id}`
     );
 
     if (savedSellerName) {
@@ -165,7 +165,7 @@ export default function SellerDashboard() {
     }
 
     const savedSoundSetting = localStorage.getItem(
-      `Nefo_seller_sound_${user.id}`
+      `NeFo_seller_sound_${user.id}`
     );
 
     if (savedSoundSetting === "on") {
@@ -185,8 +185,8 @@ export default function SellerDashboard() {
 
   function getSellerStorageKey() {
     return user
-      ? `Nefo_seller_name_${user.id}`
-      : "Nefo_seller_name";
+      ? `NeFo_seller_name_${user.id}`
+      : "NeFo_seller_name";
   }
 
   function goToCustomerHome() {
@@ -245,7 +245,7 @@ export default function SellerDashboard() {
       setSellerProfileComplete(false);
 
       setMessage(
-        "This account is not approved as a seller. Please apply to sell on Nefo and wait for owner approval."
+        "This account is not approved as a seller. Please apply to sell on NeFo and wait for owner approval."
       );
 
       setProfileLoading(false);
@@ -310,7 +310,7 @@ export default function SellerDashboard() {
 
     if (setupData.seller_kitchen_name) {
       localStorage.setItem(
-        `Nefo_seller_name_${user.id}`,
+        `NeFo_seller_name_${user.id}`,
         setupData.seller_kitchen_name
       );
 
@@ -322,11 +322,11 @@ export default function SellerDashboard() {
 
     if (setupComplete) {
       localStorage.removeItem(
-        `Nefo_seller_profile_incomplete_${user.id}`
+        `NeFo_seller_profile_incomplete_${user.id}`
       );
     } else {
       localStorage.setItem(
-        `Nefo_seller_profile_incomplete_${user.id}`,
+        `NeFo_seller_profile_incomplete_${user.id}`,
         "yes"
       );
     }
@@ -442,17 +442,17 @@ export default function SellerDashboard() {
     }
 
     localStorage.setItem(
-      `Nefo_seller_access_${user.id}`,
+      `NeFo_seller_access_${user.id}`,
       "yes"
     );
 
     localStorage.setItem(
-      `Nefo_seller_name_${user.id}`,
+      `NeFo_seller_name_${user.id}`,
       sellerSetupData.seller_kitchen_name.trim()
     );
 
     localStorage.removeItem(
-      `Nefo_seller_profile_incomplete_${user.id}`
+      `NeFo_seller_profile_incomplete_${user.id}`
     );
 
     setFormData((currentData) => ({
@@ -697,7 +697,7 @@ export default function SellerDashboard() {
     setAudioReady(nextValue);
 
     localStorage.setItem(
-      `Nefo_seller_sound_${user.id}`,
+      `NeFo_seller_sound_${user.id}`,
       nextValue ? "on" : "off"
     );
 
@@ -929,11 +929,11 @@ export default function SellerDashboard() {
           playTingSound();
 
           document.title =
-            "🔔 New Order - Nefo";
+            "🔔 New Order - NeFo";
 
           setTimeout(() => {
             document.title =
-              "Nefo Seller";
+              "NeFo Seller";
           }, 5000);
 
           if (
@@ -942,13 +942,13 @@ export default function SellerDashboard() {
               "granted"
           ) {
             new Notification(
-              "🍔 New Nefo Order",
+              "🍔 New NeFo Order",
               {
                 body:
                   "You received a new food order.",
 
                 icon:
-                  "/Nefo-logo.png",
+                  "/NeFo-logo.png",
               }
             );
           }
@@ -1117,7 +1117,7 @@ export default function SellerDashboard() {
               const compressedFile =
                 new File(
                   [blob],
-                  `${Date.now()}-Nefo.jpg`,
+                  `${Date.now()}-NeFo.jpg`,
                   {
                     type: "image/jpeg",
                   }

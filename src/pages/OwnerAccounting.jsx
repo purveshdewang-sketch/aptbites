@@ -278,7 +278,7 @@ export default function OwnerAccounting() {
     );
   }
 
-  function getNefoTotalEarning(order) {
+  function getNeFoTotalEarning(order) {
     return getPlatformRevenue(order) + getSellerCommission(order);
   }
 
@@ -399,8 +399,8 @@ export default function OwnerAccounting() {
       0
     );
 
-    const nefoTotalEarning = filteredOrders.reduce(
-      (total, order) => total + getNefoTotalEarning(order),
+    const NeFoTotalEarning = filteredOrders.reduce(
+      (total, order) => total + getNeFoTotalEarning(order),
       0
     );
 
@@ -432,7 +432,7 @@ export default function OwnerAccounting() {
       sellerGrossEarning,
       sellerCommission,
       sellerNetPayout,
-      nefoTotalEarning,
+      NeFoTotalEarning,
       paymentPendingOrders,
       upiReferenceSubmitted,
       cashOrders,
@@ -472,7 +472,7 @@ export default function OwnerAccounting() {
           sellerGrossEarning: 0,
           sellerCommission: 0,
           sellerNetPayout: 0,
-          nefoTotalEarning: 0,
+          NeFoTotalEarning: 0,
           pendingPayments: 0,
           upiReferenceSubmitted: 0,
           cashOrders: 0,
@@ -486,7 +486,7 @@ export default function OwnerAccounting() {
       ledger[sellerId].sellerGrossEarning += getSellerGrossEarning(order);
       ledger[sellerId].sellerCommission += getSellerCommission(order);
       ledger[sellerId].sellerNetPayout += getSellerNetPayout(order);
-      ledger[sellerId].nefoTotalEarning += getNefoTotalEarning(order);
+      ledger[sellerId].NeFoTotalEarning += getNeFoTotalEarning(order);
 
       if (status === "completed") ledger[sellerId].completedOrders += 1;
       if (status === "cancelled") ledger[sellerId].cancelledOrders += 1;
@@ -531,7 +531,7 @@ export default function OwnerAccounting() {
       "Seller Gross Earning",
       "Seller Commission",
       "Net Seller Payout",
-      "Nefo Total Earning",
+      "NeFo Total Earning",
       "Gross Total",
       "Scheduled Order",
       "Scheduled For",
@@ -565,7 +565,7 @@ export default function OwnerAccounting() {
         getSellerGrossEarning(order),
         getSellerCommission(order),
         getSellerNetPayout(order),
-        getNefoTotalEarning(order),
+        getNeFoTotalEarning(order),
         Number(order.total_amount || 0),
         order.scheduled_order ? "Yes" : "No",
         order.scheduled_for ? formatDateTime(order.scheduled_for) : "",
@@ -591,7 +591,7 @@ export default function OwnerAccounting() {
     const link = document.createElement("a");
 
     link.href = url;
-    link.download = `Nefo-weekly-payout-${dateFilter}.csv`;
+    link.download = `NeFo-weekly-payout-${dateFilter}.csv`;
     link.click();
 
     URL.revokeObjectURL(url);
@@ -621,7 +621,7 @@ export default function OwnerAccounting() {
             </h1>
 
             <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
-              Track seller earnings, deduct Nefo commission, view seller bank
+              Track seller earnings, deduct NeFo commission, view seller bank
               details, and calculate net weekly payout.
             </p>
           </div>
@@ -752,8 +752,8 @@ export default function OwnerAccounting() {
                 value={`₹${analytics.platformRevenue}`}
               />
               <AccountingCard
-                title="Nefo Earning"
-                value={`₹${analytics.nefoTotalEarning}`}
+                title="NeFo Earning"
+                value={`₹${analytics.NeFoTotalEarning}`}
               />
               <AccountingCard
                 title="Total Orders"
@@ -780,7 +780,7 @@ export default function OwnerAccounting() {
                   value={`₹${analytics.sellerGrossEarning}`}
                 />
                 <MoneyRow
-                  label={`Nefo Commission (${Math.round(
+                  label={`NeFo Commission (${Math.round(
                     SELLER_COMMISSION_RATE * 100
                   )}%)`}
                   value={`₹${analytics.sellerCommission}`}
@@ -790,12 +790,12 @@ export default function OwnerAccounting() {
                   value={`₹${analytics.sellerNetPayout}`}
                 />
                 <MoneyRow
-                  label="Nefo Platform Fee"
+                  label="NeFo Platform Fee"
                   value={`₹${analytics.platformRevenue}`}
                 />
                 <MoneyRow
-                  label="Nefo Total Earning"
-                  value={`₹${analytics.nefoTotalEarning}`}
+                  label="NeFo Total Earning"
+                  value={`₹${analytics.NeFoTotalEarning}`}
                 />
               </div>
             </section>
@@ -810,7 +810,7 @@ export default function OwnerAccounting() {
               </h2>
 
               <p className="mt-3 text-sm font-semibold leading-relaxed text-white/75">
-                For every non-cancelled order, Nefo calculates seller food
+                For every non-cancelled order, NeFo calculates seller food
                 earning, deducts seller commission, and shows the net payout
                 amount before weekly settlement.
               </p>
@@ -896,8 +896,8 @@ export default function OwnerAccounting() {
                           value={`₹${seller.platformFee}`}
                         />
                         <DetailLine
-                          label="Nefo Earning"
-                          value={`₹${seller.nefoTotalEarning}`}
+                          label="NeFo Earning"
+                          value={`₹${seller.NeFoTotalEarning}`}
                         />
                       </div>
 
@@ -1066,8 +1066,8 @@ export default function OwnerAccounting() {
                             value={`₹${getSellerNetPayout(order)}`}
                           />
                           <MoneyPill
-                            label="Nefo"
-                            value={`₹${getNefoTotalEarning(order)}`}
+                            label="NeFo"
+                            value={`₹${getNeFoTotalEarning(order)}`}
                           />
                         </div>
 

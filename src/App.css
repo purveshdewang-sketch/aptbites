@@ -1,25 +1,25 @@
 :root {
-  --nefo-bg: #fffff2;
-  --nefo-primary: #073b35;
-  --nefo-primary-hover: #0b5149;
-  --nefo-accent: #41d3bd;
-  --nefo-accent-soft: #effffb;
-  --nefo-border: #e8f4f1;
-  --nefo-border-strong: #d7f5ef;
-  --nefo-text: #111827;
-  --nefo-muted: #51615d;
-  --nefo-muted-light: #7a8a86;
+  --NeFo-bg: #fffff2;
+  --NeFo-primary: #073b35;
+  --NeFo-primary-hover: #0b5149;
+  --NeFo-accent: #41d3bd;
+  --NeFo-accent-soft: #effffb;
+  --NeFo-border: #e8f4f1;
+  --NeFo-border-strong: #d7f5ef;
+  --NeFo-text: #111827;
+  --NeFo-muted: #51615d;
+  --NeFo-muted-light: #7a8a86;
 
-  --nefo-shadow-dark: rgba(7, 59, 53, 0.1);
-  --nefo-shadow-dark-strong: rgba(7, 59, 53, 0.18);
-  --nefo-shadow-light: rgba(255, 255, 255, 0.96);
+  --NeFo-shadow-dark: rgba(7, 59, 53, 0.1);
+  --NeFo-shadow-dark-strong: rgba(7, 59, 53, 0.18);
+  --NeFo-shadow-light: rgba(255, 255, 255, 0.96);
 }
 
 html,
 body,
 #root {
   min-height: 100%;
-  background: var(--nefo-bg);
+  background: var(--NeFo-bg);
 }
 
 * {
@@ -28,8 +28,8 @@ body,
 
 body {
   margin: 0;
-  color: var(--nefo-text);
-  background: var(--nefo-bg);
+  color: var(--NeFo-text);
+  background: var(--NeFo-bg);
 }
 
 button,
@@ -37,50 +37,50 @@ a {
   touch-action: manipulation;
 }
 
-.nefo-page {
+.NeFo-page {
   min-height: 100vh;
-  background: var(--nefo-bg);
-  color: var(--nefo-text);
+  background: var(--NeFo-bg);
+  color: var(--NeFo-text);
 }
 
-.nefo-section {
+.NeFo-section {
   max-width: 80rem;
   margin: 0 auto;
   padding: 1rem;
 }
 
-.nefo-bottom-safe {
+.NeFo-bottom-safe {
   padding-bottom: 6rem;
 }
 
 /* Base cards */
 
-.nefo-card {
+.NeFo-card {
   background: #ffffff;
-  border: 1px solid var(--nefo-border);
+  border: 1px solid var(--NeFo-border);
   border-radius: 1.5rem;
   box-shadow: 0 1px 2px rgba(7, 59, 53, 0.05);
 }
 
-.nefo-card-compact {
+.NeFo-card-compact {
   background: #ffffff;
-  border: 1px solid var(--nefo-border);
+  border: 1px solid var(--NeFo-border);
   border-radius: 1.25rem;
   box-shadow: 0 1px 2px rgba(7, 59, 53, 0.05);
 }
 
 /* Neumorphism */
 
-.nefo-neo {
-  background: var(--nefo-bg);
+.NeFo-neo {
+  background: var(--NeFo-bg);
   border: 1px solid rgba(215, 245, 239, 0.8);
   border-radius: 1.75rem;
   box-shadow:
-    12px 12px 28px var(--nefo-shadow-dark),
-    -12px -12px 28px var(--nefo-shadow-light);
+    12px 12px 28px var(--NeFo-shadow-dark),
+    -12px -12px 28px var(--NeFo-shadow-light);
 }
 
-.nefo-neo-white {
+.NeFo-neo-white {
   background: #ffffff;
   border: 1px solid rgba(215, 245, 239, 0.82);
   border-radius: 1.75rem;
@@ -89,8 +89,8 @@ a {
     -10px -10px 24px rgba(255, 255, 255, 0.92);
 }
 
-.nefo-neo-inset {
-  background: var(--nefo-bg);
+.NeFo-neo-inset {
+  background: var(--NeFo-bg);
   border: 1px solid rgba(215, 245, 239, 0.75);
   border-radius: 1.35rem;
   box-shadow:
@@ -98,8 +98,8 @@ a {
     inset -8px -8px 18px rgba(255, 255, 255, 0.95);
 }
 
-.nefo-neo-tile {
-  background: var(--nefo-bg);
+.NeFo-neo-tile {
+  background: var(--NeFo-bg);
   border: 1px solid rgba(215, 245, 239, 0.72);
   border-radius: 1.5rem;
   box-shadow:
@@ -107,8 +107,8 @@ a {
     -7px -7px 16px rgba(255, 255, 255, 0.95);
 }
 
-.nefo-neo-pressed {
-  background: var(--nefo-bg);
+.NeFo-neo-pressed {
+  background: var(--NeFo-bg);
   border: 1px solid rgba(65, 211, 189, 0.35);
   border-radius: 1.5rem;
   box-shadow:
@@ -118,43 +118,43 @@ a {
 
 /* Buttons */
 
-.nefo-btn-primary {
+.NeFo-btn-primary {
   min-height: 48px;
   border-radius: 1rem;
-  background: var(--nefo-primary);
+  background: var(--NeFo-primary);
   color: #ffffff;
   font-weight: 900;
   transition: 0.2s ease;
 }
 
-.nefo-btn-primary:hover {
-  background: var(--nefo-primary-hover);
+.NeFo-btn-primary:hover {
+  background: var(--NeFo-primary-hover);
 }
 
-.nefo-btn-primary:active {
+.NeFo-btn-primary:active {
   transform: scale(0.98);
 }
 
-.nefo-btn-secondary {
+.NeFo-btn-secondary {
   min-height: 48px;
   border-radius: 1rem;
   background: #ffffff;
-  color: var(--nefo-primary);
+  color: var(--NeFo-primary);
   border: 1px solid rgba(65, 211, 189, 0.4);
   font-weight: 900;
   transition: 0.2s ease;
 }
 
-.nefo-btn-secondary:hover {
-  background: var(--nefo-accent-soft);
+.NeFo-btn-secondary:hover {
+  background: var(--NeFo-accent-soft);
 }
 
-.nefo-btn-secondary:active {
+.NeFo-btn-secondary:active {
   transform: scale(0.98);
 }
 
-.nefo-neo-button {
-  background: var(--nefo-primary);
+.NeFo-neo-button {
+  background: var(--NeFo-primary);
   color: #ffffff;
   border-radius: 1.35rem;
   font-weight: 900;
@@ -164,16 +164,16 @@ a {
   transition: 0.18s ease;
 }
 
-.nefo-neo-button:active {
+.NeFo-neo-button:active {
   transform: scale(0.98);
   box-shadow:
     4px 4px 12px rgba(7, 59, 53, 0.2),
     -4px -4px 12px rgba(255, 255, 255, 0.85);
 }
 
-.nefo-neo-soft-button {
-  background: var(--nefo-bg);
-  color: var(--nefo-primary);
+.NeFo-neo-soft-button {
+  background: var(--NeFo-bg);
+  color: var(--NeFo-primary);
   border: 1px solid rgba(215, 245, 239, 0.8);
   border-radius: 1.35rem;
   font-weight: 900;
@@ -183,7 +183,7 @@ a {
   transition: 0.18s ease;
 }
 
-.nefo-neo-soft-button:active {
+.NeFo-neo-soft-button:active {
   transform: scale(0.98);
   box-shadow:
     inset 5px 5px 12px rgba(7, 59, 53, 0.08),
@@ -192,29 +192,29 @@ a {
 
 /* Inputs */
 
-.nefo-input {
+.NeFo-input {
   width: 100%;
   min-height: 48px;
   border-radius: 1rem;
   background: #ffffff;
-  border: 1px solid var(--nefo-border-strong);
-  color: var(--nefo-text);
+  border: 1px solid var(--NeFo-border-strong);
+  color: var(--NeFo-text);
   outline: none;
   padding: 0 1rem;
 }
 
-.nefo-input:focus {
-  border-color: var(--nefo-accent);
+.NeFo-input:focus {
+  border-color: var(--NeFo-accent);
   box-shadow: 0 0 0 3px rgba(65, 211, 189, 0.2);
 }
 
-.nefo-neo-input {
+.NeFo-neo-input {
   width: 100%;
   min-height: 52px;
   border-radius: 1.25rem;
-  background: var(--nefo-bg);
+  background: var(--NeFo-bg);
   border: 1px solid rgba(215, 245, 239, 0.85);
-  color: var(--nefo-text);
+  color: var(--NeFo-text);
   outline: none;
   padding: 0 1rem;
   box-shadow:
@@ -222,7 +222,7 @@ a {
     inset -6px -6px 14px rgba(255, 255, 255, 0.95);
 }
 
-.nefo-neo-input:focus {
+.NeFo-neo-input:focus {
   border-color: rgba(65, 211, 189, 0.7);
   box-shadow:
     inset 6px 6px 14px rgba(7, 59, 53, 0.06),
@@ -232,27 +232,27 @@ a {
 
 /* Chips */
 
-.nefo-chip {
+.NeFo-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
   padding: 0.45rem 0.75rem;
-  background: var(--nefo-accent-soft);
-  color: var(--nefo-primary);
+  background: var(--NeFo-accent-soft);
+  color: var(--NeFo-primary);
   border: 1px solid rgba(65, 211, 189, 0.35);
   font-size: 0.75rem;
   font-weight: 900;
 }
 
-.nefo-neo-chip {
+.NeFo-neo-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
   padding: 0.5rem 0.85rem;
-  background: var(--nefo-bg);
-  color: var(--nefo-primary);
+  background: var(--NeFo-bg);
+  color: var(--NeFo-primary);
   border: 1px solid rgba(215, 245, 239, 0.8);
   font-size: 0.75rem;
   font-weight: 900;
@@ -261,9 +261,9 @@ a {
     -5px -5px 12px rgba(255, 255, 255, 0.95);
 }
 
-.nefo-neo-chip-active {
-  background: var(--nefo-accent);
-  color: var(--nefo-primary);
+.NeFo-neo-chip-active {
+  background: var(--NeFo-accent);
+  color: var(--NeFo-primary);
   border-radius: 999px;
   border: 1px solid rgba(65, 211, 189, 0.75);
   box-shadow:
@@ -273,26 +273,26 @@ a {
 
 /* Text */
 
-.nefo-title {
-  color: var(--nefo-primary);
+.NeFo-title {
+  color: var(--NeFo-primary);
   font-weight: 900;
   line-height: 1.05;
   letter-spacing: -0.03em;
 }
 
-.nefo-subtitle {
-  color: var(--nefo-muted);
+.NeFo-subtitle {
+  color: var(--NeFo-muted);
   line-height: 1.5;
 }
 
 /* Liquid / glass */
 
-.nefo-liquid-bg {
+.NeFo-liquid-bg {
   position: relative;
   overflow: hidden;
 }
 
-.nefo-liquid-bg::before {
+.NeFo-liquid-bg::before {
   content: "";
   position: absolute;
   width: 220px;
@@ -305,7 +305,7 @@ a {
   pointer-events: none;
 }
 
-.nefo-liquid-bg::after {
+.NeFo-liquid-bg::after {
   content: "";
   position: absolute;
   width: 180px;
@@ -318,22 +318,22 @@ a {
   pointer-events: none;
 }
 
-.nefo-glass {
+.NeFo-glass {
   background: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(18px);
   border: 1px solid rgba(215, 245, 239, 0.9);
 }
 
-.nefo-liquid-card {
+.NeFo-liquid-card {
   background:
     radial-gradient(circle at top right, rgba(65, 211, 189, 0.18), transparent 38%),
     #ffffff;
-  border: 1px solid var(--nefo-border);
+  border: 1px solid var(--NeFo-border);
   border-radius: 1.5rem;
   box-shadow: 0 8px 24px rgba(7, 59, 53, 0.06);
 }
 
-.nefo-liquid-button {
+.NeFo-liquid-button {
   background:
     linear-gradient(135deg, #073b35 0%, #0b5149 55%, #41d3bd 160%);
   color: white;
@@ -342,7 +342,7 @@ a {
   box-shadow: 0 10px 24px rgba(7, 59, 53, 0.18);
 }
 
-.nefo-liquid-chip-active {
+.NeFo-liquid-chip-active {
   background:
     linear-gradient(135deg, #073b35 0%, #0b5149 70%);
   color: white;
@@ -351,7 +351,7 @@ a {
 
 /* Mobile polish */
 
-.nefo-sticky-bottom {
+.NeFo-sticky-bottom {
   position: fixed;
   left: 0;
   right: 0;
@@ -359,11 +359,11 @@ a {
   z-index: 50;
   background: rgba(255, 255, 242, 0.94);
   backdrop-filter: blur(18px);
-  border-top: 1px solid var(--nefo-border-strong);
+  border-top: 1px solid var(--NeFo-border-strong);
   padding: 0.75rem;
 }
 
-.nefo-safe-area {
+.NeFo-safe-area {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
@@ -379,14 +379,14 @@ a {
 }
 
 @media (max-width: 640px) {
-  .nefo-neo,
-  .nefo-neo-white {
+  .NeFo-neo,
+  .NeFo-neo-white {
     box-shadow:
       7px 7px 18px rgba(7, 59, 53, 0.08),
       -7px -7px 18px rgba(255, 255, 255, 0.95);
   }
 
-  .nefo-neo-inset {
+  .NeFo-neo-inset {
     box-shadow:
       inset 5px 5px 12px rgba(7, 59, 53, 0.06),
       inset -5px -5px 12px rgba(255, 255, 255, 0.95);

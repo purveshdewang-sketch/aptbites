@@ -147,7 +147,7 @@ export default function Navbar() {
       return "Seller Application Pending";
     }
     if (sellerApplicationStatus === "rejected") return "Re-apply to Sell";
-    return "Apply to Sell on Nefo";
+    return "Apply to Sell on NeFo";
   }
 
   function isActive(path) {
@@ -159,8 +159,8 @@ export default function Navbar() {
       <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#BDEFE6] bg-[#FFFFF2] shadow-[4px_4px_10px_rgba(7,59,53,0.10),-4px_-4px_10px_rgba(255,255,255,0.95)]">
         {!logoFailed ? (
           <img
-            src="/Nefo-logo.png"
-            alt="Nefo"
+            src="/NeFo-logo.png"
+            alt="NeFo"
             className="h-full w-full scale-[1.65] object-cover"
             onError={() => setLogoFailed(true)}
           />
@@ -189,7 +189,7 @@ export default function Navbar() {
 
               <div className="min-w-0 leading-none">
                 <p className="truncate text-2xl font-black tracking-tight text-[#073B35] transition-all group-hover:text-[#0B8F80] sm:text-xl">
-                  Nefo
+                  NeFo
                 </p>
 
                 <p className="mt-2 truncate text-[10px] font-black uppercase tracking-wide text-[#51615D]">

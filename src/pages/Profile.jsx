@@ -175,7 +175,7 @@ export default function Profile() {
       formData.full_name?.trim() ||
       user?.user_metadata?.full_name ||
       user?.email?.split("@")[0] ||
-      "Nefo User"
+      "NeFo User"
     );
   }, [formData.full_name, user]);
 
@@ -1023,7 +1023,7 @@ export default function Profile() {
                   </p>
 
                   <p className="mt-1 text-xs font-semibold text-[#6B6258]">
-                    Manage Nefo operations, accounting, and sellers.
+                    Manage NeFo operations, accounting, and sellers.
                   </p>
                 </div>
 

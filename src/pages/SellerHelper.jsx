@@ -692,7 +692,7 @@ export default function SellerHelper() {
     {
       role: "assistant",
       text:
-        "Hi! I’m Nefo AI Seller Assistant. I can check your live dishes, stock, orders, earnings, payout setup, kitchen visibility, and dashboard settings.",
+        "Hi! I’m NeFo AI Seller Assistant. I can check your live dishes, stock, orders, earnings, payout setup, kitchen visibility, and dashboard settings.",
     },
   ]);
 
@@ -1257,7 +1257,7 @@ export default function SellerHelper() {
         "",
         "Your payout details appear complete.",
         "",
-        "For a settlement problem, contact Nefo support with the affected order ID.",
+        "For a settlement problem, contact NeFo support with the affected order ID.",
       ].join("\n");
     }
 
@@ -1583,7 +1583,7 @@ export default function SellerHelper() {
         );
 
       const enrichedMessage = [
-        "Answer the seller's question using the live Nefo seller data below.",
+        "Answer the seller's question using the live NeFo seller data below.",
         "Treat this data as the current source of truth.",
         "Do not say that the menu is empty when total_dishes is greater than zero.",
         "Do not expose or invent private customer details.",
@@ -1604,7 +1604,7 @@ export default function SellerHelper() {
         error,
       } =
         await supabase.functions.invoke(
-          "nefo-ai-agent",
+          "NeFo-ai-agent",
           {
             body: {
               role: "seller",
@@ -1627,7 +1627,7 @@ export default function SellerHelper() {
       if (error) {
         let detailedMessage =
           error.message ||
-          "Nefo AI Seller Assistant is not available right now.";
+          "NeFo AI Seller Assistant is not available right now.";
 
         try {
           if (error.context) {
@@ -1666,7 +1666,7 @@ export default function SellerHelper() {
         const detailedMessage =
           data.details ||
           data.error ||
-          "Nefo AI returned an error.";
+          "NeFo AI returned an error.";
 
         setAiErrorMessage(
           String(
@@ -1700,7 +1700,7 @@ export default function SellerHelper() {
     } catch (error) {
       const detailedMessage =
         error?.message ||
-        "Could not connect to Nefo AI Seller Assistant.";
+        "Could not connect to NeFo AI Seller Assistant.";
 
       setAiErrorMessage(
         detailedMessage
@@ -1780,7 +1780,7 @@ export default function SellerHelper() {
 
           <div className="min-w-0 flex-1">
             <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
-              Nefo AI Seller
+              NeFo AI Seller
             </p>
 
             <h1 className="mt-1 text-3xl font-black leading-tight text-[#3F5128]">
@@ -1991,7 +1991,7 @@ export default function SellerHelper() {
 
               <div className="min-w-0">
                 <p className="text-xl font-black">
-                  Nefo AI Seller
+                  NeFo AI Seller
                 </p>
 
                 <p className="mt-0.5 text-xs font-semibold text-white/70">
@@ -2012,7 +2012,7 @@ export default function SellerHelper() {
             {aiErrorMessage ? (
               <div className="mb-3 rounded-2xl border border-red-200 bg-red-50 p-4">
                 <p className="text-sm font-black text-red-600">
-                  Nefo AI service issue
+                  NeFo AI service issue
                 </p>
 
                 <p className="mt-1 text-xs font-semibold text-red-500">

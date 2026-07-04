@@ -61,7 +61,7 @@ import {
 } from "./lib/supabaseClient";
 
 const RECOVERY_STORAGE_KEY =
-  "Nefo_password_recovery_url";
+  "NeFo_password_recovery_url";
 
 function LoadingScreen() {
   return (
@@ -150,9 +150,9 @@ function NativeDeepLinkHandler() {
 
         const supportedProtocol =
           parsedUrl.protocol ===
-            "com.nefo.app:" ||
+            "com.NeFo.app:" ||
           parsedUrl.protocol ===
-            "nefo:";
+            "NeFo:";
 
         const recoveryHost =
           parsedUrl.hostname ===
@@ -196,7 +196,7 @@ function NativeDeepLinkHandler() {
     ) {
       window.dispatchEvent(
         new CustomEvent(
-          "Nefo_password_recovery_link",
+          "NeFo_password_recovery_link",
           {
             detail: {
               url: rawUrl,

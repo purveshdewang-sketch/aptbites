@@ -17,7 +17,7 @@ import { Capacitor } from "@capacitor/core";
 import { useAuth } from "../context/AuthContext";
 
 const HISTORY_STORAGE_KEY =
-  "Nefo_internal_route_history";
+  "NeFo_internal_route_history";
 
 const MAX_HISTORY_LENGTH = 40;
 
@@ -665,7 +665,7 @@ export default function GlobalBackHandler() {
         listenerHandle = handle;
       } catch (error) {
         console.error(
-          "Nefo native back-button listener could not be registered:",
+          "NeFo native back-button listener could not be registered:",
           error
         );
       }
@@ -702,7 +702,7 @@ export default function GlobalBackHandler() {
             'a[aria-label="Go back"]',
             'button[aria-label="Back"]',
             'a[aria-label="Back"]',
-            '[data-nefo-back="true"]',
+            '[data-NeFo-back="true"]',
           ].join(", ")
         );
 
@@ -749,10 +749,10 @@ export default function GlobalBackHandler() {
   ]);
 
   useEffect(() => {
-    window.nefoGoBack = goBack;
+    window.NeFoGoBack = goBack;
 
     return () => {
-      delete window.nefoGoBack;
+      delete window.NeFoGoBack;
     };
   }, [goBack]);
 

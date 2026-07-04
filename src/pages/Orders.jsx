@@ -669,7 +669,7 @@ export default function Orders() {
       order.partner_name ||
       order.seller_name ||
       order.seller_kitchen_name ||
-      "Nefo Partner"
+      "NeFo Partner"
     );
   }
 

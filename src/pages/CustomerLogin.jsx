@@ -16,7 +16,7 @@ const INPUT =
   "w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-base font-semibold text-[#181411] outline-none placeholder:text-[#9A8E80] focus:border-[#CF743D] focus:bg-white";
 
 const NATIVE_RESET_REDIRECT_URL =
-  "com.nefo.app://reset-password";
+  "com.NeFo.app://reset-password";
 
 function getPasswordResetRedirectUrl() {
   if (Capacitor.isNativePlatform()) {
@@ -833,15 +833,15 @@ export default function CustomerLogin() {
           >
             <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#EADFCE] bg-white/90 shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]">
               <img
-                src="/Nefo-logo.png"
-                alt="Nefo"
+                src="/NeFo-logo.png"
+                alt="NeFo"
                 className="h-full w-full scale-[1.65] object-cover"
               />
             </div>
 
             <div className="min-w-0">
               <p className="text-xl font-black text-[#3F5128]">
-                Nefo
+                NeFo
               </p>
 
               <p className="text-[10px] font-black uppercase tracking-wide text-[#6B6258]">
@@ -882,7 +882,7 @@ export default function CustomerLogin() {
               <p className="mt-4 text-sm font-semibold leading-relaxed text-white/75">
                 Sign in to order
                 homemade food or manage
-                your Nefo kitchen panel.
+                your NeFo kitchen panel.
               </p>
 
               <div className="mt-5 grid grid-cols-2 gap-3">

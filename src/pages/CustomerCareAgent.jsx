@@ -56,7 +56,7 @@ const QUICK_ACTIONS = [
     icon: "👤",
     issueType: "account_help",
     aiPrompt:
-      "I need account help in Nefo. Please explain what I should do inside the app.",
+      "I need account help in NeFo. Please explain what I should do inside the app.",
   },
 ];
 
@@ -86,7 +86,7 @@ export default function CustomerCareAgent() {
     {
       sender: "agent",
       text:
-        "Hi 👋 I’m Nefo AI Care. I can check your orders, payment status, packing, refund questions, and support tickets. Ask me anything about your Nefo order.",
+        "Hi 👋 I’m NeFo AI Care. I can check your orders, payment status, packing, refund questions, and support tickets. Ask me anything about your NeFo order.",
     },
   ]);
 
@@ -236,9 +236,9 @@ export default function CustomerCareAgent() {
       .filter((message) => message.content?.trim());
   }
 
-  async function askNefoAi(customPrompt = "", customOrderId = null) {
+  async function askNeFoAi(customPrompt = "", customOrderId = null) {
     if (!user) {
-      alert("Please login before using Nefo AI.");
+      alert("Please login before using NeFo AI.");
       return;
     }
 
@@ -259,7 +259,7 @@ export default function CustomerCareAgent() {
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke("nefo-ai-agent", {
+      const { data, error } = await supabase.functions.invoke("NeFo-ai-agent", {
         body: {
           role: "customer",
           message: prompt,
@@ -275,7 +275,7 @@ export default function CustomerCareAgent() {
 
       if (error) {
         let detailedMessage =
-          error.message || "Nefo AI is not available right now. Please try again.";
+          error.message || "NeFo AI is not available right now. Please try again.";
 
         try {
           if (error.context) {
@@ -298,7 +298,7 @@ export default function CustomerCareAgent() {
 
       if (data?.error) {
         const detailedMessage =
-          data.details || data.error || "Nefo AI returned an error.";
+          data.details || data.error || "NeFo AI returned an error.";
 
         addMessage("agent", String(detailedMessage));
         setChatError(String(detailedMessage));
@@ -313,7 +313,7 @@ export default function CustomerCareAgent() {
       );
     } catch (error) {
       const detailedMessage =
-        error?.message || "Could not connect to Nefo AI. Please try again.";
+        error?.message || "Could not connect to NeFo AI. Please try again.";
 
       addMessage("agent", detailedMessage);
       setChatError(detailedMessage);
@@ -501,7 +501,7 @@ export default function CustomerCareAgent() {
       addMessage("agent", getAgentReplyForAction(action.key, selectedOrder));
     }
 
-    askNefoAi(action.aiPrompt);
+    askNeFoAi(action.aiPrompt);
   }
 
   async function createSupportTicket() {
@@ -567,7 +567,7 @@ export default function CustomerCareAgent() {
     addMessage("user", messageText.trim());
     addMessage(
       "agent",
-      `Ticket #${data.id} created. Nefo support will review it.`
+      `Ticket #${data.id} created. NeFo support will review it.`
     );
 
     setMessageText("");
@@ -612,7 +612,7 @@ export default function CustomerCareAgent() {
             </h1>
 
             <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
-              Sign in to attach orders, ask Nefo AI, and create support tickets.
+              Sign in to attach orders, ask NeFo AI, and create support tickets.
             </p>
 
             <Link
@@ -649,7 +649,7 @@ export default function CustomerCareAgent() {
 
           <div className="min-w-0 flex-1">
             <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
-              Nefo AI Care
+              NeFo AI Care
             </p>
 
             <h1 className="mt-1 text-3xl font-black leading-tight text-[#3F5128]">
@@ -690,7 +690,7 @@ export default function CustomerCareAgent() {
               type="button"
               onClick={() => {
                 setSelectedOrderId(String(latestActiveOrder.id));
-                askNefoAi(
+                askNeFoAi(
                   `Please explain the current status of Order #${latestActiveOrder.id}.`,
                   latestActiveOrder.id
                 );
@@ -864,7 +864,7 @@ export default function CustomerCareAgent() {
               </div>
 
               <div>
-                <p className="text-xl font-black">Nefo AI Care</p>
+                <p className="text-xl font-black">NeFo AI Care</p>
                 <p className="mt-0.5 text-xs font-semibold text-white/70">
                   Smart support with live order context
                 </p>
@@ -908,7 +908,7 @@ export default function CustomerCareAgent() {
             {chatError ? (
               <div className="mb-3 rounded-2xl border border-red-200 bg-red-50 p-4">
                 <p className="text-sm font-black text-red-600">
-                  Nefo AI could not reply.
+                  NeFo AI could not reply.
                 </p>
 
                 <p className="mt-1 text-xs font-semibold text-red-500">
@@ -969,7 +969,7 @@ export default function CustomerCareAgent() {
                   onKeyDown={(event) => {
                     if (event.key === "Enter" && !event.shiftKey && !aiThinking) {
                       event.preventDefault();
-                      askNefoAi();
+                      askNeFoAi();
                     }
                   }}
                   placeholder={
@@ -982,7 +982,7 @@ export default function CustomerCareAgent() {
 
                 <button
                   type="button"
-                  onClick={() => askNefoAi()}
+                  onClick={() => askNeFoAi()}
                   disabled={aiThinking || !messageText.trim()}
                   className="shrink-0 rounded-2xl border border-[#3F5128] bg-[#3F5128] px-5 font-black text-white active:scale-95 disabled:opacity-50"
                 >

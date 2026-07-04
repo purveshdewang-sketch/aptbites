@@ -468,7 +468,7 @@ export default function OwnerDashboard() {
     const link = document.createElement("a");
 
     link.href = url;
-    link.download = `Nefo-owner-report-${dateFilter}.csv`;
+    link.download = `NeFo-owner-report-${dateFilter}.csv`;
     link.click();
 
     URL.revokeObjectURL(url);
@@ -539,7 +539,7 @@ export default function OwnerDashboard() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs font-black uppercase tracking-wide text-[#F3C06E]">
-                Nefo AI Insights
+                NeFo AI Insights
               </p>
 
               <h2 className="mt-1 text-2xl font-black">

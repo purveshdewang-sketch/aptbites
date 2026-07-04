@@ -1421,7 +1421,7 @@ export default function OrderHistory() {
                       door/location is not
                       shown publicly.
                       Pickup coordination
-                      happens through Nefo
+                      happens through NeFo
                       after confirmation.
                     </p>
                   </div>

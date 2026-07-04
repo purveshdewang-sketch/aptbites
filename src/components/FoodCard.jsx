@@ -478,7 +478,7 @@ export default function Kitchens() {
 
         <section className="mt-5 rounded-[24px] border border-[#4D612F] bg-[#3F5128] p-5 text-white shadow-lg shadow-[#3F5128]/15">
           <p className="text-xs font-black uppercase tracking-wide text-[#F3C06E]">
-            Nefo kitchens
+            NeFo kitchens
           </p>
 
           <h2 className="mt-1 text-xl font-black">

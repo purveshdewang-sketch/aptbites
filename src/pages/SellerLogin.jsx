@@ -175,7 +175,7 @@ export default function SellerLogin() {
       return "Your seller application was rejected. Please open Seller Registration to review and re-apply.";
     }
 
-    return "This account is not approved as a seller. Please apply to sell on Nefo first.";
+    return "This account is not approved as a seller. Please apply to sell on NeFo first.";
   }
 
   function fillSellerForm(user, profile) {
@@ -308,7 +308,7 @@ export default function SellerLogin() {
     }
 
     localStorage.setItem(
-      `Nefo_seller_name_${user.id}`,
+      `NeFo_seller_name_${user.id}`,
       formData.kitchenName.trim()
     );
 
@@ -487,14 +487,14 @@ export default function SellerLogin() {
           <Link to="/" className="flex min-w-0 items-center gap-3">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#EADFCE] bg-white/90 shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]">
               <img
-                src="/Nefo-logo.png"
-                alt="Nefo"
+                src="/NeFo-logo.png"
+                alt="NeFo"
                 className="h-full w-full scale-[1.65] object-cover"
               />
             </div>
 
             <div className="min-w-0">
-              <p className="text-xl font-black text-[#3F5128]">Nefo</p>
+              <p className="text-xl font-black text-[#3F5128]">NeFo</p>
               <p className="text-[10px] font-black uppercase tracking-wide text-[#6B6258]">
                 Seller Login
               </p>

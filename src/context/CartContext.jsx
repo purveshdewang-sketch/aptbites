@@ -7,7 +7,7 @@ import {
 } from "react";
 
 const CartContext = createContext(null);
-const CART_STORAGE_KEY = "Nefo_cart_items";
+const CART_STORAGE_KEY = "NeFo_cart_items";
 
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState(() => {

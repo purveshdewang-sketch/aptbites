@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 
-const SUPPORT_EMAIL = "nefosupport@gmail.com";
+const SUPPORT_EMAIL = "NeFosupport@gmail.com";
 
 const CARD =
   "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
@@ -59,7 +59,7 @@ export default function CustomerCare() {
 
           <div className="min-w-0 flex-1">
             <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
-              Nefo Support
+              NeFo Support
             </p>
 
             <h1 className="mt-1 text-3xl font-black leading-tight text-[#3F5128]">
@@ -240,11 +240,11 @@ export default function CustomerCare() {
           </p>
 
           <h2 className="mt-1 text-2xl font-black leading-tight text-[#181411]">
-            Nefo connects customers with community kitchens
+            NeFo connects customers with community kitchens
           </h2>
 
           <p className="mt-4 text-sm font-semibold leading-relaxed text-[#6B6258]">
-            Nefo connects neighbourhood customers with home food sellers. Food
+            NeFo connects neighbourhood customers with home food sellers. Food
             is prepared by individual kitchens. Customers should review dish
             details, ingredients, freshness, and hygiene-related information
             before ordering.
@@ -257,7 +257,7 @@ export default function CustomerCare() {
 
             <p className="mt-1 text-sm font-semibold leading-relaxed text-[#6B6258]">
               Exact kitchen door/location should not be shown publicly. Pickup
-              and support coordination should happen through Nefo.
+              and support coordination should happen through NeFo.
             </p>
           </div>
         </section>

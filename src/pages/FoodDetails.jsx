@@ -16,7 +16,7 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 
 const FAVORITES_STORAGE_KEY =
-  "Nefo_favorite_foods";
+  "NeFo_favorite_foods";
 
 const KITCHEN_MENU_CATEGORIES = [
   "Meals",
@@ -58,7 +58,7 @@ function saveFavorites(favorites) {
 
   window.dispatchEvent(
     new CustomEvent(
-      "Nefo_favorites_updated"
+      "NeFo_favorites_updated"
     )
   );
 }
@@ -372,7 +372,7 @@ export default function FoodDetails() {
     }
 
     window.addEventListener(
-      "Nefo_favorites_updated",
+      "NeFo_favorites_updated",
       syncFavoriteState
     );
 
@@ -383,7 +383,7 @@ export default function FoodDetails() {
 
     return () => {
       window.removeEventListener(
-        "Nefo_favorites_updated",
+        "NeFo_favorites_updated",
         syncFavoriteState
       );
 

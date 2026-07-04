@@ -112,7 +112,7 @@ function ShimmerBlock({ className = "" }) {
         before:inset-y-0
         before:-left-1/2
         before:w-1/2
-        before:animate-[nefoShimmer_1.45s_ease-in-out_infinite]
+        before:animate-[NeFoShimmer_1.45s_ease-in-out_infinite]
         before:bg-gradient-to-r
         before:from-transparent
         before:via-white/70

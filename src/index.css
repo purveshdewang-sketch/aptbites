@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Nefo global theme — Harvest Olive */
+/* NeFo global theme — Harvest Olive */
 :root {
   --qb-bg: #fff8ec;
   --qb-card: #ffffff;
@@ -147,7 +147,7 @@ a:focus-visible {
   -webkit-line-clamp: 3;
 }
 
-/* Fast global overrides for old hard-coded Nefo colors */
+/* Fast global overrides for old hard-coded NeFo colors */
 .bg-\[\#FFFFF2\],
 .bg-\[\#fffff2\] {
   background-color: var(--qb-bg) !important;
@@ -292,7 +292,7 @@ a:focus-visible {
   }
 }
 
-@keyframes nefoShimmer {
+@keyframes NeFoShimmer {
   0% {
     transform: translateX(0);
   }
