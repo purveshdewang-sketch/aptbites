@@ -849,13 +849,6 @@ export default function CustomerLogin() {
               </p>
             </div>
           </Link>
-
-          <Link
-            to="/"
-            className="shrink-0 rounded-full border border-[#D8C9B3] bg-white px-4 py-2 text-xs font-black text-[#3F5128] active:scale-95"
-          >
-            Home
-          </Link>
         </header>
 
         <section
