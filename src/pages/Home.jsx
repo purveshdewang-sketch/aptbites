@@ -1654,12 +1654,6 @@ export default function Home() {
                Search
               </p>
 
-              <h2 className="mt-1 text-xl font-black text-[#3F5128]">
-                {hasActiveFilters
-                  ? "Search Results"
-                  : "All Food Near You"}
-              </h2>
-
               {!loadingFoods ? (
                 <p className="mt-1 text-xs font-semibold text-[#6B6258]">
                   {filteredFoods.length}{" "}

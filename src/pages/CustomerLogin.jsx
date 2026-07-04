@@ -16,7 +16,7 @@ const INPUT =
   "w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-base font-semibold text-[#181411] outline-none placeholder:text-[#9A8E80] focus:border-[#CF743D] focus:bg-white";
 
 const NATIVE_RESET_REDIRECT_URL =
-  "com.NeFo.app://reset-password";
+  "com.nefo.app://reset-password";
 
 function getPasswordResetRedirectUrl() {
   if (Capacitor.isNativePlatform()) {
@@ -54,19 +54,15 @@ function normalizePhone(value) {
   return digits;
 }
 
-async function getFunctionErrorMessage(
-  error
-) {
+async function getFunctionErrorMessage(error) {
   try {
     const response = error?.context;
 
     if (
       response &&
-      typeof response.json ===
-        "function"
+      typeof response.json === "function"
     ) {
-      const body =
-        await response.json();
+      const body = await response.json();
 
       return (
         body?.error ||
@@ -186,9 +182,7 @@ export default function CustomerLogin() {
       .join(" ");
   }
 
-  function setLoginError(
-    errorMessage
-  ) {
+  function setLoginError(errorMessage) {
     const cleanMessage = String(
       errorMessage || ""
     ).toLowerCase();
@@ -222,15 +216,9 @@ export default function CustomerLogin() {
     }
 
     if (
-      cleanMessage.includes(
-        "email"
-      ) ||
-      cleanMessage.includes(
-        "mobile"
-      ) ||
-      cleanMessage.includes(
-        "phone"
-      )
+      cleanMessage.includes("email") ||
+      cleanMessage.includes("mobile") ||
+      cleanMessage.includes("phone")
     ) {
       setErrors(
         (currentErrors) => ({
@@ -263,9 +251,7 @@ export default function CustomerLogin() {
       general: "",
     };
 
-    if (
-      !formData.fullName.trim()
-    ) {
+    if (!formData.fullName.trim()) {
       nextErrors.fullName =
         "Full name is required.";
     }
@@ -306,9 +292,7 @@ export default function CustomerLogin() {
         "Please enter a valid email address.";
     }
 
-    if (
-      !formData.password.trim()
-    ) {
+    if (!formData.password.trim()) {
       nextErrors.password =
         "Password is required.";
     }
@@ -349,9 +333,7 @@ export default function CustomerLogin() {
         "Enter a valid email address or 10-digit mobile number.";
     }
 
-    if (
-      !formData.password.trim()
-    ) {
+    if (!formData.password.trim()) {
       nextErrors.password =
         "Password is required.";
     }
@@ -590,9 +572,7 @@ export default function CustomerLogin() {
     );
   }
 
-  async function handleAuth(
-    event
-  ) {
+  async function handleAuth(event) {
     event.preventDefault();
 
     setLoading(true);
@@ -826,14 +806,14 @@ export default function CustomerLogin() {
   return (
     <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-28 text-[#181411]">
       <div className="mx-auto max-w-md">
-        <header className="flex items-center justify-between gap-3">
+        <header className="flex items-center gap-3">
           <Link
             to="/"
             className="flex min-w-0 items-center gap-3"
           >
             <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#EADFCE] bg-white/90 shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]">
               <img
-                src="/NeFo-logo.png"
+                src="/Nefo-logo.png"
                 alt="NeFo"
                 className="h-full w-full scale-[1.65] object-cover"
               />
@@ -845,7 +825,7 @@ export default function CustomerLogin() {
               </p>
 
               <p className="text-[10px] font-black uppercase tracking-wide text-[#6B6258]">
-                Neighbourhood food
+                NEIGHBOUR FOOD
               </p>
             </div>
           </Link>
