@@ -995,17 +995,6 @@ function AppRoutes() {
       <Route
         path="/cart"
         element={
-         eller-applications"
-        element={
-          <AdminOnlyRoute>
-            <OwnerSellerApplications />
-          </AdminOnlyRoute>
-        }
-      />
-
-      <Route
-        path="/cart"
-        element={
           <ProtectedRoute>
             <Cart />
           </ProtectedRoute>
