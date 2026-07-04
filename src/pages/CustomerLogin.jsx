@@ -5,8 +5,8 @@ import {
 } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
 import { supabase } from "../lib/supabaseClient";
+import nefoLogo from "../assets/nefo-logo.png";
 
-const LOGO_SRC = "/nefo-logo.png";
 
 const CARD =
   "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
@@ -816,10 +816,10 @@ export default function CustomerLogin() {
           >
             <div className="flex h-[66px] w-[66px] shrink-0 items-center justify-center overflow-hidden rounded-[22px] border border-[#D8C9B3] bg-[#FFF8EC] shadow-[inset_2px_2px_6px_rgba(63,81,40,0.04),inset_-2px_-2px_6px_rgba(255,255,255,0.95)]">
               <img
-                src={LOGO_SRC}
-                alt="NeFo logo"
-                className="h-full w-full scale-[1.12] object-cover object-center"
-              />
+              src={nefoLogo}
+              alt="NeFo logo"
+              className="h-full w-full object-contain p-1.5"
+            />
             </div>
 
             <div className="min-w-0 flex-1">
