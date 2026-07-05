@@ -16,38 +16,83 @@ const QUICK_ACTIONS = [
   {
     key: "payment_issue",
     label: "Payment issue",
-    short: "UPI / ref",
+    short: "UPI / reference",
     icon: "💳",
     issueType: "payment_issue",
     aiPrompt:
-      "I have a payment issue. Please check my order payment status and tell me what to do next.",
+      "I have a payment issue. Check the selected order payment status and tell me the correct customer-side next step.",
   },
   {
     key: "refund_request",
-    label: "Refund request",
+    label: "Refund help",
     short: "Cancel / refund",
     icon: "↩️",
     issueType: "refund_request",
     aiPrompt:
-      "I want help with refund eligibility. Please check my order details and explain the next step.",
+      "I need customer-side help with cancellation or refund eligibility for the selected order.",
   },
   {
-    key: "missing_item",
+    key: "food_issue",
     label: "Food issue",
     short: "Missing / wrong",
     icon: "🍱",
     issueType: "food_issue",
     aiPrompt:
-      "I received a wrong or missing food item. Please guide me based on my order.",
+      "I received a missing, wrong, damaged, or poor-quality food item. Guide me using my selected order.",
   },
   {
-    key: "packing_issue",
-    label: "Packing issue",
-    short: "Container / pack",
-    icon: "🥡",
-    issueType: "packing_issue",
+    key: "cart_help",
+    label: "Cart help",
+    short: "Qty / kitchen",
+    icon: "🛒",
+    issueType: "cart_help",
     aiPrompt:
-      "I have a packing issue. Please check whether packing was selected for my order and guide me.",
+      "Help me solve a NeFo cart problem such as quantity, sold-out food, or mixed kitchens.",
+  },
+  {
+    key: "checkout_help",
+    label: "Checkout help",
+    short: "Address / proof",
+    icon: "✅",
+    issueType: "checkout_help",
+    aiPrompt:
+      "Help me solve a customer checkout problem involving address, packing, UPI proof, or order placement.",
+  },
+  {
+    key: "schedule_help",
+    label: "Schedule order",
+    short: "Date / time",
+    icon: "🕒",
+    issueType: "schedule_help",
+    aiPrompt:
+      "Explain how I can schedule a NeFo order and solve schedule date or time problems.",
+  },
+  {
+    key: "delivery_pickup",
+    label: "Delivery / pickup",
+    short: "Choose service",
+    icon: "🛍️",
+    issueType: "delivery_pickup",
+    aiPrompt:
+      "Explain the customer-side difference between doorstep delivery and self pickup for my order.",
+  },
+  {
+    key: "order_chat",
+    label: "Order chat",
+    short: "Contact kitchen",
+    icon: "💬",
+    issueType: "order_chat",
+    aiPrompt:
+      "Show me how to contact the kitchen through my order chat as a customer.",
+  },
+  {
+    key: "rating_help",
+    label: "Rate food",
+    short: "After delivery",
+    icon: "⭐",
+    issueType: "rating_help",
+    aiPrompt:
+      "Explain how customer dish ratings work and when I can rate my food.",
   },
   {
     key: "account_help",
@@ -56,7 +101,16 @@ const QUICK_ACTIONS = [
     icon: "👤",
     issueType: "account_help",
     aiPrompt:
-      "I need account help in NeFo. Please explain what I should do inside the app.",
+      "I need customer account help with login, password reset, phone number, address, or profile.",
+  },
+  {
+    key: "app_help",
+    label: "App problem",
+    short: "Screen / navigation",
+    icon: "⚙️",
+    issueType: "app_help",
+    aiPrompt:
+      "Help me solve a customer-side NeFo app navigation or screen problem.",
   },
 ];
 
@@ -68,6 +122,8 @@ const SOFT_CARD =
 
 const INPUT =
   "w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-sm font-semibold text-[#181411] outline-none placeholder:text-[#9A8E80] focus:border-[#CF743D] focus:bg-white";
+
+const CUSTOMER_AI_FUNCTION = "nefo-ai-agent";
 
 export default function CustomerCareAgent() {
   const { user } = useAuth();
@@ -86,7 +142,7 @@ export default function CustomerCareAgent() {
     {
       sender: "agent",
       text:
-        "Hi 👋 I’m NeFo AI Care. I can check your orders, payment status, packing, refund questions, and support tickets. Ask me anything about your NeFo order.",
+        "Hi 👋 I’m NeFo Customer Assistant. I help only with customer-side NeFo questions: food discovery, cart, checkout, payment, delivery or pickup, scheduled orders, tracking, order chat, ratings, profile, and support tickets.",
     },
   ]);
 
@@ -156,7 +212,13 @@ export default function CustomerCareAgent() {
   const latestActiveOrder = useMemo(() => {
     return orders.find((order) => {
       const status = normalizeStatus(order.status);
-      return status !== "completed" && status !== "cancelled";
+      const response = normalizeSellerResponse(order.seller_response);
+
+      return (
+        status !== "completed" &&
+        status !== "cancelled" &&
+        response !== "rejected"
+      );
     });
   }, [orders]);
 
@@ -236,6 +298,200 @@ export default function CustomerCareAgent() {
       .filter((message) => message.content?.trim());
   }
 
+
+  function isSellerOrOwnerQuestion(question) {
+    const value = String(question || "").toLowerCase();
+
+    return (
+      value.includes("seller dashboard") ||
+      value.includes("add dish") ||
+      value.includes("edit dish") ||
+      value.includes("seller earning") ||
+      value.includes("seller payout") ||
+      value.includes("seller bank") ||
+      value.includes("seller approval") ||
+      value.includes("owner dashboard") ||
+      value.includes("admin") ||
+      value.includes("platform commission") ||
+      value.includes("mark sold out") ||
+      value.includes("restock dish")
+    );
+  }
+
+  function getCustomerFallbackAnswer(question, order) {
+    const value = String(question || "").toLowerCase();
+
+    if (isSellerOrOwnerQuestion(value)) {
+      return [
+        "Customer Assistant only",
+        "",
+        "This assistant handles customer-side NeFo questions only.",
+        "Seller, payout, inventory, owner, and admin controls are not available here.",
+        "Approved sellers must use Seller Help inside their seller account.",
+      ].join("\n");
+    }
+
+    if (
+      value.includes("track") ||
+      value.includes("status") ||
+      value.includes("where is my order")
+    ) {
+      if (!order) {
+        return [
+          "Order tracking",
+          "",
+          "I could not find a selected order.",
+          "Open Orders or select a recent order here, then ask again.",
+        ].join("\n");
+      }
+
+      return [
+        `Order #${order.id}`,
+        "",
+        `Status: ${getStatusLabel(order)}`,
+        `Delivery mode: ${order.delivery_type || "Delivery"}`,
+        `Payment status: ${order.payment_status || "Not available"}`,
+        isScheduledOrder(order)
+          ? `Scheduled for: ${formatDateTime(order.scheduled_for)}`
+          : "Timing: Prepare now",
+      ].join("\n");
+    }
+
+    if (
+      value.includes("cart") ||
+      value.includes("mixed kitchen") ||
+      value.includes("quantity") ||
+      value.includes("sold out")
+    ) {
+      return [
+        "Cart help",
+        "",
+        "1. NeFo checkout accepts food from one kitchen at a time.",
+        "2. Remove dishes from the other kitchen if a mixed-kitchen warning appears.",
+        "3. Reduce quantity when live stock is lower than the cart quantity.",
+        "4. A sold-out dish must be removed or replaced before checkout.",
+        "5. Open Cart to edit quantities or delete an item.",
+      ].join("\n");
+    }
+
+    if (
+      value.includes("checkout") ||
+      value.includes("place order") ||
+      value.includes("address") ||
+      value.includes("packing")
+    ) {
+      return [
+        "Checkout check",
+        "",
+        "1. Confirm your name, saved phone number, and complete address.",
+        "2. Choose delivery or self pickup only if the kitchen offers it.",
+        "3. Choose whether packing is required.",
+        "4. For UPI, upload a JPG, PNG, or WEBP screenshot below 5 MB or enter the transaction reference.",
+        "5. Fix any red message shown above the relevant checkout field.",
+      ].join("\n");
+    }
+
+    if (
+      value.includes("schedule") ||
+      value.includes("later") ||
+      value.includes("date") ||
+      value.includes("time slot")
+    ) {
+      return [
+        "Scheduled order",
+        "",
+        "1. Choose Schedule in Checkout when the kitchen allows scheduled orders.",
+        "2. Select a date from the in-app date strip.",
+        "3. Open the in-app time dropdown and choose an available slot.",
+        "4. Today’s slots require at least 30 minutes’ notice.",
+        "5. If scheduling is unavailable, place the order for preparation now.",
+      ].join("\n");
+    }
+
+    if (
+      value.includes("payment") ||
+      value.includes("upi") ||
+      value.includes("reference") ||
+      value.includes("money deducted")
+    ) {
+      return [
+        "Payment help",
+        "",
+        order
+          ? `Selected order payment status: ${order.payment_status || "Not available"}`
+          : "Select the affected order so its payment status can be checked.",
+        "A submitted screenshot or transaction reference is not automatic payment verification.",
+        "If money was deducted but the order is unclear, keep the UPI reference and create a Payment Issue ticket.",
+      ].join("\n");
+    }
+
+    if (
+      value.includes("refund") ||
+      value.includes("cancel")
+    ) {
+      return [
+        "Cancellation or refund",
+        "",
+        "NeFo Customer Assistant cannot approve a cancellation or refund.",
+        "Select the affected order, choose Refund Help, describe the reason, and create a support ticket.",
+        "Keep the payment reference and relevant screenshots available.",
+      ].join("\n");
+    }
+
+    if (
+      value.includes("chat") ||
+      value.includes("contact kitchen") ||
+      value.includes("message")
+    ) {
+      return [
+        "Order chat",
+        "",
+        "1. Open Orders.",
+        "2. Open the relevant order.",
+        "3. Tap the order chat option.",
+        "4. Use chat for order changes, pickup coordination, or delivery details.",
+      ].join("\n");
+    }
+
+    if (
+      value.includes("rate") ||
+      value.includes("rating") ||
+      value.includes("review")
+    ) {
+      return [
+        "Food rating",
+        "",
+        "Dish ratings are available after a completed order.",
+        "Open Order History, select the completed order, and use the available rating option for the dish.",
+        "Food Details shows the live average rating and rating count.",
+      ].join("\n");
+    }
+
+    if (
+      value.includes("login") ||
+      value.includes("password") ||
+      value.includes("profile") ||
+      value.includes("phone") ||
+      value.includes("otp")
+    ) {
+      return [
+        "Customer account help",
+        "",
+        "1. Use Customer Login for sign-in.",
+        "2. Use Reset Password when the password is forgotten.",
+        "3. Update customer name, address, and profile photo from Profile.",
+        "4. Checkout uses the phone number saved in the NeFo profile.",
+      ].join("\n");
+    }
+
+    return [
+      "Customer help",
+      "",
+      "I can help with food discovery, cart, checkout, UPI payment, delivery or pickup, scheduled orders, tracking, order chat, ratings, customer profile, and support tickets.",
+      "Select an order when the question concerns a specific purchase.",
+    ].join("\n");
+  }
+
   async function askNeFoAi(customPrompt = "", customOrderId = null) {
     if (!user) {
       alert("Please login before using NeFo AI.");
@@ -243,6 +499,12 @@ export default function CustomerCareAgent() {
     }
 
     const prompt = String(customPrompt || messageText || "").trim();
+
+    const questionOrder = customOrderId
+      ? orders.find((order) => String(order.id) === String(customOrderId)) || null
+      : selectedOrder;
+
+    const localFallback = getCustomerFallbackAnswer(prompt, questionOrder);
 
     if (!prompt) {
       setChatError("Please type your question first.");
@@ -259,7 +521,7 @@ export default function CustomerCareAgent() {
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke("NeFo-ai-agent", {
+      const { data, error } = await supabase.functions.invoke(CUSTOMER_AI_FUNCTION, {
         body: {
           role: "customer",
           message: prompt,
@@ -290,7 +552,12 @@ export default function CustomerCareAgent() {
           // Keep default error message.
         }
 
-        addMessage("agent", detailedMessage);
+        addMessage(
+          "agent",
+          `${localFallback}
+
+AI service note: ${detailedMessage}`
+        );
         setChatError(detailedMessage);
         setAiThinking(false);
         return;
@@ -300,7 +567,12 @@ export default function CustomerCareAgent() {
         const detailedMessage =
           data.details || data.error || "NeFo AI returned an error.";
 
-        addMessage("agent", String(detailedMessage));
+        addMessage(
+          "agent",
+          `${localFallback}
+
+AI service note: ${String(detailedMessage)}`
+        );
         setChatError(String(detailedMessage));
         setAiThinking(false);
         return;
@@ -309,13 +581,18 @@ export default function CustomerCareAgent() {
       addMessage(
         "agent",
         data?.reply ||
-          "I could not generate a clear answer. Please ask again with more details."
+          localFallback
       );
     } catch (error) {
       const detailedMessage =
         error?.message || "Could not connect to NeFo AI. Please try again.";
 
-      addMessage("agent", detailedMessage);
+      addMessage(
+        "agent",
+        `${localFallback}
+
+AI service note: ${detailedMessage}`
+      );
       setChatError(detailedMessage);
     }
 
@@ -388,12 +665,13 @@ export default function CustomerCareAgent() {
 
     if (dbStatus === "completed") return "completed";
     if (order.ready_for_pickup) return "ready_for_pickup";
+    if (sellerResponse === "pending") return "pending";
 
-    const createdAt = new Date(order.created_at || Date.now()).getTime();
-    const minutesPassed = Math.floor((Date.now() - createdAt) / 60000);
-
-    if (minutesPassed >= 20) return "packing";
-    if (minutesPassed >= 10) return "cooking";
+    if (dbStatus === "cooking") return "cooking";
+    if (dbStatus === "packing") return "packing";
+    if (dbStatus === "accepted" || sellerResponse === "accepted") {
+      return "accepted";
+    }
 
     return "confirmed";
   }
@@ -401,15 +679,18 @@ export default function CustomerCareAgent() {
   function getStatusLabel(order) {
     const status = getAutoStatus(order);
 
+    if (status === "pending") return "Awaiting Kitchen";
     if (status === "confirmed") {
       return isScheduledOrder(order) ? "Scheduled Order" : "Order Confirmed";
     }
 
+    if (status === "accepted") return "Preparing";
     if (status === "cooking") return "Cooking";
     if (status === "packing") return "Almost Ready";
     if (status === "ready_for_pickup") return "Ready for Pickup";
-    if (status === "completed")
+    if (status === "completed") {
       return isSelfPickup(order) ? "Picked Up" : "Delivered";
+    }
     if (status === "cancelled") return "Cancelled";
 
     return "Order Confirmed";
@@ -419,6 +700,9 @@ export default function CustomerCareAgent() {
     const status = getAutoStatus(order);
 
     if (status === "cancelled") return "border-red-200 bg-red-50 text-red-600";
+    if (status === "pending") {
+      return "border-yellow-200 bg-yellow-50 text-yellow-700";
+    }
     if (status === "completed")
       return "border-green-200 bg-green-50 text-green-700";
     if (status === "ready_for_pickup") {
@@ -485,7 +769,7 @@ export default function CustomerCareAgent() {
     }
 
     if (actionKey === "account_help") {
-      return "Tell me the account issue clearly: login problem, wrong phone number, profile update, password reset, or seller account issue.";
+      return "Tell me the customer account issue clearly: login problem, wrong phone number, profile update, password reset, or saved address issue.";
     }
 
     return "Describe your issue and I will create a support ticket.";
@@ -598,6 +882,7 @@ export default function CustomerCareAgent() {
             onClick={() => navigate(-1)}
             className="flex h-10 w-10 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
             aria-label="Go back"
+            data-nefo-back="true"
           >
             <BackIcon />
           </button>
@@ -643,23 +928,24 @@ export default function CustomerCareAgent() {
             onClick={() => navigate(-1)}
             className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
             aria-label="Go back"
+            data-nefo-back="true"
           >
             <BackIcon />
           </button>
 
           <div className="min-w-0 flex-1">
             <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
-              NeFo AI Care
+              NeFo Customer AI
             </p>
 
             <h1 className="mt-1 text-3xl font-black leading-tight text-[#3F5128]">
-              Ask anything
-              <span className="block text-[#181411]">about your order.</span>
+              Customer help
+              <span className="block text-[#181411]">for the entire app.</span>
             </h1>
 
             <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
-              AI can check your order context, explain payment status, and help
-              you create a support ticket.
+              Customer-only help for food discovery, cart, checkout, payment,
+              orders, delivery, pickup, ratings, profile, and support tickets.
             </p>
           </div>
         </header>
@@ -711,7 +997,7 @@ export default function CustomerCareAgent() {
               </p>
 
               <h2 className="mt-1 text-2xl font-black text-[#181411]">
-                Choose issue
+                Choose customer topic
               </h2>
             </div>
 
@@ -761,7 +1047,7 @@ export default function CustomerCareAgent() {
           </p>
 
           <h2 className="mt-1 text-2xl font-black text-[#181411]">
-            Attach order
+            Attach order if relevant
           </h2>
 
           {orderError ? (
@@ -974,8 +1260,8 @@ export default function CustomerCareAgent() {
                   }}
                   placeholder={
                     selectedIssueType
-                      ? "Ask about payment, refund, food issue..."
-                      : "Ask anything about your order..."
+                      ? "Ask about checkout, payment, order, profile..."
+                      : "Ask any customer-side NeFo question..."
                   }
                   className={INPUT}
                 />
