@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "977131737153",
+    "project_id": "nefo-ca055",
+    "storage_bucket": "nefo-ca055.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:977131737153:android:321887d30fc0b6950876c0",
+        "android_client_info": {
+          "package_name": "com.nefo.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMs9brXLzlVnPAR7Pt4Gr7iDCzmAzbq3g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
