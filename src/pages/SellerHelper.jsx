@@ -60,6 +60,30 @@ const QUICK_ACTIONS = [
     prompt:
       "I am facing a problem in seller dashboard",
   },
+  {
+    label: "Order help",
+    icon: "🛎️",
+    prompt:
+      "How do I manage my active orders?",
+  },
+  {
+    label: "Customer chats",
+    icon: "💬",
+    prompt:
+      "How do I find and reply to customer messages?",
+  },
+  {
+    label: "Scheduled orders",
+    icon: "🕒",
+    prompt:
+      "How do scheduled orders work for my kitchen?",
+  },
+  {
+    label: "Profile photo",
+    icon: "👤",
+    prompt:
+      "Why is my seller profile photo not showing?",
+  },
 ];
 
 const CARD =
@@ -69,8 +93,10 @@ const INPUT =
   "w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-sm font-semibold text-[#181411] outline-none placeholder:text-[#9A8E80] focus:border-[#CF743D] focus:bg-white";
 
 const LOW_STOCK_LIMIT = 3;
+const UNLIMITED_STOCK = 999999;
 const MAX_AI_MENU_ITEMS = 60;
 const MAX_AI_RECENT_ORDERS = 25;
+const SELLER_AI_FUNCTION = "nefo-ai-agent";
 
 function getOrderItems(order) {
   if (Array.isArray(order?.items)) {
@@ -109,11 +135,19 @@ function buildSellerStats(sellerData) {
 
   const completedOrders =
     orders.filter((order) => {
-      return (
+      const status = String(
+        order.status || ""
+      ).toLowerCase();
+
+      const sellerResponse =
         String(
-          order.status || ""
-        ).toLowerCase() ===
-        "completed"
+          order.seller_response ||
+            ""
+        ).toLowerCase();
+
+      return (
+        status === "completed" &&
+        sellerResponse !== "rejected"
       );
     });
 
@@ -211,8 +245,9 @@ function buildSellerStats(sellerData) {
       (sum, order) =>
         sum +
         Number(
-          order.subtotal_amount ||
-            order.seller_amount ||
+          order.seller_amount ||
+            order.subtotal_amount ||
+            order.total_amount ||
             0
         ),
       0
@@ -223,8 +258,9 @@ function buildSellerStats(sellerData) {
       (sum, order) =>
         sum +
         Number(
-          order.subtotal_amount ||
-            order.seller_amount ||
+          order.seller_amount ||
+            order.subtotal_amount ||
+            order.total_amount ||
             0
         ),
       0
@@ -425,7 +461,11 @@ function buildSafeSellerContext(
         status:
           Number(
             food.stock || 0
-          ) <= 0
+          ) >= UNLIMITED_STOCK
+            ? "unlimited"
+            : Number(
+                food.stock || 0
+              ) <= 0
             ? "sold_out"
             : Number(
                 food.stock || 0
@@ -653,6 +693,44 @@ function detectSettingsIssue(
     question.includes("packing") ||
     question.includes("online") ||
     question.includes("offline")
+  );
+}
+
+function detectOrderManagementIssue(
+  question
+) {
+  return (
+    question.includes("accept order") ||
+    question.includes("reject order") ||
+    question.includes("complete order") ||
+    question.includes("active order") ||
+    question.includes("manage order") ||
+    question.includes("ready for pickup") ||
+    question.includes("preparing")
+  );
+}
+
+function detectChatIssue(
+  question
+) {
+  return (
+    question.includes("customer chat") ||
+    question.includes("customer message") ||
+    question.includes("reply customer") ||
+    question.includes("chat tab") ||
+    question.includes("message customer")
+  );
+}
+
+function detectProfileIssue(
+  question
+) {
+  return (
+    question.includes("profile photo") ||
+    question.includes("profile picture") ||
+    question.includes("avatar") ||
+    question.includes("kitchen name") ||
+    question.includes("seller profile")
   );
 }
 
@@ -1465,6 +1543,53 @@ export default function SellerHelper() {
     }
 
     if (
+      detectOrderManagementIssue(
+        question
+      )
+    ) {
+      return [
+        "Order management",
+        "",
+        "1. Open Seller Dashboard → Orders.",
+        "2. Tap Accept to confirm a new order.",
+        "3. Use Chat with customer for changes or delivery details.",
+        "4. For pickup orders, tap Mark Ready for Pickup when prepared.",
+        "5. Tap Complete Order only after delivery or collection.",
+        "6. Use Reject only when the order cannot be fulfilled.",
+      ].join("\n");
+    }
+
+    if (
+      detectChatIssue(
+        question
+      )
+    ) {
+      return [
+        "Customer chat",
+        "",
+        "1. Open Seller Dashboard → Chats.",
+        "2. Select the customer conversation linked to the order.",
+        "3. You can also open Orders and tap Chat with customer.",
+        "4. Chats appear after a customer sends an order message.",
+      ].join("\n");
+    }
+
+    if (
+      detectProfileIssue(
+        question
+      )
+    ) {
+      return [
+        "Seller profile",
+        "",
+        "1. Tap the circular profile button at the top-right of Seller Dashboard.",
+        "2. Update the kitchen name, photo, or payout details in Profile.",
+        "3. Save the changes and reopen Seller Dashboard.",
+        "4. A missing photo usually means profiles.avatar_url was not saved or the image URL is not public.",
+      ].join("\n");
+    }
+
+    if (
       detectDashboardIssue(
         question
       )
@@ -1568,58 +1693,30 @@ export default function SellerHelper() {
           freshStats
         );
 
-      if (directAnswer) {
-        addMessage(
-          "assistant",
-          directAnswer
-        );
-
-        return;
-      }
-
       const safeSellerContext =
         buildSafeSellerContext(
           freshStats
         );
-
-      const enrichedMessage = [
-        "Answer the seller's question using the live NeFo seller data below.",
-        "Treat this data as the current source of truth.",
-        "Do not say that the menu is empty when total_dishes is greater than zero.",
-        "Do not expose or invent private customer details.",
-        "Use short headings and practical numbered steps.",
-        "",
-        `Seller question: ${userText}`,
-        "",
-        "LIVE SELLER CONTEXT:",
-        JSON.stringify(
-          safeSellerContext,
-          null,
-          2
-        ),
-      ].join("\n");
 
       const {
         data,
         error,
       } =
         await supabase.functions.invoke(
-          "NeFo-ai-agent",
+          SELLER_AI_FUNCTION,
           {
             body: {
               role: "seller",
-
-              message:
-                enrichedMessage,
-
-              user_message:
-                userText,
-
-              seller_context:
-                safeSellerContext,
-
+              message: userText,
               history:
                 getAiHistory(),
+
+              // Safe optional context for forward compatibility.
+              // The server agent reloads authoritative Supabase data itself.
+              seller_context:
+                safeSellerContext,
+              local_diagnosis:
+                directAnswer || null,
             },
           }
         );
@@ -1651,9 +1748,10 @@ export default function SellerHelper() {
         addMessage(
           "assistant",
           [
-            getGeneralFallback(
-              freshStats
-            ),
+            directAnswer ||
+              getGeneralFallback(
+                freshStats
+              ),
             "",
             `AI service note: ${detailedMessage}`,
           ].join("\n")
@@ -1677,9 +1775,10 @@ export default function SellerHelper() {
         addMessage(
           "assistant",
           [
-            getGeneralFallback(
-              freshStats
-            ),
+            directAnswer ||
+              getGeneralFallback(
+                freshStats
+              ),
             "",
             `AI service note: ${String(
               detailedMessage
@@ -1730,6 +1829,7 @@ export default function SellerHelper() {
             }
             className="flex h-10 w-10 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)]"
             aria-label="Go back"
+            data-nefo-back="true"
           >
             <BackIcon />
           </button>
@@ -1774,6 +1874,7 @@ export default function SellerHelper() {
             }
             className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#EADFCE] bg-white/90 text-[#3F5128] shadow-[6px_6px_16px_rgba(63,81,40,0.08),-6px_-6px_16px_rgba(255,255,255,0.95)] active:scale-95"
             aria-label="Go back"
+            data-nefo-back="true"
           >
             <BackIcon />
           </button>
@@ -1991,7 +2092,7 @@ export default function SellerHelper() {
 
               <div className="min-w-0">
                 <p className="text-xl font-black">
-                  NeFo AI Seller Assistantance
+                  NeFo AI Seller Assistance
                 </p>
 
                 <p className="mt-0.5 text-xs font-semibold text-white/70">
