@@ -2550,7 +2550,7 @@ export default function SellerDashboard() {
   }
 
   if (!sellerProfileComplete) {
-    return <SellerSetupView />;
+    return SellerSetupView();
   }
 
   return (
@@ -2597,11 +2597,11 @@ export default function SellerDashboard() {
 
         {message ? <MessageBox message={message} /> : null}
 
-        {activeTab === "dashboard" && <DashboardView />}
-        {activeTab === "menu" && <MenuView />}
-        {activeTab === "orders" && <OrdersView />}
-        {activeTab === "messages" && <MessagesView />}
-        {activeTab === "more" && <MoreView />}
+        {activeTab === "dashboard" && DashboardView()}
+        {activeTab === "menu" && MenuView()}
+        {activeTab === "orders" && OrdersView()}
+        {activeTab === "messages" && MessagesView()}
+        {activeTab === "more" && MoreView()}
       </div>
 
       <Link
