@@ -38,6 +38,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import GlobalBackHandler from "./components/GlobalBackHandler";
 import PullToRefresh from "./components/PullToRefresh";
 import LocalNotificationBootstrap from "./components/LocalNotificationBootstrap";
+import PushNotificationBootstrap from "./components/PushNotificationBootstrap";
 import { NeFoDialogProvider } from "./components/NeFoDialogProvider";
 
 import { useAuth } from "./context/AuthContext";
@@ -767,6 +768,8 @@ function AppShell() {
       <GlobalBackHandler />
 
       <LocalNotificationBootstrap />
+
+      <PushNotificationBootstrap />
 
       <ScrollToTop />
 
