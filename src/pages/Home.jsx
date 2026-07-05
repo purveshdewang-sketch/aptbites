@@ -2010,37 +2010,6 @@ export default function Home() {
           </div>
         </section>
 
-        {showRecommendations ? (
-          <section className="mt-6">
-            <div className="mb-3">
-              <p className="text-[11px] font-black uppercase tracking-wide text-[#CF743D]">
-                Personalised
-              </p>
-
-              <h2 className="mt-1 text-lg font-black text-[#3F5128]">
-                Picked for You
-              </h2>
-
-              <p className="mt-1 text-xs font-semibold text-[#6B6258]">
-                Based on your orders,
-                favourites and food
-                activity.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              {recommendedFoods.map(
-                (food) => (
-                  <FoodCard
-                    key={`recommended-${food.id}`}
-                    item={food}
-                  />
-                )
-              )}
-            </div>
-          </section>
-        ) : null}
-
         {!hasActiveFilters ? (
           <section className="mt-6">
             <div className="mb-3 flex items-center justify-between gap-3">
