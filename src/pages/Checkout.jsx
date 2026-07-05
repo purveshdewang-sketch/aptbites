@@ -268,6 +268,12 @@ export default function Checkout() {
   const paymentProofInputRef =
     useRef(null);
 
+  const timeDropdownRef =
+    useRef(null);
+
+  const selectedTimeOptionRef =
+    useRef(null);
+
   const [
     formData,
     setFormData,
@@ -361,6 +367,11 @@ export default function Checkout() {
   ] = useState(false);
 
   const [
+    showTimeDropdown,
+    setShowTimeDropdown,
+  ] = useState(false);
+
+  const [
     showDeliveryEditor,
     setShowDeliveryEditor,
   ] = useState(false);
@@ -412,6 +423,20 @@ export default function Checkout() {
       [
         timeOptions,
         scheduledDate,
+      ]
+    );
+
+  const selectedTimeLabel =
+    useMemo(
+      () =>
+        availableTimeOptions.find(
+          (option) =>
+            option.value ===
+            scheduledTime
+        )?.label || "",
+      [
+        availableTimeOptions,
+        scheduledTime,
       ]
     );
 
@@ -928,6 +953,66 @@ export default function Checkout() {
     timeOptions,
   ]);
 
+  useEffect(() => {
+    if (!showTimeDropdown) {
+      return undefined;
+    }
+
+    function handleOutsideTap(event) {
+      if (
+        timeDropdownRef.current &&
+        !timeDropdownRef.current.contains(
+          event.target
+        )
+      ) {
+        setShowTimeDropdown(false);
+      }
+    }
+
+    function handleEscapeKey(event) {
+      if (event.key === "Escape") {
+        setShowTimeDropdown(false);
+      }
+    }
+
+    document.addEventListener(
+      "pointerdown",
+      handleOutsideTap
+    );
+
+    document.addEventListener(
+      "keydown",
+      handleEscapeKey
+    );
+
+    const frameId =
+      window.requestAnimationFrame(
+        () => {
+          selectedTimeOptionRef.current?.scrollIntoView(
+            {
+              block: "nearest",
+            }
+          );
+        }
+      );
+
+    return () => {
+      window.cancelAnimationFrame(
+        frameId
+      );
+
+      document.removeEventListener(
+        "pointerdown",
+        handleOutsideTap
+      );
+
+      document.removeEventListener(
+        "keydown",
+        handleEscapeKey
+      );
+    };
+  }, [showTimeDropdown]);
+
   async function fetchKitchenSettings(
     kitchenId
   ) {
@@ -1174,8 +1259,16 @@ export default function Checkout() {
       setShowTimingEditor(
         true
       );
+
+      setShowTimeDropdown(
+        false
+      );
     } else {
       setShowTimingEditor(
+        false
+      );
+
+      setShowTimeDropdown(
         false
       );
     }
@@ -1210,6 +1303,10 @@ export default function Checkout() {
         ""
     );
 
+    setShowTimeDropdown(
+      false
+    );
+
     setErrors(
       (current) => ({
         ...current,
@@ -1228,6 +1325,10 @@ export default function Checkout() {
   ) {
     setScheduledTime(
       nextTime
+    );
+
+    setShowTimeDropdown(
+      false
     );
 
     setErrors(
@@ -2449,7 +2550,7 @@ export default function Checkout() {
                   )}
                 </div>
 
-                <label className="mt-3 block">
+                <div className="mt-3 block">
                   <span className="text-[11px] font-black uppercase tracking-wide text-[#CF743D]">
                     Select time
                   </span>
@@ -2462,42 +2563,121 @@ export default function Checkout() {
                     </span>
                   ) : null}
 
-                  <select
-                    value={
-                      scheduledTime
-                    }
-                    onChange={(
-                      event
-                    ) =>
-                      selectScheduleTime(
-                        event.target
-                          .value
-                      )
-                    }
-                    className={`${INPUT} mt-3`}
+                  <div
+                    ref={timeDropdownRef}
+                    className="mt-3"
                   >
-                    <option value="">
-                      Select time
-                    </option>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowTimeDropdown(
+                          (current) =>
+                            !current
+                        )
+                      }
+                      disabled={
+                        availableTimeOptions.length ===
+                        0
+                      }
+                      aria-haspopup="listbox"
+                      aria-expanded={
+                        showTimeDropdown
+                      }
+                      className={`flex w-full items-center justify-between gap-3 rounded-2xl border bg-[#FFFDF7] px-4 py-3.5 text-left text-sm font-semibold outline-none transition active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#F1E8DC] ${
+                        showTimeDropdown
+                          ? "border-[#CF743D] bg-white"
+                          : "border-[#D8C9B3]"
+                      }`}
+                    >
+                      <span
+                        className={
+                          selectedTimeLabel
+                            ? "text-[#181411]"
+                            : "text-[#9A8E80]"
+                        }
+                      >
+                        {selectedTimeLabel ||
+                          "Select time"}
+                      </span>
 
-                    {availableTimeOptions.map(
-                      (option) => (
-                        <option
-                          key={
-                            option.value
+                      <DropdownChevronIcon
+                        open={
+                          showTimeDropdown
+                        }
+                      />
+                    </button>
+
+                    {availableTimeOptions.length ===
+                    0 ? (
+                      <p className="mt-2 rounded-xl border border-[#EADFCE] bg-white px-3 py-2 text-xs font-bold text-[#6B6258]">
+                        No available time
+                        slots for this
+                        date.
+                      </p>
+                    ) : null}
+
+                    {showTimeDropdown &&
+                    availableTimeOptions.length >
+                      0 ? (
+                      <div
+                        role="listbox"
+                        aria-label="Available order times"
+                        className="mt-2 max-h-64 overflow-y-auto overscroll-contain rounded-2xl border border-[#D8C9B3] bg-white p-1 shadow-[0_14px_34px_rgba(63,81,40,0.14)]"
+                      >
+                        {availableTimeOptions.map(
+                          (option) => {
+                            const active =
+                              option.value ===
+                              scheduledTime;
+
+                            return (
+                              <button
+                                key={
+                                  option.value
+                                }
+                                ref={
+                                  active
+                                    ? selectedTimeOptionRef
+                                    : null
+                                }
+                                type="button"
+                                role="option"
+                                aria-selected={
+                                  active
+                                }
+                                onClick={() =>
+                                  selectScheduleTime(
+                                    option.value
+                                  )
+                                }
+                                className={`flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-left text-sm font-black transition active:scale-[0.99] ${
+                                  active
+                                    ? "bg-[#3F5128] text-white"
+                                    : "text-[#3F5128] hover:bg-[#FFF0DF]"
+                                }`}
+                              >
+                                <span>
+                                  {
+                                    option.label
+                                  }
+                                </span>
+
+                                {active ? (
+                                  <span
+                                    aria-hidden="true"
+                                    className="flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-sm"
+                                  >
+                                    ✓
+                                  </span>
+                                ) : null}
+                              </button>
+                            );
                           }
-                          value={
-                            option.value
-                          }
-                        >
-                          {
-                            option.label
-                          }
-                        </option>
-                      )
-                    )}
-                  </select>
-                </label>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
               </div>
             ) : null}
           </div>
@@ -3203,6 +3383,27 @@ function BackIcon() {
     >
       <path d="M19 12H5" />
       <path d="M12 19l-7-7 7-7" />
+    </svg>
+  );
+}
+
+function DropdownChevronIcon({
+  open,
+}) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={`h-5 w-5 shrink-0 text-[#6B6258] transition-transform ${
+        open
+          ? "rotate-180"
+          : ""
+      }`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+      aria-hidden="true"
+    >
+      <path d="m6 9 6 6 6-6" />
     </svg>
   );
 }
