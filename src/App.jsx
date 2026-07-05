@@ -1,9 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-
+import { useEffect, useState } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -12,16 +7,7 @@ import {
   Link,
   NavLink,
   useLocation,
-  useNavigate,
 } from "react-router-dom";
-
-import {
-  App as CapacitorApp,
-} from "@capacitor/app";
-
-import {
-  Capacitor,
-} from "@capacitor/core";
 
 import Home from "./pages/Home";
 import Kitchens from "./pages/Kitchens";
@@ -51,17 +37,10 @@ import Favorites from "./pages/Favorites";
 import ScrollToTop from "./components/ScrollToTop";
 import GlobalBackHandler from "./components/GlobalBackHandler";
 import PullToRefresh from "./components/PullToRefresh";
+import { NeFoDialogProvider } from "./components/NeFoDialogProvider";
 
-import {
-  useAuth,
-} from "./context/AuthContext";
-
-import {
-  supabase,
-} from "./lib/supabaseClient";
-
-const RECOVERY_STORAGE_KEY =
-  "NeFo_password_recovery_url";
+import { useAuth } from "./context/AuthContext";
+import { supabase } from "./lib/supabaseClient";
 
 function LoadingScreen() {
   return (
@@ -77,9 +56,7 @@ function LoadingScreen() {
   );
 }
 
-function shouldShowCustomerBottomNav(
-  pathname
-) {
+function shouldShowCustomerBottomNav(pathname) {
   const hiddenRoutes = [
     "/customer-login",
     "/seller-login",
@@ -100,202 +77,21 @@ function shouldShowCustomerBottomNav(
     "/refund-policy",
   ];
 
-  return !hiddenRoutes.some(
-    (route) =>
-      pathname.startsWith(route)
+  return !hiddenRoutes.some((route) =>
+    pathname.startsWith(route)
   );
 }
 
-function shouldEnablePullToRefresh(
-  pathname
-) {
+function shouldEnablePullToRefresh(pathname) {
   const disabledRoutes = [
     "/customer-login",
     "/seller-login",
     "/reset-password",
   ];
 
-  return !disabledRoutes.some(
-    (route) =>
-      pathname.startsWith(route)
+  return !disabledRoutes.some((route) =>
+    pathname.startsWith(route)
   );
-}
-
-function NativeDeepLinkHandler() {
-  const navigate = useNavigate();
-
-  const handledUrlsRef =
-    useRef(new Set());
-
-  useEffect(() => {
-    if (
-      !Capacitor.isNativePlatform()
-    ) {
-      return undefined;
-    }
-
-    let listenerHandle = null;
-    let disposed = false;
-
-    function isPasswordRecoveryUrl(
-      rawUrl
-    ) {
-      if (!rawUrl) {
-        return false;
-      }
-
-      try {
-        const parsedUrl =
-          new URL(rawUrl);
-
-        const supportedProtocol =
-          parsedUrl.protocol ===
-            "com.NeFo.app:" ||
-          parsedUrl.protocol ===
-            "NeFo:";
-
-        const recoveryHost =
-          parsedUrl.hostname ===
-          "reset-password";
-
-        const recoveryPath =
-          parsedUrl.pathname ===
-            "/reset-password" ||
-          parsedUrl.pathname.startsWith(
-            "/reset-password/"
-          );
-
-        return (
-          supportedProtocol &&
-          (recoveryHost ||
-            recoveryPath)
-        );
-      } catch {
-        return false;
-      }
-    }
-
-    function saveRecoveryUrl(
-      rawUrl
-    ) {
-      try {
-        sessionStorage.setItem(
-          RECOVERY_STORAGE_KEY,
-          rawUrl
-        );
-      } catch (error) {
-        console.error(
-          "Could not store recovery URL:",
-          error
-        );
-      }
-    }
-
-    function dispatchRecoveryUrl(
-      rawUrl
-    ) {
-      window.dispatchEvent(
-        new CustomEvent(
-          "NeFo_password_recovery_link",
-          {
-            detail: {
-              url: rawUrl,
-            },
-          }
-        )
-      );
-    }
-
-    function openRecoveryUrl(
-      rawUrl
-    ) {
-      if (
-        !isPasswordRecoveryUrl(
-          rawUrl
-        )
-      ) {
-        return;
-      }
-
-      if (
-        handledUrlsRef.current.has(
-          rawUrl
-        )
-      ) {
-        return;
-      }
-
-      handledUrlsRef.current.add(
-        rawUrl
-      );
-
-      saveRecoveryUrl(rawUrl);
-
-      navigate(
-        "/reset-password",
-        {
-          replace: true,
-        }
-      );
-
-      window.setTimeout(() => {
-        dispatchRecoveryUrl(
-          rawUrl
-        );
-      }, 100);
-    }
-
-    async function registerDeepLinkHandling() {
-      try {
-        const nextListenerHandle =
-          await CapacitorApp.addListener(
-            "appUrlOpen",
-            (event) => {
-              openRecoveryUrl(
-                event?.url || ""
-              );
-            }
-          );
-
-        if (disposed) {
-          await nextListenerHandle.remove();
-          return;
-        }
-
-        listenerHandle =
-          nextListenerHandle;
-
-        const launchData =
-          await CapacitorApp.getLaunchUrl();
-
-        if (
-          !disposed &&
-          launchData?.url
-        ) {
-          openRecoveryUrl(
-            launchData.url
-          );
-        }
-      } catch (error) {
-        console.error(
-          "Native deep-link registration failed:",
-          error
-        );
-      }
-    }
-
-    registerDeepLinkHandling();
-
-    return () => {
-      disposed = true;
-
-      if (listenerHandle) {
-        void listenerHandle.remove();
-      }
-    };
-  }, [navigate]);
-
-  return null;
 }
 
 function BottomNav() {
@@ -325,64 +121,54 @@ function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-[900] border-t border-[#EADFCE] bg-[#FFF8EC]/95 shadow-[0_-8px_24px_rgba(63,81,40,0.08)] backdrop-blur-xl">
       <div className="mx-auto grid h-[76px] max-w-md grid-cols-4 px-2 pb-[env(safe-area-inset-bottom)]">
-        {navItems.map(
-          (item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={
-                item.path === "/"
-              }
-              className={({
-                isActive,
-              }) =>
-                `flex flex-col items-center justify-center gap-1 rounded-2xl text-[10px] font-black transition-all ${
-                  isActive
-                    ? "text-[#3F5128]"
-                    : "text-[#6B6258] hover:text-[#3F5128]"
-                }`
-              }
-            >
-              {({
-                isActive,
-              }) => (
-                <>
-                  <div
-                    className={`flex h-9 w-9 items-center justify-center rounded-2xl border transition-all ${
+        {navItems.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            end={item.path === "/"}
+            className={({ isActive }) =>
+              `flex flex-col items-center justify-center gap-1 rounded-2xl text-[10px] font-black transition-all ${
+                isActive
+                  ? "text-[#3F5128]"
+                  : "text-[#6B6258] hover:text-[#3F5128]"
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <div
+                  className={`flex h-9 w-9 items-center justify-center rounded-2xl border transition-all ${
+                    isActive
+                      ? "border-[#D8C9B3] bg-[#FFF0DF] shadow-[4px_4px_10px_rgba(63,81,40,0.08),-4px_-4px_10px_rgba(255,255,255,0.9)]"
+                      : "border-transparent bg-transparent"
+                  }`}
+                >
+                  <span
+                    className={
+                      item.label === "Favorites" &&
                       isActive
-                        ? "border-[#D8C9B3] bg-[#FFF0DF] shadow-[4px_4px_10px_rgba(63,81,40,0.08),-4px_-4px_10px_rgba(255,255,255,0.9)]"
-                        : "border-transparent bg-transparent"
-                    }`}
+                        ? "text-[#CF743D]"
+                        : ""
+                    }
                   >
-                    <span
-                      className={
-                        item.label ===
-                          "Favorites" &&
-                        isActive
-                          ? "text-[#CF743D]"
-                          : ""
-                      }
-                    >
-                      {item.icon}
-                    </span>
-                  </div>
-
-                  <span className="leading-none">
-                    {item.label}
+                    {item.icon}
                   </span>
-                </>
-              )}
-            </NavLink>
-          )
-        )}
+                </div>
+
+                <span className="leading-none">
+                  {item.label}
+                </span>
+              </>
+            )}
+          </NavLink>
+        ))}
       </div>
     </nav>
   );
 }
 
 function FloatingHelpButton() {
-  const location =
-    useLocation();
+  const location = useLocation();
 
   const hiddenRoutes = [
     "/customer-login",
@@ -405,17 +191,11 @@ function FloatingHelpButton() {
     "/refund-policy",
   ];
 
-  const shouldHide =
-    hiddenRoutes.some(
-      (route) =>
-        location.pathname.startsWith(
-          route
-        )
-    );
+  const shouldHide = hiddenRoutes.some((route) =>
+    location.pathname.startsWith(route)
+  );
 
-  if (shouldHide) {
-    return null;
-  }
+  if (shouldHide) return null;
 
   const bottomNavVisible =
     shouldShowCustomerBottomNav(
@@ -430,13 +210,9 @@ function FloatingHelpButton() {
     "/owner-seller-applications",
   ];
 
-  const isSellerPage =
-    sellerPages.some(
-      (page) =>
-        location.pathname.startsWith(
-          page
-        )
-    );
+  const isSellerPage = sellerPages.some((page) =>
+    location.pathname.startsWith(page)
+  );
 
   return (
     <Link
@@ -462,13 +238,8 @@ function FloatingHelpButton() {
   );
 }
 
-function ProtectedRoute({
-  children,
-}) {
-  const {
-    user,
-    authLoading,
-  } = useAuth();
+function ProtectedRoute({ children }) {
+  const { user, authLoading } = useAuth();
 
   if (authLoading) {
     return <LoadingScreen />;
@@ -486,31 +257,20 @@ function ProtectedRoute({
   return children;
 }
 
-function SellerOnlyRoute({
-  children,
-}) {
-  const {
-    user,
-    authLoading,
-  } = useAuth();
+function SellerOnlyRoute({ children }) {
+  const { user, authLoading } = useAuth();
 
-  const [
-    checkingRole,
-    setCheckingRole,
-  ] = useState(true);
+  const [checkingRole, setCheckingRole] =
+    useState(true);
 
-  const [
-    sellerAllowed,
-    setSellerAllowed,
-  ] = useState(false);
+  const [sellerAllowed, setSellerAllowed] =
+    useState(false);
 
   useEffect(() => {
     let cancelled = false;
 
     async function checkSellerAccess() {
-      if (authLoading) {
-        return;
-      }
+      if (authLoading) return;
 
       if (!user) {
         if (!cancelled) {
@@ -523,15 +283,11 @@ function SellerOnlyRoute({
 
       setCheckingRole(true);
 
-      const metadataRole =
-        String(
-          user?.user_metadata
-            ?.role || ""
-        ).toLowerCase();
+      const metadataRole = String(
+        user?.user_metadata?.role || ""
+      ).toLowerCase();
 
-      if (
-        metadataRole === "admin"
-      ) {
+      if (metadataRole === "admin") {
         if (!cancelled) {
           setSellerAllowed(true);
           setCheckingRole(false);
@@ -540,10 +296,7 @@ function SellerOnlyRoute({
         return;
       }
 
-      const {
-        data,
-        error,
-      } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .select(
           "role, is_seller, seller_application_status"
@@ -551,9 +304,7 @@ function SellerOnlyRoute({
         .eq("id", user.id)
         .maybeSingle();
 
-      if (cancelled) {
-        return;
-      }
+      if (cancelled) return;
 
       if (error) {
         setSellerAllowed(false);
@@ -561,31 +312,25 @@ function SellerOnlyRoute({
         return;
       }
 
-      const profileRole =
-        String(
-          data?.role || ""
-        ).toLowerCase();
+      const profileRole = String(
+        data?.role || ""
+      ).toLowerCase();
 
-      const applicationStatus =
-        String(
-          data?.seller_application_status ||
-            "not_applied"
-        ).toLowerCase();
+      const applicationStatus = String(
+        data?.seller_application_status ||
+          "not_applied"
+      ).toLowerCase();
 
       const isApprovedSeller =
-        profileRole ===
-          "seller" &&
-        data?.is_seller ===
-          true &&
-        applicationStatus ===
-          "approved";
+        profileRole === "seller" &&
+        data?.is_seller === true &&
+        applicationStatus === "approved";
 
       const isAdmin =
         profileRole === "admin";
 
       setSellerAllowed(
-        isApprovedSeller ||
-          isAdmin
+        isApprovedSeller || isAdmin
       );
 
       setCheckingRole(false);
@@ -596,15 +341,9 @@ function SellerOnlyRoute({
     return () => {
       cancelled = true;
     };
-  }, [
-    user,
-    authLoading,
-  ]);
+  }, [user, authLoading]);
 
-  if (
-    authLoading ||
-    checkingRole
-  ) {
+  if (authLoading || checkingRole) {
     return <LoadingScreen />;
   }
 
@@ -629,31 +368,20 @@ function SellerOnlyRoute({
   return children;
 }
 
-function AdminOnlyRoute({
-  children,
-}) {
-  const {
-    user,
-    authLoading,
-  } = useAuth();
+function AdminOnlyRoute({ children }) {
+  const { user, authLoading } = useAuth();
 
-  const [
-    checkingRole,
-    setCheckingRole,
-  ] = useState(true);
+  const [checkingRole, setCheckingRole] =
+    useState(true);
 
-  const [
-    adminAllowed,
-    setAdminAllowed,
-  ] = useState(false);
+  const [adminAllowed, setAdminAllowed] =
+    useState(false);
 
   useEffect(() => {
     let cancelled = false;
 
     async function checkAdminAccess() {
-      if (authLoading) {
-        return;
-      }
+      if (authLoading) return;
 
       if (!user) {
         if (!cancelled) {
@@ -666,15 +394,11 @@ function AdminOnlyRoute({
 
       setCheckingRole(true);
 
-      const metadataRole =
-        String(
-          user?.user_metadata
-            ?.role || ""
-        ).toLowerCase();
+      const metadataRole = String(
+        user?.user_metadata?.role || ""
+      ).toLowerCase();
 
-      if (
-        metadataRole === "admin"
-      ) {
+      if (metadataRole === "admin") {
         if (!cancelled) {
           setAdminAllowed(true);
           setCheckingRole(false);
@@ -683,18 +407,13 @@ function AdminOnlyRoute({
         return;
       }
 
-      const {
-        data,
-        error,
-      } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", user.id)
         .maybeSingle();
 
-      if (cancelled) {
-        return;
-      }
+      if (cancelled) return;
 
       if (error) {
         setAdminAllowed(false);
@@ -702,10 +421,9 @@ function AdminOnlyRoute({
         return;
       }
 
-      const profileRole =
-        String(
-          data?.role || ""
-        ).toLowerCase();
+      const profileRole = String(
+        data?.role || ""
+      ).toLowerCase();
 
       setAdminAllowed(
         profileRole === "admin"
@@ -719,15 +437,9 @@ function AdminOnlyRoute({
     return () => {
       cancelled = true;
     };
-  }, [
-    user,
-    authLoading,
-  ]);
+  }, [user, authLoading]);
 
-  if (
-    authLoading ||
-    checkingRole
-  ) {
+  if (authLoading || checkingRole) {
     return <LoadingScreen />;
   }
 
@@ -741,12 +453,7 @@ function AdminOnlyRoute({
   }
 
   if (!adminAllowed) {
-    return (
-      <Navigate
-        to="/"
-        replace
-      />
-    );
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -785,23 +492,17 @@ function AppRoutes() {
     <Routes>
       <Route
         path="/customer-login"
-        element={
-          <CustomerLogin />
-        }
+        element={<CustomerLogin />}
       />
 
       <Route
         path="/seller-login"
-        element={
-          <SellerLogin />
-        }
+        element={<SellerLogin />}
       />
 
       <Route
         path="/reset-password"
-        element={
-          <ResetPassword />
-        }
+        element={<ResetPassword />}
       />
 
       <Route
@@ -1040,10 +741,7 @@ function AppRoutes() {
       <Route
         path="*"
         element={
-          <Navigate
-            to="/"
-            replace
-          />
+          <Navigate to="/" replace />
         }
       />
     </Routes>
@@ -1051,8 +749,7 @@ function AppRoutes() {
 }
 
 function AppShell() {
-  const location =
-    useLocation();
+  const location = useLocation();
 
   const showBottomNav =
     shouldShowCustomerBottomNav(
@@ -1066,34 +763,30 @@ function AppShell() {
 
   return (
     <>
-      <NativeDeepLinkHandler />
-
       <GlobalBackHandler />
 
       <ScrollToTop />
 
       <PullToRefresh
-        enabled={
-          pullToRefreshEnabled
-        }
+        enabled={pullToRefreshEnabled}
       />
 
       <AppRoutes />
 
       <FloatingHelpButton />
 
-      {showBottomNav ? (
-        <BottomNav />
-      ) : null}
+      {showBottomNav ? <BottomNav /> : null}
     </>
   );
 }
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AppShell />
-    </BrowserRouter>
+    <NeFoDialogProvider>
+      <BrowserRouter>
+        <AppShell />
+      </BrowserRouter>
+    </NeFoDialogProvider>
   );
 }
 
@@ -1152,12 +845,7 @@ function ProfileIcon() {
       stroke="currentColor"
       strokeWidth="2"
     >
-      <circle
-        cx="12"
-        cy="8"
-        r="4"
-      />
-
+      <circle cx="12" cy="8" r="4" />
       <path d="M4 21c1.8-4 5-6 8-6s6.2 2 8 6" />
     </svg>
   );

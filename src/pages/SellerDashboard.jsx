@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../context/AuthContext";
+import { useNeFoDialog } from "../components/NeFoDialogProvider";
 
 const FOOD_CATEGORIES = [
   "Meals",
@@ -61,6 +62,8 @@ function getMessageText(messageRow) {
 export default function SellerDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { confirmAction } =
+    useNeFoDialog();
 
   const audioContextRef = useRef(null);
   const previousOrderIdsRef = useRef([]);
@@ -1166,7 +1169,16 @@ export default function SellerDashboard() {
   }
 
   async function deleteDish(foodId) {
-    const confirmDelete = window.confirm("Delete this dish permanently?");
+    const confirmDelete =
+      await confirmAction({
+        title: "Delete this dish?",
+        message:
+          "This dish will be permanently removed from your NeFo menu.",
+        confirmText: "Delete",
+        cancelText: "Keep dish",
+        tone: "danger",
+      });
+
     if (!confirmDelete) return;
 
     const { error } = await supabase
@@ -1224,7 +1236,16 @@ export default function SellerDashboard() {
   }
 
   async function rejectOrder(orderId) {
-    const confirmReject = window.confirm("Reject this order?");
+    const confirmReject =
+      await confirmAction({
+        title: "Reject this order?",
+        message:
+          "The order will be cancelled and the customer will see it as rejected.",
+        confirmText: "Reject order",
+        cancelText: "Keep order",
+        tone: "danger",
+      });
+
     if (!confirmReject) return;
 
     const { error } = await supabase
@@ -1246,7 +1267,16 @@ export default function SellerDashboard() {
   }
 
   async function completeOrder(orderId) {
-    const confirmComplete = window.confirm("Mark this order as completed?");
+    const confirmComplete =
+      await confirmAction({
+        title: "Complete this order?",
+        message:
+          "Confirm only after the order has been delivered or collected by the customer.",
+        confirmText: "Complete order",
+        cancelText: "Not yet",
+        tone: "default",
+      });
+
     if (!confirmComplete) return;
 
     const { data, error } = await supabase

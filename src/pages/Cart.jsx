@@ -10,9 +10,13 @@ import {
 } from "react-router-dom";
 
 import { useCart } from "../context/CartContext";
+import { supabase } from "../lib/supabaseClient";
 
 const CART_TIMING_STORAGE_KEY =
   "NeFo_cart_order_timing";
+
+const LEGACY_CART_TIMING_STORAGE_KEY =
+  "Nefo_cart_order_timing";
 
 const MINIMUM_SCHEDULE_NOTICE_MINUTES = 30;
 
@@ -38,9 +42,13 @@ function addDays(date, days) {
 
 function getStoredTiming() {
   try {
-    const saved = localStorage.getItem(
-      CART_TIMING_STORAGE_KEY
-    );
+    const saved =
+      localStorage.getItem(
+        CART_TIMING_STORAGE_KEY
+      ) ||
+      localStorage.getItem(
+        LEGACY_CART_TIMING_STORAGE_KEY
+      );
 
     return saved
       ? JSON.parse(saved)
@@ -323,6 +331,21 @@ export default function Cart() {
     initialScheduledTime
   );
 
+  const [
+    kitchenAcceptsScheduledOrders,
+    setKitchenAcceptsScheduledOrders,
+  ] = useState(false);
+
+  const [
+    checkingKitchenSettings,
+    setCheckingKitchenSettings,
+  ] = useState(true);
+
+  const [
+    kitchenSettingsError,
+    setKitchenSettingsError,
+  ] = useState("");
+
   const [errors, setErrors] =
     useState({});
 
@@ -362,6 +385,39 @@ export default function Cart() {
       ).size;
     }, [cartItems]);
 
+  const kitchenId =
+    useMemo(() => {
+      const kitchenIds =
+        cartItems
+          .map(
+            (item) =>
+              item.user_id ||
+              item.seller_id
+          )
+          .filter(Boolean)
+          .map(String);
+
+      const uniqueKitchenIds = [
+        ...new Set(kitchenIds),
+      ];
+
+      if (
+        uniqueKitchenIds.length ===
+        0
+      ) {
+        return null;
+      }
+
+      if (
+        uniqueKitchenIds.length >
+        1
+      ) {
+        return "MIXED_KITCHENS";
+      }
+
+      return uniqueKitchenIds[0];
+    }, [cartItems]);
+
   const selectedDateLabel =
     useMemo(() => {
       return (
@@ -390,6 +446,232 @@ export default function Cart() {
       scheduledTime,
     ]);
 
+  function clearScheduledTiming() {
+    setOrderTiming("now");
+    setScheduledDate("");
+    setScheduledTime("");
+
+    localStorage.removeItem(
+      CART_TIMING_STORAGE_KEY
+    );
+
+    localStorage.removeItem(
+      LEGACY_CART_TIMING_STORAGE_KEY
+    );
+  }
+
+  async function refreshKitchenScheduleAvailability({
+    silent = false,
+  } = {}) {
+    if (!cartItems.length) {
+      setKitchenAcceptsScheduledOrders(
+        false
+      );
+
+      setCheckingKitchenSettings(
+        false
+      );
+
+      setKitchenSettingsError("");
+
+      return false;
+    }
+
+    if (!kitchenId) {
+      setKitchenAcceptsScheduledOrders(
+        false
+      );
+
+      setCheckingKitchenSettings(
+        false
+      );
+
+      setKitchenSettingsError(
+        "Kitchen scheduling details are missing. Please add the dishes again."
+      );
+
+      clearScheduledTiming();
+
+      return false;
+    }
+
+    if (
+      kitchenId ===
+      "MIXED_KITCHENS"
+    ) {
+      setKitchenAcceptsScheduledOrders(
+        false
+      );
+
+      setCheckingKitchenSettings(
+        false
+      );
+
+      setKitchenSettingsError(
+        "Scheduled checkout is available only when the cart contains dishes from one kitchen."
+      );
+
+      clearScheduledTiming();
+
+      return false;
+    }
+
+    if (!silent) {
+      setCheckingKitchenSettings(
+        true
+      );
+    }
+
+    const { data, error } =
+      await supabase
+        .from("profiles")
+        .select(
+          "accept_scheduled_orders"
+        )
+        .eq("id", kitchenId)
+        .maybeSingle();
+
+    if (error) {
+      setKitchenAcceptsScheduledOrders(
+        false
+      );
+
+      setCheckingKitchenSettings(
+        false
+      );
+
+      setKitchenSettingsError(
+        `Could not verify this kitchen's schedule setting: ${error.message}`
+      );
+
+      clearScheduledTiming();
+
+      return false;
+    }
+
+    const scheduleAllowed =
+      data?.accept_scheduled_orders ===
+      true;
+
+    setKitchenAcceptsScheduledOrders(
+      scheduleAllowed
+    );
+
+    setCheckingKitchenSettings(
+      false
+    );
+
+    setKitchenSettingsError("");
+
+    if (!scheduleAllowed) {
+      clearScheduledTiming();
+    }
+
+    return scheduleAllowed;
+  }
+
+  useEffect(() => {
+    void refreshKitchenScheduleAvailability();
+
+    if (
+      !kitchenId ||
+      kitchenId ===
+        "MIXED_KITCHENS"
+    ) {
+      return undefined;
+    }
+
+    const scheduleChannel =
+      supabase
+        .channel(
+          `NeFo-cart-schedule-${kitchenId}`
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "profiles",
+            filter: `id=eq.${kitchenId}`,
+          },
+          (payload) => {
+            const latestValue =
+              payload?.new
+                ?.accept_scheduled_orders;
+
+            if (
+              typeof latestValue ===
+              "boolean"
+            ) {
+              setKitchenAcceptsScheduledOrders(
+                latestValue
+              );
+
+              setCheckingKitchenSettings(
+                false
+              );
+
+              setKitchenSettingsError("");
+
+              if (!latestValue) {
+                clearScheduledTiming();
+              }
+
+              return;
+            }
+
+            void refreshKitchenScheduleAvailability({
+              silent: true,
+            });
+          }
+        )
+        .subscribe();
+
+    function refreshOnFocus() {
+      void refreshKitchenScheduleAvailability({
+        silent: true,
+      });
+    }
+
+    function refreshWhenVisible() {
+      if (
+        document.visibilityState ===
+        "visible"
+      ) {
+        refreshOnFocus();
+      }
+    }
+
+    window.addEventListener(
+      "focus",
+      refreshOnFocus
+    );
+
+    document.addEventListener(
+      "visibilitychange",
+      refreshWhenVisible
+    );
+
+    return () => {
+      window.removeEventListener(
+        "focus",
+        refreshOnFocus
+      );
+
+      document.removeEventListener(
+        "visibilitychange",
+        refreshWhenVisible
+      );
+
+      void supabase.removeChannel(
+        scheduleChannel
+      );
+    };
+  }, [
+    kitchenId,
+    cartItems.length,
+  ]);
+
   useEffect(() => {
     localStorage.setItem(
       CART_TIMING_STORAGE_KEY,
@@ -398,6 +680,10 @@ export default function Cart() {
         scheduledDate,
         scheduledTime,
       })
+    );
+
+    localStorage.removeItem(
+      LEGACY_CART_TIMING_STORAGE_KEY
     );
   }, [
     orderTiming,
@@ -463,6 +749,33 @@ export default function Cart() {
   }
 
   function selectScheduledOrder() {
+    if (checkingKitchenSettings) {
+      setErrors(
+        (currentErrors) => ({
+          ...currentErrors,
+          timing:
+            "Checking whether this kitchen accepts scheduled orders.",
+        })
+      );
+
+      return;
+    }
+
+    if (
+      !kitchenAcceptsScheduledOrders
+    ) {
+      setErrors(
+        (currentErrors) => ({
+          ...currentErrors,
+          timing:
+            kitchenSettingsError ||
+            "This kitchen is not accepting scheduled orders right now.",
+        })
+      );
+
+      return;
+    }
+
     setOrderTiming("scheduled");
     setErrors({});
 
@@ -524,12 +837,26 @@ export default function Cart() {
     );
   }
 
-  function handleCheckout() {
+  async function handleCheckout() {
     const nextErrors = {};
 
     if (
       orderTiming === "scheduled"
     ) {
+      const scheduleStillAllowed =
+        await refreshKitchenScheduleAvailability({
+          silent: true,
+        });
+
+      if (!scheduleStillAllowed) {
+        setErrors({
+          timing:
+            kitchenSettingsError ||
+            "This kitchen is not accepting scheduled orders right now. Your order has been changed to Order Now.",
+        });
+
+        return;
+      }
       if (!scheduledDate) {
         nextErrors.scheduledDate =
           "Please select a date.";
@@ -786,6 +1113,12 @@ export default function Cart() {
             When should we prepare it?
           </h2>
 
+          {errors.timing ? (
+            <p className="mt-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-black text-red-600">
+              {errors.timing}
+            </p>
+          ) : null}
+
           <div className="mt-5 space-y-4">
             <button
               type="button"
@@ -825,10 +1158,17 @@ export default function Cart() {
               onClick={
                 selectScheduledOrder
               }
-              className={`w-full rounded-[24px] border p-5 text-left transition-all active:scale-[0.99] ${
+              disabled={
+                checkingKitchenSettings ||
+                !kitchenAcceptsScheduledOrders
+              }
+              className={`w-full rounded-[24px] border p-5 text-left transition-all active:scale-[0.99] disabled:cursor-not-allowed ${
                 orderTiming ===
                 "scheduled"
                   ? "border-[#3F5128] bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15"
+                  : checkingKitchenSettings ||
+                    !kitchenAcceptsScheduledOrders
+                  ? "border-[#D8C9B3] bg-[#F1E8DC] text-[#6B6258] opacity-75"
                   : "border-[#EADFCE] bg-white/90 text-[#181411] shadow-[5px_5px_14px_rgba(63,81,40,0.05),-5px_-5px_14px_rgba(255,255,255,0.95)]"
               }`}
             >
@@ -864,14 +1204,40 @@ export default function Cart() {
                         : "text-[#6B6258]"
                     }`}
                   >
-                    {orderTiming ===
-                    "scheduled"
+                    {checkingKitchenSettings
+                      ? "Checking kitchen availability..."
+                      : !kitchenAcceptsScheduledOrders
+                      ? "Scheduling is turned off by this kitchen."
+                      : orderTiming ===
+                        "scheduled"
                       ? `${selectedDateLabel} • ${selectedTimeLabel}`
                       : "Choose date and time."}
                   </p>
                 </div>
               </div>
             </button>
+
+            {!checkingKitchenSettings &&
+            !kitchenAcceptsScheduledOrders ? (
+              <div
+                className={`rounded-2xl border px-4 py-3 ${
+                  kitchenSettingsError
+                    ? "border-red-200 bg-red-50"
+                    : "border-[#D8C9B3] bg-[#FFF0DF]"
+                }`}
+              >
+                <p
+                  className={`text-xs font-black ${
+                    kitchenSettingsError
+                      ? "text-red-600"
+                      : "text-[#3F5128]"
+                  }`}
+                >
+                  {kitchenSettingsError ||
+                    "This kitchen is currently accepting Order Now only."}
+                </p>
+              </div>
+            ) : null}
 
             {orderTiming ===
             "scheduled" ? (
