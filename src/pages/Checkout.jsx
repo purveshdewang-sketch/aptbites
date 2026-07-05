@@ -13,6 +13,7 @@ import {
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabaseClient";
+import { scheduleOrderReminders } from "../lib/nefoLocalNotifications";
 
 const PLATFORM_FEE = 8;
 
@@ -2006,17 +2007,58 @@ export default function Checkout() {
       }
 
       const {
+        data: createdOrder,
         error: orderError,
       } = await supabase
         .from("orders")
         .insert([
           orderPayload,
-        ]);
+        ])
+        .select(
+          "id, scheduled_order, scheduled_for"
+        )
+        .single();
 
       if (orderError) {
         throw new Error(
           orderError.message
         );
+      }
+
+      if (
+        createdOrder?.scheduled_order &&
+        createdOrder?.scheduled_for
+      ) {
+        try {
+          const reminderResult =
+            await scheduleOrderReminders({
+              orderId:
+                createdOrder.id,
+              scheduledFor:
+                createdOrder.scheduled_for,
+              audience:
+                "customer",
+              kitchenName,
+            });
+
+          if (
+            reminderResult.scheduled ===
+              0 &&
+            reminderResult.reason
+          ) {
+            console.warn(
+              "NeFo reminder was not scheduled:",
+              reminderResult.reason
+            );
+          }
+        } catch (
+          notificationError
+        ) {
+          console.warn(
+            "NeFo local notification setup failed:",
+            notificationError
+          );
+        }
       }
 
       localStorage.setItem(

@@ -37,6 +37,7 @@ import Favorites from "./pages/Favorites";
 import ScrollToTop from "./components/ScrollToTop";
 import GlobalBackHandler from "./components/GlobalBackHandler";
 import PullToRefresh from "./components/PullToRefresh";
+import LocalNotificationBootstrap from "./components/LocalNotificationBootstrap";
 import { NeFoDialogProvider } from "./components/NeFoDialogProvider";
 
 import { useAuth } from "./context/AuthContext";
@@ -764,6 +765,8 @@ function AppShell() {
   return (
     <>
       <GlobalBackHandler />
+
+      <LocalNotificationBootstrap />
 
       <ScrollToTop />
 
