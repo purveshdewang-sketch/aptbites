@@ -192,15 +192,13 @@ export default function Profile() {
 
   const addressLines = useMemo(() => {
     const apartment = formData.apartment_name?.trim();
-    const block = formData.block?.trim();
-    const flatNo = formData.flat_no?.trim();
-    const flat = formData.flat?.trim();
+    const doorNumber =
+      formData.flat_no?.trim() || formData.flat?.trim();
 
     const lineOne = apartment || "No address added";
-
-    const lineTwo = [block, flatNo ? `Flat ${flatNo}` : flat]
-      .filter(Boolean)
-      .join(", ");
+    const lineTwo = doorNumber
+      ? `Door / Flat ${doorNumber}`
+      : "";
 
     return {
       lineOne,
@@ -234,11 +232,21 @@ export default function Profile() {
       full_name: user?.user_metadata?.full_name || "",
       phone: user?.phone || user?.user_metadata?.phone || "",
       apartment_name: user?.user_metadata?.apartment_name || "",
-      block: user?.user_metadata?.block || "",
-      flat_no: user?.user_metadata?.flat_no || "",
-      flat: user?.user_metadata?.flat || "",
+      block: "",
+      flat_no:
+        user?.user_metadata?.flat_no ||
+        user?.user_metadata?.flat ||
+        "",
+      flat:
+        user?.user_metadata?.flat ||
+        user?.user_metadata?.flat_no ||
+        "",
       seller_kitchen_name: "",
-      seller_door_no: "",
+      seller_door_no:
+        user?.user_metadata?.seller_door_no ||
+        user?.user_metadata?.flat_no ||
+        user?.user_metadata?.flat ||
+        "",
       seller_specialty: "",
       seller_about: "",
       accept_scheduled_orders: true,
@@ -306,11 +314,27 @@ export default function Profile() {
         data?.apartment_name ||
         user?.user_metadata?.apartment_name ||
         "",
-      block: data?.block || user?.user_metadata?.block || "",
-      flat_no: data?.flat_no || user?.user_metadata?.flat_no || "",
-      flat: data?.flat || user?.user_metadata?.flat || "",
+      block: "",
+      flat_no:
+        data?.flat_no ||
+        data?.flat ||
+        data?.seller_door_no ||
+        user?.user_metadata?.flat_no ||
+        user?.user_metadata?.flat ||
+        "",
+      flat:
+        data?.flat ||
+        data?.flat_no ||
+        data?.seller_door_no ||
+        user?.user_metadata?.flat ||
+        user?.user_metadata?.flat_no ||
+        "",
       seller_kitchen_name: data?.seller_kitchen_name || "",
-      seller_door_no: data?.seller_door_no || "",
+      seller_door_no:
+        data?.seller_door_no ||
+        data?.flat_no ||
+        data?.flat ||
+        "",
       seller_specialty: data?.seller_specialty || "",
       seller_about: data?.seller_about || "",
       accept_scheduled_orders: data?.accept_scheduled_orders !== false,
@@ -577,6 +601,9 @@ export default function Profile() {
     setSaving(true);
     setMessage("");
 
+    const singleDoorNumber =
+      formData.flat_no.trim() || formData.flat.trim();
+
     const nextBankDetailsCompleted = isSeller
       ? isAdmin
         ? true
@@ -589,9 +616,9 @@ export default function Profile() {
       full_name: formData.full_name.trim(),
       phone: formData.phone.trim(),
       apartment_name: formData.apartment_name.trim(),
-      block: formData.block.trim(),
-      flat_no: formData.flat_no.trim(),
-      flat: formData.flat.trim(),
+      block: "",
+      flat_no: singleDoorNumber,
+      flat: singleDoorNumber,
       role,
       is_seller: isSeller,
       bank_account_holder: formData.bank_account_holder.trim(),
@@ -606,7 +633,7 @@ export default function Profile() {
       profilePayload.seller_kitchen_name =
         formData.seller_kitchen_name.trim();
 
-      profilePayload.seller_door_no = formData.seller_door_no.trim();
+      profilePayload.seller_door_no = singleDoorNumber;
 
       profilePayload.seller_specialty = formData.seller_specialty.trim();
 
@@ -635,9 +662,9 @@ export default function Profile() {
         full_name: formData.full_name.trim(),
         phone: formData.phone.trim(),
         apartment_name: formData.apartment_name.trim(),
-        block: formData.block.trim(),
-        flat_no: formData.flat_no.trim(),
-        flat: formData.flat.trim(),
+        block: "",
+        flat_no: singleDoorNumber,
+        flat: singleDoorNumber,
         role,
         avatar_url: avatarUrl || null,
       },
@@ -647,11 +674,11 @@ export default function Profile() {
       full_name: formData.full_name.trim(),
       phone: formData.phone.trim(),
       apartment_name: formData.apartment_name.trim(),
-      block: formData.block.trim(),
-      flat_no: formData.flat_no.trim(),
-      flat: formData.flat.trim(),
+      block: "",
+      flat_no: singleDoorNumber,
+      flat: singleDoorNumber,
       seller_kitchen_name: formData.seller_kitchen_name.trim(),
-      seller_door_no: formData.seller_door_no.trim(),
+      seller_door_no: singleDoorNumber,
       seller_specialty: formData.seller_specialty.trim(),
       seller_about: formData.seller_about.trim(),
       accept_scheduled_orders: formData.accept_scheduled_orders,
@@ -1143,27 +1170,11 @@ export default function Profile() {
                     />
 
                     <InputField
-                      label="Block"
-                      name="block"
-                      value={formData.block}
-                      onChange={handleChange}
-                      placeholder="Block B"
-                    />
-
-                    <InputField
-                      label="Flat No."
+                      label="Door / Flat Number"
                       name="flat_no"
                       value={formData.flat_no}
                       onChange={handleChange}
                       placeholder="1204"
-                    />
-
-                    <InputField
-                      label="Tower / Flat Display"
-                      name="flat"
-                      value={formData.flat}
-                      onChange={handleChange}
-                      placeholder="B-1204"
                     />
                   </FormSection>
 
@@ -1269,14 +1280,6 @@ export default function Profile() {
                           value={formData.seller_kitchen_name}
                           onChange={handleChange}
                           placeholder="Kitchen / Seller Name"
-                        />
-
-                        <InputField
-                          label="Seller Door No."
-                          name="seller_door_no"
-                          value={formData.seller_door_no}
-                          onChange={handleChange}
-                          placeholder="Door No."
                         />
 
                         <InputField
