@@ -169,6 +169,7 @@ export default function SellerDashboard() {
   const [messagesLoading, setMessagesLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [openDishDropdown, setOpenDishDropdown] = useState("");
+  const [orderListMode, setOrderListMode] = useState("active");
 
   useEffect(() => {
     const pageBackHandler = () => {
@@ -179,6 +180,11 @@ export default function SellerDashboard() {
 
       if (openDishDropdown) {
         setOpenDishDropdown("");
+        return true;
+      }
+
+      if (activeTab === "orders" && orderListMode !== "active") {
+        setOrderListMode("active");
         return true;
       }
 
@@ -197,7 +203,7 @@ export default function SellerDashboard() {
         delete window.NeFoPageBack;
       }
     };
-  }, [activeTab, openDishDropdown]);
+  }, [activeTab, openDishDropdown, orderListMode]);
 
 
   useEffect(() => {
@@ -931,6 +937,24 @@ export default function SellerDashboard() {
       weekday: "short",
       day: "2-digit",
       month: "short",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
+
+  function formatOrderDateTime(value) {
+    if (!value) return "Date not available";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return "Date not available";
+    }
+
+    return date.toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
       hour: "numeric",
       minute: "2-digit",
     });
@@ -2324,161 +2348,368 @@ export default function SellerDashboard() {
   }
 
   function OrdersView() {
-    return (
-      <section className="space-y-4">
-        <div className={`p-5 ${CARD}`}>
-          <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
-            Kitchen orders
-          </p>
-          <h2 className="mt-1 text-2xl font-black text-[#181411]">Orders</h2>
-          <p className="mt-1 text-sm text-[#6B6258]">
-            Accept, chat, prepare, and complete orders.
-          </p>
-        </div>
+    const historyOrders = sellerOrders;
+    const completedHistoryCount = completedOrders.length;
+    const cancelledHistoryCount = sellerOrders.filter((order) => {
+      const dbStatus = normalizeStatus(order.status);
+      const sellerResponse = normalizeSellerResponse(order.seller_response);
 
-        {ordersLoading ? (
+      return dbStatus === "cancelled" || sellerResponse === "rejected";
+    }).length;
+
+    function renderItemsPreview(items) {
+      if (items.length === 0) {
+        return <p className="text-sm text-[#6B6258]">No item details.</p>;
+      }
+
+      const visibleItems = items.slice(0, 4);
+      const hiddenCount = Math.max(0, items.length - visibleItems.length);
+
+      return (
+        <div className="space-y-2">
+          {visibleItems.map((item, index) => (
+            <div
+              key={`${item.id || item.name}-${index}`}
+              className="flex items-center justify-between gap-3 text-sm"
+            >
+              <p className="min-w-0 truncate text-[#181411]">
+                {item.name || "Food item"} × {item.quantity || 1}
+              </p>
+
+              <p className="shrink-0 font-black text-[#3F5128]">
+                ₹{formatMoney(
+                  Number(item.price || 0) * Number(item.quantity || 1)
+                )}
+              </p>
+            </div>
+          ))}
+
+          {hiddenCount > 0 ? (
+            <p className="text-xs font-black text-[#CF743D]">
+              +{hiddenCount} more {hiddenCount === 1 ? "item" : "items"}
+            </p>
+          ) : null}
+        </div>
+      );
+    }
+
+    function renderActiveOrders() {
+      if (ordersLoading) {
+        return (
           <div className={`p-6 text-[#6B6258] ${SOFT_CARD}`}>
             Loading orders...
           </div>
-        ) : activeSellerOrders.length === 0 ? (
+        );
+      }
+
+      if (activeSellerOrders.length === 0) {
+        return (
           <div className={`p-8 text-center ${SOFT_CARD}`}>
             <div className="text-4xl">🛎️</div>
             <p className="mt-3 font-black text-[#6B6258]">
               No active orders right now.
             </p>
           </div>
-        ) : (
-          activeSellerOrders.map((order) => {
+        );
+      }
+
+      return activeSellerOrders.map((order) => {
+        const autoStatus = getAutoStatus(order);
+        const sellerResponse = normalizeSellerResponse(order.seller_response);
+        const orderIsSelfPickup = isSelfPickup(order);
+        const scheduled = isScheduledOrder(order);
+        const items = getOrderItems(order);
+
+        return (
+          <article key={order.id} className={`p-4 ${CARD}`}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-[#6B6258]">
+                  Order #{String(order.id).slice(0, 8)}
+                </p>
+
+                <h3 className="mt-1 text-2xl font-black text-[#3F5128]">
+                  ₹{formatMoney(order.total_amount)}
+                </h3>
+
+                <p className="mt-2 truncate text-sm text-[#6B6258]">
+                  {order.customer_name || "Customer"} • {order.phone || "No phone"}
+                </p>
+
+                <p className="mt-1 truncate text-sm text-[#6B6258]">
+                  {order.delivery_type || "Delivery"} • {order.flat || "Address not available"}
+                </p>
+
+                {scheduled ? (
+                  <p className="mt-2 w-fit rounded-full border border-[#D8C9B3] bg-[#FFF0DF] px-3 py-1 text-xs font-black text-[#3F5128]">
+                    🕒 {formatScheduledDateTime(order.scheduled_for)}
+                  </p>
+                ) : null}
+              </div>
+
+              <span
+                className={`rounded-full px-3 py-1 text-[10px] font-black ${getStatusPillClass(
+                  autoStatus
+                )}`}
+              >
+                {getStatusLabel(autoStatus)}
+              </span>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-[#EADFCE] bg-[#FFFDF7] p-3">
+              <p className="text-xs font-black uppercase tracking-wide text-[#6B6258]">
+                Items
+              </p>
+
+              <div className="mt-2">
+                {renderItemsPreview(items)}
+              </div>
+            </div>
+
+            <Link
+              to={`/order-chat/${order.id}`}
+              className="mt-4 flex items-center justify-between rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF] p-4"
+            >
+              <div>
+                <p className="font-black text-[#3F5128]">
+                  Chat with customer
+                </p>
+                <p className="mt-1 text-xs text-[#6B6258]">
+                  Confirm changes, pickup, or delivery details.
+                </p>
+              </div>
+              <span className="text-xl text-[#3F5128]">›</span>
+            </Link>
+
+            <div className="mt-4 space-y-3">
+              {sellerResponse === "pending" ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => acceptOrder(order.id)}
+                    className="rounded-2xl border border-[#3F5128] bg-[#3F5128] py-3 font-black text-white"
+                  >
+                    Accept
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => rejectOrder(order.id)}
+                    className="rounded-2xl border border-red-200 bg-red-50 py-3 font-black text-red-600"
+                  >
+                    Reject
+                  </button>
+                </div>
+              ) : null}
+
+              {sellerResponse === "accepted" && orderIsSelfPickup && !order.ready_for_pickup ? (
+                <button
+                  type="button"
+                  onClick={() => markReadyForPickup(order.id)}
+                  className="w-full rounded-2xl border border-[#CF743D] bg-[#FFF0DF] py-3 font-black text-[#3F5128]"
+                >
+                  Mark Ready for Pickup
+                </button>
+              ) : null}
+
+              {sellerResponse === "accepted" ? (
+                <button
+                  type="button"
+                  onClick={() => completeOrder(order.id)}
+                  className="w-full rounded-2xl border border-[#3F5128] bg-[#3F5128] py-3 font-black text-white"
+                >
+                  Complete Order
+                </button>
+              ) : null}
+            </div>
+          </article>
+        );
+      });
+    }
+
+    function renderReceivedHistory() {
+      if (ordersLoading) {
+        return (
+          <div className={`p-6 text-[#6B6258] ${SOFT_CARD}`}>
+            Loading received order history...
+          </div>
+        );
+      }
+
+      if (historyOrders.length === 0) {
+        return (
+          <div className={`p-8 text-center ${SOFT_CARD}`}>
+            <div className="text-4xl">📚</div>
+            <p className="mt-3 font-black text-[#181411]">
+              No received orders yet.
+            </p>
+            <p className="mt-1 text-sm font-semibold text-[#6B6258]">
+              Every order received by this kitchen will appear here.
+            </p>
+          </div>
+        );
+      }
+
+      return (
+        <div className="space-y-3">
+          {historyOrders.map((order) => {
             const autoStatus = getAutoStatus(order);
-            const sellerResponse = normalizeSellerResponse(
-              order.seller_response
-            );
-            const orderIsSelfPickup = isSelfPickup(order);
-            const scheduled = isScheduledOrder(order);
             const items = getOrderItems(order);
+            const scheduled = isScheduledOrder(order);
+            const isActiveOrder = activeSellerOrders.some(
+              (activeOrder) => String(activeOrder.id) === String(order.id)
+            );
+            const sellerEarning = Number(
+              order.seller_amount ||
+                order.subtotal_amount ||
+                order.total_amount ||
+                0
+            );
 
             return (
-              <article key={order.id} className={`p-4 ${CARD}`}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-[#6B6258]">
-                      Order #{String(order.id).slice(0, 8)}
+              <article key={order.id} className={`overflow-hidden ${CARD}`}>
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-[#6B6258]">
+                        Order #{String(order.id).slice(0, 8)}
+                      </p>
+
+                      <h3 className="mt-1 text-xl font-black text-[#3F5128]">
+                        ₹{formatMoney(order.total_amount)}
+                      </h3>
+
+                      <p className="mt-1 text-xs font-semibold text-[#9A8E80]">
+                        {formatOrderDateTime(order.created_at)}
+                      </p>
+                    </div>
+
+                    <span
+                      className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-black ${getStatusPillClass(
+                        autoStatus
+                      )}`}
+                    >
+                      {getStatusLabel(autoStatus)}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 rounded-2xl border border-[#EADFCE] bg-[#FFFDF7] p-3">
+                    <p className="truncate text-sm font-black text-[#181411]">
+                      {order.customer_name || "Customer"}
                     </p>
 
-                    <h3 className="mt-1 text-2xl font-black text-[#3F5128]">
-                      ₹{formatMoney(order.total_amount)}
-                    </h3>
-
-                    <p className="mt-2 truncate text-sm text-[#6B6258]">
-                      {order.customer_name || "Customer"} • {order.phone || "No phone"}
+                    <p className="mt-1 truncate text-xs font-semibold text-[#6B6258]">
+                      {order.phone || "No phone"} • {order.delivery_type || "Delivery"}
                     </p>
 
-                    <p className="mt-1 truncate text-sm text-[#6B6258]">
-                      {order.delivery_type || "Delivery"} • {order.flat || "Address not available"}
+                    <p className="mt-1 truncate text-xs font-semibold text-[#6B6258]">
+                      {order.flat || "Address not available"}
                     </p>
 
                     {scheduled ? (
-                      <p className="mt-2 w-fit rounded-full border border-[#D8C9B3] bg-[#FFF0DF] px-3 py-1 text-xs font-black text-[#3F5128]">
+                      <p className="mt-2 w-fit rounded-full border border-[#D8C9B3] bg-[#FFF0DF] px-3 py-1 text-[11px] font-black text-[#3F5128]">
                         🕒 {formatScheduledDateTime(order.scheduled_for)}
                       </p>
                     ) : null}
                   </div>
 
-                  <span
-                    className={`rounded-full px-3 py-1 text-[10px] font-black ${getStatusPillClass(
-                      autoStatus
-                    )}`}
-                  >
-                    {getStatusLabel(autoStatus)}
-                  </span>
-                </div>
+                  <div className="mt-3 rounded-2xl border border-[#EADFCE] bg-white p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-xs font-black uppercase tracking-wide text-[#6B6258]">
+                        Items
+                      </p>
 
-                <div className="mt-4 rounded-2xl border border-[#EADFCE] bg-[#FFFDF7] p-3">
-                  <p className="text-xs font-black uppercase tracking-wide text-[#6B6258]">
-                    Items
-                  </p>
+                      <p className="text-xs font-black text-[#CF743D]">
+                        Seller earning ₹{formatMoney(sellerEarning)}
+                      </p>
+                    </div>
 
-                  <div className="mt-2 space-y-2">
-                    {items.length === 0 ? (
-                      <p className="text-sm text-[#6B6258]">No item details.</p>
+                    <div className="mt-2">
+                      {renderItemsPreview(items)}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <Link
+                      to={`/order-chat/${order.id}`}
+                      className="rounded-xl border border-[#D8C9B3] bg-[#FFFDF7] py-3 text-center text-xs font-black text-[#3F5128]"
+                    >
+                      Open Chat
+                    </Link>
+
+                    {isActiveOrder ? (
+                      <button
+                        type="button"
+                        onClick={() => setOrderListMode("active")}
+                        className="rounded-xl border border-[#CF743D] bg-[#FFF0DF] py-3 text-xs font-black text-[#3F5128]"
+                      >
+                        Manage Order
+                      </button>
                     ) : (
-                      items.map((item, index) => (
-                        <div
-                          key={`${item.id || item.name}-${index}`}
-                          className="flex items-center justify-between gap-3 text-sm"
-                        >
-                          <p className="min-w-0 truncate text-[#181411]">
-                            {item.name || "Food item"} × {item.quantity || 1}
-                          </p>
-                          <p className="shrink-0 font-black text-[#3F5128]">
-                            ₹{formatMoney(Number(item.price || 0) * Number(item.quantity || 1))}
-                          </p>
-                        </div>
-                      ))
+                      <button
+                        type="button"
+                        disabled
+                        className="rounded-xl border border-[#EADFCE] bg-[#F7EFE4] py-3 text-xs font-black text-[#9A8E80]"
+                      >
+                        History
+                      </button>
                     )}
                   </div>
                 </div>
-
-                <Link
-                  to={`/order-chat/${order.id}`}
-                  className="mt-4 flex items-center justify-between rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF] p-4"
-                >
-                  <div>
-                    <p className="font-black text-[#3F5128]">
-                      Chat with customer
-                    </p>
-                    <p className="mt-1 text-xs text-[#6B6258]">
-                      Confirm changes, pickup, or delivery details.
-                    </p>
-                  </div>
-                  <span className="text-xl text-[#3F5128]">›</span>
-                </Link>
-
-                <div className="mt-4 space-y-3">
-                  {sellerResponse === "pending" ? (
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => acceptOrder(order.id)}
-                        className="rounded-2xl border border-[#3F5128] bg-[#3F5128] py-3 font-black text-white"
-                      >
-                        Accept
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => rejectOrder(order.id)}
-                        className="rounded-2xl border border-red-200 bg-red-50 py-3 font-black text-red-600"
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  ) : null}
-
-                  {sellerResponse === "accepted" && orderIsSelfPickup && !order.ready_for_pickup ? (
-                    <button
-                      type="button"
-                      onClick={() => markReadyForPickup(order.id)}
-                      className="w-full rounded-2xl border border-[#CF743D] bg-[#FFF0DF] py-3 font-black text-[#3F5128]"
-                    >
-                      Mark Ready for Pickup
-                    </button>
-                  ) : null}
-
-                  {sellerResponse === "accepted" ? (
-                    <button
-                      type="button"
-                      onClick={() => completeOrder(order.id)}
-                      className="w-full rounded-2xl border border-[#3F5128] bg-[#3F5128] py-3 font-black text-white"
-                    >
-                      Complete Order
-                    </button>
-                  ) : null}
-                </div>
               </article>
             );
-          })
-        )}
+          })}
+        </div>
+      );
+    }
+
+    return (
+      <section className="space-y-4">
+        <div className={`p-5 ${CARD}`}>
+          <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
+            Kitchen orders
+          </p>
+          <h2 className="mt-1 text-2xl font-black text-[#181411]">
+            Orders
+          </h2>
+          <p className="mt-1 text-sm text-[#6B6258]">
+            Manage active orders and review every order received by your kitchen.
+          </p>
+        </div>
+
+        <section className="grid grid-cols-3 gap-3">
+          <StatCard label="Received" value={sellerOrders.length} />
+          <StatCard label="Completed" value={completedHistoryCount} />
+          <StatCard label="Cancelled" value={cancelledHistoryCount} />
+        </section>
+
+        <div className={`grid grid-cols-2 gap-2 p-1 ${SOFT_CARD}`}>
+          <button
+            type="button"
+            onClick={() => setOrderListMode("active")}
+            className={`rounded-[18px] px-3 py-3 text-xs font-black transition active:scale-[0.98] ${
+              orderListMode === "active"
+                ? "bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15"
+                : "bg-transparent text-[#6B6258]"
+            }`}
+          >
+            Active Orders ({activeSellerOrders.length})
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setOrderListMode("history")}
+            className={`rounded-[18px] px-3 py-3 text-xs font-black transition active:scale-[0.98] ${
+              orderListMode === "history"
+                ? "bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15"
+                : "bg-transparent text-[#6B6258]"
+            }`}
+          >
+            Received History ({historyOrders.length})
+          </button>
+        </div>
+
+        {orderListMode === "active" ? renderActiveOrders() : renderReceivedHistory()}
       </section>
     );
   }

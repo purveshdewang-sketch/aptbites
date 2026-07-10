@@ -20,7 +20,8 @@ const PLATFORM_FEE = 8;
 const NeFo_UPI_ID =
   "cropg1agroresearch@sbi";
 
-const NeFo_PAYEE_NAME = "NeFo";
+const NeFo_PAYEE_NAME =
+  "CROPG1 AGRO RESEARCH AND DEVELOPMENT PVT LTD";
 
 const CHECKOUT_STORAGE_PREFIX =
   "NeFo_checkout_details";
@@ -61,6 +62,16 @@ function formatMoney(value) {
       maximumFractionDigits: 2,
     }
   );
+}
+
+function formatUpiAmount(value) {
+  const amount = Number(value || 0);
+
+  if (!Number.isFinite(amount)) {
+    return "0.00";
+  }
+
+  return amount.toFixed(2);
 }
 
 function formatDateValue(date) {
@@ -506,9 +517,9 @@ export default function Checkout() {
     )}&pn=${encodeURIComponent(
       NeFo_PAYEE_NAME
     )}&am=${encodeURIComponent(
-      totalAmount
+      formatUpiAmount(totalAmount)
     )}&cu=INR&tn=${encodeURIComponent(
-      "NeFo food order"
+      `NeFo food order ₹${formatUpiAmount(totalAmount)}`
     )}`;
 
   const qrCodeUrl =
@@ -687,14 +698,15 @@ export default function Checkout() {
           ?.phone ||
         "";
 
-      const savedAddress = [
-        profileData?.flat_no,
-        profileData?.block,
-        profileData
-          ?.apartment_name,
-      ]
-        .filter(Boolean)
-        .join(", ");
+      const savedAddress =
+        profileData?.flat_no ||
+        profileData?.flat ||
+        [
+          profileData?.block,
+          profileData?.apartment_name,
+        ]
+          .filter(Boolean)
+          .join(", ");
 
       setFormData(
         (current) => ({
@@ -1561,7 +1573,7 @@ export default function Checkout() {
       await supabase
         .from("foods")
         .select(
-          "id, name, stock, user_id, seller_id"
+          "id, name, stock, user_id"
         )
         .in("id", foodIds);
 
@@ -1690,7 +1702,18 @@ export default function Checkout() {
       !paymentReference.trim()
     ) {
       nextErrors.payment =
-        "Upload the UPI payment screenshot or enter the transaction reference.";
+        "Upload the completed UPI payment screenshot or enter the transaction reference.";
+    }
+
+    const cleanPaymentReference =
+      paymentReference.trim();
+
+    if (
+      cleanPaymentReference &&
+      !/^[A-Za-z0-9/-]{8,40}$/.test(cleanPaymentReference)
+    ) {
+      nextErrors.payment =
+        "Enter a valid UPI transaction ID/reference from the completed payment screen.";
     }
 
     setErrors(nextErrors);
@@ -1980,8 +2003,8 @@ export default function Checkout() {
 
         payment_status:
           paymentProofUrl
-            ? "proof_submitted"
-            : "reference_submitted",
+            ? "proof_submitted_pending_verification"
+            : "reference_submitted_pending_verification",
 
         payment_reference:
           paymentReference.trim(),
@@ -3095,6 +3118,10 @@ export default function Checkout() {
                   UPI ID:{" "}
                   {NeFo_UPI_ID}
                 </p>
+
+                <p className="mt-1 line-clamp-2 text-[10px] font-bold text-[#6B6258]">
+                  Receiver: {NeFo_PAYEE_NAME}
+                </p>
               </div>
 
               <button
@@ -3190,8 +3217,10 @@ export default function Checkout() {
                 </p>
 
                 <p className="mt-1 text-xs font-semibold text-[#6B6258]">
-                  JPG, PNG or WEBP
-                  up to 5 MB
+                  Upload only a successful
+                  / completed payment
+                  screenshot. JPG, PNG
+                  or WEBP up to 5 MB.
                 </p>
               </button>
 
@@ -3243,8 +3272,12 @@ export default function Checkout() {
                   );
                 }}
                 className={`${INPUT} mt-2`}
-                placeholder="Enter transaction ID or reference"
+                placeholder="Example: 619175270428"
               />
+
+              <p className="mt-2 text-[10px] font-semibold leading-relaxed text-[#6B6258]">
+                Do not submit failed, refunded, pending, or money-will-be-refunded screenshots.
+              </p>
             </label>
 
             {paymentMessage ? (
