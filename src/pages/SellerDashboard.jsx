@@ -14,6 +14,24 @@ const FOOD_CATEGORIES = [
   "Specials",
 ];
 
+const FOOD_TYPES = ["Veg", "Non-Veg"];
+
+const READY_TIME_OPTIONS = [
+  "10 min",
+  "15 min",
+  "20 min",
+  "25 min",
+  "30 min",
+  "35 min",
+  "40 min",
+  "45 min",
+  "50 min",
+  "1 hour",
+  "1 hour 15 min",
+  "1 hour 30 min",
+  "2 hours",
+];
+
 const CARD =
   "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
@@ -44,6 +62,26 @@ function normalizeText(value) {
     .toLowerCase();
 }
 
+function sanitizeReadyTime(value) {
+  const cleanValue = String(value || "").trim();
+
+  if (normalizeText(cleanValue) === "all day") {
+    return "";
+  }
+
+  return cleanValue;
+}
+
+function getOptionsWithCurrentValue(options, currentValue) {
+  const cleanValue = String(currentValue || "").trim();
+
+  if (!cleanValue || options.includes(cleanValue)) {
+    return options;
+  }
+
+  return [cleanValue, ...options];
+}
+
 function formatMoney(value) {
   return Number(value || 0).toLocaleString("en-IN", {
     maximumFractionDigits: 2,
@@ -69,6 +107,8 @@ export default function SellerDashboard() {
   const previousOrderIdsRef = useRef([]);
   const uploadImageInputRef = useRef(null);
   const cameraImageInputRef = useRef(null);
+  const imagePickerActiveRef = useRef(false);
+  const imagePickerTimeoutRef = useRef(null);
 
   const [activeTab, setActiveTab] = useState("dashboard");
 
@@ -128,9 +168,20 @@ export default function SellerDashboard() {
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [messagesLoading, setMessagesLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [openDishDropdown, setOpenDishDropdown] = useState("");
 
   useEffect(() => {
     const pageBackHandler = () => {
+      if (imagePickerActiveRef.current) {
+        imagePickerActiveRef.current = false;
+        return true;
+      }
+
+      if (openDishDropdown) {
+        setOpenDishDropdown("");
+        return true;
+      }
+
       if (activeTab !== "dashboard") {
         setActiveTab("dashboard");
         return true;
@@ -146,7 +197,44 @@ export default function SellerDashboard() {
         delete window.NeFoPageBack;
       }
     };
-  }, [activeTab]);
+  }, [activeTab, openDishDropdown]);
+
+
+  useEffect(() => {
+    if (!openDishDropdown) return undefined;
+
+    function closeOnOutsideTap(event) {
+      if (
+        event.target.closest("[data-nefo-dish-dropdown]")
+      ) {
+        return;
+      }
+
+      setOpenDishDropdown("");
+    }
+
+    function closeOnEscape(event) {
+      if (event.key === "Escape") {
+        setOpenDishDropdown("");
+      }
+    }
+
+    document.addEventListener("pointerdown", closeOnOutsideTap);
+    document.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsideTap);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [openDishDropdown]);
+
+  useEffect(() => {
+    return () => {
+      if (imagePickerTimeoutRef.current) {
+        window.clearTimeout(imagePickerTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!user) return undefined;
@@ -734,6 +822,83 @@ export default function SellerDashboard() {
     }
   }
 
+  function handleDishDropdownSelect(name, value) {
+    const nextValue =
+      name === "time" ? sanitizeReadyTime(value) : value;
+
+    setFormData((currentData) => ({
+      ...currentData,
+      [name]: nextValue,
+    }));
+
+    setDishErrors((currentErrors) => ({
+      ...currentErrors,
+      [name]: "",
+    }));
+
+    setOpenDishDropdown("");
+  }
+
+  function markImagePickerOpening() {
+    imagePickerActiveRef.current = true;
+
+    if (imagePickerTimeoutRef.current) {
+      window.clearTimeout(imagePickerTimeoutRef.current);
+    }
+
+    imagePickerTimeoutRef.current = window.setTimeout(() => {
+      imagePickerActiveRef.current = false;
+      imagePickerTimeoutRef.current = null;
+    }, 12000);
+  }
+
+  function releaseImagePickerLock() {
+    imagePickerActiveRef.current = false;
+
+    if (imagePickerTimeoutRef.current) {
+      window.clearTimeout(imagePickerTimeoutRef.current);
+      imagePickerTimeoutRef.current = null;
+    }
+  }
+
+  function openImageInput(inputRef, source) {
+    const input = inputRef.current;
+
+    setDishErrors((currentErrors) => ({
+      ...currentErrors,
+      image: "",
+    }));
+
+    if (!input) {
+      setDishErrors((currentErrors) => ({
+        ...currentErrors,
+        image: "Photo picker is not ready. Please try again.",
+      }));
+      return;
+    }
+
+    markImagePickerOpening();
+    setMessage(source === "camera" ? "Opening camera..." : "Opening photos...");
+
+    input.value = "";
+
+    window.requestAnimationFrame(() => {
+      try {
+        input.click();
+      } catch {
+        releaseImagePickerLock();
+
+        setDishErrors((currentErrors) => ({
+          ...currentErrors,
+          image:
+            source === "camera"
+              ? "Camera could not open. Please use Upload photo."
+              : "Photo picker could not open. Please try again.",
+        }));
+      }
+    });
+  }
+
   function getOrderItems(order) {
     if (Array.isArray(order.items)) return order.items;
 
@@ -894,9 +1059,14 @@ export default function SellerDashboard() {
   }
 
   async function handleImageChange(event) {
+    releaseImagePickerLock();
+
     const file = event.target.files?.[0];
 
-    if (!file) return;
+    if (!file) {
+      setMessage("");
+      return;
+    }
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
 
@@ -905,6 +1075,7 @@ export default function SellerDashboard() {
         ...currentErrors,
         image: "Please upload a JPG, PNG, or WEBP image.",
       }));
+      event.target.value = "";
       return;
     }
 
@@ -926,12 +1097,15 @@ export default function SellerDashboard() {
         ...currentErrors,
         image: "Could not process this image.",
       }));
+    } finally {
+      event.target.value = "";
     }
   }
 
   function removeSelectedImage() {
     setImageFile(null);
     setImagePreview(editingFood?.image || "");
+    releaseImagePickerLock();
 
     if (uploadImageInputRef.current) {
       uploadImageInputRef.current.value = "";
@@ -1036,6 +1210,8 @@ export default function SellerDashboard() {
     setEditingFood(null);
     setImageFile(null);
     setImagePreview("");
+    setOpenDishDropdown("");
+    releaseImagePickerLock();
 
     if (uploadImageInputRef.current) {
       uploadImageInputRef.current.value = "";
@@ -1053,7 +1229,7 @@ export default function SellerDashboard() {
       name: food.name || "",
       price: food.price || "",
       seller: food.seller || sellerSetupData.seller_kitchen_name || "",
-      time: food.time || "",
+      time: sanitizeReadyTime(food.time),
       stock:
         Number(food.stock) >= UNLIMITED_STOCK ? "" : String(food.stock ?? ""),
       type: food.type || "Veg",
@@ -1799,6 +1975,16 @@ export default function SellerDashboard() {
   }
 
   function MenuView() {
+    const categoryOptions = getOptionsWithCurrentValue(
+      FOOD_CATEGORIES,
+      formData.category
+    );
+
+    const foodTypeOptions = getOptionsWithCurrentValue(
+      FOOD_TYPES,
+      formData.type
+    );
+
     return (
       <section className="space-y-5">
         <form onSubmit={handleSubmit} className={`p-5 ${CARD}`}>
@@ -1870,41 +2056,52 @@ export default function SellerDashboard() {
             </div>
 
             <Field label="Ready time" error={dishErrors.time} required>
-              <input
+              <NeFoSelect
                 name="time"
                 value={formData.time}
-                onChange={handleChange}
-                className={INPUT}
-                placeholder="Ready time e.g. 7:30 PM"
+                placeholder="Select ready time"
+                options={READY_TIME_OPTIONS}
+                isOpen={openDishDropdown === "time"}
+                onToggle={() =>
+                  setOpenDishDropdown((current) =>
+                    current === "time" ? "" : "time"
+                  )
+                }
+                onSelect={handleDishDropdownSelect}
               />
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
               <Field label="Category">
-                <select
+                <NeFoSelect
                   name="category"
                   value={formData.category}
-                  onChange={handleChange}
-                  className={INPUT}
-                >
-                  {FOOD_CATEGORIES.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Choose category"
+                  options={categoryOptions}
+                  isOpen={openDishDropdown === "category"}
+                  onToggle={() =>
+                    setOpenDishDropdown((current) =>
+                      current === "category" ? "" : "category"
+                    )
+                  }
+                  onSelect={handleDishDropdownSelect}
+                />
               </Field>
 
               <Field label="Food type">
-                <select
+                <NeFoSelect
                   name="type"
                   value={formData.type}
-                  onChange={handleChange}
-                  className={INPUT}
-                >
-                  <option value="Veg">Veg</option>
-                  <option value="Non-Veg">Non-Veg</option>
-                </select>
+                  placeholder="Choose type"
+                  options={foodTypeOptions}
+                  isOpen={openDishDropdown === "type"}
+                  onToggle={() =>
+                    setOpenDishDropdown((current) =>
+                      current === "type" ? "" : "type"
+                    )
+                  }
+                  onSelect={handleDishDropdownSelect}
+                />
               </Field>
             </div>
 
@@ -1950,7 +2147,11 @@ export default function SellerDashboard() {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
-                  onClick={() => uploadImageInputRef.current?.click()}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    openImageInput(uploadImageInputRef, "gallery");
+                  }}
                   className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-4 text-sm font-black text-[#3F5128]"
                 >
                   Upload photo
@@ -1958,7 +2159,11 @@ export default function SellerDashboard() {
 
                 <button
                   type="button"
-                  onClick={() => cameraImageInputRef.current?.click()}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    openImageInput(cameraImageInputRef, "camera");
+                  }}
                   className="rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF] py-4 text-sm font-black text-[#3F5128]"
                 >
                   Use camera
@@ -2675,6 +2880,84 @@ export default function SellerDashboard() {
         </div>
       </nav>
     </main>
+  );
+}
+
+function NeFoSelect({
+  name,
+  value,
+  placeholder,
+  options,
+  isOpen,
+  onToggle,
+  onSelect,
+}) {
+  return (
+    <div className="relative" data-nefo-dish-dropdown={name}>
+      <button
+        type="button"
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          onToggle();
+        }}
+        className={`${INPUT} flex items-center justify-between gap-3 border-2 text-left active:scale-[0.99]`}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+      >
+        <span
+          className={`min-w-0 truncate ${
+            value ? "text-[#181411]" : "text-[#9A8E80]"
+          }`}
+        >
+          {value || placeholder}
+        </span>
+
+        <span
+          className={`shrink-0 text-lg font-black text-[#3F5128] transition-transform ${
+            isOpen ? "rotate-180" : ""
+          }`}
+          aria-hidden="true"
+        >
+          ⌄
+        </span>
+      </button>
+
+      {isOpen ? (
+        <div
+          role="listbox"
+          className="absolute left-0 right-0 top-full z-[1200] mt-2 max-h-64 overflow-y-auto rounded-2xl border-2 border-[#D8C9B3] bg-[#FFFDF7] p-2 shadow-2xl shadow-[#181411]/20"
+        >
+          {options.map((option) => {
+            const selected = option === value;
+
+            return (
+              <button
+                key={option}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onSelect(name, option);
+                }}
+                className={`mb-1 flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left text-sm font-black last:mb-0 active:scale-[0.99] ${
+                  selected
+                    ? "border-[#CF743D] bg-[#FFF0DF] text-[#3F5128]"
+                    : "border-[#EADFCE] bg-white text-[#181411]"
+                }`}
+              >
+                <span>{option}</span>
+                {selected ? (
+                  <span className="text-[#CF743D]">✓</span>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
