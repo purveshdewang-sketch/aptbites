@@ -249,17 +249,6 @@ export default function CustomerCare() {
             details, ingredients, freshness, and hygiene-related information
             before ordering.
           </p>
-
-          <div className="mt-5 rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF] p-4">
-            <p className="text-sm font-black text-[#3F5128]">
-              Privacy-safe coordination
-            </p>
-
-            <p className="mt-1 text-sm font-semibold leading-relaxed text-[#6B6258]">
-              Exact kitchen door/location should not be shown publicly. Pickup
-              and support coordination should happen through NeFo.
-            </p>
-          </div>
         </section>
       </div>
     </main>
