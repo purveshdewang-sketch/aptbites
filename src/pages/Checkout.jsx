@@ -413,6 +413,11 @@ export default function Checkout() {
     setLoading,
   ] = useState(false);
 
+  const [
+    testOrderMode,
+    setTestOrderMode,
+  ] = useState(false);
+
   const dateOptions =
     useMemo(
       () => buildDateOptions(),
@@ -526,6 +531,10 @@ export default function Checkout() {
     `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(
       upiPaymentLink
     )}`;
+
+  const manualPaymentText =
+    `Pay ₹${formatUpiAmount(totalAmount)} to ${NeFo_UPI_ID}`;
+
 
   function getCheckoutStorageKey() {
     return user
@@ -1422,6 +1431,22 @@ export default function Checkout() {
     }, 1800);
   }
 
+  function openUpiPayment() {
+    setPaymentMessage(
+      "Opening UPI app. If it does not open, use Copy UPI ID or Scan QR."
+    );
+
+    setShowQr(true);
+
+    try {
+      window.location.href = upiPaymentLink;
+    } catch {
+      setPaymentMessage(
+        "Could not open UPI app. Copy the UPI ID and pay manually."
+      );
+    }
+  }
+
   function handlePaymentProofChange(
     event
   ) {
@@ -1698,6 +1723,7 @@ export default function Checkout() {
     }
 
     if (
+      !testOrderMode &&
       !paymentProofFile &&
       !paymentReference.trim()
     ) {
@@ -1709,6 +1735,7 @@ export default function Checkout() {
       paymentReference.trim();
 
     if (
+      !testOrderMode &&
       cleanPaymentReference &&
       !/^[A-Za-z0-9/-]{8,40}$/.test(cleanPaymentReference)
     ) {
@@ -1941,7 +1968,9 @@ export default function Checkout() {
       await validateLiveStockBeforeOrder();
 
       const paymentProofUrl =
-        await uploadPaymentProof();
+        testOrderMode
+          ? ""
+          : await uploadPaymentProof();
 
       const latestTotalAmount =
         subtotalAmount +
@@ -2002,15 +2031,22 @@ export default function Checkout() {
           paymentMethod,
 
         payment_status:
-          paymentProofUrl
+          testOrderMode
+            ? "test_order_no_payment"
+            : paymentProofUrl
             ? "proof_submitted_pending_verification"
             : "reference_submitted_pending_verification",
 
         payment_reference:
-          paymentReference.trim(),
+          testOrderMode
+            ? "TEST_ORDER_NO_PAYMENT"
+            : paymentReference.trim(),
 
         payment_proof_url:
           paymentProofUrl,
+
+        payment_test_mode:
+          testOrderMode,
       };
 
       const {
@@ -2163,15 +2199,19 @@ export default function Checkout() {
           </div>
 
           <p className="mt-6 text-xs font-black uppercase tracking-wide text-[#CF743D]">
-            {orderTiming ===
-            "scheduled"
+            {testOrderMode
+              ? "Test Order Created"
+              : orderTiming ===
+              "scheduled"
               ? "Order Scheduled"
               : "Order Confirmed"}
           </p>
 
           <h1 className="mt-3 text-3xl font-black leading-tight text-[#181411]">
-            {orderTiming ===
-            "scheduled"
+            {testOrderMode
+              ? "Your test order was created without payment."
+              : orderTiming ===
+              "scheduled"
               ? "Your order has been scheduled."
               : "Your food is now being prepared."}
           </h1>
@@ -3101,6 +3141,43 @@ export default function Checkout() {
           <div
             className={`mt-3 p-4 ${CARD}`}
           >
+            <label className="mb-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-yellow-300 bg-yellow-50 p-4">
+              <input
+                type="checkbox"
+                checked={testOrderMode}
+                onChange={(event) => {
+                  const checked = event.target.checked;
+
+                  setTestOrderMode(checked);
+
+                  if (checked) {
+                    setErrors((current) => ({
+                      ...current,
+                      payment: "",
+                    }));
+
+                    setPaymentMessage(
+                      "Test order mode ON. No real payment will be required."
+                    );
+                  } else {
+                    setPaymentMessage("");
+                  }
+                }}
+                className="mt-1 h-5 w-5 accent-[#3F5128]"
+              />
+
+              <span>
+                <span className="block text-sm font-black text-yellow-800">
+                  Test order without payment
+                </span>
+
+                <span className="mt-1 block text-xs font-semibold leading-relaxed text-yellow-800">
+                  Use this only for trial orders. It will create the order with payment status
+                  marked as test_order_no_payment.
+                </span>
+              </span>
+            </label>
+
             <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF] p-4">
               <div className="min-w-0">
                 <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
@@ -3139,12 +3216,13 @@ export default function Checkout() {
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <a
-                href={upiPaymentLink}
+              <button
+                type="button"
+                onClick={openUpiPayment}
                 className="flex h-12 items-center justify-center rounded-2xl border border-[#3F5128] bg-[#3F5128] text-sm font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-[0.98]"
               >
                 Pay via UPI App
-              </a>
+              </button>
 
               <button
                 type="button"
@@ -3160,6 +3238,58 @@ export default function Checkout() {
                   ? "Hide QR"
                   : "Scan QR"}
               </button>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-4">
+              <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
+                Manual UPI fallback
+              </p>
+
+              <p className="mt-2 text-sm font-black text-[#181411]">
+                Pay exactly ₹{formatMoney(totalAmount)}
+              </p>
+
+              <p className="mt-1 break-all text-xs font-semibold text-[#6B6258]">
+                To: {NeFo_UPI_ID}
+              </p>
+
+              <p className="mt-1 text-xs font-semibold text-[#6B6258]">
+                Receiver should show: {NeFo_PAYEE_NAME}
+              </p>
+
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    copyToClipboard(
+                      NeFo_UPI_ID,
+                      "UPI ID"
+                    )
+                  }
+                  className="rounded-xl border border-[#D8C9B3] bg-white py-3 text-xs font-black text-[#3F5128]"
+                >
+                  Copy UPI ID
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    copyToClipboard(
+                      manualPaymentText,
+                      "Payment details"
+                    )
+                  }
+                  className="rounded-xl border border-[#D8C9B3] bg-white py-3 text-xs font-black text-[#3F5128]"
+                >
+                  Copy Amount
+                </button>
+              </div>
+
+              <p className="mt-3 text-[10px] font-semibold leading-relaxed text-[#6B6258]">
+                If Pay via UPI App fails, open Google Pay / PhonePe manually,
+                paste this UPI ID, enter the same amount, then upload only the
+                Completed screenshot.
+              </p>
             </div>
 
             {showQr ? (
@@ -3188,6 +3318,12 @@ export default function Checkout() {
             {errors.payment ? (
               <p className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-3 text-xs font-black text-red-600">
                 {errors.payment}
+              </p>
+            ) : null}
+
+            {testOrderMode ? (
+              <p className="mt-4 rounded-2xl border border-yellow-300 bg-yellow-50 p-3 text-xs font-black text-yellow-800">
+                Test mode is active. Payment screenshot and transaction reference are not required.
               </p>
             ) : null}
 
@@ -3329,6 +3465,8 @@ export default function Checkout() {
               ? "Checking..."
               : checkoutBlocked
               ? "Unavailable"
+              : testOrderMode
+              ? "Place Test Order"
               : orderTiming ===
                 "scheduled"
               ? "Schedule Order"
