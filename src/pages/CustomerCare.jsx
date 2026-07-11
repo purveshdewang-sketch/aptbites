@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 
-const SUPPORT_EMAIL = "NeFosupport@gmail.com";
+const SUPPORT_EMAIL = "nefosupport@gmail.com";
 
 const CARD =
   "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
