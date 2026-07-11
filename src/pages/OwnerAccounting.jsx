@@ -828,7 +828,7 @@ export default function OwnerAccounting() {
                   </p>
 
                   <h2 className="mt-1 text-2xl font-black text-[#181411]">
-                    Amount to send
+                    Seller payout amount
                   </h2>
                 </div>
 
@@ -848,100 +848,118 @@ export default function OwnerAccounting() {
                   {sellerLedger.map((seller) => (
                     <article
                       key={seller.sellerId}
-                      className="rounded-[24px] border border-[#D8C9B3] bg-[#FFFDF7] p-4"
+                      className="overflow-hidden rounded-[26px] border-2 border-[#3F5128] bg-white"
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="truncate font-black text-[#181411]">
-                            {seller.sellerName}
-                          </p>
+                      <div className="bg-[#3F5128] p-5 text-white">
+                        <p className="text-xs font-black uppercase tracking-wide text-[#F3C06E]">
+                          Send to Seller
+                        </p>
 
-                          <p className="mt-1 text-xs font-semibold text-[#6B6258]">
-                            {seller.phone || seller.email || "No contact"}
+                        <div className="mt-2 flex items-end justify-between gap-4">
+                          <div className="min-w-0">
+                            <h3 className="truncate text-xl font-black">
+                              {seller.sellerName}
+                            </h3>
+
+                            <p className="mt-1 truncate text-xs font-semibold text-white/75">
+                              {seller.phone || seller.email || "No contact"}
+                            </p>
+                          </div>
+
+                          <p className="shrink-0 text-5xl font-black leading-none text-[#F3C06E]">
+                            ₹{seller.sellerNetPayout}
                           </p>
                         </div>
 
-                        <p className="shrink-0 text-xl font-black text-[#3F5128]">
-                          ₹{seller.sellerNetPayout}
+                        <p className="mt-3 rounded-2xl bg-white/10 px-3 py-2 text-xs font-black text-white">
+                          Final payout after deducting commission.
                         </p>
                       </div>
 
-                      <div className="mt-4 grid grid-cols-3 gap-2">
-                        <SmallMetric label="Orders" value={seller.totalOrders} />
-                        <SmallMetric
-                          label="Done"
-                          value={seller.completedOrders}
-                        />
-                        <SmallMetric
-                          label="Pending"
-                          value={seller.pendingPayments}
-                        />
-                      </div>
-
-                      <div className="mt-4 space-y-2 rounded-2xl border border-[#D8C9B3] bg-white p-4">
-                        <DetailLine
-                          label="Gross Sales"
-                          value={`₹${seller.grossSales}`}
-                        />
-                        <DetailLine
-                          label="Seller Earning"
-                          value={`₹${seller.sellerGrossEarning}`}
-                        />
-                        <DetailLine
-                          label="Commission"
-                          value={`₹${seller.sellerCommission}`}
-                        />
-                        <DetailLine
-                          label="Platform Fee"
-                          value={`₹${seller.platformFee}`}
-                        />
-                        <DetailLine
-                          label="NeFo Earning"
-                          value={`₹${seller.NeFoTotalEarning}`}
-                        />
-                      </div>
-
-                      <div className="mt-4 rounded-2xl border border-[#D8C9B3] bg-white p-4">
-                        <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
-                          Bank Details
-                        </p>
-
-                        <div className="mt-3 space-y-2">
-                          <DetailLine
-                            label="Holder"
-                            value={seller.bankAccountHolder || "Not added"}
+                      <div className="p-4">
+                        <div className="grid grid-cols-3 gap-2">
+                          <SmallMetric label="Orders" value={seller.totalOrders} />
+                          <SmallMetric
+                            label="Done"
+                            value={seller.completedOrders}
                           />
-                          <DetailLine
-                            label="Bank"
-                            value={seller.bankName || "Not added"}
-                          />
-                          <DetailLine
-                            label="A/C"
-                            value={seller.bankAccountNumber || "Not added"}
-                          />
-                          <DetailLine
-                            label="IFSC"
-                            value={seller.bankIfsc || "Not added"}
-                          />
-                          <DetailLine
-                            label="UPI"
-                            value={seller.bankUpiId || "-"}
+                          <SmallMetric
+                            label="Pending"
+                            value={seller.pendingPayments}
                           />
                         </div>
-                      </div>
 
-                      <div className="mt-4">
-                        <span
-                          className={`inline-flex rounded-full border px-3 py-1.5 text-xs font-black ${
-                            seller.pendingPayments > 0
-                              ? "border-yellow-200 bg-yellow-50 text-yellow-700"
-                              : "border-green-200 bg-green-50 text-green-700"
-                          }`}
-                        >
-                          {seller.pendingPayments > 0
-                            ? "Hold / Verify"
-                            : "Ready to Pay"}
-                        </span>
+                        <div className="mt-4 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-4">
+                          <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
+                            Simple calculation
+                          </p>
+
+                          <div className="mt-3 space-y-2">
+                            <PayoutLine
+                              label="Seller food earning"
+                              value={`₹${seller.sellerGrossEarning}`}
+                            />
+                            <PayoutLine
+                              label={`Minus commission (${Math.round(
+                                SELLER_COMMISSION_RATE * 100
+                              )}%)`}
+                              value={`- ₹${seller.sellerCommission}`}
+                              danger
+                            />
+                            <div className="mt-3 flex items-center justify-between border-t border-[#D8C9B3] pt-3">
+                              <p className="text-sm font-black text-[#181411]">
+                                Amount to send
+                              </p>
+
+                              <p className="text-2xl font-black text-[#3F5128]">
+                                ₹{seller.sellerNetPayout}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 rounded-2xl border border-[#D8C9B3] bg-white p-4">
+                          <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
+                            Pay to this account
+                          </p>
+
+                          <div className="mt-3 space-y-2">
+                            <DetailLine
+                              label="Holder"
+                              value={seller.bankAccountHolder || "Not added"}
+                            />
+                            <DetailLine
+                              label="Bank"
+                              value={seller.bankName || "Not added"}
+                            />
+                            <DetailLine
+                              label="A/C"
+                              value={seller.bankAccountNumber || "Not added"}
+                            />
+                            <DetailLine
+                              label="IFSC"
+                              value={seller.bankIfsc || "Not added"}
+                            />
+                            <DetailLine
+                              label="UPI"
+                              value={seller.bankUpiId || "-"}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="mt-4">
+                          <span
+                            className={`inline-flex rounded-full border px-3 py-1.5 text-xs font-black ${
+                              seller.pendingPayments > 0
+                                ? "border-yellow-200 bg-yellow-50 text-yellow-700"
+                                : "border-green-200 bg-green-50 text-green-700"
+                            }`}
+                          >
+                            {seller.pendingPayments > 0
+                              ? "Hold / Verify"
+                              : `Ready to Pay ₹${seller.sellerNetPayout}`}
+                          </span>
+                        </div>
                       </div>
                     </article>
                   ))}
@@ -1142,6 +1160,22 @@ function SmallMetric({ label, value }) {
       </p>
 
       <p className="mt-1 font-black text-[#3F5128]">{value}</p>
+    </div>
+  );
+}
+
+function PayoutLine({ label, value, danger = false }) {
+  return (
+    <div className="flex items-center justify-between gap-3 text-sm">
+      <p className="font-bold text-[#6B6258]">{label}</p>
+
+      <p
+        className={`shrink-0 font-black ${
+          danger ? "text-red-500" : "text-[#3F5128]"
+        }`}
+      >
+        {value}
+      </p>
     </div>
   );
 }
