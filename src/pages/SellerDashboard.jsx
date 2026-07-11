@@ -45,6 +45,7 @@ const UNLIMITED_STOCK = 999999;
 const SELLER_NAME_STORAGE_PREFIX = "NeFo_seller_name";
 const LEGACY_SELLER_NAME_STORAGE_PREFIX = "Nefo_seller_name";
 const MESSAGE_SEEN_STORAGE_PREFIX = "NeFo_seller_messages_seen";
+const SELLER_DISH_DRAFT_STORAGE_PREFIX = "NeFo_seller_dish_draft";
 
 function createChannelName(prefix, userId) {
   const uniquePart =
@@ -174,7 +175,9 @@ export default function SellerDashboard() {
   useEffect(() => {
     const pageBackHandler = () => {
       if (imagePickerActiveRef.current) {
-        imagePickerActiveRef.current = false;
+        restoreDishDraftAfterPickerCancel();
+        releaseImagePickerLock();
+        setActiveTab("menu");
         return true;
       }
 
@@ -241,6 +244,32 @@ export default function SellerDashboard() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    function restoreAfterNativePicker() {
+      if (!imagePickerActiveRef.current) return;
+
+      restoreDishDraftAfterPickerCancel();
+
+      window.setTimeout(() => {
+        if (imagePickerActiveRef.current) {
+          releaseImagePickerLock();
+        }
+      }, 1200);
+    }
+
+    window.addEventListener("focus", restoreAfterNativePicker);
+    window.addEventListener("pageshow", restoreAfterNativePicker);
+    document.addEventListener("visibilitychange", restoreAfterNativePicker);
+
+    return () => {
+      window.removeEventListener("focus", restoreAfterNativePicker);
+      window.removeEventListener("pageshow", restoreAfterNativePicker);
+      document.removeEventListener("visibilitychange", restoreAfterNativePicker);
+    };
+  }, [user, formData, editingFood, imagePreview]);
+
+
 
   useEffect(() => {
     if (!user) return undefined;
@@ -390,6 +419,63 @@ export default function SellerDashboard() {
     return user
       ? `${SELLER_NAME_STORAGE_PREFIX}_${user.id}`
       : SELLER_NAME_STORAGE_PREFIX;
+  }
+
+  function getDishDraftStorageKey() {
+    return user
+      ? `${SELLER_DISH_DRAFT_STORAGE_PREFIX}_${user.id}`
+      : SELLER_DISH_DRAFT_STORAGE_PREFIX;
+  }
+
+  function saveDishDraftBeforePicker() {
+    try {
+      localStorage.setItem(
+        getDishDraftStorageKey(),
+        JSON.stringify({
+          formData,
+          editingFoodId: editingFood?.id || null,
+          editingFoodImage: editingFood?.image || "",
+          imagePreview,
+          savedAt: Date.now(),
+        })
+      );
+    } catch {
+      // Draft backup is best-effort only.
+    }
+  }
+
+  function restoreDishDraftAfterPickerCancel() {
+    try {
+      const savedDraft = localStorage.getItem(getDishDraftStorageKey());
+
+      if (!savedDraft) return false;
+
+      const parsedDraft = JSON.parse(savedDraft);
+
+      if (!parsedDraft?.formData) return false;
+
+      setFormData((currentData) => ({
+        ...currentData,
+        ...parsedDraft.formData,
+      }));
+
+      if (!imagePreview && parsedDraft.imagePreview) {
+        setImagePreview(parsedDraft.imagePreview);
+      }
+
+      setActiveTab("menu");
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function clearDishDraftBackup() {
+    try {
+      localStorage.removeItem(getDishDraftStorageKey());
+    } catch {
+      // Ignore storage cleanup failures.
+    }
   }
 
   function getSafePackingCharge(value) {
@@ -855,7 +941,7 @@ export default function SellerDashboard() {
     imagePickerTimeoutRef.current = window.setTimeout(() => {
       imagePickerActiveRef.current = false;
       imagePickerTimeoutRef.current = null;
-    }, 12000);
+    }, 60000);
   }
 
   function releaseImagePickerLock() {
@@ -883,7 +969,9 @@ export default function SellerDashboard() {
       return;
     }
 
+    saveDishDraftBeforePicker();
     markImagePickerOpening();
+    setActiveTab("menu");
     setMessage(source === "camera" ? "Opening camera..." : "Opening photos...");
 
     input.value = "";
@@ -1088,7 +1176,10 @@ export default function SellerDashboard() {
     const file = event.target.files?.[0];
 
     if (!file) {
-      setMessage("");
+      restoreDishDraftAfterPickerCancel();
+      setMessage(
+        "Camera cancelled. Your dish details are still saved."
+      );
       return;
     }
 
@@ -1113,6 +1204,7 @@ export default function SellerDashboard() {
         ...currentErrors,
         image: "",
       }));
+      clearDishDraftBackup();
       setMessage(
         `Image optimized (${(compressedFile.size / 1024 / 1024).toFixed(2)} MB)`
       );
@@ -1236,6 +1328,7 @@ export default function SellerDashboard() {
     setImagePreview("");
     setOpenDishDropdown("");
     releaseImagePickerLock();
+    clearDishDraftBackup();
 
     if (uploadImageInputRef.current) {
       uploadImageInputRef.current.value = "";
@@ -2190,7 +2283,7 @@ export default function SellerDashboard() {
                   }}
                   className="rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF] py-4 text-sm font-black text-[#3F5128]"
                 >
-                  Use camera
+                  Take photo
                 </button>
               </div>
 
