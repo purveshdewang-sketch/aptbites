@@ -1389,9 +1389,9 @@ export default function OrderHistory() {
                       </p>
                     ) : null}
 
-                    <div className="mt-4 grid grid-cols-2 gap-3">
+                    <div className="mt-4 grid grid-cols-3 gap-2">
                       {isCancelled ? (
-                        <div className="rounded-2xl border border-red-200 bg-red-50 py-3 text-center text-sm font-black text-red-600">
+                        <div className="rounded-2xl border border-red-200 bg-red-50 py-3 text-center text-xs font-black text-red-600">
                           Cancelled
                         </div>
                       ) : (
@@ -1402,17 +1402,24 @@ export default function OrderHistory() {
                               order
                             )
                           }
-                          className="rounded-2xl border border-[#3F5128] bg-[#3F5128] py-3 text-sm font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-[0.98]"
+                          className="rounded-2xl border border-[#3F5128] bg-[#3F5128] py-3 text-xs font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-[0.98]"
                         >
                           Re-order
                         </button>
                       )}
 
                       <Link
-                        to={`/customer-care?order_id=${order.id}`}
-                        className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-3 text-center text-sm font-black text-[#3F5128] active:scale-[0.98]"
+                        to={`/order-chat/${order.id}`}
+                        className="rounded-2xl border border-[#CF743D] bg-[#FFF0DF] py-3 text-center text-xs font-black text-[#3F5128] active:scale-[0.98]"
                       >
-                        Need Help
+                        Chat
+                      </Link>
+
+                      <Link
+                        to={`/customer-care?order_id=${order.id}`}
+                        className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] py-3 text-center text-xs font-black text-[#3F5128] active:scale-[0.98]"
+                      >
+                        Help
                       </Link>
                     </div>
 
