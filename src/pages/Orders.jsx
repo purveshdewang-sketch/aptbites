@@ -1359,25 +1359,18 @@ function OrderTrackingCard({
             }
           )}
         </div>
-
         <Link
           to={`/order-chat/${order.id}`}
           className="mt-4 flex items-center justify-between gap-3 rounded-[22px] border border-[#CF743D] bg-[#FFF0DF] p-4 shadow-[4px_4px_12px_rgba(63,81,40,0.05),-4px_-4px_12px_rgba(255,255,255,0.95)] active:scale-[0.99]"
         >
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#D8C9B3] bg-white text-sm font-black text-[#3F5128]">
-              {getPartnerInitial(order)}
-            </div>
+          <div className="min-w-0">
+            <p className="truncate text-base font-black text-[#3F5128]">
+              Talk to Seller
+            </p>
 
-            <div className="min-w-0">
-              <p className="truncate text-sm font-black text-[#3F5128]">
-                Chat with Seller
-              </p>
-
-              <p className="truncate text-xs font-semibold text-[#6B6258]">
-                Live chat with {getPartnerName(order)}
-              </p>
-            </div>
+            <p className="mt-1 truncate text-xs font-semibold text-[#6B6258]">
+              Live chat for pickup, delivery, or order changes.
+            </p>
           </div>
 
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#CF743D] bg-[#CF743D] text-white">
@@ -1460,13 +1453,6 @@ function OrderTrackingCard({
               Cancel
             </button>
           ) : null}
-
-          <Link
-            to={`/order-chat/${order.id}`}
-            className="rounded-2xl border border-[#CF743D] bg-[#FFF0DF] py-3 text-center text-xs font-black text-[#3F5128] active:scale-95"
-          >
-            Chat with Seller
-          </Link>
         </div>
       </div>
     </article>

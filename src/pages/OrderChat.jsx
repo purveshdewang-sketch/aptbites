@@ -15,6 +15,7 @@ export default function OrderChat() {
   const { user } = useAuth();
 
   const bottomRef = useRef(null);
+  const messageRefreshRunningRef = useRef(false);
 
   const [order, setOrder] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -43,7 +44,7 @@ export default function OrderChat() {
   useEffect(() => {
     if (!user || !orderId) {
       setLoading(false);
-      return;
+      return undefined;
     }
 
     fetchOrderAndMessages();
@@ -72,7 +73,12 @@ export default function OrderChat() {
       )
       .subscribe();
 
+    const refreshInterval = window.setInterval(() => {
+      fetchMessagesOnly();
+    }, 5000);
+
     return () => {
+      window.clearInterval(refreshInterval);
       supabase.removeChannel(channel);
     };
   }, [user, orderId]);
@@ -136,6 +142,52 @@ export default function OrderChat() {
     }
 
     setLoading(false);
+  }
+
+  async function fetchMessagesOnly() {
+    if (!user || !orderId || messageRefreshRunningRef.current) {
+      return;
+    }
+
+    const numericOrderId = Number(orderId);
+
+    if (!numericOrderId) {
+      return;
+    }
+
+    messageRefreshRunningRef.current = true;
+
+    const { data, error } = await supabase
+      .from("order_messages")
+      .select("*")
+      .eq("order_id", numericOrderId)
+      .order("created_at", { ascending: true });
+
+    messageRefreshRunningRef.current = false;
+
+    if (error) {
+      return;
+    }
+
+    const nextMessages = data || [];
+
+    setMessages((currentMessages) => {
+      if (currentMessages.length !== nextMessages.length) {
+        return nextMessages;
+      }
+
+      const hasChanged = nextMessages.some((nextMessage, index) => {
+        const currentMessage = currentMessages[index];
+
+        return (
+          currentMessage?.id !== nextMessage.id ||
+          currentMessage?.message !== nextMessage.message ||
+          currentMessage?.created_at !== nextMessage.created_at
+        );
+      });
+
+      return hasChanged ? nextMessages : currentMessages;
+    });
   }
 
   function scrollToBottom() {
