@@ -2044,9 +2044,6 @@ export default function Checkout() {
 
         payment_proof_url:
           paymentProofUrl,
-
-        payment_test_mode:
-          testOrderMode,
       };
 
       const {
