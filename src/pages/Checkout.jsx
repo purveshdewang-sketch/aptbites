@@ -18,7 +18,7 @@ import { scheduleOrderReminders } from "../lib/nefoLocalNotifications";
 const PLATFORM_FEE = 8;
 
 const NeFo_UPI_ID =
-  "cropg1agroresearch@sbi";
+  "cropglagroresearchan.62455967@hdfcbank";
 
 const NeFo_PAYEE_NAME =
   "CROPG1 AGRO RESEARCH AND DEVELOPMENT PVT LTD";
@@ -3234,7 +3234,7 @@ export default function Checkout() {
 
               <p className="mt-3 text-[10px] font-semibold leading-relaxed text-[#6B6258]">
                 If Pay via UPI App fails, open Google Pay / PhonePe manually,
-                paste this UPI ID, enter the same amount, then upload only the
+                paste this HDFC UPI ID, enter the same amount, then upload only the
                 Completed screenshot.
               </p>
             </div>
