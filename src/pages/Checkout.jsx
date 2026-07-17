@@ -512,15 +512,21 @@ export default function Checkout() {
         : "Home Kitchen";
     }, [cartItems]);
 
+  const upiPaymentAmount =
+    formatUpiAmount(totalAmount);
+
+  const upiPaymentNote =
+    `NeFo food order ${upiPaymentAmount}`;
+
   const upiPaymentLink =
     `upi://pay?pa=${encodeURIComponent(
       NeFo_UPI_ID
     )}&pn=${encodeURIComponent(
       NeFo_PAYEE_NAME
     )}&am=${encodeURIComponent(
-      formatUpiAmount(totalAmount)
+      upiPaymentAmount
     )}&cu=INR&tn=${encodeURIComponent(
-      `NeFo food order ₹${formatUpiAmount(totalAmount)}`
+      upiPaymentNote
     )}`;
 
   const qrCodeUrl =
@@ -3231,9 +3237,9 @@ export default function Checkout() {
               </div>
 
               <p className="mt-3 text-[10px] font-semibold leading-relaxed text-[#6B6258]">
-                If Pay via UPI App fails, open Google Pay / PhonePe manually,
-                paste this UPI ID, enter the same amount, then upload only the
-                Completed screenshot.
+                Pay via UPI App should open with the amount filled automatically.
+                If any UPI app rejects the direct link, scan the official QR or paste this
+                UPI ID manually, enter the same amount, then upload only the Completed screenshot.
               </p>
             </div>
 
