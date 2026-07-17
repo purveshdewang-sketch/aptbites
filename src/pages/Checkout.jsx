@@ -18,7 +18,7 @@ import { scheduleOrderReminders } from "../lib/nefoLocalNotifications";
 const PLATFORM_FEE = 8;
 
 const NeFo_UPI_ID =
-  "cropg1agroresearch@sbi";
+  "cropglagroresearchan.62455967@hdfcbank";
 
 const NeFo_PAYEE_NAME =
   "CROPG1 AGRO RESEARCH AND DEVELOPMENT PVT LTD";
