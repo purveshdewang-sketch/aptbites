@@ -413,10 +413,6 @@ export default function Checkout() {
     setLoading,
   ] = useState(false);
 
-  const [
-    testOrderMode,
-    setTestOrderMode,
-  ] = useState(false);
 
   const dateOptions =
     useMemo(
@@ -1723,7 +1719,6 @@ export default function Checkout() {
     }
 
     if (
-      !testOrderMode &&
       !paymentProofFile &&
       !paymentReference.trim()
     ) {
@@ -1735,7 +1730,6 @@ export default function Checkout() {
       paymentReference.trim();
 
     if (
-      !testOrderMode &&
       cleanPaymentReference &&
       !/^[A-Za-z0-9/-]{8,40}$/.test(cleanPaymentReference)
     ) {
@@ -1968,9 +1962,7 @@ export default function Checkout() {
       await validateLiveStockBeforeOrder();
 
       const paymentProofUrl =
-        testOrderMode
-          ? ""
-          : await uploadPaymentProof();
+        await uploadPaymentProof();
 
       const latestTotalAmount =
         subtotalAmount +
@@ -2031,16 +2023,12 @@ export default function Checkout() {
           paymentMethod,
 
         payment_status:
-          testOrderMode
-            ? "test_order_no_payment"
-            : paymentProofUrl
+          paymentProofUrl
             ? "proof_submitted_pending_verification"
             : "reference_submitted_pending_verification",
 
         payment_reference:
-          testOrderMode
-            ? "TEST_ORDER_NO_PAYMENT"
-            : paymentReference.trim(),
+          paymentReference.trim(),
 
         payment_proof_url:
           paymentProofUrl,
@@ -2196,18 +2184,14 @@ export default function Checkout() {
           </div>
 
           <p className="mt-6 text-xs font-black uppercase tracking-wide text-[#CF743D]">
-            {testOrderMode
-              ? "Test Order Created"
-              : orderTiming ===
+            {orderTiming ===
               "scheduled"
               ? "Order Scheduled"
               : "Order Confirmed"}
           </p>
 
           <h1 className="mt-3 text-3xl font-black leading-tight text-[#181411]">
-            {testOrderMode
-              ? "Your test order was created without payment."
-              : orderTiming ===
+            {orderTiming ===
               "scheduled"
               ? "Your order has been scheduled."
               : "Your food is now being prepared."}
@@ -3138,42 +3122,8 @@ export default function Checkout() {
           <div
             className={`mt-3 p-4 ${CARD}`}
           >
-            <label className="mb-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-yellow-300 bg-yellow-50 p-4">
-              <input
-                type="checkbox"
-                checked={testOrderMode}
-                onChange={(event) => {
-                  const checked = event.target.checked;
 
-                  setTestOrderMode(checked);
 
-                  if (checked) {
-                    setErrors((current) => ({
-                      ...current,
-                      payment: "",
-                    }));
-
-                    setPaymentMessage(
-                      "Test order mode ON. No real payment will be required."
-                    );
-                  } else {
-                    setPaymentMessage("");
-                  }
-                }}
-                className="mt-1 h-5 w-5 accent-[#3F5128]"
-              />
-
-              <span>
-                <span className="block text-sm font-black text-yellow-800">
-                  Test order without payment
-                </span>
-
-                <span className="mt-1 block text-xs font-semibold leading-relaxed text-yellow-800">
-                  Use this only for trial orders. It will create the order with payment status
-                  marked as test_order_no_payment.
-                </span>
-              </span>
-            </label>
 
             <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF] p-4">
               <div className="min-w-0">
@@ -3318,12 +3268,6 @@ export default function Checkout() {
               </p>
             ) : null}
 
-            {testOrderMode ? (
-              <p className="mt-4 rounded-2xl border border-yellow-300 bg-yellow-50 p-3 text-xs font-black text-yellow-800">
-                Test mode is active. Payment screenshot and transaction reference are not required.
-              </p>
-            ) : null}
-
             <div className="mt-4">
               <input
                 ref={
@@ -3462,8 +3406,6 @@ export default function Checkout() {
               ? "Checking..."
               : checkoutBlocked
               ? "Unavailable"
-              : testOrderMode
-              ? "Place Test Order"
               : orderTiming ===
                 "scheduled"
               ? "Schedule Order"
