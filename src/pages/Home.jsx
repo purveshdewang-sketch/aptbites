@@ -787,7 +787,7 @@ export default function Home() {
       const {
         data: kitchenProfiles,
       } = await supabase
-        .from("profiles")
+        .from("public_seller_profiles")
         .select(
           "id, seller_online, seller_kitchen_name, delivery_available, pickup_available"
         )

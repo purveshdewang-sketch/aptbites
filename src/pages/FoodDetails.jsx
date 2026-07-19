@@ -756,7 +756,7 @@ export default function FoodDetails() {
       data,
       error,
     } = await supabase
-      .from("profiles")
+      .from("public_seller_profiles")
       .select(
         "id, seller_online, seller_kitchen_name, seller_door_no, seller_about, seller_specialty, delivery_available, pickup_available, avatar_url"
       )
@@ -804,7 +804,7 @@ export default function FoodDetails() {
     const {
       data: fallbackData,
     } = await supabase
-      .from("profiles")
+      .from("public_seller_profiles")
       .select(
         "id, seller_online, seller_kitchen_name, seller_about, seller_specialty, delivery_available, pickup_available"
       )

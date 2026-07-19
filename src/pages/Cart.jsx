@@ -524,7 +524,7 @@ export default function Cart() {
 
     const { data, error } =
       await supabase
-        .from("profiles")
+        .from("public_seller_profiles")
         .select(
           "accept_scheduled_orders"
         )
