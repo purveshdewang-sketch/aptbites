@@ -259,20 +259,14 @@ export default function OwnerSupportTickets() {
     setErrorMessage("");
     setSuccessMessage("");
 
-    const tableName =
-      ticket.ticketType === SELLER_TICKET_TYPE
-        ? "seller_support_tickets"
-        : "support_tickets";
-
-    const { error } = await supabase
-      .from(tableName)
-      .update({
-        status: nextStatus,
-      })
-      .eq("id", ticket.id);
+    const { error } = await supabase.rpc("update_support_ticket_status", {
+      ticket_type_input: ticket.ticketType,
+      ticket_id_input: ticket.id,
+      status_input: nextStatus,
+    });
 
     if (error) {
-      setErrorMessage(error.message);
+      setErrorMessage(error.message || "Could not update ticket status.");
       setActionLoadingKey("");
       return;
     }
