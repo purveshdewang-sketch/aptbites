@@ -802,6 +802,31 @@ export default function SellerHelper() {
   ] = useState("");
 
   const [
+    ticketMessage,
+    setTicketMessage,
+  ] = useState("");
+
+  const [
+    ticketIssueType,
+    setTicketIssueType,
+  ] = useState("dashboard_issue");
+
+  const [
+    creatingTicket,
+    setCreatingTicket,
+  ] = useState(false);
+
+  const [
+    ticketErrorMessage,
+    setTicketErrorMessage,
+  ] = useState("");
+
+  const [
+    ticketSuccessMessage,
+    setTicketSuccessMessage,
+  ] = useState("");
+
+  const [
     lastUpdatedAt,
     setLastUpdatedAt,
   ] = useState(null);
@@ -1818,6 +1843,65 @@ export default function SellerHelper() {
     }
   }
 
+
+  async function createSellerSupportTicket() {
+    if (!user) {
+      setTicketErrorMessage("Please login before creating a support ticket.");
+      return;
+    }
+
+    const cleanMessage = ticketMessage.trim();
+
+    if (!cleanMessage) {
+      setTicketErrorMessage("Please describe the seller issue first.");
+      return;
+    }
+
+    setCreatingTicket(true);
+    setTicketErrorMessage("");
+    setTicketSuccessMessage("");
+
+    const profileName =
+      sellerData.profile?.seller_kitchen_name ||
+      sellerData.profile?.full_name ||
+      "Seller";
+
+    const fullMessage = [
+      cleanMessage,
+      "",
+      "Seller Context:",
+      `Kitchen: ${profileName}`,
+      `Dishes: ${stats.foods.length}`,
+      `Active dishes: ${stats.activeFoods.length}`,
+      `Low-stock dishes: ${stats.lowStockFoods.length}`,
+      `Active orders: ${stats.activeOrders.length}`,
+      `Today earnings: ₹${stats.todayEarnings}`,
+    ].join("\n");
+
+    const { data, error } = await supabase
+      .from("seller_support_tickets")
+      .insert([
+        {
+          seller_id: user.id,
+          issue_type: ticketIssueType,
+          message: fullMessage,
+          status: "open",
+        },
+      ])
+      .select("id")
+      .single();
+
+    if (error) {
+      setTicketErrorMessage(error.message);
+      setCreatingTicket(false);
+      return;
+    }
+
+    setTicketSuccessMessage(`Seller support ticket #${data.id} created.`);
+    setTicketMessage("");
+    setCreatingTicket(false);
+  }
+
   if (!user) {
     return (
       <main className="min-h-screen bg-[#FFF8EC] px-4 py-5 pb-28 text-[#181411]">
@@ -2205,6 +2289,80 @@ export default function SellerHelper() {
                   : "Send"}
               </button>
             </div>
+          </div>
+        </section>
+
+        <section
+          className={`mt-5 p-5 ${CARD}`}
+        >
+          <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
+            Seller Support Ticket
+          </p>
+
+          <h2 className="mt-1 text-2xl font-black text-[#181411]">
+            Need owner help?
+          </h2>
+
+          <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
+            Create a real support ticket when AI help is not enough. The NeFo owner can review it from Owner Support Tickets.
+          </p>
+
+          {ticketSuccessMessage ? (
+            <div className="mt-4 rounded-2xl border border-green-200 bg-green-50 p-4">
+              <p className="text-sm font-black text-green-700">
+                {ticketSuccessMessage}
+              </p>
+            </div>
+          ) : null}
+
+          {ticketErrorMessage ? (
+            <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4">
+              <p className="text-sm font-black text-red-600">
+                {ticketErrorMessage}
+              </p>
+            </div>
+          ) : null}
+
+          <div className="mt-5 grid grid-cols-1 gap-3">
+            <select
+              value={ticketIssueType}
+              onChange={(event) => {
+                setTicketIssueType(event.target.value);
+                setTicketErrorMessage("");
+                setTicketSuccessMessage("");
+              }}
+              className={INPUT}
+            >
+              <option value="dashboard_issue">Dashboard Issue</option>
+              <option value="dish_issue">Dish / Menu Issue</option>
+              <option value="photo_upload_issue">Photo Upload Issue</option>
+              <option value="order_issue">Order Issue</option>
+              <option value="payout_issue">Payout / Bank Issue</option>
+              <option value="stock_issue">Stock Issue</option>
+              <option value="visibility_issue">Food Visibility Issue</option>
+              <option value="other">Other Seller Issue</option>
+            </select>
+
+            <textarea
+              value={ticketMessage}
+              onChange={(event) => {
+                setTicketMessage(event.target.value);
+                setTicketErrorMessage("");
+                setTicketSuccessMessage("");
+              }}
+              rows={5}
+              placeholder="Describe the seller issue clearly..."
+              className={`${INPUT} min-h-32 resize-none`}
+            />
+
+            <button
+              type="button"
+              onClick={createSellerSupportTicket}
+              disabled={creatingTicket || !ticketMessage.trim()}
+              className="rounded-2xl border border-[#3F5128] bg-[#3F5128] px-5 py-4 font-black text-white shadow-lg shadow-[#3F5128]/15 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {creatingTicket ? "Creating Ticket..." : "Create Seller Ticket"}
+            </button>
           </div>
         </section>
 
