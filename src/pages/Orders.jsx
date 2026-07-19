@@ -1337,7 +1337,7 @@ function OrderTrackingCard({
                       : "text-[#6B6258]"
                   }`}
                 >
-                  Cancellation window
+                  Cancellation
                 </p>
 
                 <p className="mt-1 text-xs font-semibold leading-relaxed text-[#6B6258]">
