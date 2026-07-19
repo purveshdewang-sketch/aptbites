@@ -25,6 +25,7 @@ export default function OwnerAccounting() {
   const [sellerCommissionPercent, setSellerCommissionPercent] = useState(
     DEFAULT_SELLER_COMMISSION_PERCENT
   );
+  const [sellerCommissionMap, setSellerCommissionMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -82,6 +83,7 @@ export default function OwnerAccounting() {
     ];
 
     const nextSellerMap = {};
+    const nextSellerCommissionMap = {};
 
     if (sellerIds.length > 0) {
       const { data: profileData, error: profileError } = await supabase
@@ -98,9 +100,23 @@ export default function OwnerAccounting() {
       (profileData || []).forEach((profile) => {
         nextSellerMap[profile.id] = profile;
       });
+
+      const { data: commissionData, error: commissionError } = await supabase
+        .from("seller_commission_settings")
+        .select("seller_id, commission_percent")
+        .in("seller_id", sellerIds);
+
+      if (commissionError) {
+        setErrorMessage(commissionError.message);
+      }
+
+      (commissionData || []).forEach((row) => {
+        nextSellerCommissionMap[row.seller_id] = Number(row.commission_percent);
+      });
     }
 
     setSellerMap(nextSellerMap);
+    setSellerCommissionMap(nextSellerCommissionMap);
     setOrders(orderData || []);
     setLoading(false);
   }
@@ -283,9 +299,15 @@ export default function OwnerAccounting() {
     return getOrderSubtotal(order);
   }
 
+  function getOrderCommissionPercent(order) {
+    return Number(
+      sellerCommissionMap[order.seller_id] ?? sellerCommissionPercent
+    );
+  }
+
   function getSellerCommission(order) {
     return Math.round(
-      getSellerGrossEarning(order) * (sellerCommissionPercent / 100)
+      getSellerGrossEarning(order) * (getOrderCommissionPercent(order) / 100)
     );
   }
 
@@ -488,6 +510,7 @@ export default function OwnerAccounting() {
           platformFee: 0,
           sellerGrossEarning: 0,
           sellerCommission: 0,
+          commissionPercent: getOrderCommissionPercent(order),
           sellerNetPayout: 0,
           NeFoTotalEarning: 0,
           pendingPayments: 0,
@@ -545,6 +568,7 @@ export default function OwnerAccounting() {
       "Food Sales",
       "Platform Fee",
       "Seller Gross Earning",
+      "Commission %",
       "Seller Commission",
       "Net Seller Payout",
       "NeFo Total Earning",
@@ -578,6 +602,7 @@ export default function OwnerAccounting() {
         getOrderSubtotal(order),
         getOrderPlatformFee(order),
         getSellerGrossEarning(order),
+        getOrderCommissionPercent(order),
         getSellerCommission(order),
         getSellerNetPayout(order),
         getNeFoTotalEarning(order),
@@ -922,9 +947,7 @@ export default function OwnerAccounting() {
                               value={`₹${seller.sellerGrossEarning}`}
                             />
                             <PayoutLine
-                              label={`Minus commission (${Math.round(
-                                sellerCommissionPercent
-                              )}%)`}
+                              label={`Minus commission (${seller.commissionPercent}%)`}
                               value={`- ₹${seller.sellerCommission}`}
                               danger
                             />
@@ -1091,7 +1114,7 @@ export default function OwnerAccounting() {
                             value={`₹${getSellerGrossEarning(order)}`}
                           />
                           <MoneyPill
-                            label="Commission"
+                            label={`Commission ${getOrderCommissionPercent(order)}%`}
                             value={`₹${getSellerCommission(order)}`}
                             danger
                           />
