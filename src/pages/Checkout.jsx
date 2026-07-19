@@ -1059,7 +1059,7 @@ export default function Checkout() {
 
     const { data, error } =
       await supabase
-        .from("profiles")
+        .from("public_seller_profiles")
         .select(
           "accept_scheduled_orders, delivery_available, pickup_available, packing_charge"
         )
