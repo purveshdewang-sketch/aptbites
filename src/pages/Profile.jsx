@@ -647,7 +647,7 @@ export default function Profile() {
       return;
     }
 
-    await supabase.auth.updateUser({
+    const { error: metadataError } = await supabase.auth.updateUser({
       data: {
         full_name: formData.full_name.trim(),
         phone: formData.phone.trim(),
@@ -683,6 +683,14 @@ export default function Profile() {
     setOriginalFormData(savedProfile);
     setBankDetailsCompleted(nextBankDetailsCompleted);
     setSaving(false);
+
+    if (metadataError) {
+      setMessage(
+        "Profile saved. Account metadata sync failed temporarily; logout/login later if old details still show."
+      );
+      return;
+    }
+
     setMessage("Profile updated successfully.");
   }
 
