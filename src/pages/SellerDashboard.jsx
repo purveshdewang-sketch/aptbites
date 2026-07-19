@@ -152,6 +152,7 @@ export default function SellerDashboard() {
   const [sellerOrders, setSellerOrders] = useState([]);
   const [sellerChats, setSellerChats] = useState([]);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+  const [paymentProofUrls, setPaymentProofUrls] = useState({});
 
   const [sellerOnline, setSellerOnline] = useState(true);
   const [acceptScheduledOrders, setAcceptScheduledOrders] = useState(true);
@@ -1048,6 +1049,48 @@ export default function SellerDashboard() {
     });
   }
 
+  function getPaymentProofSource(order) {
+    return (
+      paymentProofUrls[order.id] ||
+      order.payment_proof_url ||
+      ""
+    );
+  }
+
+  function hasPaymentProof(order) {
+    return Boolean(
+      order.payment_proof_path ||
+        order.payment_proof_url
+    );
+  }
+
+  async function refreshPaymentProofUrls(orders) {
+    const nextProofUrls = {};
+
+    await Promise.all(
+      orders.map(async (order) => {
+        if (!order.payment_proof_path) {
+          return;
+        }
+
+        const { data, error } =
+          await supabase.storage
+            .from("payment-proofs")
+            .createSignedUrl(
+              order.payment_proof_path,
+              60 * 10
+            );
+
+        if (!error && data?.signedUrl) {
+          nextProofUrls[order.id] =
+            data.signedUrl;
+        }
+      })
+    );
+
+    setPaymentProofUrls(nextProofUrls);
+  }
+
   async function fetchSellerFoods() {
     if (!user) return;
 
@@ -1115,6 +1158,7 @@ export default function SellerDashboard() {
 
       previousOrderIdsRef.current = nextOrders.map((order) => order.id);
       setSellerOrders(nextOrders);
+      refreshPaymentProofUrls(nextOrders);
     } else {
       setMessage(`Could not load seller orders: ${error.message}`);
     }
@@ -2559,6 +2603,45 @@ export default function SellerDashboard() {
               </div>
             </div>
 
+            {hasPaymentProof(order) ? (
+              <div className="mt-4 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-wide text-[#6B6258]">
+                      Payment proof
+                    </p>
+
+                    <p className="mt-1 text-xs font-semibold text-[#6B6258]">
+                      Verify the amount and UPI reference before completing.
+                    </p>
+                  </div>
+
+                  <span className="rounded-full border border-yellow-200 bg-yellow-50 px-3 py-1 text-[10px] font-black text-yellow-700">
+                    Check
+                  </span>
+                </div>
+
+                {getPaymentProofSource(order) ? (
+                  <a
+                    href={getPaymentProofSource(order)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-3 block overflow-hidden rounded-xl border border-[#EADFCE] bg-white"
+                  >
+                    <img
+                      src={getPaymentProofSource(order)}
+                      alt="Payment proof"
+                      className="max-h-64 w-full object-contain"
+                    />
+                  </a>
+                ) : (
+                  <p className="mt-3 rounded-xl border border-[#EADFCE] bg-white p-3 text-xs font-black text-[#9A8E80]">
+                    Payment proof is secured. Refresh orders if the image does not appear.
+                  </p>
+                )}
+              </div>
+            ) : null}
+
             <Link
               to={`/order-chat/${order.id}`}
               className="mt-4 flex items-center justify-between rounded-2xl border border-[#D8C9B3] bg-[#FFF0DF] p-4"
@@ -2721,6 +2804,45 @@ export default function SellerDashboard() {
                       {renderItemsPreview(items)}
                     </div>
                   </div>
+
+                  {hasPaymentProof(order) ? (
+                    <div className="mt-3 rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] p-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-wide text-[#6B6258]">
+                            Payment proof
+                          </p>
+
+                          <p className="mt-1 text-xs font-semibold text-[#6B6258]">
+                            Secured proof preview for this received order.
+                          </p>
+                        </div>
+
+                        <span className="rounded-full border border-[#D8C9B3] bg-white px-3 py-1 text-[10px] font-black text-[#3F5128]">
+                          Private
+                        </span>
+                      </div>
+
+                      {getPaymentProofSource(order) ? (
+                        <a
+                          href={getPaymentProofSource(order)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-3 block overflow-hidden rounded-xl border border-[#EADFCE] bg-white"
+                        >
+                          <img
+                            src={getPaymentProofSource(order)}
+                            alt="Payment proof"
+                            className="max-h-64 w-full object-contain"
+                          />
+                        </a>
+                      ) : (
+                        <p className="mt-3 rounded-xl border border-[#EADFCE] bg-white p-3 text-xs font-black text-[#9A8E80]">
+                          Payment proof is secured. Refresh orders if the image does not appear.
+                        </p>
+                      )}
+                    </div>
+                  ) : null}
 
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <Link
