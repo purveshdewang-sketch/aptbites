@@ -285,19 +285,6 @@ function SellerOnlyRoute({ children }) {
 
       setCheckingRole(true);
 
-      const metadataRole = String(
-        user?.user_metadata?.role || ""
-      ).toLowerCase();
-
-      if (metadataRole === "admin") {
-        if (!cancelled) {
-          setSellerAllowed(true);
-          setCheckingRole(false);
-        }
-
-        return;
-      }
-
       const { data, error } = await supabase
         .from("profiles")
         .select(
@@ -395,19 +382,6 @@ function AdminOnlyRoute({ children }) {
       }
 
       setCheckingRole(true);
-
-      const metadataRole = String(
-        user?.user_metadata?.role || ""
-      ).toLowerCase();
-
-      if (metadataRole === "admin") {
-        if (!cancelled) {
-          setAdminAllowed(true);
-          setCheckingRole(false);
-        }
-
-        return;
-      }
 
       const { data, error } = await supabase
         .from("profiles")
@@ -644,9 +618,9 @@ function AppRoutes() {
       <Route
         path="/care-agent"
         element={
-          <ProtectedRoute>
+          <AdminOnlyRoute>
             <CustomerCareAgent />
-          </ProtectedRoute>
+          </AdminOnlyRoute>
         }
       />
 
