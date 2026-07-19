@@ -128,6 +128,9 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
   const [message, setMessage] = useState("");
+  const [avatarMessage, setAvatarMessage] = useState("");
+  const [formMessage, setFormMessage] = useState("");
+  const [passwordMessage, setPasswordMessage] = useState("");
 
   const isAdmin = role === "admin";
   const displayedAvatar = pendingAvatarPreview || avatarUrl;
@@ -224,6 +227,9 @@ export default function Profile() {
 
     setLoading(true);
     setMessage("");
+    setAvatarMessage("");
+    setFormMessage("");
+    setPasswordMessage("");
     setAvatarError("");
 
     const defaultProfile = {
@@ -357,7 +363,7 @@ export default function Profile() {
       checked === false &&
       formData.pickup_available === false
     ) {
-      setMessage(
+      setFormMessage(
         "At least one option must stay ON: Delivery or Self Pickup."
       );
       return;
@@ -369,7 +375,7 @@ export default function Profile() {
       checked === false &&
       formData.delivery_available === false
     ) {
-      setMessage(
+      setFormMessage(
         "At least one option must stay ON: Delivery or Self Pickup."
       );
       return;
@@ -381,6 +387,7 @@ export default function Profile() {
     }));
 
     setMessage("");
+    setFormMessage("");
   }
 
   async function handleAvatarSelection(event) {
@@ -391,6 +398,7 @@ export default function Profile() {
     if (!selectedFile) return;
 
     setAvatarError("");
+    setAvatarMessage("");
     setMessage("");
 
     if (!selectedFile.type.startsWith("image/")) {
@@ -427,6 +435,7 @@ export default function Profile() {
 
     setAvatarUploading(true);
     setAvatarError("");
+    setAvatarMessage("");
     setMessage("");
 
     const imagePath = `${user.id}/avatar.webp`;
@@ -496,7 +505,7 @@ export default function Profile() {
     setPendingAvatarBlob(null);
     setPendingAvatarPreview("");
     setAvatarUploading(false);
-    setMessage("Profile photo updated successfully.");
+    setAvatarMessage("Profile photo updated successfully.");
   }
 
   async function removeProfilePhoto() {
@@ -508,6 +517,7 @@ export default function Profile() {
 
     setAvatarRemoving(true);
     setAvatarError("");
+    setAvatarMessage("");
     setMessage("");
 
     const imagePath = `${user.id}/avatar.webp`;
@@ -556,7 +566,7 @@ export default function Profile() {
     setPendingAvatarBlob(null);
     setPendingAvatarPreview("");
     setAvatarRemoving(false);
-    setMessage("Profile photo removed.");
+    setAvatarMessage("Profile photo removed.");
   }
 
   async function handleSaveProfile(event) {
@@ -568,7 +578,7 @@ export default function Profile() {
       !profileChanged &&
       bankDetailsCompleted === effectiveBankDetailsComplete
     ) {
-      setMessage("No profile changes to save.");
+      setFormMessage("No profile changes to save.");
       return;
     }
 
@@ -577,14 +587,14 @@ export default function Profile() {
       formData.delivery_available === false &&
       formData.pickup_available === false
     ) {
-      setMessage(
+      setFormMessage(
         "At least one option must stay ON: Delivery or Self Pickup."
       );
       return;
     }
 
     if (isSeller && !isAdmin && !currentBankDetailsComplete) {
-      setMessage(
+      setFormMessage(
         "Please complete Account Holder Name, Bank Name, and Account Number to start selling."
       );
 
@@ -594,6 +604,7 @@ export default function Profile() {
 
     setSaving(true);
     setMessage("");
+    setFormMessage("");
 
     const singleDoorNumber =
       formData.flat_no.trim() || formData.flat.trim();
@@ -645,7 +656,7 @@ export default function Profile() {
       .upsert(profilePayload);
 
     if (error) {
-      setMessage(`Could not save profile: ${error.message}`);
+      setFormMessage(`Could not save profile: ${error.message}`);
       setSaving(false);
       return;
     }
@@ -687,17 +698,17 @@ export default function Profile() {
     setOriginalFormData(savedProfile);
     setBankDetailsCompleted(nextBankDetailsCompleted);
     setSaving(false);
-    setMessage("Profile updated successfully.");
+    setFormMessage("Profile updated successfully.");
   }
 
   async function handlePasswordReset() {
     if (!user?.email) {
-      setMessage("Email not available for password reset.");
+      setPasswordMessage("Email not available for password reset.");
       return;
     }
 
     setResettingPassword(true);
-    setMessage("");
+    setPasswordMessage("");
 
     const redirectTo = `${window.location.origin}/reset-password`;
 
@@ -706,12 +717,12 @@ export default function Profile() {
     });
 
     if (error) {
-      setMessage(`Password reset failed: ${error.message}`);
+      setPasswordMessage(`Password reset failed: ${error.message}`);
       setResettingPassword(false);
       return;
     }
 
-    setMessage("Password reset link sent to your email.");
+    setPasswordMessage("Password reset link sent to your email.");
     setResettingPassword(false);
   }
 
@@ -890,6 +901,12 @@ export default function Profile() {
               {avatarError ? (
                 <p className="mt-4 text-sm font-black text-red-600">
                   {avatarError}
+                </p>
+              ) : null}
+
+              {avatarMessage ? (
+                <p className="mt-4 text-sm font-black text-[#3F5128]">
+                  {avatarMessage}
                 </p>
               ) : null}
 
@@ -1348,7 +1365,30 @@ export default function Profile() {
                         ? "Sending..."
                         : "Send Reset Link"}
                     </button>
+
+                    {passwordMessage ? (
+                      <p className={`text-sm font-black ${
+                        passwordMessage.toLowerCase().includes("failed") ||
+                        passwordMessage.toLowerCase().includes("not available")
+                          ? "text-red-600"
+                          : "text-[#3F5128]"
+                      }`}>
+                        {passwordMessage}
+                      </p>
+                    ) : null}
                   </FormSection>
+
+                  {formMessage ? (
+                    <div className={`mt-5 rounded-2xl border p-4 ${
+                      formMessage.toLowerCase().includes("could not") ||
+                      formMessage.toLowerCase().includes("please") ||
+                      formMessage.toLowerCase().includes("at least")
+                        ? "border-red-200 bg-red-50 text-red-600"
+                        : "border-[#D8C9B3] bg-[#FFFDF7] text-[#3F5128]"
+                    }`}>
+                      <p className="text-sm font-black">{formMessage}</p>
+                    </div>
+                  ) : null}
 
                   <button
                     type="submit"

@@ -141,6 +141,9 @@ export default function CustomerLogin() {
   const [message, setMessage] =
     useState("");
 
+  const [resetMessage, setResetMessage] =
+    useState("");
+
   const [errors, setErrors] =
     useState(createEmptyErrors);
 
@@ -172,6 +175,7 @@ export default function CustomerLogin() {
     );
 
     setMessage("");
+    setResetMessage("");
   }
 
   function cleanPhone(phone) {
@@ -397,7 +401,7 @@ export default function CustomerLogin() {
     }
 
     setResettingPassword(true);
-    setMessage("");
+    setResetMessage("");
 
     const redirectTo =
       getPasswordResetRedirectUrl();

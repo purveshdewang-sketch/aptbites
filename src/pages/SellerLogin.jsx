@@ -33,6 +33,7 @@ export default function SellerLogin() {
   const [loading, setLoading] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
   const [message, setMessage] = useState("");
+  const [resetMessage, setResetMessage] = useState("");
 
   const [errors, setErrors] = useState({
     email: "",
@@ -93,6 +94,7 @@ export default function SellerLogin() {
   async function checkExistingSession() {
     setCheckingSession(true);
     setMessage("");
+    setResetMessage("");
     clearErrors();
 
     const { data } = await supabase.auth.getUser();
@@ -320,6 +322,7 @@ export default function SellerLogin() {
 
     setLoading(true);
     setMessage("");
+    setResetMessage("");
     clearErrors();
 
     try {
@@ -422,7 +425,7 @@ export default function SellerLogin() {
     }
 
     setResettingPassword(true);
-    setMessage("");
+    setResetMessage("");
 
     const redirectTo = `${window.location.origin}/reset-password`;
 
@@ -431,15 +434,12 @@ export default function SellerLogin() {
     });
 
     if (error) {
-      setErrors((current) => ({
-        ...current,
-        email: `Password reset failed: ${error.message}`,
-      }));
+      setResetMessage(`Password reset failed: ${error.message}`);
       setResettingPassword(false);
       return;
     }
 
-    setMessage("Password reset link sent to your email.");
+    setResetMessage("Password reset link sent to your email.");
     setResettingPassword(false);
   }
 
@@ -449,6 +449,7 @@ export default function SellerLogin() {
     setCurrentUser(null);
     setSellerVerified(false);
     setMessage("");
+    setResetMessage("");
     clearErrors();
 
     setFormData({
@@ -645,6 +646,16 @@ export default function SellerLogin() {
                       Customer login
                     </Link>
                   </div>
+
+                  {resetMessage ? (
+                    <div className={`rounded-2xl border p-4 ${
+                      resetMessage.toLowerCase().includes("failed")
+                        ? "border-red-200 bg-red-50 text-red-600"
+                        : "border-[#D8C9B3] bg-[#FFFDF7] text-[#3F5128]"
+                    }`}>
+                      <p className="text-sm font-black">{resetMessage}</p>
+                    </div>
+                  ) : null}
                 </>
               ) : null}
 
