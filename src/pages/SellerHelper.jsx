@@ -353,8 +353,7 @@ function getBankDetailsComplete(
   return Boolean(
     profile?.bank_account_holder &&
       profile?.bank_name &&
-      profile?.bank_account_number &&
-      profile?.bank_ifsc
+      profile?.bank_account_number
   );
 }
 
@@ -746,7 +745,6 @@ function detectPayoutIssue(
     question.includes(
       "account number"
     ) ||
-    question.includes("ifsc") ||
     question.includes("upi")
   );
 }
@@ -1340,13 +1338,6 @@ export default function SellerHelper() {
       missing.push(
         "Account number"
       );
-    }
-
-    if (
-      !currentStats.profile
-        ?.bank_ifsc
-    ) {
-      missing.push("IFSC code");
     }
 
     if (

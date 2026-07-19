@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 
 const PLATFORM_FEE = 10;
-const SELLER_COMMISSION_RATE = 0.1;
+const DEFAULT_SELLER_COMMISSION_PERCENT = 10;
 
 const CARD =
   "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
@@ -22,6 +22,9 @@ export default function OwnerAccounting() {
   const [dateFilter, setDateFilter] = useState("week");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sellerCommissionPercent, setSellerCommissionPercent] = useState(
+    DEFAULT_SELLER_COMMISSION_PERCENT
+  );
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -47,6 +50,19 @@ export default function OwnerAccounting() {
 
     setErrorMessage("");
 
+    const { data: settingsData } = await supabase
+      .from("platform_settings")
+      .select("setting_value")
+      .eq("setting_key", "seller_commission_percent")
+      .maybeSingle();
+
+    if (
+      settingsData?.setting_value !== undefined &&
+      settingsData?.setting_value !== null
+    ) {
+      setSellerCommissionPercent(Number(settingsData.setting_value));
+    }
+
     const { data: orderData, error: orderError } = await supabase
       .from("orders")
       .select("*")
@@ -71,7 +87,7 @@ export default function OwnerAccounting() {
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select(
-          "id, full_name, email, phone, seller_kitchen_name, bank_account_holder, bank_name, bank_account_number, bank_ifsc, bank_upi_id"
+          "id, full_name, email, phone, seller_kitchen_name, bank_account_holder, bank_name, bank_account_number, bank_upi_id"
         )
         .in("id", sellerIds);
 
@@ -268,7 +284,9 @@ export default function OwnerAccounting() {
   }
 
   function getSellerCommission(order) {
-    return Math.round(getSellerGrossEarning(order) * SELLER_COMMISSION_RATE);
+    return Math.round(
+      getSellerGrossEarning(order) * (sellerCommissionPercent / 100)
+    );
   }
 
   function getSellerNetPayout(order) {
@@ -460,7 +478,6 @@ export default function OwnerAccounting() {
           bankAccountHolder: sellerProfile.bank_account_holder || "",
           bankName: sellerProfile.bank_name || "",
           bankAccountNumber: sellerProfile.bank_account_number || "",
-          bankIfsc: sellerProfile.bank_ifsc || "",
           bankUpiId: sellerProfile.bank_upi_id || "",
           totalOrders: 0,
           activeOrders: 0,
@@ -517,7 +534,6 @@ export default function OwnerAccounting() {
       "Bank Account Holder",
       "Bank Name",
       "Bank Account Number",
-      "Bank IFSC",
       "Bank UPI ID",
       "Items",
       "Delivery Type",
@@ -551,7 +567,6 @@ export default function OwnerAccounting() {
         sellerProfile.bank_account_holder || "",
         sellerProfile.bank_name || "",
         sellerProfile.bank_account_number || "",
-        sellerProfile.bank_ifsc || "",
         sellerProfile.bank_upi_id || "",
         getItemsText(order),
         order.delivery_type || "",
@@ -640,6 +655,13 @@ export default function OwnerAccounting() {
             className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-center text-sm font-black text-[#3F5128] active:scale-95"
           >
             Applications
+          </Link>
+
+          <Link
+            to="/owner-commission-settings"
+            className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-center text-sm font-black text-[#3F5128] active:scale-95"
+          >
+            Commission
           </Link>
 
           <button
@@ -781,7 +803,7 @@ export default function OwnerAccounting() {
                 />
                 <MoneyRow
                   label={`NeFo Commission (${Math.round(
-                    SELLER_COMMISSION_RATE * 100
+                    sellerCommissionPercent
                   )}%)`}
                   value={`₹${analytics.sellerCommission}`}
                 />
@@ -816,7 +838,7 @@ export default function OwnerAccounting() {
               </p>
 
               <p className="mt-5 text-sm font-black text-[#F3C06E]">
-                Current commission: {Math.round(SELLER_COMMISSION_RATE * 100)}%
+                Current commission: {sellerCommissionPercent}%
               </p>
             </section>
 
@@ -901,7 +923,7 @@ export default function OwnerAccounting() {
                             />
                             <PayoutLine
                               label={`Minus commission (${Math.round(
-                                SELLER_COMMISSION_RATE * 100
+                                sellerCommissionPercent
                               )}%)`}
                               value={`- ₹${seller.sellerCommission}`}
                               danger
@@ -936,10 +958,7 @@ export default function OwnerAccounting() {
                               label="A/C"
                               value={seller.bankAccountNumber || "Not added"}
                             />
-                            <DetailLine
-                              label="IFSC"
-                              value={seller.bankIfsc || "Not added"}
-                            />
+
                             <DetailLine
                               label="UPI"
                               value={seller.bankUpiId || "-"}
@@ -1058,10 +1077,7 @@ export default function OwnerAccounting() {
                                 sellerProfile.bank_account_number || "Not added"
                               }
                             />
-                            <DetailLine
-                              label="IFSC"
-                              value={sellerProfile.bank_ifsc || "Not added"}
-                            />
+
                             <DetailLine
                               label="UPI"
                               value={sellerProfile.bank_upi_id || "-"}

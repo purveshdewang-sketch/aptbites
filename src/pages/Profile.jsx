@@ -109,7 +109,6 @@ export default function Profile() {
     bank_account_holder: "",
     bank_name: "",
     bank_account_number: "",
-    bank_ifsc: "",
     bank_upi_id: "",
   });
 
@@ -141,8 +140,7 @@ export default function Profile() {
   const currentBankDetailsComplete = Boolean(
     formData.bank_account_holder?.trim() &&
       formData.bank_name?.trim() &&
-      formData.bank_account_number?.trim() &&
-      formData.bank_ifsc?.trim()
+      formData.bank_account_number?.trim()
   );
 
   const effectiveBankDetailsComplete = isAdmin
@@ -255,14 +253,13 @@ export default function Profile() {
       bank_account_holder: "",
       bank_name: "",
       bank_account_number: "",
-      bank_ifsc: "",
-      bank_upi_id: "",
+        bank_upi_id: "",
     };
 
     const { data, error } = await supabase
       .from("profiles")
       .select(
-        "role, is_seller, full_name, phone, apartment_name, block, flat_no, flat, avatar_url, seller_kitchen_name, seller_door_no, seller_specialty, seller_about, accept_scheduled_orders, delivery_available, pickup_available, seller_application_status, bank_account_holder, bank_name, bank_account_number, bank_ifsc, bank_upi_id, bank_details_completed"
+        "role, is_seller, full_name, phone, apartment_name, block, flat_no, flat, avatar_url, seller_kitchen_name, seller_door_no, seller_specialty, seller_about, accept_scheduled_orders, delivery_available, pickup_available, seller_application_status, bank_account_holder, bank_name, bank_account_number, bank_upi_id, bank_details_completed"
       )
       .eq("id", user.id)
       .maybeSingle();
@@ -343,7 +340,6 @@ export default function Profile() {
       bank_account_holder: data?.bank_account_holder || "",
       bank_name: data?.bank_name || "",
       bank_account_number: data?.bank_account_number || "",
-      bank_ifsc: data?.bank_ifsc || "",
       bank_upi_id: data?.bank_upi_id || "",
     };
 
@@ -379,11 +375,9 @@ export default function Profile() {
       return;
     }
 
-    const nextValue = name === "bank_ifsc" ? value.toUpperCase() : value;
-
     setFormData((currentData) => ({
       ...currentData,
-      [name]: type === "checkbox" ? checked : nextValue,
+      [name]: type === "checkbox" ? checked : value,
     }));
 
     setMessage("");
@@ -591,7 +585,7 @@ export default function Profile() {
 
     if (isSeller && !isAdmin && !currentBankDetailsComplete) {
       setMessage(
-        "Please complete Account Holder Name, Bank Name, Account Number, and IFSC Code to start selling."
+        "Please complete Account Holder Name, Bank Name, and Account Number to start selling."
       );
 
       openEditSection();
@@ -624,7 +618,6 @@ export default function Profile() {
       bank_account_holder: formData.bank_account_holder.trim(),
       bank_name: formData.bank_name.trim(),
       bank_account_number: formData.bank_account_number.trim(),
-      bank_ifsc: formData.bank_ifsc.trim().toUpperCase(),
       bank_upi_id: formData.bank_upi_id.trim(),
       bank_details_completed: nextBankDetailsCompleted,
     };
@@ -687,7 +680,6 @@ export default function Profile() {
       bank_account_holder: formData.bank_account_holder.trim(),
       bank_name: formData.bank_name.trim(),
       bank_account_number: formData.bank_account_number.trim(),
-      bank_ifsc: formData.bank_ifsc.trim().toUpperCase(),
       bank_upi_id: formData.bank_upi_id.trim(),
     };
 
@@ -1077,6 +1069,22 @@ export default function Profile() {
                   label="Seller Applications"
                   to="/owner-seller-applications"
                 />
+
+                <Divider />
+
+                <ProfileRow
+                  icon={<HelpIcon />}
+                  label="Support Tickets"
+                  to="/owner-support-tickets"
+                />
+
+                <Divider />
+
+                <ProfileRow
+                  icon={<CardIcon />}
+                  label="Commission Settings"
+                  to="/owner-commission-settings"
+                />
               </section>
             ) : null}
 
@@ -1216,7 +1224,7 @@ export default function Profile() {
                           >
                             {isAdmin
                               ? "Owner access is not blocked by missing seller payout details."
-                              : "Account Holder Name, Bank Name, Account Number, and IFSC Code are mandatory for seller payout."}
+                              : "Account Holder Name, Bank Name, and Account Number are mandatory for seller payout."}
                           </p>
                         </div>
 
@@ -1254,15 +1262,7 @@ export default function Profile() {
                           placeholder="Account Number"
                         />
 
-                        <InputField
-                          label={isAdmin ? "IFSC Code" : "IFSC Code *"}
-                          name="bank_ifsc"
-                          value={formData.bank_ifsc}
-                          onChange={handleChange}
-                          required={isSeller && !isAdmin}
-                          placeholder="IFSC Code"
-                          className="uppercase"
-                        />
+
 
                         <InputField
                           label="UPI ID Optional"

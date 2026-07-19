@@ -23,6 +23,8 @@ import OrderHistory from "./pages/OrderHistory";
 import FoodDetails from "./pages/FoodDetails";
 import OwnerDashboard from "./pages/OwnerDashboard";
 import OwnerAccounting from "./pages/OwnerAccounting";
+import OwnerSupportTickets from "./pages/OwnerSupportTickets";
+import OwnerCommissionSettings from "./pages/OwnerCommissionSettings";
 import Profile from "./pages/Profile";
 import ResetPassword from "./pages/ResetPassword";
 import CustomerCare from "./pages/CustomerCare";
@@ -69,6 +71,8 @@ function shouldShowCustomerBottomNav(pathname) {
     "/owner-dashboard",
     "/owner-accounting",
     "/owner-seller-applications",
+    "/owner-commission-settings",
+    "/owner-support-tickets",
     "/care-agent",
     "/order-chat",
     "/food",
@@ -618,9 +622,9 @@ function AppRoutes() {
       <Route
         path="/care-agent"
         element={
-          <AdminOnlyRoute>
+          <ProtectedRoute>
             <CustomerCareAgent />
-          </AdminOnlyRoute>
+          </ProtectedRoute>
         }
       />
 
@@ -665,6 +669,24 @@ function AppRoutes() {
         element={
           <AdminOnlyRoute>
             <OwnerSellerApplications />
+          </AdminOnlyRoute>
+        }
+      />
+
+      <Route
+        path="/owner-support-tickets"
+        element={
+          <AdminOnlyRoute>
+            <OwnerSupportTickets />
+          </AdminOnlyRoute>
+        }
+      />
+
+      <Route
+        path="/owner-commission-settings"
+        element={
+          <AdminOnlyRoute>
+            <OwnerCommissionSettings />
           </AdminOnlyRoute>
         }
       />
