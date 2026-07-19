@@ -1058,9 +1058,17 @@ export default function SellerDashboard() {
   }
 
   function hasPaymentProof(order) {
-    return Boolean(
-      order.payment_proof_path ||
-        order.payment_proof_url
+    const sellerResponse =
+      normalizeSellerResponse(
+        order.seller_response
+      );
+
+    return (
+      sellerResponse === "pending" &&
+      Boolean(
+        order.payment_proof_path ||
+          order.payment_proof_url
+      )
     );
   }
 
@@ -1567,6 +1575,16 @@ export default function SellerDashboard() {
       setMessage(`Could not accept order: ${error.message}`);
       return;
     }
+
+    setPaymentProofUrls((currentProofUrls) => {
+      const nextProofUrls = {
+        ...currentProofUrls,
+      };
+
+      delete nextProofUrls[orderId];
+
+      return nextProofUrls;
+    });
 
     setMessage("Order accepted.");
     fetchSellerOrders();
