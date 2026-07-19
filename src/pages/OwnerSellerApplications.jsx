@@ -144,45 +144,12 @@ export default function OwnerSellerApplications() {
     setErrorMessage("");
     setSuccessMessage("");
 
-    const { error: applicationError } = await supabase
-      .from("seller_applications")
-      .update({
-        status: "approved",
-        reviewed_by: user.id,
-        reviewed_at: new Date().toISOString(),
-        rejection_reason: null,
-      })
-      .eq("id", application.id);
+    const { error } = await supabase.rpc("approve_seller_application", {
+      target_application_id: application.id,
+    });
 
-    if (applicationError) {
-      setErrorMessage(applicationError.message);
-      setActionLoadingId(null);
-      return;
-    }
-
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .update({
-        role: "seller",
-        is_seller: true,
-        full_name: application.full_name || "",
-        phone: application.phone || "",
-        apartment_name: application.apartment_name || "",
-        block: application.block || "",
-        flat: application.flat || "",
-        seller_kitchen_name: application.kitchen_name || "",
-        seller_specialty: application.food_specialty || "",
-        seller_about: application.about_kitchen || "",
-        seller_experience: application.experience || "",
-        seller_hygiene_note: application.hygiene_note || "",
-        seller_application_status: "approved",
-        seller_approved_at: new Date().toISOString(),
-        seller_rejected_reason: null,
-      })
-      .eq("id", application.user_id);
-
-    if (profileError) {
-      setErrorMessage(profileError.message);
+    if (error) {
+      setErrorMessage(error.message);
       setActionLoadingId(null);
       return;
     }
@@ -207,34 +174,13 @@ export default function OwnerSellerApplications() {
 
     const cleanReason = reason.trim() || "Application rejected by owner.";
 
-    const { error: applicationError } = await supabase
-      .from("seller_applications")
-      .update({
-        status: "rejected",
-        reviewed_by: user.id,
-        reviewed_at: new Date().toISOString(),
-        rejection_reason: cleanReason,
-      })
-      .eq("id", application.id);
+    const { error } = await supabase.rpc("reject_seller_application", {
+      target_application_id: application.id,
+      rejection_reason_input: cleanReason,
+    });
 
-    if (applicationError) {
-      setErrorMessage(applicationError.message);
-      setActionLoadingId(null);
-      return;
-    }
-
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .update({
-        role: "customer",
-        is_seller: false,
-        seller_application_status: "rejected",
-        seller_rejected_reason: cleanReason,
-      })
-      .eq("id", application.user_id);
-
-    if (profileError) {
-      setErrorMessage(profileError.message);
+    if (error) {
+      setErrorMessage(error.message);
       setActionLoadingId(null);
       return;
     }
