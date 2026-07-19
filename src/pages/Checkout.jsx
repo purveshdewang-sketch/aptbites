@@ -1585,7 +1585,10 @@ export default function Checkout() {
         .from("payment-proofs")
         .getPublicUrl(filePath);
 
-    return data.publicUrl;
+    return {
+      url: data.publicUrl,
+      path: filePath,
+    };
   }
 
   async function validateLiveStockBeforeOrder() {
@@ -1965,8 +1968,14 @@ export default function Checkout() {
 
       await validateLiveStockBeforeOrder();
 
-      const paymentProofUrl =
+      const paymentProofUpload =
         await uploadPaymentProof();
+
+      const paymentProofUrl =
+        paymentProofUpload?.url || "";
+
+      const paymentProofPath =
+        paymentProofUpload?.path || "";
 
       const latestTotalAmount =
         subtotalAmount +
@@ -2036,6 +2045,9 @@ export default function Checkout() {
 
         payment_proof_url:
           paymentProofUrl,
+
+        payment_proof_path:
+          paymentProofPath,
       };
 
       const {

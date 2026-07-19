@@ -31,6 +31,8 @@ const TRACKING_STEPS = [
   },
 ];
 
+const CANCEL_WINDOW_SECONDS = 60;
+
 const CARD =
   "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
@@ -70,7 +72,7 @@ export default function Orders() {
         setTimerTick(
           (current) => current + 1
         );
-      }, 60000);
+      }, 1000);
 
     return () => {
       window.clearInterval(interval);
@@ -328,6 +330,52 @@ export default function Orders() {
       baseDate.getTime() +
         minutes * 60000
     ).toISOString();
+  }
+
+  function getCancelSecondsLeft(order) {
+    void timerTick;
+
+    const createdAt = new Date(
+      order.created_at || Date.now()
+    ).getTime();
+
+    if (
+      Number.isNaN(createdAt)
+    ) {
+      return 0;
+    }
+
+    const elapsedSeconds =
+      Math.floor(
+        (Date.now() - createdAt) /
+          1000
+      );
+
+    return Math.max(
+      0,
+      CANCEL_WINDOW_SECONDS -
+        elapsedSeconds
+    );
+  }
+
+  function formatCancelTimer(secondsLeft) {
+    const safeSeconds =
+      Math.max(
+        0,
+        Number(secondsLeft || 0)
+      );
+
+    const minutes =
+      Math.floor(
+        safeSeconds / 60
+      );
+
+    const seconds =
+      safeSeconds % 60;
+
+    return `${minutes}:${String(
+      seconds
+    ).padStart(2, "0")}`;
   }
 
   function formatScheduledDateTime(
@@ -789,11 +837,15 @@ export default function Orders() {
         order.seller_response
       );
 
+    const secondsLeft =
+      getCancelSecondsLeft(order);
+
     return (
       currentStatus ===
         "confirmed" &&
       kitchenResponse !==
-        "accepted"
+        "accepted" &&
+      secondsLeft > 0
     );
   }
 
@@ -1162,6 +1214,12 @@ export default function Orders() {
                   canCancelOrder={
                     canCancelOrder
                   }
+                  getCancelSecondsLeft={
+                    getCancelSecondsLeft
+                  }
+                  formatCancelTimer={
+                    formatCancelTimer
+                  }
                   cancelOrder={
                     cancelOrder
                   }
@@ -1196,6 +1254,8 @@ function OrderTrackingCard({
   isScheduledOrder,
   isSelfPickup,
   canCancelOrder,
+  getCancelSecondsLeft,
+  formatCancelTimer,
   cancelOrder,
 }) {
   const autoStatus =
@@ -1210,8 +1270,16 @@ function OrderTrackingCard({
   const orderItems =
     getOrderItems(order);
 
+  const cancelSecondsLeft =
+    getCancelSecondsLeft(order);
+
   const cancellationAllowed =
     canCancelOrder(order);
+
+  const cancelTimerText =
+    formatCancelTimer(
+      cancelSecondsLeft
+    );
 
   return (
     <article
@@ -1249,6 +1317,52 @@ function OrderTrackingCard({
             {formatScheduledDateTime(
               order.scheduled_for
             )}
+          </div>
+        ) : null}
+
+        {autoStatus === "confirmed" ? (
+          <div
+            className={`mb-4 rounded-2xl border px-4 py-3 ${
+              cancellationAllowed
+                ? "border-red-200 bg-red-50"
+                : "border-[#EADFCE] bg-[#FFFDF7]"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p
+                  className={`text-xs font-black uppercase tracking-wide ${
+                    cancellationAllowed
+                      ? "text-red-600"
+                      : "text-[#6B6258]"
+                  }`}
+                >
+                  Cancellation window
+                </p>
+
+                <p className="mt-1 text-xs font-semibold leading-relaxed text-[#6B6258]">
+                  {cancellationAllowed
+                    ? "You can cancel this order for 1 minute after placing it."
+                    : "Cancellation time is over. Contact the seller if you need help."}
+                </p>
+              </div>
+
+              <div
+                className={`shrink-0 rounded-2xl border px-3 py-2 text-center ${
+                  cancellationAllowed
+                    ? "border-red-200 bg-white text-red-600"
+                    : "border-[#EADFCE] bg-white text-[#9A8E80]"
+                }`}
+              >
+                <p className="text-[10px] font-black uppercase">
+                  Left
+                </p>
+
+                <p className="mt-0.5 text-lg font-black leading-none">
+                  {cancelTimerText}
+                </p>
+              </div>
+            </div>
           </div>
         ) : null}
 
@@ -1435,13 +1549,7 @@ function OrderTrackingCard({
           </details>
         ) : null}
 
-        <div
-          className={`mt-4 grid gap-3 ${
-            cancellationAllowed
-              ? "grid-cols-2"
-              : "grid-cols-1"
-          }`}
-        >
+        <div className="mt-4 grid grid-cols-1 gap-3">
           {cancellationAllowed ? (
             <button
               type="button"
@@ -1450,8 +1558,12 @@ function OrderTrackingCard({
               }
               className="rounded-2xl border border-red-200 bg-red-50 py-3 text-xs font-black text-red-500 active:scale-95"
             >
-              Cancel
+              Cancel Order ({cancelTimerText})
             </button>
+          ) : autoStatus === "confirmed" ? (
+            <div className="rounded-2xl border border-[#EADFCE] bg-[#FFFDF7] px-4 py-3 text-center text-xs font-black text-[#9A8E80]">
+              Cancel option closed
+            </div>
           ) : null}
         </div>
       </div>

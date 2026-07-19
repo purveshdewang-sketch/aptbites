@@ -863,7 +863,7 @@ export default function CustomerLogin() {
               </p>
 
               <p className="mt-1.5 text-[9px] font-black uppercase tracking-[0.12em] text-[#6B6258]">
-                Neighbour Food
+                Neighbourhood Food
               </p>
             </div>
           </Link>
