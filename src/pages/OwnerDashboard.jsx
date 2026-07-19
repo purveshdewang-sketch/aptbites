@@ -526,6 +526,13 @@ export default function OwnerDashboard() {
             Applications
           </Link>
 
+          <Link
+            to="/owner-support-tickets"
+            className="rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-center text-sm font-black text-[#3F5128] active:scale-95"
+          >
+            Support Tickets
+          </Link>
+
           <button
             type="button"
             onClick={downloadCSV}
