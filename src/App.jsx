@@ -32,6 +32,7 @@ import CustomerCareAgent from "./pages/CustomerCareAgent";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import RefundPolicy from "./pages/RefundPolicy";
+import PaymentMethods from "./pages/PaymentMethods";
 import SellerHelper from "./pages/SellerHelper";
 import OrderChat from "./pages/OrderChat";
 import Favorites from "./pages/Favorites";
@@ -81,6 +82,7 @@ function shouldShowCustomerBottomNav(pathname) {
     "/privacy-policy",
     "/terms",
     "/refund-policy",
+    "/payment-methods",
   ];
 
   return !hiddenRoutes.some((route) =>
@@ -195,6 +197,7 @@ function FloatingHelpButton() {
     "/privacy-policy",
     "/terms",
     "/refund-policy",
+    "/payment-methods",
   ];
 
   const shouldHide = hiddenRoutes.some((route) =>
@@ -602,10 +605,7 @@ function AppRoutes() {
         path="/payment-methods"
         element={
           <ProtectedRoute>
-            <ComingSoonPage
-              title="Payment Methods"
-              description="Payment methods will appear here after the payment wallet or saved payment feature is connected."
-            />
+            <PaymentMethods />
           </ProtectedRoute>
         }
       />
