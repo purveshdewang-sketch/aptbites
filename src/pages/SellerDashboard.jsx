@@ -894,7 +894,7 @@ export default function SellerDashboard() {
       return;
     }
 
-    setMessage(`Packing charge updated to ₹${safeCharge}.`);
+    setMessage(`Packing charge updated to ₹${safeCharge} per item.`);
   }
 
   function handleChange(event) {
@@ -3073,8 +3073,10 @@ export default function SellerDashboard() {
         <section className={`p-5 ${CARD}`}>
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="font-black text-[#181411]">Packing charge</p>
-              <p className="mt-1 text-sm text-[#6B6258]">Choose ₹5 to ₹15.</p>
+              <p className="font-black text-[#181411]">Packing charge per item</p>
+              <p className="mt-1 text-sm text-[#6B6258]">
+                Choose ₹5 to ₹15. Checkout will multiply this by total item quantity.
+              </p>
             </div>
 
             <div className="rounded-2xl bg-[#3F5128] px-5 py-2.5 text-xl font-black text-white">

@@ -463,7 +463,8 @@ export default function Checkout() {
 
   const effectivePackingCharge =
     packingRequired
-      ? sellerPackingCharge
+      ? sellerPackingCharge *
+        Math.max(totalQuantity, 0)
       : 0;
 
   const deliveryFee = 0;
@@ -1847,7 +1848,8 @@ export default function Checkout() {
 
       const latestEffectivePackingCharge =
         packingRequired
-          ? latestSellerPackingCharge
+          ? latestSellerPackingCharge *
+            Math.max(totalQuantity, 0)
           : 0;
 
       setPackingCharge(
@@ -2452,7 +2454,7 @@ export default function Checkout() {
                 +₹
                 {formatMoney(
                   sellerPackingCharge
-                )}
+                )} / item
               </p>
             </button>
 
@@ -3065,7 +3067,17 @@ export default function Checkout() {
               title={`Total Bill ₹${formatMoney(
                 totalAmount
               )}`}
-              subtitle="Including packing and platform fee"
+              subtitle={`Including ${
+                packingRequired
+                  ? `₹${formatMoney(
+                      sellerPackingCharge
+                    )} × ${totalQuantity} item${
+                      totalQuantity === 1
+                        ? ""
+                        : "s"
+                    } packing`
+                  : "no packing"
+              } and platform fee`}
               onClick={() =>
                 setShowBillDetails(
                   (current) =>
@@ -3084,7 +3096,17 @@ export default function Checkout() {
                 />
 
                 <BillRow
-                  label="Packaging"
+                  label={`Packaging ${
+                    packingRequired
+                      ? `(₹${formatMoney(
+                          sellerPackingCharge
+                        )} × ${totalQuantity} item${
+                          totalQuantity === 1
+                            ? ""
+                            : "s"
+                        })`
+                      : ""
+                  }`}
                   value={`₹${formatMoney(
                     effectivePackingCharge
                   )}`}
