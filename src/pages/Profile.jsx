@@ -143,6 +143,17 @@ export default function Profile() {
       formData.bank_account_number?.trim()
   );
 
+  const hasAnyBankDetails = Boolean(
+    formData.bank_account_holder?.trim() ||
+      formData.bank_name?.trim() ||
+      formData.bank_account_number?.trim() ||
+      formData.bank_upi_id?.trim()
+  );
+
+  const maskedBankAccountNumber = useMemo(() => {
+    return maskBankAccountNumber(formData.bank_account_number);
+  }, [formData.bank_account_number]);
+
   const effectiveBankDetailsComplete = isAdmin
     ? true
     : currentBankDetailsComplete;
@@ -1015,10 +1026,15 @@ export default function Profile() {
 
               <Divider />
 
-              <ProfileRow
+              <BankDetailsProfileRow
                 icon={<CardIcon />}
-                label="Payment Methods"
-                to="/payment-methods"
+                complete={currentBankDetailsComplete}
+                hasAnyDetails={hasAnyBankDetails}
+                accountHolder={formData.bank_account_holder}
+                bankName={formData.bank_name}
+                maskedAccountNumber={maskedBankAccountNumber}
+                upiId={formData.bank_upi_id}
+                onClick={scrollToBankDetails}
               />
 
               <Divider />
@@ -1385,6 +1401,20 @@ export default function Profile() {
   );
 }
 
+function maskBankAccountNumber(value) {
+  const cleanValue = String(value || "").replace(/\s+/g, "");
+
+  if (!cleanValue) {
+    return "";
+  }
+
+  if (cleanValue.length <= 4) {
+    return cleanValue;
+  }
+
+  return `•••• ${cleanValue.slice(-4)}`;
+}
+
 function ProfileLoading() {
   return (
     <div className="space-y-4">
@@ -1392,6 +1422,82 @@ function ProfileLoading() {
       <div className="h-24 animate-pulse rounded-[24px] bg-white/90 shadow-sm" />
       <div className="h-64 animate-pulse rounded-[24px] bg-white/90 shadow-sm" />
     </div>
+  );
+}
+
+function BankDetailsProfileRow({
+  icon,
+  complete,
+  hasAnyDetails,
+  accountHolder,
+  bankName,
+  maskedAccountNumber,
+  upiId,
+  onClick,
+}) {
+  const label = complete ? "Bank Details" : "Add Bank Details";
+  const statusLabel = complete ? "Added" : hasAnyDetails ? "Incomplete" : "Add";
+  const cleanedHolder = accountHolder?.trim();
+  const cleanedBank = bankName?.trim();
+  const cleanedUpi = upiId?.trim();
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="block w-full text-left active:scale-[0.99]"
+    >
+      <div className="py-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-start gap-3">
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[#EADFCE] bg-[#FFFDF7] text-[#3F5128]">
+              {icon}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-bold text-[#181411]">
+                  {label}
+                </span>
+
+                <span
+                  className={`rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${
+                    complete
+                      ? "border-[#BDEFE6] bg-[#EAFBF7] text-[#007660]"
+                      : hasAnyDetails
+                      ? "border-[#F4D6B7] bg-[#FFF0DF] text-[#B85D21]"
+                      : "border-[#EADFCE] bg-[#FFF8EC] text-[#6B6258]"
+                  }`}
+                >
+                  {statusLabel}
+                </span>
+              </div>
+
+              {complete ? (
+                <div className="mt-2 space-y-1 text-xs font-semibold leading-relaxed text-[#6B6258]">
+                  {cleanedHolder ? <p>{cleanedHolder}</p> : null}
+                  {cleanedBank ? <p>{cleanedBank}</p> : null}
+                  {maskedAccountNumber ? (
+                    <p>Account {maskedAccountNumber}</p>
+                  ) : null}
+                  {cleanedUpi ? <p className="break-all">UPI {cleanedUpi}</p> : null}
+                </div>
+              ) : (
+                <p className="mt-2 text-xs font-semibold leading-relaxed text-[#6B6258]">
+                  {hasAnyDetails
+                    ? "Some bank details are missing. Complete them for seller payout."
+                    : "Add account holder name, bank name, and account number."}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-1 shrink-0">
+            <ChevronIcon />
+          </div>
+        </div>
+      </div>
+    </button>
   );
 }
 
