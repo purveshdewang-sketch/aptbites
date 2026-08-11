@@ -475,8 +475,7 @@ export default function Checkout() {
 
   const effectivePackingCharge =
     packingRequired
-      ? sellerPackingCharge *
-        Math.max(totalQuantity, 0)
+      ? sellerPackingCharge
       : 0;
 
   const deliveryFee = 0;
@@ -1848,8 +1847,7 @@ export default function Checkout() {
 
       const latestEffectivePackingCharge =
         packingRequired
-          ? latestSellerPackingCharge *
-            Math.max(totalQuantity, 0)
+          ? latestSellerPackingCharge
           : 0;
 
       setPackingCharge(
@@ -2446,15 +2444,15 @@ export default function Checkout() {
                     : "text-[#6B6258]"
                 }`}
               >
-                Secure takeaway packing
-                charged per item
+                Secure takeaway
+                packing
               </p>
 
               <p className="mt-3 text-lg font-black">
                 +₹
                 {formatMoney(
                   sellerPackingCharge
-                )} / item
+                )}
               </p>
             </button>
 
@@ -3067,17 +3065,7 @@ export default function Checkout() {
               title={`Total Bill ₹${formatMoney(
                 totalAmount
               )}`}
-              subtitle={`Including ${
-                packingRequired
-                  ? `₹${formatMoney(
-                      sellerPackingCharge
-                    )} × ${totalQuantity} item${
-                      totalQuantity === 1
-                        ? ""
-                        : "s"
-                    } packing`
-                  : "no packing"
-              } and platform fee`}
+              subtitle="Including packing and platform fee"
               onClick={() =>
                 setShowBillDetails(
                   (current) =>
@@ -3096,17 +3084,7 @@ export default function Checkout() {
                 />
 
                 <BillRow
-                  label={`Packaging ${
-                    packingRequired
-                      ? `(₹${formatMoney(
-                          sellerPackingCharge
-                        )} × ${totalQuantity} item${
-                          totalQuantity === 1
-                            ? ""
-                            : "s"
-                        })`
-                      : ""
-                  }`}
+                  label="Packaging"
                   value={`₹${formatMoney(
                     effectivePackingCharge
                   )}`}

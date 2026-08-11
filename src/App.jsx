@@ -32,7 +32,6 @@ import CustomerCareAgent from "./pages/CustomerCareAgent";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import RefundPolicy from "./pages/RefundPolicy";
-import PaymentMethods from "./pages/PaymentMethods";
 import SellerHelper from "./pages/SellerHelper";
 import OrderChat from "./pages/OrderChat";
 import Favorites from "./pages/Favorites";
@@ -601,14 +600,6 @@ function AppRoutes() {
         }
       />
 
-      <Route
-        path="/payment-methods"
-        element={
-          <ProtectedRoute>
-            <PaymentMethods />
-          </ProtectedRoute>
-        }
-      />
 
       <Route
         path="/customer-care"
