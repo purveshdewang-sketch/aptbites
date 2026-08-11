@@ -38,7 +38,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:scheme="com.nefo.app"
+                    android:scheme="com.nefofood.app"
                     android:host="reset-password" />
             </intent-filter>
         </activity>

@@ -22,7 +22,7 @@ const INPUT =
   "w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-base font-semibold text-[#181411] outline-none placeholder:text-[#9A8E80] focus:border-[#CF743D] focus:bg-white";
 
 const NATIVE_RESET_REDIRECT_URL =
-  "com.nefo.app://reset-password";
+  "com.nefofood.app://reset-password";
 
 function createEmptyErrors() {
   return {

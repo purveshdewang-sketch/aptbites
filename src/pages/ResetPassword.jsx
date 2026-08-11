@@ -15,7 +15,7 @@ const RECOVERY_STORAGE_KEY =
   "NeFo_password_recovery_url";
 
 const NATIVE_RESET_REDIRECT_URL =
-  "com.NeFo.app://reset-password";
+  "com.nefofood.app://reset-password";
 
 const CARD =
   "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";

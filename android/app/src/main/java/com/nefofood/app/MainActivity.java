@@ -1,4 +1,4 @@
-package com.nefo.app;
+package com.nefofood.app;
 
 import com.getcapacitor.BridgeActivity;
 

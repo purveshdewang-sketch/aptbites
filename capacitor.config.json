@@ -1,5 +1,5 @@
 {
-  "appId": "com.nefo.app",
+  "appId": "com.nefofood.app",
   "appName": "NeFo",
   "webDir": "dist",
   "plugins": {

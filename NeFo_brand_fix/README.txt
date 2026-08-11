@@ -21,5 +21,5 @@ After the build:
    C:\Users\Admin\Desktop\App\android\app\build\outputs\apk\debug\app-debug.apk
 
 If using ADB:
-& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" uninstall com.nefo.app
+& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" uninstall com.nefofood.app
 & "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install "C:\Users\Admin\Desktop\App\android\app\build\outputs\apk\debug\app-debug.apk"
