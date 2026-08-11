@@ -456,6 +456,18 @@ export default function Checkout() {
   const subtotalAmount =
     Number(cartTotal || 0);
 
+  const totalQuantity =
+    useMemo(() => {
+      return cartItems.reduce(
+        (total, item) =>
+          total +
+          Number(
+            item.quantity || 0
+          ),
+        0
+      );
+    }, [cartItems]);
+
   const sellerPackingCharge =
     getSafePackingCharge(
       packingCharge
@@ -488,18 +500,6 @@ export default function Checkout() {
     !checkingKitchenSettings &&
     !deliveryAvailable &&
     !pickupAvailable;
-
-  const totalQuantity =
-    useMemo(() => {
-      return cartItems.reduce(
-        (total, item) =>
-          total +
-          Number(
-            item.quantity || 0
-          ),
-        0
-      );
-    }, [cartItems]);
 
   const kitchenName =
     useMemo(() => {
@@ -2446,8 +2446,8 @@ export default function Checkout() {
                     : "text-[#6B6258]"
                 }`}
               >
-                Secure takeaway
-                packing
+                Secure takeaway packing
+                charged per item
               </p>
 
               <p className="mt-3 text-lg font-black">

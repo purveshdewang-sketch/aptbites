@@ -3075,7 +3075,7 @@ export default function SellerDashboard() {
             <div>
               <p className="font-black text-[#181411]">Packing charge per item</p>
               <p className="mt-1 text-sm text-[#6B6258]">
-                Choose ₹5 to ₹15. Checkout will multiply this by total item quantity.
+                Choose ₹5 to ₹15. Checkout multiplies it by total cart quantity. Example: ₹9 × 2 items = ₹18.
               </p>
             </div>
 
