@@ -84,7 +84,7 @@ function compressProfileImage(file) {
 }
 
 export default function Profile() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, loginMode } = useAuth();
   const navigate = useNavigate();
 
   const editSectionRef = useRef(null);
@@ -130,6 +130,10 @@ export default function Profile() {
   const [message, setMessage] = useState("");
 
   const isAdmin = role === "admin";
+  const isCustomerView = loginMode !== "seller";
+  const showSellerFeatures = !isCustomerView && isSeller;
+  const showAdminFeatures = !isCustomerView && isAdmin;
+
   const displayedAvatar = pendingAvatarPreview || avatarUrl;
   const avatarBusy = avatarUploading || avatarRemoving;
 
@@ -874,7 +878,7 @@ export default function Profile() {
                       {displayName}
                     </h2>
 
-                    {isAdmin ? (
+                    {showAdminFeatures ? (
                       <span className="rounded-full border border-[#D8C9B3] bg-[#FFF0DF] px-2 py-1 text-[9px] font-black uppercase text-[#CF743D]">
                         Owner
                       </span>
@@ -899,6 +903,16 @@ export default function Profile() {
                   >
                     {avatarUrl ? "Change Photo" : "Add Photo"}
                   </button>
+
+                  {isCustomerView ? (
+                    <button
+                      type="button"
+                      onClick={openEditSection}
+                      className="ml-4 mt-2 text-xs font-black text-[#3F5128] active:scale-95"
+                    >
+                      Edit Profile
+                    </button>
+                  ) : null}
                 </div>
               </div>
 
@@ -950,31 +964,33 @@ export default function Profile() {
               ) : null}
             </section>
 
-            <section className={`mt-4 p-4 ${PAGE_CARD}`}>
-              <div className="mb-2 flex items-start justify-between gap-3">
-                <h3 className="text-sm font-black text-[#181411]">
-                  Seller Details
-                </h3>
+            {showSellerFeatures ? (
+              <section className={`mt-4 p-4 ${PAGE_CARD}`}>
+                <div className="mb-2 flex items-start justify-between gap-3">
+                  <h3 className="text-sm font-black text-[#181411]">
+                    Seller Details
+                  </h3>
 
-                <button
-                  type="button"
-                  onClick={openEditSection}
-                  className="text-xs font-black text-[#CF743D] active:scale-95"
-                >
-                  Edit
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    onClick={openEditSection}
+                    className="text-xs font-black text-[#CF743D] active:scale-95"
+                  >
+                    Edit
+                  </button>
+                </div>
 
-              <div className="space-y-1 text-xs font-semibold leading-relaxed text-[#6B6258]">
-                <p>{addressLines.lineOne}</p>
+                <div className="space-y-1 text-xs font-semibold leading-relaxed text-[#6B6258]">
+                  <p>{addressLines.lineOne}</p>
 
-                {addressLines.lineTwo ? (
-                  <p>{addressLines.lineTwo}</p>
-                ) : null}
-              </div>
-            </section>
+                  {addressLines.lineTwo ? (
+                    <p>{addressLines.lineTwo}</p>
+                  ) : null}
+                </div>
+              </section>
+            ) : null}
 
-            {isSeller && !isAdmin && !sellerOnboardingComplete ? (
+            {showSellerFeatures && !isAdmin && !sellerOnboardingComplete ? (
               <section className="mt-4 rounded-[24px] bg-[#3F5128] p-4 text-white shadow-lg shadow-[#3F5128]/15">
                 <p className="text-xs font-black uppercase tracking-wide text-[#F3C06E]">
                   Seller setup required
@@ -1024,18 +1040,22 @@ export default function Profile() {
                 to="/favorites"
               />
 
-              <Divider />
+              {showSellerFeatures ? (
+                <>
+                  <Divider />
 
-              <BankDetailsProfileRow
-                icon={<CardIcon />}
-                complete={currentBankDetailsComplete}
-                hasAnyDetails={hasAnyBankDetails}
-                accountHolder={formData.bank_account_holder}
-                bankName={formData.bank_name}
-                maskedAccountNumber={maskedBankAccountNumber}
-                upiId={formData.bank_upi_id}
-                onClick={scrollToBankDetails}
-              />
+                  <BankDetailsProfileRow
+                    icon={<CardIcon />}
+                    complete={currentBankDetailsComplete}
+                    hasAnyDetails={hasAnyBankDetails}
+                    accountHolder={formData.bank_account_holder}
+                    bankName={formData.bank_name}
+                    maskedAccountNumber={maskedBankAccountNumber}
+                    upiId={formData.bank_upi_id}
+                    onClick={scrollToBankDetails}
+                  />
+                </>
+              ) : null}
 
               <Divider />
 
@@ -1054,7 +1074,7 @@ export default function Profile() {
               />
             </section>
 
-            {isAdmin ? (
+            {showAdminFeatures ? (
               <section className={`mt-4 overflow-hidden px-4 py-1 ${PAGE_CARD}`}>
                 <div className="py-3">
                   <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
@@ -1108,7 +1128,7 @@ export default function Profile() {
               </section>
             ) : null}
 
-            {isSeller ? (
+            {showSellerFeatures ? (
               <section className={`mt-4 overflow-hidden px-4 py-1 ${PAGE_CARD}`}>
                 <ProfileRow
                   icon={<KitchenIcon />}
@@ -1206,7 +1226,7 @@ export default function Profile() {
                     />
                   </FormSection>
 
-                  {isSeller ? (
+                  {showSellerFeatures ? (
                     <>
                       <div
                         id="seller-bank-details"
