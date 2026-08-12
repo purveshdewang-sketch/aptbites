@@ -10,49 +10,11 @@ import { supabase } from "../lib/supabaseClient";
 
 const AuthContext = createContext(null);
 
-const LOGIN_MODE_STORAGE_KEY = "NeFo_login_mode";
-
-function getLoginModeFromCurrentPage() {
-  if (typeof window === "undefined") {
-    return "customer";
-  }
-
-  return window.location.pathname.startsWith("/seller-login")
-    ? "seller"
-    : "customer";
-}
-
-function getStoredLoginMode() {
-  if (typeof window === "undefined") {
-    return "customer";
-  }
-
-  const storedMode = window.localStorage.getItem(LOGIN_MODE_STORAGE_KEY);
-
-  return storedMode === "seller" ? "seller" : "customer";
-}
-
-function storeLoginMode(mode) {
-  if (typeof window === "undefined") return;
-
-  window.localStorage.setItem(
-    LOGIN_MODE_STORAGE_KEY,
-    mode === "seller" ? "seller" : "customer"
-  );
-}
-
-function clearLoginMode() {
-  if (typeof window === "undefined") return;
-
-  window.localStorage.removeItem(LOGIN_MODE_STORAGE_KEY);
-}
-
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState("");
-  const [loginMode, setLoginMode] = useState(() => getStoredLoginMode());
 
   useEffect(() => {
     let mounted = true;
@@ -79,11 +41,6 @@ export function AuthProvider({ children }) {
 
         setSession(session);
         setUser(session?.user ?? null);
-
-        if (session?.user) {
-          setLoginMode(getStoredLoginMode());
-        }
-
         setAuthLoading(false);
       } catch (error) {
         if (!mounted) return;
@@ -117,10 +74,6 @@ export function AuthProvider({ children }) {
   async function signUp(email, password, metadata = {}) {
     setAuthError("");
 
-    const requestedMode = getLoginModeFromCurrentPage();
-    storeLoginMode(requestedMode);
-    setLoginMode(requestedMode);
-
     const result = await supabase.auth.signUp({
       email,
       password,
@@ -131,8 +84,6 @@ export function AuthProvider({ children }) {
 
     if (result.error) {
       setAuthError(result.error.message);
-      clearLoginMode();
-      setLoginMode("customer");
     }
 
     return result;
@@ -141,10 +92,6 @@ export function AuthProvider({ children }) {
   async function signIn(email, password) {
     setAuthError("");
 
-    const requestedMode = getLoginModeFromCurrentPage();
-    storeLoginMode(requestedMode);
-    setLoginMode(requestedMode);
-
     const result = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -152,13 +99,9 @@ export function AuthProvider({ children }) {
 
     if (result.error) {
       setAuthError(result.error.message);
-      clearLoginMode();
-      setLoginMode("customer");
     } else {
       setSession(result.data?.session ?? null);
       setUser(result.data?.user ?? null);
-      storeLoginMode(requestedMode);
-      setLoginMode(requestedMode);
     }
 
     return result;
@@ -177,8 +120,6 @@ export function AuthProvider({ children }) {
 
       setSession(null);
       setUser(null);
-      clearLoginMode();
-      setLoginMode("customer");
 
       return { error: null };
     } catch (error) {
@@ -195,12 +136,11 @@ export function AuthProvider({ children }) {
       authLoading,
       authError,
       isAuthenticated: Boolean(user),
-      loginMode,
       signUp,
       signIn,
       signOut,
     }),
-    [session, user, authLoading, authError, loginMode]
+    [session, user, authLoading, authError]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

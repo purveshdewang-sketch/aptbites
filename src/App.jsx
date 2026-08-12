@@ -266,7 +266,7 @@ function ProtectedRoute({ children }) {
 }
 
 function SellerOnlyRoute({ children }) {
-  const { user, authLoading, loginMode } = useAuth();
+  const { user, authLoading } = useAuth();
 
   const [checkingRole, setCheckingRole] =
     useState(true);
@@ -351,10 +351,6 @@ function SellerOnlyRoute({ children }) {
     );
   }
 
-  if (loginMode !== "seller") {
-    return <Navigate to="/profile" replace />;
-  }
-
   if (!sellerAllowed) {
     return (
       <Navigate
@@ -368,7 +364,7 @@ function SellerOnlyRoute({ children }) {
 }
 
 function AdminOnlyRoute({ children }) {
-  const { user, authLoading, loginMode } = useAuth();
+  const { user, authLoading } = useAuth();
 
   const [checkingRole, setCheckingRole] =
     useState(true);
@@ -436,10 +432,6 @@ function AdminOnlyRoute({ children }) {
         replace
       />
     );
-  }
-
-  if (loginMode !== "seller") {
-    return <Navigate to="/profile" replace />;
   }
 
   if (!adminAllowed) {
