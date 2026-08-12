@@ -968,7 +968,7 @@ export default function Profile() {
               <section className={`mt-4 p-4 ${PAGE_CARD}`}>
                 <div className="mb-2 flex items-start justify-between gap-3">
                   <h3 className="text-sm font-black text-[#181411]">
-                    Seller Details
+                    Account Details
                   </h3>
 
                   <button
