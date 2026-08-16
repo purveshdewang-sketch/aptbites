@@ -32,6 +32,43 @@ const READY_TIME_OPTIONS = [
   "2 hours",
 ];
 
+const PACKAGING_TYPE_OPTIONS = [
+  "Small / Snack Packaging",
+  "Regular Meal Packaging",
+  "Large / Combo Packaging",
+  "Cake / Special Packaging",
+];
+
+const PACKAGING_SUGGESTIONS = {
+  "Small / Snack Packaging": "₹3–₹5",
+  "Regular Meal Packaging": "₹5–₹8",
+  "Large / Combo Packaging": "₹8–₹10",
+  "Cake / Special Packaging": "₹10–₹15",
+};
+
+const DEFAULT_DISH_PACKING_CHARGE = 8;
+
+function getSafeDishPackingCharge(value) {
+  if (value === null || value === undefined || value === "") {
+    return DEFAULT_DISH_PACKING_CHARGE;
+  }
+
+  const numericValue = Number(value);
+
+  if (!Number.isFinite(numericValue)) {
+    return DEFAULT_DISH_PACKING_CHARGE;
+  }
+
+  return Math.min(15, Math.max(0, numericValue));
+}
+
+function getPackagingSuggestion(packagingType) {
+  return (
+    PACKAGING_SUGGESTIONS[packagingType] ||
+    "Choose any charge from ₹0–₹15"
+  );
+}
+
 const CARD =
   "rounded-[28px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
 
@@ -122,6 +159,8 @@ export default function SellerDashboard() {
     type: "Veg",
     category: "Meals",
     description: "",
+    packaging_type: "",
+    packing_charge: DEFAULT_DISH_PACKING_CHARGE,
   });
 
   const [dishErrors, setDishErrors] = useState({});
@@ -1372,6 +1411,8 @@ export default function SellerDashboard() {
       type: "Veg",
       category: "Meals",
       description: "",
+      packaging_type: "",
+      packing_charge: DEFAULT_DISH_PACKING_CHARGE,
     });
 
     setDishErrors({});
@@ -1404,6 +1445,11 @@ export default function SellerDashboard() {
       type: food.type || "Veg",
       category: food.category || "Meals",
       description: food.description || "",
+      packaging_type:
+        food.packaging_type || "Regular Meal Packaging",
+      packing_charge: getSafeDishPackingCharge(
+        food.packing_charge
+      ),
     });
 
     setDishErrors({});
@@ -1440,6 +1486,21 @@ export default function SellerDashboard() {
 
     if (String(formData.stock).trim() && Number(formData.stock) < 0) {
       nextErrors.stock = "Quantity cannot be below zero.";
+    }
+
+    if (!formData.packaging_type) {
+      nextErrors.packaging_type = "Please select a packaging type.";
+    }
+
+    const dishPackingCharge = Number(formData.packing_charge);
+
+    if (
+      !Number.isFinite(dishPackingCharge) ||
+      dishPackingCharge < 0 ||
+      dishPackingCharge > 15
+    ) {
+      nextErrors.packing_charge =
+        "Packaging charge must be between ₹0 and ₹15.";
     }
 
     if (!editingFood && !imageFile) {
@@ -1483,6 +1544,10 @@ export default function SellerDashboard() {
         type: formData.type,
         category: formData.category,
         description: formData.description.trim(),
+        packaging_type: formData.packaging_type,
+        packing_charge: getSafeDishPackingCharge(
+          formData.packing_charge
+        ),
         image: imageUrl,
       };
 
@@ -2164,6 +2229,11 @@ export default function SellerDashboard() {
       formData.type
     );
 
+    const packagingTypeOptions = getOptionsWithCurrentValue(
+      PACKAGING_TYPE_OPTIONS,
+      formData.packaging_type
+    );
+
     return (
       <section className="space-y-5">
         <form onSubmit={handleSubmit} className={`p-5 ${CARD}`}>
@@ -2304,6 +2374,88 @@ export default function SellerDashboard() {
                 placeholder="Describe the dish"
               />
             </Field>
+
+            <Field
+              label="Packaging type"
+              error={dishErrors.packaging_type}
+              required
+            >
+              <NeFoSelect
+                name="packaging_type"
+                value={formData.packaging_type}
+                placeholder="Select packaging type"
+                options={packagingTypeOptions}
+                isOpen={openDishDropdown === "packaging_type"}
+                onToggle={() =>
+                  setOpenDishDropdown((current) =>
+                    current === "packaging_type"
+                      ? ""
+                      : "packaging_type"
+                  )
+                }
+                onSelect={handleDishDropdownSelect}
+              />
+            </Field>
+
+            {formData.packaging_type ? (
+              <div className="rounded-[22px] border border-[#D8C9B3] bg-[#FFFDF7] p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-sm font-black text-[#181411]">
+                      Packaging charge
+                    </p>
+                    <p className="mt-1 text-xs font-semibold leading-relaxed text-[#6B6258]">
+                      Suggested for {formData.packaging_type}:{" "}
+                      <span className="font-black text-[#CF743D]">
+                        {getPackagingSuggestion(formData.packaging_type)}
+                      </span>
+                    </p>
+                    <p className="mt-1 text-[11px] font-semibold text-[#9A8E80]">
+                      You can choose any amount from ₹0 to ₹15.
+                    </p>
+                  </div>
+
+                  <div className="shrink-0 rounded-2xl bg-[#3F5128] px-4 py-2 text-xl font-black text-white">
+                    ₹{getSafeDishPackingCharge(formData.packing_charge)}
+                  </div>
+                </div>
+
+                {dishErrors.packing_charge ? (
+                  <p className="mt-3 text-xs font-black text-red-600">
+                    {dishErrors.packing_charge}
+                  </p>
+                ) : null}
+
+                <input
+                  type="range"
+                  min="0"
+                  max="15"
+                  step="1"
+                  value={getSafeDishPackingCharge(formData.packing_charge)}
+                  onChange={(event) => {
+                    const nextCharge = Number(event.target.value);
+
+                    setFormData((currentData) => ({
+                      ...currentData,
+                      packing_charge: nextCharge,
+                    }));
+
+                    setDishErrors((currentErrors) => ({
+                      ...currentErrors,
+                      packing_charge: "",
+                    }));
+                  }}
+                  className="mt-5 w-full accent-[#CF743D]"
+                  aria-label="Packaging charge"
+                />
+
+                <div className="mt-1 flex items-center justify-between text-[10px] font-black text-[#9A8E80]">
+                  <span>₹0</span>
+                  <span>Default ₹8</span>
+                  <span>₹15</span>
+                </div>
+              </div>
+            ) : null}
 
             <Field label="Dish photo" error={dishErrors.image} required={!editingFood}>
               <input
@@ -2463,6 +2615,10 @@ export default function SellerDashboard() {
 
                         <p className="mt-2 truncate text-xs font-semibold text-[#6B6258]">
                           {food.category || "Meals"} • {food.type || "Veg"}
+                        </p>
+
+                        <p className="mt-1 truncate text-[11px] font-black text-[#CF743D]">
+                          Packaging ₹{getSafeDishPackingCharge(food.packing_charge)}
                         </p>
                       </div>
                     </div>
@@ -3071,35 +3227,19 @@ export default function SellerDashboard() {
         </section>
 
         <section className={`p-5 ${CARD}`}>
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="font-black text-[#181411]">Packing charge</p>
-              <p className="mt-1 text-sm text-[#6B6258]">Choose ₹5 to ₹15.</p>
-            </div>
+          <p className="text-xs font-black uppercase tracking-wide text-[#CF743D]">
+            Packaging
+          </p>
 
-            <div className="rounded-2xl bg-[#3F5128] px-5 py-2.5 text-xl font-black text-white">
-              ₹{packingCharge}
-            </div>
-          </div>
+          <h2 className="mt-1 text-xl font-black text-[#181411]">
+            Set packaging per dish
+          </h2>
 
-          <input
-            type="range"
-            min="5"
-            max="15"
-            step="1"
-            value={packingCharge}
-            onChange={(event) => {
-              const nextCharge = Number(event.target.value);
-              setPackingCharge(nextCharge);
-              setSellerSetupData((currentData) => ({
-                ...currentData,
-                packing_charge: nextCharge,
-              }));
-            }}
-            onMouseUp={(event) => updatePackingCharge(event.currentTarget.value)}
-            onTouchEnd={(event) => updatePackingCharge(event.currentTarget.value)}
-            className="mt-5 w-full accent-[#CF743D]"
-          />
+          <p className="mt-2 text-sm font-semibold leading-relaxed text-[#6B6258]">
+            Packaging is now controlled individually for every dish. Open Menu,
+            add or edit a dish, choose the packaging type, then set its charge
+            from ₹0 to ₹15.
+          </p>
         </section>
 
         <section className={`p-5 ${CARD}`}>
@@ -3412,9 +3552,18 @@ function NeFoSelect({
                     : "border-[#EADFCE] bg-white text-[#181411]"
                 }`}
               >
-                <span>{option}</span>
+                <div className="min-w-0">
+                  <span className="block truncate">{option}</span>
+
+                  {name === "packaging_type" ? (
+                    <span className="mt-1 block text-[10px] font-bold text-[#9A8E80]">
+                      Suggested {getPackagingSuggestion(option)}
+                    </span>
+                  ) : null}
+                </div>
+
                 {selected ? (
-                  <span className="text-[#CF743D]">✓</span>
+                  <span className="shrink-0 text-[#CF743D]">✓</span>
                 ) : null}
               </button>
             );

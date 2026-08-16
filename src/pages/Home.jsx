@@ -264,6 +264,20 @@ function getFoodId(food) {
   );
 }
 
+function getSafePackingCharge(value) {
+  if (value === null || value === undefined || value === "") {
+    return 8;
+  }
+
+  const numericValue = Number(value);
+
+  if (!Number.isFinite(numericValue)) {
+    return 8;
+  }
+
+  return Math.min(15, Math.max(0, numericValue));
+}
+
 export default function Home() {
   const { user } = useAuth();
   const { cartItems } = useCart();
@@ -947,6 +961,15 @@ export default function Home() {
 
           rating_count:
             foodRating.count,
+
+          packaging_type:
+            food.packaging_type ||
+            "Regular Meal Packaging",
+
+          packing_charge:
+            getSafePackingCharge(
+              food.packing_charge
+            ),
         };
       });
 

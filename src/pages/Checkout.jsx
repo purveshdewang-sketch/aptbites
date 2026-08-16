@@ -257,12 +257,39 @@ function formatScheduledDateTime(
 function getSafePackingCharge(
   value
 ) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return 8;
+  }
+
+  const numericValue =
+    Number(value);
+
+  if (
+    !Number.isFinite(
+      numericValue
+    )
+  ) {
+    return 8;
+  }
+
   return Math.min(
     15,
     Math.max(
-      5,
-      Number(value || 5)
+      0,
+      numericValue
     )
+  );
+}
+
+function getCartItemPackingCharge(
+  item
+) {
+  return getSafePackingCharge(
+    item?.packing_charge
   );
 }
 
@@ -413,6 +440,11 @@ export default function Checkout() {
     setLoading,
   ] = useState(false);
 
+  const [
+    livePackingByFoodId,
+    setLivePackingByFoodId,
+  ] = useState({});
+
 
   const dateOptions =
     useMemo(
@@ -468,15 +500,62 @@ export default function Checkout() {
       );
     }, [cartItems]);
 
-  const sellerPackingCharge =
-    getSafePackingCharge(
-      packingCharge
-    );
+  const packingBreakdown =
+    useMemo(() => {
+      return cartItems.map(
+        (item) => {
+          const quantity =
+            Math.max(
+              0,
+              Number(
+                item.quantity || 0
+              )
+            );
+
+          const liveCharge =
+            livePackingByFoodId[
+              String(item.id)
+            ];
+
+          const unitCharge =
+            liveCharge !==
+            undefined
+              ? getSafePackingCharge(
+                  liveCharge
+                )
+              : getCartItemPackingCharge(
+                  item
+                );
+
+          return {
+            id: item.id,
+            name:
+              item.name ||
+              "Food item",
+            quantity,
+            unitCharge,
+            total:
+              unitCharge *
+              quantity,
+          };
+        }
+      );
+    }, [
+      cartItems,
+      livePackingByFoodId,
+    ]);
 
   const effectivePackingCharge =
-    packingRequired
-      ? sellerPackingCharge
-      : 0;
+    useMemo(() => {
+      return packingBreakdown.reduce(
+        (total, item) =>
+          total +
+          Number(
+            item.total || 0
+          ),
+        0
+      );
+    }, [packingBreakdown]);
 
   const deliveryFee = 0;
 
@@ -549,6 +628,66 @@ export default function Checkout() {
   }
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function refreshLivePackingCharges() {
+      const foodIds = cartItems
+        .map((item) => item.id)
+        .filter(
+          (foodId) =>
+            foodId !== null &&
+            foodId !== undefined
+        );
+
+      if (foodIds.length === 0) {
+        if (!cancelled) {
+          setLivePackingByFoodId({});
+        }
+
+        return;
+      }
+
+      const { data, error } =
+        await supabase
+          .from("foods")
+          .select(
+            "id, packing_charge"
+          )
+          .in("id", foodIds);
+
+      if (
+        cancelled ||
+        error
+      ) {
+        return;
+      }
+
+      const nextPackingMap = {};
+
+      (data || []).forEach(
+        (foodItem) => {
+          nextPackingMap[
+            String(foodItem.id)
+          ] =
+            getSafePackingCharge(
+              foodItem.packing_charge
+            );
+        }
+      );
+
+      setLivePackingByFoodId(
+        nextPackingMap
+      );
+    }
+
+    refreshLivePackingCharges();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [cartItems]);
+
+  useEffect(() => {
     async function loadSavedCheckoutDetails() {
       const storageKey =
         getCheckoutStorageKey();
@@ -614,8 +753,7 @@ export default function Checkout() {
           );
 
           setPackingRequired(
-            parsedDetails.packingRequired !==
-              false
+            true
           );
         } catch {
           localStorage.removeItem(
@@ -764,7 +902,8 @@ export default function Checkout() {
 
       paymentReference,
 
-      packingRequired,
+      packingRequired:
+        true,
     };
 
     localStorage.setItem(
@@ -1601,7 +1740,7 @@ export default function Checkout() {
       await supabase
         .from("foods")
         .select(
-          "id, name, stock, user_id"
+          "id, name, stock, user_id, packaging_type, packing_charge"
         )
         .in("id", foodIds);
 
@@ -1663,6 +1802,8 @@ export default function Checkout() {
         );
       }
     }
+
+    return data || [];
   }
 
   function validateCheckout() {
@@ -1839,21 +1980,6 @@ export default function Checkout() {
           kitchenId
         );
 
-      const latestSellerPackingCharge =
-        getSafePackingCharge(
-          latestKitchenSettings
-            .packing_charge
-        );
-
-      const latestEffectivePackingCharge =
-        packingRequired
-          ? latestSellerPackingCharge
-          : 0;
-
-      setPackingCharge(
-        latestSellerPackingCharge
-      );
-
       if (
         latestKitchenSettings
           .delivery_available ===
@@ -1966,7 +2092,67 @@ export default function Checkout() {
       const scheduledFor =
         getScheduledDateTime();
 
-      await validateLiveStockBeforeOrder();
+      const latestFoods =
+        await validateLiveStockBeforeOrder();
+
+      const latestFoodMap =
+        new Map(
+          latestFoods.map(
+            (foodItem) => [
+              String(
+                foodItem.id
+              ),
+              foodItem,
+            ]
+          )
+        );
+
+      const latestOrderItems =
+        cartItems.map(
+          (cartItem) => {
+            const latestFood =
+              latestFoodMap.get(
+                String(
+                  cartItem.id
+                )
+              );
+
+            return {
+              ...cartItem,
+              packaging_type:
+                latestFood
+                  ?.packaging_type ||
+                cartItem
+                  .packaging_type ||
+                "Regular Meal Packaging",
+              packing_charge:
+                getSafePackingCharge(
+                  latestFood
+                    ?.packing_charge
+                ),
+            };
+          }
+        );
+
+      const latestEffectivePackingCharge =
+        latestOrderItems.reduce(
+          (total, item) => {
+            return (
+              total +
+              getCartItemPackingCharge(
+                item
+              ) *
+                Math.max(
+                  0,
+                  Number(
+                    item.quantity ||
+                      0
+                  )
+                )
+            );
+          },
+          0
+        );
 
       const paymentProofUpload =
         await uploadPaymentProof();
@@ -2007,7 +2193,7 @@ export default function Checkout() {
           subtotalAmount,
 
         packing_required:
-          packingRequired,
+          true,
 
         packing_charge:
           latestEffectivePackingCharge,
@@ -2023,7 +2209,7 @@ export default function Checkout() {
 
         status: "confirmed",
 
-        items: cartItems,
+        items: latestOrderItems,
 
         scheduled_order:
           orderTiming ===
@@ -2056,7 +2242,7 @@ export default function Checkout() {
         "decrement_food_stock",
         {
           order_items:
-            cartItems,
+            latestOrderItems,
         }
       );
 
@@ -2144,7 +2330,8 @@ export default function Checkout() {
           paymentReference:
             "",
 
-          packingRequired,
+          packingRequired:
+            true,
         })
       );
 
@@ -2416,72 +2603,49 @@ export default function Checkout() {
           <SectionHeading
             number="2"
             eyebrow="Packaging"
-            title="Choose packaging"
+            title="Packaging charges"
           />
 
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() =>
-                setPackingRequired(
-                  true
-                )
-              }
-              className={`rounded-[22px] border p-4 text-left transition-all active:scale-[0.98] ${
-                packingRequired
-                  ? "border-[#3F5128] bg-[#3F5128] text-white shadow-lg shadow-[#3F5128]/15"
-                  : "border-[#D8C9B3] bg-white/95 text-[#181411]"
-              }`}
-            >
-              <p className="text-sm font-black">
-                Pack my order
-              </p>
+          <div className={`mt-3 overflow-hidden ${CARD}`}>
+            <div className="p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-black text-[#181411]">
+                    Set by the seller for each dish
+                  </p>
+                  <p className="mt-1 text-xs font-semibold leading-relaxed text-[#6B6258]">
+                    Packaging is charged per item based on the packaging selected
+                    by the kitchen.
+                  </p>
+                </div>
 
-              <p
-                className={`mt-1 text-xs font-semibold ${
-                  packingRequired
-                    ? "text-white/75"
-                    : "text-[#6B6258]"
-                }`}
-              >
-                Secure takeaway
-                packing
-              </p>
+                <div className="shrink-0 rounded-2xl bg-[#3F5128] px-4 py-2 text-lg font-black text-white">
+                  ₹{formatMoney(effectivePackingCharge)}
+                </div>
+              </div>
+            </div>
 
-              <p className="mt-3 text-lg font-black">
-                +₹
-                {formatMoney(
-                  sellerPackingCharge
-                )}
-              </p>
-            </button>
+            <div className="border-t border-[#EADFCE] bg-[#FFFDF7]">
+              {packingBreakdown.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between gap-3 border-b border-[#EADFCE] px-4 py-3 last:border-b-0"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-black text-[#181411]">
+                      {item.name} × {item.quantity}
+                    </p>
+                    <p className="mt-1 text-[10px] font-semibold text-[#6B6258]">
+                      ₹{formatMoney(item.unitCharge)} packaging each
+                    </p>
+                  </div>
 
-            <button
-              type="button"
-              onClick={() =>
-                setPackingRequired(
-                  false
-                )
-              }
-              className={`rounded-[22px] border p-4 text-left transition-all active:scale-[0.98] ${
-                !packingRequired
-                  ? "border-[#CF743D] bg-[#FFF0DF] text-[#181411] shadow-md"
-                  : "border-[#D8C9B3] bg-white/95 text-[#181411]"
-              }`}
-            >
-              <p className="text-sm font-black">
-                No extra packing
-              </p>
-
-              <p className="mt-1 text-xs font-semibold text-[#6B6258]">
-                Choose only when
-                suitable
-              </p>
-
-              <p className="mt-3 text-lg font-black text-[#3F5128]">
-                ₹0
-              </p>
-            </button>
+                  <p className="shrink-0 text-sm font-black text-[#3F5128]">
+                    ₹{formatMoney(item.total)}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 

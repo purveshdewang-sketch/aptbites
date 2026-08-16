@@ -8,6 +8,33 @@ import {
 
 const CartContext = createContext(null);
 const CART_STORAGE_KEY = "NeFo_cart_items";
+const DEFAULT_PACKAGING_TYPE = "Regular Meal Packaging";
+const DEFAULT_PACKING_CHARGE = 8;
+
+function getSafePackingCharge(value) {
+  if (value === null || value === undefined || value === "") {
+    return DEFAULT_PACKING_CHARGE;
+  }
+
+  const numericValue = Number(value);
+
+  if (!Number.isFinite(numericValue)) {
+    return DEFAULT_PACKING_CHARGE;
+  }
+
+  return Math.min(15, Math.max(0, numericValue));
+}
+
+function normalizeCartItem(item) {
+  return {
+    ...item,
+    packaging_type:
+      item?.packaging_type || DEFAULT_PACKAGING_TYPE,
+    packing_charge: getSafePackingCharge(
+      item?.packing_charge
+    ),
+  };
+}
 
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState(() => {
@@ -19,7 +46,7 @@ export function CartProvider({ children }) {
 
       return parsedCart
         .map((item) => ({
-          ...item,
+          ...normalizeCartItem(item),
           quantity: Math.max(Number(item.quantity || 1), 1),
         }))
         .filter((item) => item?.id);
@@ -56,15 +83,17 @@ export function CartProvider({ children }) {
   }
 
   function addToCart(item) {
+    const normalizedItem = normalizeCartItem(item);
+
     setCartItems((currentItems) => {
-      const incomingSellerId = getSellerId(item);
+      const incomingSellerId = getSellerId(normalizedItem);
 
       if (!incomingSellerId) {
         alert("Seller information missing. Please refresh and try again.");
         return currentItems;
       }
 
-      if (getItemStock(item) <= 0) {
+      if (getItemStock(normalizedItem) <= 0) {
         alert("This item is sold out.");
         return currentItems;
       }
@@ -92,7 +121,7 @@ export function CartProvider({ children }) {
           normalizeId(cartItem.id) === normalizeId(item.id)
             ? {
                 ...cartItem,
-                ...item,
+                ...normalizedItem,
                 seller_id: incomingSellerId,
                 quantity: getSafeQuantity(cartItem.quantity) + 1,
               }
@@ -103,7 +132,7 @@ export function CartProvider({ children }) {
       return [
         ...currentItems,
         {
-          ...item,
+          ...normalizedItem,
           seller_id: incomingSellerId,
           quantity: 1,
         },
