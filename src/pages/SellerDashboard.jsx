@@ -46,6 +46,25 @@ const PACKAGING_SUGGESTIONS = {
   "Cake / Special Packaging": "₹10–₹15",
 };
 
+const PACKAGING_RANGES = {
+  "Small / Snack Packaging": {
+    min: 3,
+    max: 5,
+  },
+  "Regular Meal Packaging": {
+    min: 5,
+    max: 8,
+  },
+  "Large / Combo Packaging": {
+    min: 8,
+    max: 10,
+  },
+  "Cake / Special Packaging": {
+    min: 10,
+    max: 15,
+  },
+};
+
 const DEFAULT_DISH_PACKING_CHARGE = 8;
 
 function getSafeDishPackingCharge(value) {
@@ -62,10 +81,29 @@ function getSafeDishPackingCharge(value) {
   return Math.min(15, Math.max(0, numericValue));
 }
 
+function getPackagingRange(packagingType) {
+  return (
+    PACKAGING_RANGES[packagingType] || {
+      min: 0,
+      max: 15,
+    }
+  );
+}
+
+function getPackingChargeForPackagingType(packagingType, value) {
+  const safeCharge = getSafeDishPackingCharge(value);
+  const range = getPackagingRange(packagingType);
+
+  return Math.min(
+    range.max,
+    Math.max(range.min, safeCharge)
+  );
+}
+
 function getPackagingSuggestion(packagingType) {
   return (
     PACKAGING_SUGGESTIONS[packagingType] ||
-    "Choose any charge from ₹0–₹15"
+    "Select a packaging type"
   );
 }
 
@@ -958,14 +996,30 @@ export default function SellerDashboard() {
     const nextValue =
       name === "time" ? sanitizeReadyTime(value) : value;
 
-    setFormData((currentData) => ({
-      ...currentData,
-      [name]: nextValue,
-    }));
+    setFormData((currentData) => {
+      if (name === "packaging_type") {
+        return {
+          ...currentData,
+          packaging_type: nextValue,
+          packing_charge: getPackingChargeForPackagingType(
+            nextValue,
+            currentData.packing_charge
+          ),
+        };
+      }
+
+      return {
+        ...currentData,
+        [name]: nextValue,
+      };
+    });
 
     setDishErrors((currentErrors) => ({
       ...currentErrors,
       [name]: "",
+      ...(name === "packaging_type"
+        ? { packing_charge: "" }
+        : {}),
     }));
 
     setOpenDishDropdown("");
@@ -1447,7 +1501,8 @@ export default function SellerDashboard() {
       description: food.description || "",
       packaging_type:
         food.packaging_type || "Regular Meal Packaging",
-      packing_charge: getSafeDishPackingCharge(
+      packing_charge: getPackingChargeForPackagingType(
+        food.packaging_type || "Regular Meal Packaging",
         food.packing_charge
       ),
     });
@@ -1493,14 +1548,17 @@ export default function SellerDashboard() {
     }
 
     const dishPackingCharge = Number(formData.packing_charge);
+    const selectedPackagingRange = getPackagingRange(
+      formData.packaging_type
+    );
 
     if (
       !Number.isFinite(dishPackingCharge) ||
-      dishPackingCharge < 0 ||
-      dishPackingCharge > 15
+      dishPackingCharge < selectedPackagingRange.min ||
+      dishPackingCharge > selectedPackagingRange.max
     ) {
       nextErrors.packing_charge =
-        "Packaging charge must be between ₹0 and ₹15.";
+        `Packaging charge must be between ₹${selectedPackagingRange.min} and ₹${selectedPackagingRange.max} for this packaging type.`;
     }
 
     if (!editingFood && !imageFile) {
@@ -1545,7 +1603,8 @@ export default function SellerDashboard() {
         category: formData.category,
         description: formData.description.trim(),
         packaging_type: formData.packaging_type,
-        packing_charge: getSafeDishPackingCharge(
+        packing_charge: getPackingChargeForPackagingType(
+          formData.packaging_type,
           formData.packing_charge
         ),
         image: imageUrl,
@@ -2405,18 +2464,21 @@ export default function SellerDashboard() {
                       Packaging charge
                     </p>
                     <p className="mt-1 text-xs font-semibold leading-relaxed text-[#6B6258]">
-                      Suggested for {formData.packaging_type}:{" "}
+                      Range for {formData.packaging_type}:{" "}
                       <span className="font-black text-[#CF743D]">
                         {getPackagingSuggestion(formData.packaging_type)}
                       </span>
                     </p>
                     <p className="mt-1 text-[11px] font-semibold text-[#9A8E80]">
-                      You can choose any amount from ₹0 to ₹15.
+                      Choose a charge only within this packaging range.
                     </p>
                   </div>
 
                   <div className="shrink-0 rounded-2xl bg-[#3F5128] px-4 py-2 text-xl font-black text-white">
-                    ₹{getSafeDishPackingCharge(formData.packing_charge)}
+                    ₹{getPackingChargeForPackagingType(
+                      formData.packaging_type,
+                      formData.packing_charge
+                    )}
                   </div>
                 </div>
 
@@ -2428,10 +2490,13 @@ export default function SellerDashboard() {
 
                 <input
                   type="range"
-                  min="0"
-                  max="15"
+                  min={getPackagingRange(formData.packaging_type).min}
+                  max={getPackagingRange(formData.packaging_type).max}
                   step="1"
-                  value={getSafeDishPackingCharge(formData.packing_charge)}
+                  value={getPackingChargeForPackagingType(
+                    formData.packaging_type,
+                    formData.packing_charge
+                  )}
                   onChange={(event) => {
                     const nextCharge = Number(event.target.value);
 
@@ -2446,13 +2511,16 @@ export default function SellerDashboard() {
                     }));
                   }}
                   className="mt-5 w-full accent-[#CF743D]"
-                  aria-label="Packaging charge"
+                  aria-label={`${formData.packaging_type} charge`}
                 />
 
                 <div className="mt-1 flex items-center justify-between text-[10px] font-black text-[#9A8E80]">
-                  <span>₹0</span>
-                  <span>Default ₹8</span>
-                  <span>₹15</span>
+                  <span>
+                    ₹{getPackagingRange(formData.packaging_type).min}
+                  </span>
+                  <span>
+                    ₹{getPackagingRange(formData.packaging_type).max}
+                  </span>
                 </div>
               </div>
             ) : null}
