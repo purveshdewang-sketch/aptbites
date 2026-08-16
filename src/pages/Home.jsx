@@ -305,6 +305,11 @@ export default function Home() {
   ] = useState(false);
 
   const [
+    roleChecked,
+    setRoleChecked,
+  ] = useState(false);
+
+  const [
     homeFoods,
     setHomeFoods,
   ] = useState([]);
@@ -550,10 +555,13 @@ export default function Home() {
   ]);
 
   async function checkUserRole() {
+    setRoleChecked(false);
+
     if (!user) {
       setIsSeller(false);
       setIsAdmin(false);
       setProfile(null);
+      setRoleChecked(true);
       return;
     }
 
@@ -605,6 +613,7 @@ export default function Home() {
       );
 
       setProfile(null);
+      setRoleChecked(true);
       return;
     }
 
@@ -631,6 +640,8 @@ export default function Home() {
         metadataRole ===
           "seller"
     );
+
+    setRoleChecked(true);
   }
 
   async function fetchCompletedOrders() {
@@ -1817,8 +1828,40 @@ export default function Home() {
       ? "/seller-dashboard"
       : "/seller-registration";
 
+  const showCustomerComingSoon =
+    Boolean(user?.id) &&
+    roleChecked &&
+    !isSeller &&
+    !isAdmin;
+
   return (
     <main className="min-h-screen bg-[#FFF8EC] px-4 py-4 pb-32 text-[#181411]">
+      {showCustomerComingSoon ? (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#FFF8EC]/20 px-6 backdrop-blur-[6px]"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="relative -translate-y-4 text-center">
+            <div className="flex items-center justify-center gap-3">
+              <span className="h-[2px] w-9 rounded-full bg-red-500" />
+
+              <div className="leading-none">
+                <p className="text-[38px] font-black tracking-tight text-red-600 drop-shadow-[0_3px_2px_rgba(255,255,255,0.95)]">
+                  COMING
+                </p>
+
+                <p className="mt-1 text-[42px] font-black tracking-tight text-red-600 drop-shadow-[0_3px_2px_rgba(255,255,255,0.95)]">
+                  SOON
+                </p>
+              </div>
+
+              <span className="h-[2px] w-9 rounded-full bg-red-500" />
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div className="mx-auto max-w-md">
         <header className="flex items-start justify-between gap-3">
           <div className="min-w-0">
