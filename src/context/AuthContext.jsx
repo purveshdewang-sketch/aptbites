@@ -9,6 +9,8 @@ import {
 import { supabase } from "../lib/supabaseClient";
 
 const AuthContext = createContext(null);
+const PUSH_TOKEN_STORAGE_KEY = "NeFo_push_token";
+const PUSH_TOKEN_USER_STORAGE_KEY = "NeFo_push_token_user_id";
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
@@ -45,7 +47,10 @@ export function AuthProvider({ children }) {
       } catch (error) {
         if (!mounted) return;
 
-        setAuthError(error.message || "Could not load login session.");
+        setAuthError(
+          error.message ||
+            "Could not load login session."
+        );
         setSession(null);
         setUser(null);
         setAuthLoading(false);
@@ -56,14 +61,16 @@ export function AuthProvider({ children }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      if (!mounted) return;
+    } = supabase.auth.onAuthStateChange(
+      (_event, nextSession) => {
+        if (!mounted) return;
 
-      setSession(nextSession);
-      setUser(nextSession?.user ?? null);
-      setAuthLoading(false);
-      setAuthError("");
-    });
+        setSession(nextSession);
+        setUser(nextSession?.user ?? null);
+        setAuthLoading(false);
+        setAuthError("");
+      }
+    );
 
     return () => {
       mounted = false;
@@ -71,19 +78,26 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  async function signUp(email, password, metadata = {}) {
+  async function signUp(
+    email,
+    password,
+    metadata = {}
+  ) {
     setAuthError("");
 
-    const result = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: metadata,
-      },
-    });
+    const result =
+      await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: metadata,
+        },
+      });
 
     if (result.error) {
-      setAuthError(result.error.message);
+      setAuthError(
+        result.error.message
+      );
     }
 
     return result;
@@ -92,40 +106,94 @@ export function AuthProvider({ children }) {
   async function signIn(email, password) {
     setAuthError("");
 
-    const result = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const result =
+      await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
     if (result.error) {
-      setAuthError(result.error.message);
+      setAuthError(
+        result.error.message
+      );
     } else {
-      setSession(result.data?.session ?? null);
-      setUser(result.data?.user ?? null);
+      setSession(
+        result.data?.session ?? null
+      );
+      setUser(
+        result.data?.user ?? null
+      );
     }
 
     return result;
+  }
+
+  async function unregisterCurrentPushToken() {
+    const token = String(
+      localStorage.getItem(
+        PUSH_TOKEN_STORAGE_KEY
+      ) || ""
+    ).trim();
+
+    if (!token || !user?.id) {
+      return;
+    }
+
+    try {
+      const { error } =
+        await supabase.rpc(
+          "unregister_push_device_token",
+          {
+            p_token: token,
+          }
+        );
+
+      if (error) {
+        console.warn(
+          "Could not unregister NeFo push token before logout:",
+          error.message
+        );
+      }
+    } catch (error) {
+      console.warn(
+        "Could not unregister NeFo push token before logout:",
+        error
+      );
+    }
   }
 
   async function signOut() {
     setAuthError("");
 
     try {
-      const { error } = await supabase.auth.signOut();
+      await unregisterCurrentPushToken();
+
+      const { error } =
+        await supabase.auth.signOut();
 
       if (error) {
         setAuthError(error.message);
         return { error };
       }
 
+      localStorage.removeItem(
+        PUSH_TOKEN_USER_STORAGE_KEY
+      );
+
       setSession(null);
       setUser(null);
 
       return { error: null };
     } catch (error) {
-      const message = error.message || "Could not sign out.";
+      const message =
+        error.message ||
+        "Could not sign out.";
+
       setAuthError(message);
-      return { error: { message } };
+
+      return {
+        error: { message },
+      };
     }
   }
 
@@ -140,17 +208,31 @@ export function AuthProvider({ children }) {
       signIn,
       signOut,
     }),
-    [session, user, authLoading, authError]
+    [
+      session,
+      user,
+      authLoading,
+      authError,
+    ]
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={value}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
+  const context =
+    useContext(AuthContext);
 
   if (!context) {
-    throw new Error("useAuth must be used inside AuthProvider");
+    throw new Error(
+      "useAuth must be used inside AuthProvider"
+    );
   }
 
   return context;
