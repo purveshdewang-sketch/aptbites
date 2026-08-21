@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!--
+        NeFo monochrome notification icon.
+        Android notification small icons must be white on transparent.
+        This is a simplified leaf/house mark derived from the NeFo logo.
+    -->
+
+    <!-- Outer leaf / flame silhouette -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,1.6
+            C13.1,4.1 15.1,5.7 17.2,7.7
+            C19.7,10.1 21.2,13 20.8,16.2
+            C20.4,19.8 17.8,22 14.5,22
+            C13.8,22 13.2,21.9 12.6,21.7
+            C15.6,20.3 17.3,18.1 17.3,15.2
+            C17.3,12.9 16.1,11 14.4,9.3
+            C13.1,8 12.1,6.8 11.4,5.4
+            C10.7,7.3 9.3,8.9 7.5,10.6
+            C5.8,12.2 4.8,14.1 4.8,16.3
+            C4.8,18.7 6,20.6 8.1,21.7
+            C5.4,21.1 3.4,19.2 3.1,16.5
+            C2.7,13.1 4.5,10.4 7.2,8
+            C9.4,6 11.2,4.2 12,1.6 Z" />
+
+    <!-- Inner house / diagonal NeFo cut -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#00000000"
+        android:pathData="M8.2,10.5 L15.7,18.1" />
+
+    <!-- Four small window blocks -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M9.1,17.5 H10.6 V19 H9.1 Z
+                          M11.2,17.5 H12.7 V19 H11.2 Z
+                          M9.1,19.6 H10.6 V21.1 H9.1 Z
+                          M11.2,19.6 H12.7 V21.1 H11.2 Z" />
+</vector>

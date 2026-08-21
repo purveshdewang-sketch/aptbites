@@ -12,10 +12,15 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <!-- Must match the channel created in PushNotificationBootstrap.jsx. -->
+        <!-- Default notification channel -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="nefo_orders" />
+
+        <!-- NeFo notification icon -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_nefo" />
 
         <activity
             android:name=".MainActivity"
@@ -41,6 +46,7 @@
                     android:scheme="com.nefofood.app"
                     android:host="reset-password" />
             </intent-filter>
+
         </activity>
 
         <provider
@@ -48,9 +54,13 @@
             android:authorities="${applicationId}.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
+
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
+
         </provider>
+
     </application>
+
 </manifest>
