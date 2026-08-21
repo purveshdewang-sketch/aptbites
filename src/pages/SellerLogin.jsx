@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Capacitor } from "@capacitor/core";
 import { supabase } from "../lib/supabaseClient";
 
 const CARD =
@@ -10,6 +11,17 @@ const SOFT_CARD =
 
 const INPUT =
   "w-full rounded-2xl border border-[#D8C9B3] bg-[#FFFDF7] px-4 py-4 text-base font-semibold text-[#181411] outline-none placeholder:text-[#9A8E80] focus:border-[#CF743D] focus:bg-white";
+
+const NATIVE_RESET_REDIRECT_URL =
+  "com.nefofood.app://reset-password";
+
+function getPasswordResetRedirectUrl() {
+  if (Capacitor.isNativePlatform()) {
+    return NATIVE_RESET_REDIRECT_URL;
+  }
+
+  return `${window.location.origin}/reset-password`;
+}
 
 export default function SellerLogin() {
   const navigate = useNavigate();
@@ -427,7 +439,8 @@ export default function SellerLogin() {
     setResettingPassword(true);
     setResetMessage("");
 
-    const redirectTo = `${window.location.origin}/reset-password`;
+    const redirectTo =
+      getPasswordResetRedirectUrl();
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,

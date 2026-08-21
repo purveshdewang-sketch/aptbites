@@ -7,7 +7,10 @@ import {
   Link,
   NavLink,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
+import { Capacitor } from "@capacitor/core";
+import { App as CapacitorApp } from "@capacitor/app";
 
 import Home from "./pages/Home";
 import Kitchens from "./pages/Kitchens";
@@ -45,6 +48,117 @@ import { NeFoDialogProvider } from "./components/NeFoDialogProvider";
 
 import { useAuth } from "./context/AuthContext";
 import { supabase } from "./lib/supabaseClient";
+
+const RECOVERY_STORAGE_KEY =
+  "NeFo_password_recovery_url";
+
+const NATIVE_RESET_URL_PREFIX =
+  "com.nefofood.app://reset-password";
+
+function isNeFoPasswordRecoveryUrl(rawUrl) {
+  const value = String(rawUrl || "").trim();
+
+  return (
+    value === NATIVE_RESET_URL_PREFIX ||
+    value.startsWith(`${NATIVE_RESET_URL_PREFIX}?`) ||
+    value.startsWith(`${NATIVE_RESET_URL_PREFIX}#`)
+  );
+}
+
+function PasswordRecoveryDeepLinkBootstrap() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) {
+      return undefined;
+    }
+
+    let cancelled = false;
+    let appUrlOpenHandle = null;
+
+    function openRecoveryLink(rawUrl) {
+      const recoveryUrl = String(rawUrl || "").trim();
+
+      if (
+        cancelled ||
+        !isNeFoPasswordRecoveryUrl(recoveryUrl)
+      ) {
+        return;
+      }
+
+      try {
+        sessionStorage.setItem(
+          RECOVERY_STORAGE_KEY,
+          recoveryUrl
+        );
+      } catch {
+        // ResetPassword can still use the dispatched URL.
+      }
+
+      navigate("/reset-password", {
+        replace: false,
+      });
+
+      window.setTimeout(() => {
+        window.dispatchEvent(
+          new CustomEvent(
+            "NeFo_password_recovery_link",
+            {
+              detail: {
+                url: recoveryUrl,
+              },
+            }
+          )
+        );
+      }, 0);
+    }
+
+    async function registerDeepLinkHandling() {
+      try {
+        const launchUrl =
+          await CapacitorApp.getLaunchUrl();
+
+        if (launchUrl?.url) {
+          openRecoveryLink(
+            launchUrl.url
+          );
+        }
+      } catch (error) {
+        console.warn(
+          "Could not read NeFo launch URL:",
+          error
+        );
+      }
+
+      try {
+        appUrlOpenHandle =
+          await CapacitorApp.addListener(
+            "appUrlOpen",
+            ({ url }) => {
+              openRecoveryLink(url);
+            }
+          );
+      } catch (error) {
+        console.error(
+          "Could not register NeFo password recovery deep link:",
+          error
+        );
+      }
+    }
+
+    void registerDeepLinkHandling();
+
+    return () => {
+      cancelled = true;
+
+      if (appUrlOpenHandle) {
+        void appUrlOpenHandle.remove();
+      }
+    };
+  }, [navigate]);
+
+  return null;
+}
 
 function LoadingScreen() {
   return (
@@ -752,6 +866,8 @@ function AppShell() {
 
   return (
     <>
+      <PasswordRecoveryDeepLinkBootstrap />
+
       <GlobalBackHandler />
 
       <LocalNotificationBootstrap />

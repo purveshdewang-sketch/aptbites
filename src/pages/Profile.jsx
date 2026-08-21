@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Capacitor } from "@capacitor/core";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabaseClient";
 
@@ -9,6 +10,17 @@ const PROFILE_IMAGE_DIMENSION = 900;
 
 const PAGE_CARD =
   "rounded-[26px] border border-[#EADFCE] bg-white/90 shadow-[8px_8px_22px_rgba(63,81,40,0.08),-8px_-8px_22px_rgba(255,255,255,0.95)]";
+
+const NATIVE_RESET_REDIRECT_URL =
+  "com.nefofood.app://reset-password";
+
+function getPasswordResetRedirectUrl() {
+  if (Capacitor.isNativePlatform()) {
+    return NATIVE_RESET_REDIRECT_URL;
+  }
+
+  return `${window.location.origin}/reset-password`;
+}
 
 function compressProfileImage(file) {
   return new Promise((resolve, reject) => {
@@ -714,7 +726,8 @@ export default function Profile() {
     setResettingPassword(true);
     setMessage("");
 
-    const redirectTo = `${window.location.origin}/reset-password`;
+    const redirectTo =
+      getPasswordResetRedirectUrl();
 
     const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
       redirectTo,
